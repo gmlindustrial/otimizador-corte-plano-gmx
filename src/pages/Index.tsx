@@ -31,11 +31,18 @@ export interface OptimizationResult {
 export interface Project {
   id: string;
   name: string;
+  projectNumber: string;
   client: string;
   obra: string;
   lista: string;
   revisao: string;
   tipoMaterial: string;
+  operador: string;
+  turno: string;
+  aprovadorQA: string;
+  validacaoQA: boolean;
+  enviarSobrasEstoque: boolean;
+  qrCode: string;
   date: string;
 }
 
@@ -130,7 +137,7 @@ const Index = () => {
 
     setResults(optimizationResult);
 
-    // Salvar no histórico
+    // Salvar no histórico e enviar sobras para estoque se habilitado
     if (project) {
       const historyEntry = {
         id: Date.now().toString(),
@@ -141,6 +148,15 @@ const Index = () => {
         barLength
       };
       setOptimizationHistory(prev => [historyEntry, ...prev]);
+
+      // Auto-enviar sobras para estoque se habilitado
+      if (project.enviarSobrasEstoque && optimizationResult.totalWaste > 0) {
+        console.log('Enviando sobras automaticamente para o estoque:', {
+          totalWaste: optimizationResult.totalWaste,
+          material: project.tipoMaterial,
+          projeto: project.projectNumber
+        });
+      }
     }
   };
 
