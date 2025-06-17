@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Project } from '@/pages/Index';
-import { Building, User, MapPin, Ruler, FileText, GitBranch } from 'lucide-react';
+import { Building, User, MapPin, Ruler, FileText, GitBranch, Package } from 'lucide-react';
 
 interface ProjectSelectorProps {
   project: Project | null;
@@ -21,14 +21,24 @@ export const ProjectSelector = ({ project, setProject, barLength, setBarLength }
     client: '',
     projectName: '',
     lista: 'LISTA 01',
-    revisao: 'REV-00'
+    revisao: 'REV-00',
+    tipoMaterial: ''
   });
 
   const obras = ['Obra Industrial A', 'Complexo Residencial B', 'Fábrica XYZ', 'Shopping Center ABC'];
   const clients = ['Construtora Alpha', 'Engenharia Beta', 'Indústria Gamma', 'Metalúrgica Delta'];
+  const tiposMaterial = [
+    'Perfil W 150x13',
+    'Perfil UE 100x50x17x3',
+    'Perfil U 200x75x20x3',
+    'Perfil L 50x50x5',
+    'Perfil T 100x50x8',
+    'Barra Redonda Ø 20mm',
+    'Barra Quadrada 25x25mm'
+  ];
 
   const handleCreateProject = () => {
-    if (formData.obra && formData.client && formData.projectName && formData.lista && formData.revisao) {
+    if (formData.obra && formData.client && formData.projectName && formData.lista && formData.revisao && formData.tipoMaterial) {
       const newProject: Project = {
         id: Date.now().toString(),
         name: formData.projectName,
@@ -36,6 +46,7 @@ export const ProjectSelector = ({ project, setProject, barLength, setBarLength }
         obra: formData.obra,
         lista: formData.lista,
         revisao: formData.revisao,
+        tipoMaterial: formData.tipoMaterial,
         date: new Date().toISOString()
       };
       setProject(newProject);
@@ -96,6 +107,23 @@ export const ProjectSelector = ({ project, setProject, barLength, setBarLength }
           />
         </div>
 
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <Package className="w-4 h-4" />
+            Tipo de Material
+          </Label>
+          <Select value={formData.tipoMaterial} onValueChange={(value) => setFormData(prev => ({ ...prev, tipoMaterial: value }))}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o tipo de material" />
+            </SelectTrigger>
+            <SelectContent>
+              {tiposMaterial.map(tipo => (
+                <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
         <div className="grid md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
@@ -141,7 +169,7 @@ export const ProjectSelector = ({ project, setProject, barLength, setBarLength }
         <Button 
           onClick={handleCreateProject}
           className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-          disabled={!formData.obra || !formData.client || !formData.projectName || !formData.lista || !formData.revisao}
+          disabled={!formData.obra || !formData.client || !formData.projectName || !formData.lista || !formData.revisao || !formData.tipoMaterial}
         >
           Criar Projeto
         </Button>
@@ -152,7 +180,7 @@ export const ProjectSelector = ({ project, setProject, barLength, setBarLength }
               <strong>Projeto Ativo:</strong> {project.name} - {project.client}
             </p>
             <p className="text-xs text-green-600 mt-1">
-              {project.lista} | {project.revisao}
+              {project.lista} | {project.revisao} | {project.tipoMaterial}
             </p>
           </div>
         )}

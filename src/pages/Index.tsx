@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { ProjectSelector } from '@/components/ProjectSelector';
@@ -6,8 +5,9 @@ import { MaterialInput } from '@/components/MaterialInput';
 import { OptimizationResults } from '@/components/OptimizationResults';
 import { Dashboard } from '@/components/Dashboard';
 import { HistoryPanel } from '@/components/HistoryPanel';
+import { EstoqueSobras } from '@/components/EstoqueSobras';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, Calculator, History, Settings } from 'lucide-react';
+import { BarChart3, Calculator, History, Settings, Package } from 'lucide-react';
 
 export interface CutPiece {
   length: number;
@@ -35,6 +35,7 @@ export interface Project {
   obra: string;
   lista: string;
   revisao: string;
+  tipoMaterial: string;
   date: string;
 }
 
@@ -149,7 +150,7 @@ const Index = () => {
       
       <div className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-6">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               Dashboard
@@ -157,6 +158,10 @@ const Index = () => {
             <TabsTrigger value="optimize" className="flex items-center gap-2">
               <Calculator className="w-4 h-4" />
               Otimização
+            </TabsTrigger>
+            <TabsTrigger value="sobras" className="flex items-center gap-2">
+              <Package className="w-4 h-4" />
+              Estoque
             </TabsTrigger>
             <TabsTrigger value="history" className="flex items-center gap-2">
               <History className="w-4 h-4" />
@@ -200,6 +205,10 @@ const Index = () => {
                 )}
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="sobras">
+            <EstoqueSobras tipoMaterial={project?.tipoMaterial} />
           </TabsContent>
 
           <TabsContent value="history">
