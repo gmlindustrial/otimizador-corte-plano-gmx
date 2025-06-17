@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Project } from '@/pages/Index';
-import { Building, User, MapPin, Ruler } from 'lucide-react';
+import { Building, User, MapPin, Ruler, FileText, GitBranch } from 'lucide-react';
 
 interface ProjectSelectorProps {
   project: Project | null;
@@ -19,19 +19,23 @@ export const ProjectSelector = ({ project, setProject, barLength, setBarLength }
   const [formData, setFormData] = useState({
     obra: '',
     client: '',
-    projectName: ''
+    projectName: '',
+    lista: 'LISTA 01',
+    revisao: 'REV-00'
   });
 
   const obras = ['Obra Industrial A', 'Complexo Residencial B', 'Fábrica XYZ', 'Shopping Center ABC'];
   const clients = ['Construtora Alpha', 'Engenharia Beta', 'Indústria Gamma', 'Metalúrgica Delta'];
 
   const handleCreateProject = () => {
-    if (formData.obra && formData.client && formData.projectName) {
+    if (formData.obra && formData.client && formData.projectName && formData.lista && formData.revisao) {
       const newProject: Project = {
         id: Date.now().toString(),
         name: formData.projectName,
         client: formData.client,
         obra: formData.obra,
+        lista: formData.lista,
+        revisao: formData.revisao,
         date: new Date().toISOString()
       };
       setProject(newProject);
@@ -92,6 +96,32 @@ export const ProjectSelector = ({ project, setProject, barLength, setBarLength }
           />
         </div>
 
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              Lista
+            </Label>
+            <Input
+              placeholder="Ex: LISTA 01"
+              value={formData.lista}
+              onChange={(e) => setFormData(prev => ({ ...prev, lista: e.target.value }))}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <GitBranch className="w-4 h-4" />
+              Revisão
+            </Label>
+            <Input
+              placeholder="Ex: REV-00"
+              value={formData.revisao}
+              onChange={(e) => setFormData(prev => ({ ...prev, revisao: e.target.value }))}
+            />
+          </div>
+        </div>
+
         <div className="space-y-2">
           <Label className="flex items-center gap-2">
             <Ruler className="w-4 h-4" />
@@ -111,7 +141,7 @@ export const ProjectSelector = ({ project, setProject, barLength, setBarLength }
         <Button 
           onClick={handleCreateProject}
           className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-          disabled={!formData.obra || !formData.client || !formData.projectName}
+          disabled={!formData.obra || !formData.client || !formData.projectName || !formData.lista || !formData.revisao}
         >
           Criar Projeto
         </Button>
@@ -120,6 +150,9 @@ export const ProjectSelector = ({ project, setProject, barLength, setBarLength }
           <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
             <p className="text-sm text-green-700">
               <strong>Projeto Ativo:</strong> {project.name} - {project.client}
+            </p>
+            <p className="text-xs text-green-600 mt-1">
+              {project.lista} | {project.revisao}
             </p>
           </div>
         )}

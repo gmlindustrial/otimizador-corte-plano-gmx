@@ -33,6 +33,8 @@ export interface Project {
   name: string;
   client: string;
   obra: string;
+  lista: string;
+  revisao: string;
   date: string;
 }
 
