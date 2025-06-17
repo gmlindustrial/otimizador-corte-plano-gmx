@@ -2,7 +2,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { OptimizationResult, Project } from '@/pages/Index';
-import { BarChart, Download, Printer, FileSpreadsheet } from 'lucide-react';
+import { BarChart, Download, Printer, FileSpreadsheet, FileText, Wrench } from 'lucide-react';
+import { ReportVisualization } from './ReportVisualization';
+import { PrintableReport } from './PrintableReport';
+import { useState } from 'react';
 
 interface OptimizationResultsProps {
   results: OptimizationResult;
@@ -11,19 +14,51 @@ interface OptimizationResultsProps {
 }
 
 export const OptimizationResults = ({ results, barLength, project }: OptimizationResultsProps) => {
-  const handlePrint = () => {
-    window.print();
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
+  const [printMode, setPrintMode] = useState<'complete' | 'simplified'>('complete');
+
+  const handlePrint = (mode: 'complete' | 'simplified') => {
+    setPrintMode(mode);
+    setShowPrintPreview(true);
+    
+    // Small delay to ensure the content is rendered before printing
+    setTimeout(() => {
+      window.print();
+      setShowPrintPreview(false);
+    }, 100);
   };
 
   const handleExportPDF = () => {
-    // Implementar exportação PDF
-    console.log('Export PDF');
+    console.log('Export PDF - Implementação futura');
   };
 
   const handleExportExcel = () => {
-    // Implementar exportação Excel
-    console.log('Export Excel');
+    console.log('Export Excel - Implementação futura');
   };
+
+  if (showPrintPreview) {
+    return (
+      <div className="fixed inset-0 bg-white z-50 overflow-auto">
+        <div className="no-print p-4 bg-gray-100 border-b flex justify-between items-center">
+          <h2 className="text-lg font-semibold">
+            Visualização de Impressão - {printMode === 'complete' ? 'Relatório Completo' : 'Plano Simplificado'}
+          </h2>
+          <Button 
+            onClick={() => setShowPrintPreview(false)} 
+            variant="outline"
+          >
+            Fechar Visualização
+          </Button>
+        </div>
+        <PrintableReport 
+          results={results}
+          barLength={barLength}
+          project={project}
+          mode={printMode}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -57,64 +92,18 @@ export const OptimizationResults = ({ results, barLength, project }: Optimizatio
         </CardContent>
       </Card>
 
-      {/* Visualização das Barras */}
+      {/* Visualização Detalhada */}
       <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
         <CardHeader>
           <CardTitle className="text-lg">Plano de Corte Detalhado</CardTitle>
         </CardHeader>
         <CardContent className="p-6">
-          <div className="space-y-4 max-h-96 overflow-y-auto">
-            {results.bars.map((bar, index) => (
-              <div key={bar.id} className="space-y-2">
-                <div className="flex justify-between items-center text-sm font-medium">
-                  <span>Barra {index + 1}</span>
-                  <span className="text-gray-500">
-                    Sobra: {bar.waste}mm ({((bar.waste / barLength) * 100).toFixed(1)}%)
-                  </span>
-                </div>
-                
-                {/* Visualização gráfica da barra */}
-                <div className="h-12 bg-gray-200 rounded-lg overflow-hidden flex relative">
-                  {bar.pieces.map((piece, pieceIndex) => {
-                    const widthPercentage = (piece.length / barLength) * 100;
-                    return (
-                      <div
-                        key={pieceIndex}
-                        className="h-full flex items-center justify-center text-white text-xs font-medium relative group"
-                        style={{
-                          width: `${widthPercentage}%`,
-                          backgroundColor: piece.color,
-                          borderRight: pieceIndex < bar.pieces.length - 1 ? '2px solid #fff' : 'none'
-                        }}
-                      >
-                        {piece.length > 200 && piece.label}
-                        
-                        {/* Tooltip */}
-                        <div className="absolute bottom-full mb-1 left-1/2 transform -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity z-10 whitespace-nowrap">
-                          {piece.label}
-                        </div>
-                      </div>
-                    );
-                  })}
-                  
-                  {/* Área de desperdício */}
-                  {bar.waste > 0 && (
-                    <div
-                      className="h-full bg-red-300 flex items-center justify-center text-red-800 text-xs font-medium"
-                      style={{ width: `${(bar.waste / barLength) * 100}%` }}
-                    >
-                      {bar.waste > 100 && `${bar.waste}mm`}
-                    </div>
-                  )}
-                </div>
-                
-                {/* Lista de peças da barra */}
-                <div className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
-                  Peças: {bar.pieces.map(p => p.label).join(' + ')}
-                  {bar.waste > 0 && ` + Sobra: ${bar.waste}mm`}
-                </div>
-              </div>
-            ))}
+          <div className="max-h-96 overflow-y-auto">
+            <ReportVisualization 
+              results={results}
+              barLength={barLength}
+              showLegend={true}
+            />
           </div>
         </CardContent>
       </Card>
@@ -122,21 +111,45 @@ export const OptimizationResults = ({ results, barLength, project }: Optimizatio
       {/* Botões de Exportação */}
       <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
         <CardContent className="p-6">
-          <div className="space-y-3">
+          <div className="space-y-4">
             <h4 className="font-medium text-gray-900">Exportar Resultados</h4>
-            <div className="grid grid-cols-1 gap-2">
-              <Button onClick={handlePrint} variant="outline" className="justify-start">
-                <Printer className="w-4 h-4 mr-2" />
-                Imprimir Plano
-              </Button>
-              <Button onClick={handleExportPDF} variant="outline" className="justify-start">
-                <Download className="w-4 h-4 mr-2" />
-                Exportar PDF
-              </Button>
-              <Button onClick={handleExportExcel} variant="outline" className="justify-start">
-                <FileSpreadsheet className="w-4 h-4 mr-2" />
-                Exportar Excel
-              </Button>
+            
+            {/* Modo de Impressão */}
+            <div className="space-y-2">
+              <h5 className="text-sm font-medium text-gray-700">Modos de Impressão:</h5>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <Button 
+                  onClick={() => handlePrint('complete')} 
+                  variant="outline" 
+                  className="justify-start"
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Relatório Completo
+                </Button>
+                <Button 
+                  onClick={() => handlePrint('simplified')} 
+                  variant="outline" 
+                  className="justify-start"
+                >
+                  <Wrench className="w-4 h-4 mr-2" />
+                  Plano Simplificado (Produção)
+                </Button>
+              </div>
+            </div>
+
+            {/* Outros Formatos */}
+            <div className="space-y-2">
+              <h5 className="text-sm font-medium text-gray-700">Outros Formatos:</h5>
+              <div className="grid grid-cols-1 gap-2">
+                <Button onClick={handleExportPDF} variant="outline" className="justify-start">
+                  <Download className="w-4 h-4 mr-2" />
+                  Exportar PDF
+                </Button>
+                <Button onClick={handleExportExcel} variant="outline" className="justify-start">
+                  <FileSpreadsheet className="w-4 h-4 mr-2" />
+                  Exportar Excel
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>
