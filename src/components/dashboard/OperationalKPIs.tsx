@@ -42,10 +42,11 @@ export const OperationalKPIs = ({
     acc[operador].cortadas = Number(acc[operador].cortadas) + Number(totalPecas);
     
     const currentEfficiency = Number(item.results?.efficiency || 0);
-    const previousCount = Number(acc[operador].eficiencia) === 0 ? 1 : 2;
-    acc[operador].eficiencia = Number(acc[operador].eficiencia) === 0 
+    const currentEficiencia = Number(acc[operador].eficiencia);
+    const previousCount = currentEficiencia === 0 ? 1 : 2;
+    acc[operador].eficiencia = currentEficiencia === 0 
       ? currentEfficiency 
-      : (Number(acc[operador].eficiencia) + currentEfficiency) / previousCount;
+      : (currentEficiencia + currentEfficiency) / previousCount;
     
     if (!acc[operador].turnos[turno]) {
       acc[operador].turnos[turno] = { cortadas: 0, listas: 0 };
