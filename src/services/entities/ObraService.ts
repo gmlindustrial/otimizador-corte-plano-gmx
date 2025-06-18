@@ -11,7 +11,7 @@ export class ObraService extends BaseService<Obra> {
   async getByNome(nome: string) {
     try {
       const { data, error } = await supabase
-        .from('obras')
+        .from('obras' as any)
         .select('*')
         .ilike('nome', `%${nome}%`)
         .order('created_at', { ascending: false });
@@ -27,17 +27,6 @@ export class ObraService extends BaseService<Obra> {
     } catch (error) {
       return this.handleError(error, 'Erro ao buscar obras por nome');
     }
-  }
-
-  private handleError(error: any, context: string) {
-    const errorMessage = error?.message || 'Erro desconhecido';
-    console.error(`${context}: ${errorMessage}`, error);
-    return {
-      data: [],
-      error: errorMessage,
-      success: false,
-      total: 0
-    };
   }
 }
 

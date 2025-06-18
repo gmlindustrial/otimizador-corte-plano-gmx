@@ -11,7 +11,7 @@ export class MaterialService extends BaseService<Material> {
   async getByTipo(tipo: string) {
     try {
       const { data, error } = await supabase
-        .from('materiais')
+        .from('materiais' as any)
         .select('*')
         .ilike('tipo', `%${tipo}%`)
         .order('created_at', { ascending: false });
@@ -27,17 +27,6 @@ export class MaterialService extends BaseService<Material> {
     } catch (error) {
       return this.handleError(error, 'Erro ao buscar materiais por tipo');
     }
-  }
-
-  private handleError(error: any, context: string) {
-    const errorMessage = error?.message || 'Erro desconhecido';
-    console.error(`${context}: ${errorMessage}`, error);
-    return {
-      data: [],
-      error: errorMessage,
-      success: false,
-      total: 0
-    };
   }
 }
 

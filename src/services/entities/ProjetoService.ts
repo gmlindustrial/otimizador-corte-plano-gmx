@@ -11,7 +11,7 @@ export class ProjetoService extends BaseService<Projeto> {
   async getByCliente(clienteId: string) {
     try {
       const { data, error } = await supabase
-        .from('projetos')
+        .from('projetos' as any)
         .select('*')
         .eq('cliente_id', clienteId)
         .order('created_at', { ascending: false });
@@ -32,7 +32,7 @@ export class ProjetoService extends BaseService<Projeto> {
   async getByObra(obraId: string) {
     try {
       const { data, error } = await supabase
-        .from('projetos')
+        .from('projetos' as any)
         .select('*')
         .eq('obra_id', obraId)
         .order('created_at', { ascending: false });
@@ -48,17 +48,6 @@ export class ProjetoService extends BaseService<Projeto> {
     } catch (error) {
       return this.handleError(error, 'Erro ao buscar projetos por obra');
     }
-  }
-
-  private handleError(error: any, context: string) {
-    const errorMessage = error?.message || 'Erro desconhecido';
-    console.error(`${context}: ${errorMessage}`, error);
-    return {
-      data: [],
-      error: errorMessage,
-      success: false,
-      total: 0
-    };
   }
 }
 

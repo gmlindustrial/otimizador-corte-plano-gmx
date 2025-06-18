@@ -11,7 +11,7 @@ export class ClienteService extends BaseService<Cliente> {
   async getByNome(nome: string) {
     try {
       const { data, error } = await supabase
-        .from('clientes')
+        .from('clientes' as any)
         .select('*')
         .ilike('nome', `%${nome}%`)
         .order('created_at', { ascending: false });
@@ -27,17 +27,6 @@ export class ClienteService extends BaseService<Cliente> {
     } catch (error) {
       return this.handleError(error, 'Erro ao buscar clientes por nome');
     }
-  }
-
-  private handleError(error: any, context: string) {
-    const errorMessage = error?.message || 'Erro desconhecido';
-    console.error(`${context}: ${errorMessage}`, error);
-    return {
-      data: [],
-      error: errorMessage,
-      success: false,
-      total: 0
-    };
   }
 }
 

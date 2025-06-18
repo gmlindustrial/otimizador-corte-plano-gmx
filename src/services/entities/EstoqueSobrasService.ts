@@ -11,7 +11,7 @@ export class EstoqueSobrasService extends BaseService<EstoqueSobra> {
   async getByMaterial(materialId: string) {
     try {
       const { data, error } = await supabase
-        .from('estoque_sobras')
+        .from('estoque_sobras' as any)
         .select('*')
         .eq('material_id', materialId)
         .order('created_at', { ascending: false });
@@ -32,7 +32,7 @@ export class EstoqueSobrasService extends BaseService<EstoqueSobra> {
   async getDisponiveis(materialId?: string) {
     try {
       let query = supabase
-        .from('estoque_sobras')
+        .from('estoque_sobras' as any)
         .select('*')
         .eq('disponivel', true);
 
@@ -60,17 +60,6 @@ export class EstoqueSobrasService extends BaseService<EstoqueSobra> {
       id,
       data: { disponivel: false } as any
     });
-  }
-
-  private handleError(error: any, context: string) {
-    const errorMessage = error?.message || 'Erro desconhecido';
-    console.error(`${context}: ${errorMessage}`, error);
-    return {
-      data: [],
-      error: errorMessage,
-      success: false,
-      total: 0
-    };
   }
 }
 

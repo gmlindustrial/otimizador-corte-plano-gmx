@@ -11,7 +11,7 @@ export class HistoricoOtimizacaoService extends BaseService<HistoricoOtimizacao>
   async getByProjeto(projetoId: string) {
     try {
       const { data, error } = await supabase
-        .from('historico_otimizacoes')
+        .from('historico_otimizacoes' as any)
         .select('*')
         .eq('projeto_id', projetoId)
         .order('created_at', { ascending: false });
@@ -27,17 +27,6 @@ export class HistoricoOtimizacaoService extends BaseService<HistoricoOtimizacao>
     } catch (error) {
       return this.handleError(error, 'Erro ao buscar histórico por projeto');
     }
-  }
-
-  private handleError(error: any, context: string) {
-    const errorMessage = error?.message || 'Erro desconhecido';
-    console.error(`${context}: ${errorMessage}`, error);
-    return {
-      data: [],
-      error: errorMessage,
-      success: false,
-      total: 0
-    };
   }
 }
 

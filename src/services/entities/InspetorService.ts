@@ -11,7 +11,7 @@ export class InspetorService extends BaseService<InspetorQA> {
   async getByArea(area: string) {
     try {
       const { data, error } = await supabase
-        .from('inspetores_qa')
+        .from('inspetores_qa' as any)
         .select('*')
         .ilike('area', `%${area}%`)
         .order('created_at', { ascending: false });
@@ -27,17 +27,6 @@ export class InspetorService extends BaseService<InspetorQA> {
     } catch (error) {
       return this.handleError(error, 'Erro ao buscar inspetores por área');
     }
-  }
-
-  private handleError(error: any, context: string) {
-    const errorMessage = error?.message || 'Erro desconhecido';
-    console.error(`${context}: ${errorMessage}`, error);
-    return {
-      data: [],
-      error: errorMessage,
-      success: false,
-      total: 0
-    };
   }
 }
 
