@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Calculator, Trash2, Plus } from 'lucide-react';
 import { FileUpload } from './FileUpload';
+import { DuplicateManager } from './DuplicateManager';
 import type { CutPiece } from '@/pages/Index';
 
 interface MaterialInputProps {
@@ -16,9 +17,21 @@ interface MaterialInputProps {
   disabled?: boolean;
 }
 
+interface DuplicateItem {
+  existing: CutPiece;
+  imported: CutPiece;
+  conflicts: string[];
+  material?: string;
+  tag?: string;
+  project?: string;
+}
+
 export const MaterialInput = ({ pieces, setPieces, onOptimize, disabled }: MaterialInputProps) => {
   const [length, setLength] = useState('');
   const [quantity, setQuantity] = useState('1');
+  const [showDuplicateManager, setShowDuplicateManager] = useState(false);
+  const [pendingDuplicates, setPendingDuplicates] = useState<DuplicateItem[]>([]);
+  const [pendingImportedPieces, setPendingImportedPieces] = useState<CutPiece[]>([]);
 
   const addPiece = () => {
     const pieceLength = parseFloat(length);
@@ -46,14 +59,42 @@ export const MaterialInput = ({ pieces, setPieces, onOptimize, disabled }: Mater
     ));
   };
 
-  const handleImportedData = (importedPieces: CutPiece[], duplicates?: any[]) => {
+  const handleImportedData = (importedPieces: CutPiece[], duplicates?: DuplicateItem[]) => {
     if (duplicates && duplicates.length > 0) {
-      console.log('Duplicatas resolvidas:', duplicates);
+      setPendingDuplicates(duplicates);
+      setPendingImportedPieces(importedPieces);
+      setShowDuplicateManager(true);
+      return;
     }
     
     setPieces([...pieces, ...importedPieces]);
     console.log(`${importedPieces.length} peças importadas com sucesso!`);
   };
+
+  const handleDuplicateResolution = (action: 'update' | 'ignore' | 'duplicate', resolvedPieces: CutPiece[]) => {
+    setPieces([...pieces, ...resolvedPieces]);
+    setShowDuplicateManager(false);
+    setPendingDuplicates([]);
+    setPendingImportedPieces([]);
+    console.log(`${resolvedPieces.length} peças processadas após resolução de duplicidade!`);
+  };
+
+  const handleCancelDuplicateManager = () => {
+    setShowDuplicateManager(false);
+    setPendingDuplicates([]);
+    setPendingImportedPieces([]);
+    console.log('Importação cancelada pelo usuário.');
+  };
+
+  if (showDuplicateManager) {
+    return (
+      <DuplicateManager
+        duplicates={pendingDuplicates}
+        onResolved={handleDuplicateResolution}
+        onCancel={handleCancelDuplicateManager}
+      />
+    );
+  }
 
   return (
     <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">

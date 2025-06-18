@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, FileText, CheckCircle, AlertTriangle, X } from 'lucide-react';
+import { Upload, FileText, AlertTriangle } from 'lucide-react';
 import { CutPiece } from '@/pages/Index';
 
 interface FileUploadProps {
@@ -22,9 +22,6 @@ export const FileUpload = ({ onDataImported, currentPieces }: FileUploadProps) =
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [duplicates, setDuplicates] = useState<DuplicateItem[]>([]);
-  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
-  const [importedData, setImportedData] = useState<CutPiece[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const parseCSV = (content: string): CutPiece[] => {
@@ -113,7 +110,7 @@ export const FileUpload = ({ onDataImported, currentPieces }: FileUploadProps) =
         duplicateItems.push({
           existing,
           imported: newPiece,
-          conflicts: ['Comprimento igual detectado']
+          conflicts: ['Comprimento + Material + TAG + Projeto']
         });
       }
     });
@@ -173,9 +170,7 @@ export const FileUpload = ({ onDataImported, currentPieces }: FileUploadProps) =
       const duplicateItems = checkForDuplicates(pieces);
       
       if (duplicateItems.length > 0) {
-        setDuplicates(duplicateItems);
-        setImportedData(pieces);
-        setShowDuplicateDialog(true);
+        onDataImported(pieces, duplicateItems);
       } else {
         onDataImported(pieces);
       }
@@ -188,154 +183,69 @@ export const FileUpload = ({ onDataImported, currentPieces }: FileUploadProps) =
     }
   };
 
-  const handleDuplicateResolution = (action: 'update' | 'ignore' | 'duplicate') => {
-    let finalPieces = [...importedData];
-    
-    switch (action) {
-      case 'ignore':
-        // Remove duplicatas dos dados importados
-        finalPieces = importedData.filter(piece => 
-          !duplicates.some(dup => dup.imported.length === piece.length)
-        );
-        break;
-      
-      case 'update':
-        // Mantém os dados importados (irá sobrescrever)
-        break;
-      
-      case 'duplicate':
-        // Mantém ambos (adiciona sufixo aos IDs)
-        finalPieces = importedData.map(piece => ({
-          ...piece,
-          id: `${piece.id}-dup`
-        }));
-        break;
-    }
-
-    onDataImported(finalPieces, duplicates);
-    setShowDuplicateDialog(false);
-    setDuplicates([]);
-    setImportedData([]);
-  };
-
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Upload className="w-5 h-5" />
-            Importar Lista de Peças
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv,.xlsx,.xls,.txt,.pdf"
-              onChange={handleFileUpload}
-              className="hidden"
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Upload className="w-5 h-5" />
+          Importar Lista de Peças
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".csv,.xlsx,.xls,.txt,.pdf"
+            onChange={handleFileUpload}
+            className="hidden"
+            disabled={uploading}
+          />
+          
+          <div className="space-y-4">
+            <div className="flex justify-center">
+              <div className="bg-gray-100 p-3 rounded-full">
+                <FileText className="w-8 h-8 text-gray-600" />
+              </div>
+            </div>
+            
+            <div>
+              <p className="text-lg font-medium text-gray-900">
+                Arraste arquivos ou clique para selecionar
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                Formatos aceitos: CSV, XLSX, TXT, PDF
+              </p>
+            </div>
+            
+            <Button
+              onClick={() => fileInputRef.current?.click()}
               disabled={uploading}
-            />
-            
-            <div className="space-y-4">
-              <div className="flex justify-center">
-                <div className="bg-gray-100 p-3 rounded-full">
-                  <FileText className="w-8 h-8 text-gray-600" />
-                </div>
-              </div>
-              
-              <div>
-                <p className="text-lg font-medium text-gray-900">
-                  Arraste arquivos ou clique para selecionar
-                </p>
-                <p className="text-sm text-gray-500 mt-1">
-                  Formatos aceitos: CSV, XLSX, TXT, PDF
-                </p>
-              </div>
-              
-              <Button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                Selecionar Arquivo
-              </Button>
-            </div>
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              Selecionar Arquivo
+            </Button>
           </div>
+        </div>
 
-          {uploading && (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">Processando arquivo...</span>
-              </div>
-              <Progress value={progress} className="w-full" />
+        {uploading && (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">Processando arquivo...</span>
             </div>
-          )}
+            <Progress value={progress} className="w-full" />
+          </div>
+        )}
 
-          {error && (
-            <Alert className="border-red-200 bg-red-50">
-              <AlertTriangle className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-800">
-                {error}
-              </AlertDescription>
-            </Alert>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Dialog de Duplicatas */}
-      {showDuplicateDialog && (
-        <Card className="border-orange-200 bg-orange-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-orange-800">
-              <AlertTriangle className="w-5 h-5" />
-              Duplicatas Detectadas
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-orange-700">
-              Foram encontradas {duplicates.length} peça(s) com especificações similares:
-            </p>
-            
-            <div className="space-y-2 max-h-32 overflow-y-auto">
-              {duplicates.map((dup, index) => (
-                <div key={index} className="flex items-center justify-between bg-white p-2 rounded border">
-                  <span className="text-sm">
-                    Comprimento: {dup.imported.length}mm (Qtd: {dup.imported.quantity})
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    Existe: {dup.existing.quantity} un.
-                  </span>
-                </div>
-              ))}
-            </div>
-            
-            <div className="flex gap-2 pt-2">
-              <Button
-                variant="outline"
-                onClick={() => handleDuplicateResolution('ignore')}
-                className="flex-1"
-              >
-                Ignorar Duplicatas
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => handleDuplicateResolution('duplicate')}
-                className="flex-1"
-              >
-                Manter Ambas
-              </Button>
-              <Button
-                onClick={() => handleDuplicateResolution('update')}
-                className="flex-1 bg-orange-600 hover:bg-orange-700"
-              >
-                Atualizar Existentes
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+        {error && (
+          <Alert className="border-red-200 bg-red-50">
+            <AlertTriangle className="h-4 w-4 text-red-600" />
+            <AlertDescription className="text-red-800">
+              {error}
+            </AlertDescription>
+          </Alert>
+        )}
+      </CardContent>
+    </Card>
   );
 };
