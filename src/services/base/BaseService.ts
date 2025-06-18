@@ -41,7 +41,7 @@ export abstract class BaseService<T extends BaseEntity> {
       if (error) throw error;
 
       return {
-        data: (data as T[]) || [],
+        data: (data as unknown as T[]) || [],
         error: null,
         success: true,
         total: data?.length || 0
@@ -68,7 +68,7 @@ export abstract class BaseService<T extends BaseEntity> {
       if (error) throw error;
 
       return {
-        data: data as T,
+        data: data as unknown as T,
         error: null,
         success: true
       };
@@ -95,7 +95,7 @@ export abstract class BaseService<T extends BaseEntity> {
       ErrorHandler.handleSuccess(`${this.tableName} criado com sucesso!`);
       
       return {
-        data: data as T,
+        data: data as unknown as T,
         error: null,
         success: true
       };
@@ -123,7 +123,7 @@ export abstract class BaseService<T extends BaseEntity> {
       ErrorHandler.handleSuccess(`${this.tableName} atualizado com sucesso!`);
       
       return {
-        data: data as T,
+        data: data as unknown as T,
         error: null,
         success: true
       };
@@ -161,5 +161,16 @@ export abstract class BaseService<T extends BaseEntity> {
         success: false
       };
     }
+  }
+
+  protected handleError(error: any, context: string) {
+    const errorMessage = error?.message || 'Erro desconhecido';
+    console.error(`${context}: ${errorMessage}`, error);
+    return {
+      data: [],
+      error: errorMessage,
+      success: false,
+      total: 0
+    };
   }
 }
