@@ -46,8 +46,8 @@ export const MaterialUtilization = ({
     return acc;
   }, {} as Record<string, any>);
 
-  const totalKgCortado = Object.values(materialStats).reduce((sum: number, mat: any) => sum + (Number(mat.totalKgCortado) || 0), 0);
-  const totalKgDesperdicio = Object.values(materialStats).reduce((sum: number, mat: any) => sum + (Number(mat.totalKgDesperdicio) || 0), 0);
+  const totalKgCortado = Object.values(materialStats).reduce((sum: number, mat: any) => sum + Number(mat.totalKgCortado || 0), 0);
+  const totalKgDesperdicio = Object.values(materialStats).reduce((sum: number, mat: any) => sum + Number(mat.totalKgDesperdicio || 0), 0);
   const aproveitamentoGeral = totalKgCortado / (totalKgCortado + totalKgDesperdicio) * 100;
 
   return (

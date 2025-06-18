@@ -165,7 +165,10 @@ export const OperationalKPIs = ({
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Eficiência Geral</span>
                 <span className="text-lg font-semibold">
-                  {(Object.values(operatorStats).reduce((sum: number, op: any) => sum + Number(op.eficiencia || 0), 0) / Object.keys(operatorStats).length).toFixed(1)}%
+                  {Object.keys(operatorStats).length > 0 
+                    ? (Object.values(operatorStats).reduce((sum: number, op: any) => sum + Number(op.eficiencia || 0), 0) / Object.keys(operatorStats).length).toFixed(1)
+                    : '0'
+                  }%
                 </span>
               </div>
               <Progress value={82} className="h-2" />
