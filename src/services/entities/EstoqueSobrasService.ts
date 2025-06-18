@@ -58,7 +58,7 @@ export class EstoqueSobrasService extends BaseService<EstoqueSobra> {
   async marcarComoUsada(id: string) {
     return this.update({
       id,
-      data: { disponivel: false }
+      data: { disponivel: false } as any
     });
   }
 
