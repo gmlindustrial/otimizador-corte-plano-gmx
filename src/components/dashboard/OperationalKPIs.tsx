@@ -38,21 +38,30 @@ export const OperationalKPIs = ({
       };
     }
     
-    const totalPecas = item.pieces.reduce((sum: number, piece: any) => Number(sum) + Number(piece.quantity || 0), 0);
-    acc[operador].cortadas = Number(acc[operador].cortadas) + Number(totalPecas);
+    const totalPecas = item.pieces.reduce((sum: number, piece: any) => {
+      const quantity = Number(piece.quantity || 0);
+      return Number(sum) + quantity;
+    }, 0);
+    
+    const currentCortadas = Number(acc[operador].cortadas || 0);
+    acc[operador].cortadas = currentCortadas + totalPecas;
     
     const currentEfficiency = Number(item.results?.efficiency || 0);
     const currentEficiencia = Number(acc[operador].eficiencia || 0);
     const previousCount = currentEficiencia === 0 ? 1 : 2;
     acc[operador].eficiencia = currentEficiencia === 0 
       ? currentEfficiency 
-      : (Number(currentEficiencia) + currentEfficiency) / previousCount;
+      : (currentEficiencia + currentEfficiency) / previousCount;
     
     if (!acc[operador].turnos[turno]) {
       acc[operador].turnos[turno] = { cortadas: 0, listas: 0 };
     }
-    acc[operador].turnos[turno].cortadas = Number(acc[operador].turnos[turno].cortadas) + Number(totalPecas);
-    acc[operador].turnos[turno].listas = Number(acc[operador].turnos[turno].listas) + 1;
+    
+    const currentTurnoCortadas = Number(acc[operador].turnos[turno].cortadas || 0);
+    const currentTurnoListas = Number(acc[operador].turnos[turno].listas || 0);
+    
+    acc[operador].turnos[turno].cortadas = currentTurnoCortadas + totalPecas;
+    acc[operador].turnos[turno].listas = currentTurnoListas + 1;
     
     return acc;
   }, {} as Record<string, any>);
@@ -60,13 +69,15 @@ export const OperationalKPIs = ({
   const tempoMedioPorPeca = 2.5; // minutos (exemplo)
   const metaEficiencia = 85;
 
-  const totalCortadas = Object.values(operatorStats).reduce((sum, op: any) => {
-    return Number(sum) + Number(op.cortadas || 0);
+  const totalCortadas = Object.values(operatorStats).reduce((sum: number, op: any) => {
+    const cortadas = Number(op.cortadas || 0);
+    return sum + cortadas;
   }, 0);
 
   const eficienciaGeral = Object.keys(operatorStats).length > 0 
-    ? Object.values(operatorStats).reduce((sum, op: any) => {
-        return Number(sum) + Number(op.eficiencia || 0);
+    ? Object.values(operatorStats).reduce((sum: number, op: any) => {
+        const eficiencia = Number(op.eficiencia || 0);
+        return sum + eficiencia;
       }, 0) / Object.keys(operatorStats).length
     : 0;
 
@@ -170,7 +181,7 @@ export const OperationalKPIs = ({
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Previsão Total</span>
                 <span className="text-lg font-semibold">
-                  {(Number(totalCortadas) * tempoMedioPorPeca / 60).toFixed(1)}h
+                  {(totalCortadas * tempoMedioPorPeca / 60).toFixed(1)}h
                 </span>
               </div>
               <Progress value={60} className="h-2" />
@@ -181,7 +192,7 @@ export const OperationalKPIs = ({
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Eficiência Geral</span>
                 <span className="text-lg font-semibold">
-                  {Number(eficienciaGeral).toFixed(1)}%
+                  {eficienciaGeral.toFixed(1)}%
                 </span>
               </div>
               <Progress value={82} className="h-2" />
