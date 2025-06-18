@@ -1,12 +1,23 @@
 
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { TrendingUp, TrendingDown, BarChart3, Activity } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { BarChart3, Clock, Users, Scissors, AlertTriangle, TrendingUp, Download, Send } from 'lucide-react';
+import { OperationalKPIs } from './dashboard/OperationalKPIs';
+import { EfficiencyReport } from './dashboard/EfficiencyReport';
+import { BladeManagement } from './dashboard/BladeManagement';
+import { MaterialUtilization } from './dashboard/MaterialUtilization';
+import { DuplicityMonitor } from './dashboard/DuplicityMonitor';
 
 interface DashboardProps {
   history: Array<{
     id: string;
     project: any;
+    pieces: any[];
     results: any;
     date: string;
     barLength: number;
@@ -14,155 +25,187 @@ interface DashboardProps {
 }
 
 export const Dashboard = ({ history }: DashboardProps) => {
-  // Calcular estatísticas
-  const totalOptimizations = history.length;
-  const totalBarsUsed = history.reduce((sum, item) => sum + item.results.totalBars, 0);
-  const averageEfficiency = history.length > 0 
-    ? history.reduce((sum, item) => sum + item.results.efficiency, 0) / history.length 
+  const [timeFilter, setTimeFilter] = useState('today');
+  const [operatorFilter, setOperatorFilter] = useState('all');
+
+  const operadores = ['João Silva', 'Maria Santos', 'Pedro Costa', 'Ana Oliveira'];
+  
+  // Cálculos de KPIs baseados no histórico
+  const todayHistory = history.filter(item => {
+    const itemDate = new Date(item.date);
+    const today = new Date();
+    return itemDate.toDateString() === today.toDateString();
+  });
+
+  const totalPiecesToday = todayHistory.reduce((sum, item) => 
+    sum + item.pieces.reduce((pieceSum, piece) => pieceSum + piece.quantity, 0), 0);
+  
+  const totalBarsToday = todayHistory.reduce((sum, item) => sum + item.results.totalBars, 0);
+  
+  const avgEfficiency = todayHistory.length > 0 
+    ? todayHistory.reduce((sum, item) => sum + item.results.efficiency, 0) / todayHistory.length 
     : 0;
-  const totalWaste = history.reduce((sum, item) => sum + item.results.totalWaste, 0);
 
-  // Dados para gráficos
-  const efficiencyData = history.slice(-10).map((item, index) => ({
-    name: `Opt ${index + 1}`,
-    efficiency: item.results.efficiency.toFixed(1),
-    waste: item.results.wastePercentage.toFixed(1)
-  }));
+  const handleExportReport = (reportType: string) => {
+    console.log(`Exportando relatório: ${reportType}`);
+  };
 
-  const barUsageData = [
-    { name: '6m', value: history.filter(h => h.barLength === 6000).length },
-    { name: '12m', value: history.filter(h => h.barLength === 12000).length }
-  ];
+  const handleSendWhatsApp = (reportType: string) => {
+    console.log(`Enviando via WhatsApp: ${reportType}`);
+  };
 
-  const COLORS = ['#3B82F6', '#10B981'];
+  const handleSendTelegram = (reportType: string) => {
+    console.log(`Enviando via Telegram: ${reportType}`);
+  };
 
   return (
     <div className="space-y-6">
-      {/* Cards de Estatísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-blue-100 text-sm font-medium">Total de Otimizações</p>
-                <p className="text-3xl font-bold">{totalOptimizations}</p>
-              </div>
-              <BarChart3 className="w-8 h-8 text-blue-200" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-green-100 text-sm font-medium">Eficiência Média</p>
-                <p className="text-3xl font-bold">{averageEfficiency.toFixed(1)}%</p>
-              </div>
-              <TrendingUp className="w-8 h-8 text-green-200" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-purple-100 text-sm font-medium">Barras Utilizadas</p>
-                <p className="text-3xl font-bold">{totalBarsUsed}</p>
-              </div>
-              <Activity className="w-8 h-8 text-purple-200" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-red-500 to-red-600 text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-red-100 text-sm font-medium">Desperdício Total</p>
-                <p className="text-3xl font-bold">{(totalWaste / 1000).toFixed(1)}m</p>
-              </div>
-              <TrendingDown className="w-8 h-8 text-red-200" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Gráficos */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
-          <CardHeader>
-            <CardTitle>Eficiência das Últimas Otimizações</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={efficiencyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="efficiency" fill="#3B82F6" name="Eficiência %" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
-          <CardHeader>
-            <CardTitle>Uso por Tipo de Barra</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={barUsageData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {barUsageData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Últimas Otimizações */}
-      <Card className="bg-white/90 backdrop-blur-sm shadow-lg">
+      {/* Filtros */}
+      <Card>
         <CardHeader>
-          <CardTitle>Últimas Otimizações</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5" />
+            Dashboard Operacional - Optimizador Corte Plano GMX
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {history.slice(0, 5).map((item) => (
-              <div key={item.id} className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-                <div>
-                  <h4 className="font-medium">{item.project.name}</h4>
-                  <p className="text-sm text-gray-600">{item.project.client} - {item.project.obra}</p>
-                </div>
-                <div className="text-right">
-                  <p className="font-medium text-green-600">{item.results.efficiency.toFixed(1)}% eficiência</p>
-                  <p className="text-sm text-gray-600">{new Date(item.date).toLocaleDateString()}</p>
-                </div>
-              </div>
-            ))}
-            {history.length === 0 && (
-              <p className="text-center text-gray-500 py-8">
-                Nenhuma otimização realizada ainda
-              </p>
-            )}
+          <div className="flex gap-4">
+            <Select value={timeFilter} onValueChange={setTimeFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="today">Hoje</SelectItem>
+                <SelectItem value="week">Esta Semana</SelectItem>
+                <SelectItem value="month">Este Mês</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={operatorFilter} onValueChange={setOperatorFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Todos os Operadores" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os Operadores</SelectItem>
+                {operadores.map(op => (
+                  <SelectItem key={op} value={op}>{op}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
+
+      {/* KPIs Principais */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Peças Cortadas Hoje</p>
+                <p className="text-2xl font-bold text-green-600">{totalPiecesToday}</p>
+              </div>
+              <Scissors className="w-8 h-8 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Barras Utilizadas</p>
+                <p className="text-2xl font-bold text-blue-600">{totalBarsToday}</p>
+              </div>
+              <BarChart3 className="w-8 h-8 text-blue-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Eficiência Média</p>
+                <p className="text-2xl font-bold text-orange-600">{avgEfficiency.toFixed(1)}%</p>
+              </div>
+              <TrendingUp className="w-8 h-8 text-orange-600" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Listas Processadas</p>
+                <p className="text-2xl font-bold text-purple-600">{todayHistory.length}</p>
+              </div>
+              <Users className="w-8 h-8 text-purple-600" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Tabs de Relatórios */}
+      <Tabs defaultValue="operational" className="w-full">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="operational">KPIs Operacionais</TabsTrigger>
+          <TabsTrigger value="efficiency">Eficiência</TabsTrigger>
+          <TabsTrigger value="blade">Gestão Lâmina</TabsTrigger>
+          <TabsTrigger value="material">Material</TabsTrigger>
+          <TabsTrigger value="duplicity">Duplicidade</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="operational">
+          <OperationalKPIs 
+            history={history} 
+            timeFilter={timeFilter}
+            operatorFilter={operatorFilter}
+            onExport={handleExportReport}
+            onSendWhatsApp={handleSendWhatsApp}
+            onSendTelegram={handleSendTelegram}
+          />
+        </TabsContent>
+
+        <TabsContent value="efficiency">
+          <EfficiencyReport 
+            history={history}
+            timeFilter={timeFilter}
+            onExport={handleExportReport}
+            onSendWhatsApp={handleSendWhatsApp}
+            onSendTelegram={handleSendTelegram}
+          />
+        </TabsContent>
+
+        <TabsContent value="blade">
+          <BladeManagement 
+            history={history}
+            onExport={handleExportReport}
+            onSendWhatsApp={handleSendWhatsApp}
+            onSendTelegram={handleSendTelegram}
+          />
+        </TabsContent>
+
+        <TabsContent value="material">
+          <MaterialUtilization 
+            history={history}
+            timeFilter={timeFilter}
+            onExport={handleExportReport}
+            onSendWhatsApp={handleSendWhatsApp}
+            onSendTelegram={handleSendTelegram}
+          />
+        </TabsContent>
+
+        <TabsContent value="duplicity">
+          <DuplicityMonitor 
+            history={history}
+            onExport={handleExportReport}
+            onSendWhatsApp={handleSendWhatsApp}
+            onSendTelegram={handleSendTelegram}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
