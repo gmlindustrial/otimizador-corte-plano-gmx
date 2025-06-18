@@ -54,6 +54,16 @@ export const OperationalKPIs = ({
   const tempoMedioPorPeca = 2.5; // minutos (exemplo)
   const metaEficiencia = 85;
 
+  const totalCortadas = Object.values(operatorStats).reduce((sum, op: any) => {
+    return sum + (Number(op.cortadas) || 0);
+  }, 0);
+
+  const eficienciaGeral = Object.keys(operatorStats).length > 0 
+    ? Object.values(operatorStats).reduce((sum, op: any) => {
+        return sum + (Number(op.eficiencia) || 0);
+      }, 0) / Object.keys(operatorStats).length
+    : 0;
+
   return (
     <div className="space-y-6">
       {/* Cortadas x Pendentes por Operador */}
@@ -154,7 +164,7 @@ export const OperationalKPIs = ({
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Previsão Total</span>
                 <span className="text-lg font-semibold">
-                  {(Object.values(operatorStats).reduce((sum: number, op: any) => sum + Number(op.cortadas || 0), 0) * tempoMedioPorPeca / 60).toFixed(1)}h
+                  {(totalCortadas * tempoMedioPorPeca / 60).toFixed(1)}h
                 </span>
               </div>
               <Progress value={60} className="h-2" />
@@ -165,10 +175,7 @@ export const OperationalKPIs = ({
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Eficiência Geral</span>
                 <span className="text-lg font-semibold">
-                  {Object.keys(operatorStats).length > 0 
-                    ? (Object.values(operatorStats).reduce((sum: number, op: any) => sum + Number(op.eficiencia || 0), 0) / Object.keys(operatorStats).length).toFixed(1)
-                    : '0'
-                  }%
+                  {eficienciaGeral.toFixed(1)}%
                 </span>
               </div>
               <Progress value={82} className="h-2" />
