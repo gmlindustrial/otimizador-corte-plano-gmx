@@ -69,16 +69,16 @@ export const OperationalKPIs = ({
   const tempoMedioPorPeca = 2.5; // minutos (exemplo)
   const metaEficiencia = 85;
 
-  const totalCortadas: number = Object.values(operatorStats).reduce((sum: number, op: any) => {
+  const totalCortadas = Object.values(operatorStats).reduce<number>((sum, op: any) => {
     const cortadas = Number(op?.cortadas || 0);
-    return Number(sum) + cortadas;
+    return sum + cortadas;
   }, 0);
 
-  const eficienciaGeral: number = Object.keys(operatorStats).length > 0 
-    ? Number(Object.values(operatorStats).reduce((sum: number, op: any) => {
+  const eficienciaGeral = Object.keys(operatorStats).length > 0 
+    ? Object.values(operatorStats).reduce<number>((sum, op: any) => {
         const eficiencia = Number(op?.eficiencia || 0);
-        return Number(sum) + eficiencia;
-      }, 0)) / Object.keys(operatorStats).length
+        return sum + eficiencia;
+      }, 0) / Object.keys(operatorStats).length
     : 0;
 
   return (
