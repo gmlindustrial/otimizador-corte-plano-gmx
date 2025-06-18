@@ -40,7 +40,12 @@ export const OperationalKPIs = ({
     
     const totalPecas = item.pieces.reduce((sum: number, piece: any) => sum + Number(piece.quantity || 0), 0);
     acc[operador].cortadas += totalPecas;
-    acc[operador].eficiencia = (acc[operador].eficiencia + Number(item.results.efficiency || 0)) / 2;
+    
+    const currentEfficiency = Number(item.results.efficiency || 0);
+    const previousCount = acc[operador].eficiencia === 0 ? 1 : 2;
+    acc[operador].eficiencia = acc[operador].eficiencia === 0 
+      ? currentEfficiency 
+      : (acc[operador].eficiencia + currentEfficiency) / previousCount;
     
     if (!acc[operador].turnos[turno]) {
       acc[operador].turnos[turno] = { cortadas: 0, listas: 0 };
@@ -55,12 +60,12 @@ export const OperationalKPIs = ({
   const metaEficiencia = 85;
 
   const totalCortadas = Object.values(operatorStats).reduce((sum, op: any) => {
-    return sum + (Number(op.cortadas) || 0);
+    return sum + Number(op.cortadas || 0);
   }, 0);
 
   const eficienciaGeral = Object.keys(operatorStats).length > 0 
     ? Object.values(operatorStats).reduce((sum, op: any) => {
-        return sum + (Number(op.eficiencia) || 0);
+        return sum + Number(op.eficiencia || 0);
       }, 0) / Object.keys(operatorStats).length
     : 0;
 
@@ -96,18 +101,18 @@ export const OperationalKPIs = ({
               <div key={operador} className="border rounded-lg p-4">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-semibold text-lg">{operador}</h4>
-                  <Badge variant={Number(stats.eficiencia) >= metaEficiencia ? "default" : "destructive"}>
-                    {Number(stats.eficiencia).toFixed(1)}% eficiência
+                  <Badge variant={Number(stats.eficiencia || 0) >= metaEficiencia ? "default" : "destructive"}>
+                    {Number(stats.eficiencia || 0).toFixed(1)}% eficiência
                   </Badge>
                 </div>
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
                   <div className="text-center p-3 bg-green-50 rounded">
-                    <div className="text-2xl font-bold text-green-600">{Number(stats.cortadas)}</div>
+                    <div className="text-2xl font-bold text-green-600">{Number(stats.cortadas || 0)}</div>
                     <div className="text-sm text-gray-600">Cortadas</div>
                   </div>
                   <div className="text-center p-3 bg-yellow-50 rounded">
-                    <div className="text-2xl font-bold text-yellow-600">{Number(stats.pendentes)}</div>
+                    <div className="text-2xl font-bold text-yellow-600">{Number(stats.pendentes || 0)}</div>
                     <div className="text-sm text-gray-600">Pendentes</div>
                   </div>
                   <div className="text-center p-3 bg-blue-50 rounded">
@@ -116,7 +121,7 @@ export const OperationalKPIs = ({
                   </div>
                   <div className="text-center p-3 bg-purple-50 rounded">
                     <div className="text-2xl font-bold text-purple-600">
-                      {(Number(stats.cortadas) * tempoMedioPorPeca / 60).toFixed(1)}h
+                      {(Number(stats.cortadas || 0) * tempoMedioPorPeca / 60).toFixed(1)}h
                     </div>
                     <div className="text-sm text-gray-600">Previsão Total</div>
                   </div>
@@ -130,7 +135,7 @@ export const OperationalKPIs = ({
                         {turno === 'Central' ? 'Central' : `${turno}º Turno`}
                       </div>
                       <div className="text-sm text-gray-600">
-                        {Number(dados.cortadas)} peças | {Number(dados.listas)} listas
+                        {Number(dados.cortadas || 0)} peças | {Number(dados.listas || 0)} listas
                       </div>
                     </div>
                   ))}
