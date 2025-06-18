@@ -14,6 +14,7 @@ export const useSupabaseData = () => {
   const fetchAll = async () => {
     try {
       setLoading(true);
+      console.log('Carregando dados do Supabase...');
       
       const [obrasRes, clientesRes, materiaisRes, operadoresRes, inspetoresRes] = await Promise.all([
         supabase.from('obras').select('*').order('created_at', { ascending: false }),
@@ -23,11 +24,34 @@ export const useSupabaseData = () => {
         supabase.from('inspetores_qa').select('*').order('created_at', { ascending: false })
       ]);
 
-      if (obrasRes.error) throw obrasRes.error;
-      if (clientesRes.error) throw clientesRes.error;
-      if (materiaisRes.error) throw materiaisRes.error;
-      if (operadoresRes.error) throw operadoresRes.error;
-      if (inspetoresRes.error) throw inspetoresRes.error;
+      if (obrasRes.error) {
+        console.error('Erro ao carregar obras:', obrasRes.error);
+        throw obrasRes.error;
+      }
+      if (clientesRes.error) {
+        console.error('Erro ao carregar clientes:', clientesRes.error);
+        throw clientesRes.error;
+      }
+      if (materiaisRes.error) {
+        console.error('Erro ao carregar materiais:', materiaisRes.error);
+        throw materiaisRes.error;
+      }
+      if (operadoresRes.error) {
+        console.error('Erro ao carregar operadores:', operadoresRes.error);
+        throw operadoresRes.error;
+      }
+      if (inspetoresRes.error) {
+        console.error('Erro ao carregar inspetores:', inspetoresRes.error);
+        throw inspetoresRes.error;
+      }
+
+      console.log('Dados carregados:', {
+        obras: obrasRes.data?.length,
+        clientes: clientesRes.data?.length,
+        materiais: materiaisRes.data?.length,
+        operadores: operadoresRes.data?.length,
+        inspetores: inspetoresRes.data?.length
+      });
 
       setObras(obrasRes.data || []);
       setClientes(clientesRes.data || []);
@@ -44,15 +68,24 @@ export const useSupabaseData = () => {
 
   const saveObra = async (obra: { nome: string; endereco: string; responsavel: string }) => {
     try {
+      console.log('Salvando obra:', obra);
       const { data, error } = await supabase
         .from('obras')
         .insert([obra])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao salvar obra:', error);
+        throw error;
+      }
       
-      setObras(prev => [data, ...prev]);
+      console.log('Obra salva:', data);
+      setObras(prev => {
+        const updated = [data, ...prev];
+        console.log('Lista de obras atualizada:', updated.length);
+        return updated;
+      });
       toast.success(`Obra "${obra.nome}" criada com sucesso!`);
       return data;
     } catch (error) {
@@ -64,15 +97,24 @@ export const useSupabaseData = () => {
 
   const saveCliente = async (cliente: { nome: string; contato: string; email: string; telefone: string }) => {
     try {
+      console.log('Salvando cliente:', cliente);
       const { data, error } = await supabase
         .from('clientes')
         .insert([cliente])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao salvar cliente:', error);
+        throw error;
+      }
       
-      setClientes(prev => [data, ...prev]);
+      console.log('Cliente salvo:', data);
+      setClientes(prev => {
+        const updated = [data, ...prev];
+        console.log('Lista de clientes atualizada:', updated.length);
+        return updated;
+      });
       toast.success(`Cliente "${cliente.nome}" criado com sucesso!`);
       return data;
     } catch (error) {
@@ -84,6 +126,7 @@ export const useSupabaseData = () => {
 
   const saveMaterial = async (material: { tipo: string; descricao: string; comprimentoPadrao: number }) => {
     try {
+      console.log('Salvando material:', material);
       const { data, error } = await supabase
         .from('materiais')
         .insert([{
@@ -94,9 +137,17 @@ export const useSupabaseData = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao salvar material:', error);
+        throw error;
+      }
       
-      setMateriais(prev => [data, ...prev]);
+      console.log('Material salvo:', data);
+      setMateriais(prev => {
+        const updated = [data, ...prev];
+        console.log('Lista de materiais atualizada:', updated.length);
+        return updated;
+      });
       toast.success(`Material "${material.tipo}" criado com sucesso!`);
       return data;
     } catch (error) {
@@ -108,15 +159,24 @@ export const useSupabaseData = () => {
 
   const saveOperador = async (operador: { nome: string; turno: string; especialidade: string }) => {
     try {
+      console.log('Salvando operador:', operador);
       const { data, error } = await supabase
         .from('operadores')
         .insert([operador])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao salvar operador:', error);
+        throw error;
+      }
       
-      setOperadores(prev => [data, ...prev]);
+      console.log('Operador salvo:', data);
+      setOperadores(prev => {
+        const updated = [data, ...prev];
+        console.log('Lista de operadores atualizada:', updated.length);
+        return updated;
+      });
       toast.success(`Operador "${operador.nome}" criado com sucesso!`);
       return data;
     } catch (error) {
@@ -128,15 +188,24 @@ export const useSupabaseData = () => {
 
   const saveInspetor = async (inspetor: { nome: string; certificacao: string; area: string }) => {
     try {
+      console.log('Salvando inspetor:', inspetor);
       const { data, error } = await supabase
         .from('inspetores_qa')
         .insert([inspetor])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao salvar inspetor:', error);
+        throw error;
+      }
       
-      setInspetores(prev => [data, ...prev]);
+      console.log('Inspetor salvo:', data);
+      setInspetores(prev => {
+        const updated = [data, ...prev];
+        console.log('Lista de inspetores atualizada:', updated.length);
+        return updated;
+      });
       toast.success(`Inspetor QA "${inspetor.nome}" criado com sucesso!`);
       return data;
     } catch (error) {

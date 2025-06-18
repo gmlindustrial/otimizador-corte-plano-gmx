@@ -18,7 +18,8 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
     saveCliente,
     saveMaterial,
     saveOperador,
-    saveInspetor
+    saveInspetor,
+    refetch
   } = useSupabaseData();
 
   const [openDialog, setOpenDialog] = useState<string | null>(null);
@@ -36,12 +37,19 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
     
     try {
       setSaving(true);
+      console.log('Criando nova obra...');
       await saveObra(novaObra);
       setNovaObra({ nome: '', endereco: '', responsavel: '' });
       setOpenDialog(null);
-      onUpdateData?.();
+      
+      // Force data refresh
+      console.log('Forçando atualização dos dados...');
+      setTimeout(() => {
+        refetch();
+        onUpdateData?.();
+      }, 500);
     } catch (error) {
-      // Error handled by hook
+      console.error('Erro ao criar obra:', error);
     } finally {
       setSaving(false);
     }
@@ -52,12 +60,19 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
     
     try {
       setSaving(true);
+      console.log('Criando novo cliente...');
       await saveCliente(novoCliente);
       setNovoCliente({ nome: '', contato: '', email: '', telefone: '' });
       setOpenDialog(null);
-      onUpdateData?.();
+      
+      // Force data refresh
+      console.log('Forçando atualização dos dados...');
+      setTimeout(() => {
+        refetch();
+        onUpdateData?.();
+      }, 500);
     } catch (error) {
-      // Error handled by hook
+      console.error('Erro ao criar cliente:', error);
     } finally {
       setSaving(false);
     }
@@ -68,12 +83,19 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
     
     try {
       setSaving(true);
+      console.log('Criando novo material...');
       await saveMaterial(novoMaterial);
       setNovoMaterial({ tipo: '', descricao: '', comprimentoPadrao: 6000 });
       setOpenDialog(null);
-      onUpdateData?.();
+      
+      // Force data refresh
+      console.log('Forçando atualização dos dados...');
+      setTimeout(() => {
+        refetch();
+        onUpdateData?.();
+      }, 500);
     } catch (error) {
-      // Error handled by hook
+      console.error('Erro ao criar material:', error);
     } finally {
       setSaving(false);
     }
@@ -84,12 +106,19 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
     
     try {
       setSaving(true);
+      console.log('Criando novo operador...');
       await saveOperador(novoOperador);
       setNovoOperador({ nome: '', turno: '1', especialidade: '' });
       setOpenDialog(null);
-      onUpdateData?.();
+      
+      // Force data refresh
+      console.log('Forçando atualização dos dados...');
+      setTimeout(() => {
+        refetch();
+        onUpdateData?.();
+      }, 500);
     } catch (error) {
-      // Error handled by hook
+      console.error('Erro ao criar operador:', error);
     } finally {
       setSaving(false);
     }
@@ -100,12 +129,19 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
     
     try {
       setSaving(true);
+      console.log('Criando novo inspetor...');
       await saveInspetor(novoInspetor);
       setNovoInspetor({ nome: '', certificacao: '', area: '' });
       setOpenDialog(null);
-      onUpdateData?.();
+      
+      // Force data refresh
+      console.log('Forçando atualização dos dados...');
+      setTimeout(() => {
+        refetch();
+        onUpdateData?.();
+      }, 500);
     } catch (error) {
-      // Error handled by hook
+      console.error('Erro ao criar inspetor:', error);
     } finally {
       setSaving(false);
     }
