@@ -9,7 +9,305 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      clientes: {
+        Row: {
+          contato: string | null
+          created_at: string
+          email: string | null
+          id: string
+          nome: string
+          telefone: string | null
+        }
+        Insert: {
+          contato?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome: string
+          telefone?: string | null
+        }
+        Update: {
+          contato?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome?: string
+          telefone?: string | null
+        }
+        Relationships: []
+      }
+      estoque_sobras: {
+        Row: {
+          comprimento: number
+          created_at: string
+          disponivel: boolean
+          id: string
+          localizacao: string
+          material_id: string | null
+          projeto_origem: string | null
+          quantidade: number
+        }
+        Insert: {
+          comprimento: number
+          created_at?: string
+          disponivel?: boolean
+          id?: string
+          localizacao: string
+          material_id?: string | null
+          projeto_origem?: string | null
+          quantidade?: number
+        }
+        Update: {
+          comprimento?: number
+          created_at?: string
+          disponivel?: boolean
+          id?: string
+          localizacao?: string
+          material_id?: string | null
+          projeto_origem?: string | null
+          quantidade?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estoque_sobras_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materiais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "estoque_sobras_projeto_origem_fkey"
+            columns: ["projeto_origem"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      historico_otimizacoes: {
+        Row: {
+          bar_length: number
+          created_at: string
+          id: string
+          pecas: Json
+          projeto_id: string | null
+          resultados: Json
+        }
+        Insert: {
+          bar_length: number
+          created_at?: string
+          id?: string
+          pecas: Json
+          projeto_id?: string | null
+          resultados: Json
+        }
+        Update: {
+          bar_length?: number
+          created_at?: string
+          id?: string
+          pecas?: Json
+          projeto_id?: string | null
+          resultados?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historico_otimizacoes_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inspetores_qa: {
+        Row: {
+          area: string | null
+          certificacao: string | null
+          created_at: string
+          id: string
+          nome: string
+        }
+        Insert: {
+          area?: string | null
+          certificacao?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+        }
+        Update: {
+          area?: string | null
+          certificacao?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      materiais: {
+        Row: {
+          comprimento_padrao: number
+          created_at: string
+          descricao: string | null
+          id: string
+          tipo: string
+        }
+        Insert: {
+          comprimento_padrao?: number
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          tipo: string
+        }
+        Update: {
+          comprimento_padrao?: number
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          tipo?: string
+        }
+        Relationships: []
+      }
+      obras: {
+        Row: {
+          created_at: string
+          endereco: string | null
+          id: string
+          nome: string
+          responsavel: string | null
+        }
+        Insert: {
+          created_at?: string
+          endereco?: string | null
+          id?: string
+          nome: string
+          responsavel?: string | null
+        }
+        Update: {
+          created_at?: string
+          endereco?: string | null
+          id?: string
+          nome?: string
+          responsavel?: string | null
+        }
+        Relationships: []
+      }
+      operadores: {
+        Row: {
+          created_at: string
+          especialidade: string | null
+          id: string
+          nome: string
+          turno: string
+        }
+        Insert: {
+          created_at?: string
+          especialidade?: string | null
+          id?: string
+          nome: string
+          turno: string
+        }
+        Update: {
+          created_at?: string
+          especialidade?: string | null
+          id?: string
+          nome?: string
+          turno?: string
+        }
+        Relationships: []
+      }
+      projetos: {
+        Row: {
+          cliente_id: string | null
+          created_at: string
+          dados_projeto: Json | null
+          enviar_sobras_estoque: boolean
+          id: string
+          inspetor_id: string | null
+          lista: string
+          material_id: string | null
+          nome: string
+          numero_projeto: string
+          obra_id: string | null
+          operador_id: string | null
+          qr_code: string | null
+          revisao: string
+          turno: string
+          validacao_qa: boolean
+        }
+        Insert: {
+          cliente_id?: string | null
+          created_at?: string
+          dados_projeto?: Json | null
+          enviar_sobras_estoque?: boolean
+          id?: string
+          inspetor_id?: string | null
+          lista?: string
+          material_id?: string | null
+          nome: string
+          numero_projeto: string
+          obra_id?: string | null
+          operador_id?: string | null
+          qr_code?: string | null
+          revisao?: string
+          turno: string
+          validacao_qa?: boolean
+        }
+        Update: {
+          cliente_id?: string | null
+          created_at?: string
+          dados_projeto?: Json | null
+          enviar_sobras_estoque?: boolean
+          id?: string
+          inspetor_id?: string | null
+          lista?: string
+          material_id?: string | null
+          nome?: string
+          numero_projeto?: string
+          obra_id?: string | null
+          operador_id?: string | null
+          qr_code?: string | null
+          revisao?: string
+          turno?: string
+          validacao_qa?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projetos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projetos_inspetor_id_fkey"
+            columns: ["inspetor_id"]
+            isOneToOne: false
+            referencedRelation: "inspetores_qa"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projetos_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materiais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projetos_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projetos_operador_id_fkey"
+            columns: ["operador_id"]
+            isOneToOne: false
+            referencedRelation: "operadores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -46,7 +46,7 @@ export const OperationalKPIs = ({
     const previousCount = currentEficiencia === 0 ? 1 : 2;
     acc[operador].eficiencia = currentEficiencia === 0 
       ? currentEfficiency 
-      : (currentEficiencia + currentEfficiency) / previousCount;
+      : (Number(currentEficiencia) + currentEfficiency) / previousCount;
     
     if (!acc[operador].turnos[turno]) {
       acc[operador].turnos[turno] = { cortadas: 0, listas: 0 };
