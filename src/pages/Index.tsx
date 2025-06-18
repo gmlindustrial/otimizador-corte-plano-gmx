@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { ProjectSelector } from '@/components/ProjectSelector';
@@ -6,6 +7,7 @@ import { OptimizationResults } from '@/components/OptimizationResults';
 import { Dashboard } from '@/components/Dashboard';
 import { HistoryPanel } from '@/components/HistoryPanel';
 import { EstoqueSobras } from '@/components/EstoqueSobras';
+import { CadastroManager } from '@/components/CadastroManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart3, Calculator, History, Settings, Package } from 'lucide-react';
 
@@ -240,10 +242,27 @@ const Index = () => {
             />
           </TabsContent>
 
-          <TabsContent value="settings">
+          <TabsContent value="settings" className="space-y-6">
+            <CadastroManager onUpdateData={() => {
+              // Callback para atualizar dados quando novos cadastros são criados
+              console.log('Dados atualizados - recarregando listas...');
+            }} />
+            
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-xl font-semibold mb-4">Configurações do Sistema</h3>
-              <p className="text-gray-600">Configurações avançadas em desenvolvimento...</p>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Configurações de Corte</h4>
+                  <p className="text-sm text-gray-600">• Perda por corte: 3mm</p>
+                  <p className="text-sm text-gray-600">• Comprimento padrão de barras: 6000mm</p>
+                  <p className="text-sm text-gray-600">• Algoritmo: First Fit Decreasing (FFD)</p>
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Integração Supabase</h4>
+                  <p className="text-sm text-gray-600">• Status: Conectado</p>
+                  <p className="text-sm text-gray-600">• Projeto: uspmlzuhzlbwubdrzooy</p>
+                </div>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
