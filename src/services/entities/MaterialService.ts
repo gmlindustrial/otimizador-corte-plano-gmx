@@ -1,20 +1,32 @@
-
-import { BaseService } from '../base/BaseService';
-import { supabase } from '@/integrations/supabase/client';
-import type { Material } from '../interfaces';
+import { BaseService } from "../base/BaseService";
+import { supabase } from "@/integrations/supabase/client";
+import type { Material } from "../interfaces";
 
 export class MaterialService extends BaseService<Material> {
   constructor() {
-    super('materiais');
+    super("materiais"); // nome da tabela no Supabase
+  }
+
+  async criarMaterial(novoMaterial: {
+    tipo: string;
+    descricao: string;
+    comprimento_padrao: number;
+  }) {
+    const { data, error } = await supabase
+      .from("materiais")
+      .insert([novoMaterial]);
+
+    if (error) throw error;
+    return;
   }
 
   async getByTipo(tipo: string) {
     try {
       const { data, error } = await supabase
-        .from('materiais' as any)
-        .select('*')
-        .ilike('tipo', `%${tipo}%`)
-        .order('created_at', { ascending: false });
+        .from("materiais")
+        .select("*")
+        .ilike("tipo", `%${tipo}%`)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
 
@@ -22,12 +34,11 @@ export class MaterialService extends BaseService<Material> {
         data: data || [],
         error: null,
         success: true,
-        total: data?.length || 0
+        total: data?.length || 0,
       };
     } catch (error) {
-      return this.handleError(error, 'Erro ao buscar materiais por tipo');
+      return this.handleError(error, "Erro ao buscar materiais por tipo");
     }
   }
 }
-
 export const materialService = new MaterialService();

@@ -1,92 +1,122 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Plus, Building, Users, Package, UserCheck, Factory, Loader2 } from 'lucide-react';
-import { useSupabaseData } from '@/hooks/useSupabaseData';
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Plus,
+  Building,
+  Users,
+  Package,
+  UserCheck,
+  Factory,
+  Loader2,
+} from "lucide-react";
+import { useSupabaseData } from "@/hooks/useSupabaseData";
 
 interface CadastroManagerIntegratedProps {
   onUpdateData?: () => void;
 }
 
-export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerIntegratedProps) => {
+export const CadastroManagerIntegrated = ({
+  onUpdateData,
+}: CadastroManagerIntegratedProps) => {
   const {
     saveObra,
     saveCliente,
     saveMaterial,
     saveOperador,
     saveInspetor,
-    refetch
+    refetch,
   } = useSupabaseData();
 
   const [openDialog, setOpenDialog] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  
+
   // Estados para os formulários
-  const [novaObra, setNovaObra] = useState({ nome: '', endereco: '', responsavel: '' });
-  const [novoCliente, setNovoCliente] = useState({ nome: '', contato: '', email: '', telefone: '' });
-  const [novoMaterial, setNovoMaterial] = useState({ tipo: '', descricao: '', comprimentoPadrao: 6000 });
-  const [novoOperador, setNovoOperador] = useState({ nome: '', turno: '1', especialidade: '' });
-  const [novoInspetor, setNovoInspetor] = useState({ nome: '', certificacao: '', area: '' });
+  const [novaObra, setNovaObra] = useState({
+    nome: "",
+    endereco: "",
+    responsavel: "",
+  });
+  const [novoCliente, setNovoCliente] = useState({
+    nome: "",
+    contato: "",
+    email: "",
+    telefone: "",
+  });
+  const [novoMaterial, setNovoMaterial] = useState({
+    tipo: "",
+    descricao: "",
+    comprimentoPadrao: 6000,
+  });
+  const [novoOperador, setNovoOperador] = useState({
+    nome: "",
+    turno: "1",
+    especialidade: "",
+  });
+  const [novoInspetor, setNovoInspetor] = useState({
+    nome: "",
+    certificacao: "",
+    area: "",
+  });
 
   const handleSaveObra = async () => {
-    console.log('=== HANDLESA OBRA CHAMADO ===');
-    console.log('Dados do formulário:', novaObra);
-    
-    if (!novaObra.nome || novaObra.nome.trim() === '') {
-      console.log('Nome da obra está vazio');
+    if (!novaObra.nome || novaObra.nome.trim() === "") {
+      console.log("Nome da obra está vazio");
       return;
     }
-    
+
     try {
       setSaving(true);
-      console.log('Estado saving definido como true');
-      console.log('Chamando saveObra...');
-      
+
       const result = await saveObra(novaObra);
-      console.log('Resultado do saveObra:', result);
-      
+
       // Limpar formulário e fechar dialog
-      setNovaObra({ nome: '', endereco: '', responsavel: '' });
+      setNovaObra({ nome: "", endereco: "", responsavel: "" });
       setOpenDialog(null);
-      
-      console.log('Formulário limpo e dialog fechado');
-      
+
+      console.log("Formulário limpo e dialog fechado");
+
       // Force data refresh
-      console.log('Forçando atualização dos dados...');
+      console.log("Forçando atualização dos dados...");
       setTimeout(() => {
         refetch();
         onUpdateData?.();
       }, 500);
-      
     } catch (error) {
-      console.error('Erro capturado no handleSaveObra:', error);
+      console.error("Erro capturado no handleSaveObra:", error);
     } finally {
       setSaving(false);
-      console.log('Estado saving definido como false');
+      console.log("Estado saving definido como false");
     }
   };
 
   const handleSaveCliente = async () => {
     if (!novoCliente.nome) return;
-    
+
     try {
       setSaving(true);
-      console.log('Criando novo cliente...');
+      console.log("Criando novo cliente...");
       await saveCliente(novoCliente);
-      setNovoCliente({ nome: '', contato: '', email: '', telefone: '' });
+      setNovoCliente({ nome: "", contato: "", email: "", telefone: "" });
       setOpenDialog(null);
-      
+
       // Force data refresh
-      console.log('Forçando atualização dos dados...');
+      console.log("Forçando atualização dos dados...");
       setTimeout(() => {
         refetch();
         onUpdateData?.();
       }, 500);
     } catch (error) {
-      console.error('Erro ao criar cliente:', error);
+      console.error("Erro ao criar cliente:", error);
     } finally {
       setSaving(false);
     }
@@ -94,22 +124,22 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
 
   const handleSaveMaterial = async () => {
     if (!novoMaterial.tipo) return;
-    
+
     try {
       setSaving(true);
-      console.log('Criando novo material...');
+      console.log("Criando novo material...");
       await saveMaterial(novoMaterial);
-      setNovoMaterial({ tipo: '', descricao: '', comprimentoPadrao: 6000 });
+      setNovoMaterial({ tipo: "", descricao: "", comprimentoPadrao: 6000 });
       setOpenDialog(null);
-      
+
       // Force data refresh
-      console.log('Forçando atualização dos dados...');
+      console.log("Forçando atualização dos dados...");
       setTimeout(() => {
         refetch();
         onUpdateData?.();
       }, 500);
     } catch (error) {
-      console.error('Erro ao criar material:', error);
+      console.error("Erro ao criar material:", error);
     } finally {
       setSaving(false);
     }
@@ -117,22 +147,22 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
 
   const handleSaveOperador = async () => {
     if (!novoOperador.nome) return;
-    
+
     try {
       setSaving(true);
-      console.log('Criando novo operador...');
+      console.log("Criando novo operador...");
       await saveOperador(novoOperador);
-      setNovoOperador({ nome: '', turno: '1', especialidade: '' });
+      setNovoOperador({ nome: "", turno: "1", especialidade: "" });
       setOpenDialog(null);
-      
+
       // Force data refresh
-      console.log('Forçando atualização dos dados...');
+      console.log("Forçando atualização dos dados...");
       setTimeout(() => {
         refetch();
         onUpdateData?.();
       }, 500);
     } catch (error) {
-      console.error('Erro ao criar operador:', error);
+      console.error("Erro ao criar operador:", error);
     } finally {
       setSaving(false);
     }
@@ -140,22 +170,22 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
 
   const handleSaveInspetor = async () => {
     if (!novoInspetor.nome) return;
-    
+
     try {
       setSaving(true);
-      console.log('Criando novo inspetor...');
+      console.log("Criando novo inspetor...");
       await saveInspetor(novoInspetor);
-      setNovoInspetor({ nome: '', certificacao: '', area: '' });
+      setNovoInspetor({ nome: "", certificacao: "", area: "" });
       setOpenDialog(null);
-      
+
       // Force data refresh
-      console.log('Forçando atualização dos dados...');
+      console.log("Forçando atualização dos dados...");
       setTimeout(() => {
         refetch();
         onUpdateData?.();
       }, 500);
     } catch (error) {
-      console.error('Erro ao criar inspetor:', error);
+      console.error("Erro ao criar inspetor:", error);
     } finally {
       setSaving(false);
     }
@@ -171,13 +201,15 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
       </CardHeader>
       <CardContent className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          
           {/* Criar Nova Obra */}
-          <Dialog open={openDialog === 'obra'} onOpenChange={(open) => setOpenDialog(open ? 'obra' : null)}>
+          <Dialog
+            open={openDialog === "obra"}
+            onOpenChange={(open) => setOpenDialog(open ? "obra" : null)}
+          >
             <DialogTrigger asChild>
-              <Button 
+              <Button
                 className="h-24 flex flex-col items-center gap-2 bg-blue-600 hover:bg-blue-700"
-                onClick={() => console.log('Botão Criar Nova Obra clicado')}
+                onClick={() => console.log("Botão Criar Nova Obra clicado")}
               >
                 <Building className="w-8 h-8" />
                 <span className="text-sm font-medium">+ Criar Nova Obra</span>
@@ -194,8 +226,11 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
                     id="obra-nome"
                     value={novaObra.nome}
                     onChange={(e) => {
-                      console.log('Nome da obra alterado:', e.target.value);
-                      setNovaObra(prev => ({ ...prev, nome: e.target.value }));
+                      console.log("Nome da obra alterado:", e.target.value);
+                      setNovaObra((prev) => ({
+                        ...prev,
+                        nome: e.target.value,
+                      }));
                     }}
                     placeholder="Ex: Complexo Industrial ABC"
                   />
@@ -205,7 +240,12 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
                   <Input
                     id="obra-endereco"
                     value={novaObra.endereco}
-                    onChange={(e) => setNovaObra(prev => ({ ...prev, endereco: e.target.value }))}
+                    onChange={(e) =>
+                      setNovaObra((prev) => ({
+                        ...prev,
+                        endereco: e.target.value,
+                      }))
+                    }
                     placeholder="Endereço da obra"
                   />
                 </div>
@@ -214,16 +254,20 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
                   <Input
                     id="obra-responsavel"
                     value={novaObra.responsavel}
-                    onChange={(e) => setNovaObra(prev => ({ ...prev, responsavel: e.target.value }))}
+                    onChange={(e) =>
+                      setNovaObra((prev) => ({
+                        ...prev,
+                        responsavel: e.target.value,
+                      }))
+                    }
                     placeholder="Nome do responsável"
                   />
                 </div>
-                <Button 
+                <Button
                   onClick={() => {
-                    console.log('Botão Salvar Obra clicado');
                     handleSaveObra();
-                  }} 
-                  className="w-full" 
+                  }}
+                  className="w-full"
                   disabled={!novaObra.nome || saving}
                 >
                   {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
@@ -234,11 +278,16 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
           </Dialog>
 
           {/* Criar Novo Cliente */}
-          <Dialog open={openDialog === 'cliente'} onOpenChange={(open) => setOpenDialog(open ? 'cliente' : null)}>
+          <Dialog
+            open={openDialog === "cliente"}
+            onOpenChange={(open) => setOpenDialog(open ? "cliente" : null)}
+          >
             <DialogTrigger asChild>
               <Button className="h-24 flex flex-col items-center gap-2 bg-purple-600 hover:bg-purple-700">
                 <Users className="w-8 h-8" />
-                <span className="text-sm font-medium">+ Criar Novo Cliente</span>
+                <span className="text-sm font-medium">
+                  + Criar Novo Cliente
+                </span>
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -251,7 +300,12 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
                   <Input
                     id="cliente-nome"
                     value={novoCliente.nome}
-                    onChange={(e) => setNovoCliente(prev => ({ ...prev, nome: e.target.value }))}
+                    onChange={(e) =>
+                      setNovoCliente((prev) => ({
+                        ...prev,
+                        nome: e.target.value,
+                      }))
+                    }
                     placeholder="Ex: Construtora Alpha Ltda"
                   />
                 </div>
@@ -260,7 +314,12 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
                   <Input
                     id="cliente-contato"
                     value={novoCliente.contato}
-                    onChange={(e) => setNovoCliente(prev => ({ ...prev, contato: e.target.value }))}
+                    onChange={(e) =>
+                      setNovoCliente((prev) => ({
+                        ...prev,
+                        contato: e.target.value,
+                      }))
+                    }
                     placeholder="Nome do contato"
                   />
                 </div>
@@ -270,7 +329,12 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
                     id="cliente-email"
                     type="email"
                     value={novoCliente.email}
-                    onChange={(e) => setNovoCliente(prev => ({ ...prev, email: e.target.value }))}
+                    onChange={(e) =>
+                      setNovoCliente((prev) => ({
+                        ...prev,
+                        email: e.target.value,
+                      }))
+                    }
                     placeholder="email@empresa.com"
                   />
                 </div>
@@ -279,13 +343,18 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
                   <Input
                     id="cliente-telefone"
                     value={novoCliente.telefone}
-                    onChange={(e) => setNovoCliente(prev => ({ ...prev, telefone: e.target.value }))}
+                    onChange={(e) =>
+                      setNovoCliente((prev) => ({
+                        ...prev,
+                        telefone: e.target.value,
+                      }))
+                    }
                     placeholder="(11) 99999-9999"
                   />
                 </div>
-                <Button 
-                  onClick={handleSaveCliente} 
-                  className="w-full" 
+                <Button
+                  onClick={handleSaveCliente}
+                  className="w-full"
                   disabled={!novoCliente.nome || saving}
                 >
                   {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
@@ -296,11 +365,16 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
           </Dialog>
 
           {/* Criar Novo Material */}
-          <Dialog open={openDialog === 'material'} onOpenChange={(open) => setOpenDialog(open ? 'material' : null)}>
+          <Dialog
+            open={openDialog === "material"}
+            onOpenChange={(open) => setOpenDialog(open ? "material" : null)}
+          >
             <DialogTrigger asChild>
               <Button className="h-24 flex flex-col items-center gap-2 bg-orange-600 hover:bg-orange-700">
                 <Package className="w-8 h-8" />
-                <span className="text-sm font-medium">+ Criar Novo Material</span>
+                <span className="text-sm font-medium">
+                  + Criar Novo Material
+                </span>
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -313,7 +387,12 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
                   <Input
                     id="material-tipo"
                     value={novoMaterial.tipo}
-                    onChange={(e) => setNovoMaterial(prev => ({ ...prev, tipo: e.target.value }))}
+                    onChange={(e) =>
+                      setNovoMaterial((prev) => ({
+                        ...prev,
+                        tipo: e.target.value,
+                      }))
+                    }
                     placeholder="Ex: Perfil W 150x13"
                   />
                 </div>
@@ -322,23 +401,35 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
                   <Input
                     id="material-descricao"
                     value={novoMaterial.descricao}
-                    onChange={(e) => setNovoMaterial(prev => ({ ...prev, descricao: e.target.value }))}
+                    onChange={(e) =>
+                      setNovoMaterial((prev) => ({
+                        ...prev,
+                        descricao: e.target.value,
+                      }))
+                    }
                     placeholder="Descrição detalhada do material"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="material-comprimento">Comprimento Padrão (mm)</Label>
+                  <Label htmlFor="material-comprimento">
+                    Comprimento Padrão (mm)
+                  </Label>
                   <Input
                     id="material-comprimento"
                     type="number"
                     value={novoMaterial.comprimentoPadrao}
-                    onChange={(e) => setNovoMaterial(prev => ({ ...prev, comprimentoPadrao: Number(e.target.value) }))}
+                    onChange={(e) =>
+                      setNovoMaterial((prev) => ({
+                        ...prev,
+                        comprimentoPadrao: Number(e.target.value),
+                      }))
+                    }
                     placeholder="6000"
                   />
                 </div>
-                <Button 
-                  onClick={handleSaveMaterial} 
-                  className="w-full" 
+                <Button
+                  onClick={handleSaveMaterial}
+                  className="w-full"
                   disabled={!novoMaterial.tipo || saving}
                 >
                   {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
@@ -349,11 +440,16 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
           </Dialog>
 
           {/* Criar Novo Operador */}
-          <Dialog open={openDialog === 'operador'} onOpenChange={(open) => setOpenDialog(open ? 'operador' : null)}>
+          <Dialog
+            open={openDialog === "operador"}
+            onOpenChange={(open) => setOpenDialog(open ? "operador" : null)}
+          >
             <DialogTrigger asChild>
               <Button className="h-24 flex flex-col items-center gap-2 bg-green-600 hover:bg-green-700">
                 <UserCheck className="w-8 h-8" />
-                <span className="text-sm font-medium">+ Criar Novo Operador</span>
+                <span className="text-sm font-medium">
+                  + Criar Novo Operador
+                </span>
               </Button>
             </DialogTrigger>
             <DialogContent>
@@ -366,7 +462,12 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
                   <Input
                     id="operador-nome"
                     value={novoOperador.nome}
-                    onChange={(e) => setNovoOperador(prev => ({ ...prev, nome: e.target.value }))}
+                    onChange={(e) =>
+                      setNovoOperador((prev) => ({
+                        ...prev,
+                        nome: e.target.value,
+                      }))
+                    }
                     placeholder="Ex: João Silva"
                   />
                 </div>
@@ -375,7 +476,12 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
                   <select
                     id="operador-turno"
                     value={novoOperador.turno}
-                    onChange={(e) => setNovoOperador(prev => ({ ...prev, turno: e.target.value }))}
+                    onChange={(e) =>
+                      setNovoOperador((prev) => ({
+                        ...prev,
+                        turno: e.target.value,
+                      }))
+                    }
                     className="w-full p-2 border rounded"
                   >
                     <option value="1">1º Turno</option>
@@ -389,13 +495,18 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
                   <Input
                     id="operador-especialidade"
                     value={novoOperador.especialidade}
-                    onChange={(e) => setNovoOperador(prev => ({ ...prev, especialidade: e.target.value }))}
+                    onChange={(e) =>
+                      setNovoOperador((prev) => ({
+                        ...prev,
+                        especialidade: e.target.value,
+                      }))
+                    }
                     placeholder="Ex: Corte de perfis estruturais"
                   />
                 </div>
-                <Button 
-                  onClick={handleSaveOperador} 
-                  className="w-full" 
+                <Button
+                  onClick={handleSaveOperador}
+                  className="w-full"
                   disabled={!novoOperador.nome || saving}
                 >
                   {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
@@ -406,7 +517,10 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
           </Dialog>
 
           {/* Criar Novo Inspetor QA */}
-          <Dialog open={openDialog === 'inspetor'} onOpenChange={(open) => setOpenDialog(open ? 'inspetor' : null)}>
+          <Dialog
+            open={openDialog === "inspetor"}
+            onOpenChange={(open) => setOpenDialog(open ? "inspetor" : null)}
+          >
             <DialogTrigger asChild>
               <Button className="h-24 flex flex-col items-center gap-2 bg-red-600 hover:bg-red-700">
                 <UserCheck className="w-8 h-8" />
@@ -423,7 +537,12 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
                   <Input
                     id="inspetor-nome"
                     value={novoInspetor.nome}
-                    onChange={(e) => setNovoInspetor(prev => ({ ...prev, nome: e.target.value }))}
+                    onChange={(e) =>
+                      setNovoInspetor((prev) => ({
+                        ...prev,
+                        nome: e.target.value,
+                      }))
+                    }
                     placeholder="Ex: Carlos Inspetor"
                   />
                 </div>
@@ -432,7 +551,12 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
                   <Input
                     id="inspetor-certificacao"
                     value={novoInspetor.certificacao}
-                    onChange={(e) => setNovoInspetor(prev => ({ ...prev, certificacao: e.target.value }))}
+                    onChange={(e) =>
+                      setNovoInspetor((prev) => ({
+                        ...prev,
+                        certificacao: e.target.value,
+                      }))
+                    }
                     placeholder="Ex: ISO 9001, NBR 14931"
                   />
                 </div>
@@ -441,13 +565,18 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
                   <Input
                     id="inspetor-area"
                     value={novoInspetor.area}
-                    onChange={(e) => setNovoInspetor(prev => ({ ...prev, area: e.target.value }))}
+                    onChange={(e) =>
+                      setNovoInspetor((prev) => ({
+                        ...prev,
+                        area: e.target.value,
+                      }))
+                    }
                     placeholder="Ex: Estruturas Metálicas"
                   />
                 </div>
-                <Button 
-                  onClick={handleSaveInspetor} 
-                  className="w-full" 
+                <Button
+                  onClick={handleSaveInspetor}
+                  className="w-full"
                   disabled={!novoInspetor.nome || saving}
                 >
                   {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
@@ -456,7 +585,6 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
               </div>
             </DialogContent>
           </Dialog>
-
         </div>
       </CardContent>
     </Card>

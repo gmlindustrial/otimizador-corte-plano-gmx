@@ -1,20 +1,32 @@
-
-import { BaseService } from '../base/BaseService';
-import { supabase } from '@/integrations/supabase/client';
-import type { InspetorQA } from '../interfaces';
+import { BaseService } from "../base/BaseService";
+import { supabase } from "@/integrations/supabase/client";
+import type { InspetorQA } from "../interfaces";
 
 export class InspetorService extends BaseService<InspetorQA> {
   constructor() {
-    super('inspetores_qa');
+    super("inspetor_qa"); // nome da tabela no Supabase
   }
 
-  async getByArea(area: string) {
+  async criarInspetor(novoInspetor: {
+    nome: string;
+    certificacao: string;
+    area: string;
+  }) {
+    const { data, error } = await supabase
+      .from("inspetores_qa")
+      .insert([novoInspetor]);
+
+    if (error) throw error;
+    return;
+  }
+
+  async getByNome(nome: string) {
     try {
       const { data, error } = await supabase
-        .from('inspetores_qa' as any)
-        .select('*')
-        .ilike('area', `%${area}%`)
-        .order('created_at', { ascending: false });
+        .from("inspetores_qa")
+        .select("*")
+        .ilike("nome", `%${nome}%`)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
 
@@ -22,10 +34,10 @@ export class InspetorService extends BaseService<InspetorQA> {
         data: data || [],
         error: null,
         success: true,
-        total: data?.length || 0
+        total: data?.length || 0,
       };
     } catch (error) {
-      return this.handleError(error, 'Erro ao buscar inspetores por área');
+      return this.handleError(error, "Erro ao buscar inspetores por nome");
     }
   }
 }
