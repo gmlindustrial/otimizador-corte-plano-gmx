@@ -11,7 +11,7 @@ export class HistoricoOtimizacaoService extends BaseService<HistoricoOtimizacao>
   async getByProjeto(projetoId: string) {
     try {
       const { data, error } = await supabase
-        .from(this.tableName)
+        .from('historico_otimizacoes')
         .select('*')
         .eq('projeto_id', projetoId)
         .order('created_at', { ascending: false });

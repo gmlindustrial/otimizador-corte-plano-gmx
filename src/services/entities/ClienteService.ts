@@ -11,7 +11,7 @@ export class ClienteService extends BaseService<Cliente> {
   async getByNome(nome: string) {
     try {
       const { data, error } = await supabase
-        .from(this.tableName)
+        .from('clientes')
         .select('*')
         .ilike('nome', `%${nome}%`)
         .order('created_at', { ascending: false });

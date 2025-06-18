@@ -11,7 +11,7 @@ export class InspetorService extends BaseService<InspetorQA> {
   async getByArea(area: string) {
     try {
       const { data, error } = await supabase
-        .from(this.tableName)
+        .from('inspetores_qa')
         .select('*')
         .ilike('area', `%${area}%`)
         .order('created_at', { ascending: false });

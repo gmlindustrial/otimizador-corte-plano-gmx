@@ -11,7 +11,7 @@ export class MaterialService extends BaseService<Material> {
   async getByTipo(tipo: string) {
     try {
       const { data, error } = await supabase
-        .from(this.tableName)
+        .from('materiais')
         .select('*')
         .ilike('tipo', `%${tipo}%`)
         .order('created_at', { ascending: false });

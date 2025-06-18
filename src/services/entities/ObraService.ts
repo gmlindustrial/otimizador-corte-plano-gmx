@@ -11,7 +11,7 @@ export class ObraService extends BaseService<Obra> {
   async getByNome(nome: string) {
     try {
       const { data, error } = await supabase
-        .from(this.tableName)
+        .from('obras')
         .select('*')
         .ilike('nome', `%${nome}%`)
         .order('created_at', { ascending: false });

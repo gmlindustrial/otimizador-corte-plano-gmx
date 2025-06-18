@@ -11,7 +11,7 @@ export class ProjetoService extends BaseService<Projeto> {
   async getByCliente(clienteId: string) {
     try {
       const { data, error } = await supabase
-        .from(this.tableName)
+        .from('projetos')
         .select('*')
         .eq('cliente_id', clienteId)
         .order('created_at', { ascending: false });
@@ -32,7 +32,7 @@ export class ProjetoService extends BaseService<Projeto> {
   async getByObra(obraId: string) {
     try {
       const { data, error } = await supabase
-        .from(this.tableName)
+        .from('projetos')
         .select('*')
         .eq('obra_id', obraId)
         .order('created_at', { ascending: false });

@@ -11,7 +11,7 @@ export class OperadorService extends BaseService<Operador> {
   async getByTurno(turno: string) {
     try {
       const { data, error } = await supabase
-        .from(this.tableName)
+        .from('operadores')
         .select('*')
         .eq('turno', turno)
         .order('created_at', { ascending: false });

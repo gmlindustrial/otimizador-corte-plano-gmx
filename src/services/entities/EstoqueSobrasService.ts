@@ -11,7 +11,7 @@ export class EstoqueSobrasService extends BaseService<EstoqueSobra> {
   async getByMaterial(materialId: string) {
     try {
       const { data, error } = await supabase
-        .from(this.tableName)
+        .from('estoque_sobras')
         .select('*')
         .eq('material_id', materialId)
         .order('created_at', { ascending: false });
@@ -32,7 +32,7 @@ export class EstoqueSobrasService extends BaseService<EstoqueSobra> {
   async getDisponiveis(materialId?: string) {
     try {
       let query = supabase
-        .from(this.tableName)
+        .from('estoque_sobras')
         .select('*')
         .eq('disponivel', true);
 

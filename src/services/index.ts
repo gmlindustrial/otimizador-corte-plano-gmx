@@ -16,13 +16,11 @@ export * from './entities/EstoqueSobrasService';
 export * from './entities/HistoricoOtimizacaoService';
 
 // Instâncias dos services para uso direto
-export {
-  obraService,
-  clienteService,
-  materialService,
-  operadorService,
-  inspetorService,
-  projetoService,
-  estoqueSobrasService,
-  historicoOtimizacaoService
-} from './entities/ObraService';
+export { obraService } from './entities/ObraService';
+export { clienteService } from './entities/ClienteService';
+export { materialService } from './entities/MaterialService';
+export { operadorService } from './entities/OperadorService';
+export { inspetorService } from './entities/InspetorService';
+export { projetoService } from './entities/ProjetoService';
+export { estoqueSobrasService } from './entities/EstoqueSobrasService';
+export { historicoOtimizacaoService } from './entities/HistoricoOtimizacaoService';
