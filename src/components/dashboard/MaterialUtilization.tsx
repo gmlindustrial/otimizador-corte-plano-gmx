@@ -25,9 +25,9 @@ export const MaterialUtilization = ({
   
   const materialStats = history.reduce((acc, item) => {
     const material = item.project?.tipoMaterial || 'Material não especificado';
-    const totalUsedLength = Number(item.results.totalBars || 0) * Number(item.barLength || 0) - Number(item.results.totalWaste || 0);
-    const totalWasteLength = Number(item.results.totalWaste || 0);
-    const totalMaterialLength = Number(item.results.totalBars || 0) * Number(item.barLength || 0);
+    const totalUsedLength = Number(item.results?.totalBars || 0) * Number(item.barLength || 0) - Number(item.results?.totalWaste || 0);
+    const totalWasteLength = Number(item.results?.totalWaste || 0);
+    const totalMaterialLength = Number(item.results?.totalBars || 0) * Number(item.barLength || 0);
     
     if (!acc[material]) {
       acc[material] = {
@@ -41,25 +41,25 @@ export const MaterialUtilization = ({
     const kgCortado = (totalUsedLength / 1000) * materialDensity;
     const kgDesperdicio = (totalWasteLength / 1000) * materialDensity;
     
-    acc[material].totalKgCortado += kgCortado;
-    acc[material].totalKgDesperdicio += kgDesperdicio;
-    acc[material].listas += 1;
+    acc[material].totalKgCortado = Number(acc[material].totalKgCortado) + Number(kgCortado);
+    acc[material].totalKgDesperdicio = Number(acc[material].totalKgDesperdicio) + Number(kgDesperdicio);
+    acc[material].listas = Number(acc[material].listas) + 1;
     
-    const totalKg = acc[material].totalKgCortado + acc[material].totalKgDesperdicio;
-    acc[material].aproveitamento = totalKg > 0 ? (acc[material].totalKgCortado / totalKg) * 100 : 0;
+    const totalKg = Number(acc[material].totalKgCortado) + Number(acc[material].totalKgDesperdicio);
+    acc[material].aproveitamento = totalKg > 0 ? (Number(acc[material].totalKgCortado) / totalKg) * 100 : 0;
     
     return acc;
   }, {} as Record<string, any>);
 
   const totalKgCortado = Object.values(materialStats).reduce((sum, mat: any) => {
-    return sum + Number(mat.totalKgCortado || 0);
+    return Number(sum) + Number(mat.totalKgCortado || 0);
   }, 0);
   
   const totalKgDesperdicio = Object.values(materialStats).reduce((sum, mat: any) => {
-    return sum + Number(mat.totalKgDesperdicio || 0);
+    return Number(sum) + Number(mat.totalKgDesperdicio || 0);
   }, 0);
   
-  const aproveitamentoGeral = totalKgCortado > 0 ? (totalKgCortado / (totalKgCortado + totalKgDesperdicio)) * 100 : 0;
+  const aproveitamentoGeral = Number(totalKgCortado) > 0 ? (Number(totalKgCortado) / (Number(totalKgCortado) + Number(totalKgDesperdicio))) * 100 : 0;
 
   return (
     <div className="space-y-6">
@@ -90,15 +90,15 @@ export const MaterialUtilization = ({
           {/* Resumo Geral */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div className="bg-green-50 p-4 rounded-lg text-center">
-              <div className="text-2xl font-bold text-green-600">{totalKgCortado.toFixed(1)}</div>
+              <div className="text-2xl font-bold text-green-600">{Number(totalKgCortado).toFixed(1)}</div>
               <div className="text-sm text-gray-600">Kg Cortado</div>
             </div>
             <div className="bg-red-50 p-4 rounded-lg text-center">
-              <div className="text-2xl font-bold text-red-600">{totalKgDesperdicio.toFixed(1)}</div>
+              <div className="text-2xl font-bold text-red-600">{Number(totalKgDesperdicio).toFixed(1)}</div>
               <div className="text-sm text-gray-600">Kg Desperdício</div>
             </div>
             <div className="bg-blue-50 p-4 rounded-lg text-center">
-              <div className="text-2xl font-bold text-blue-600">{aproveitamentoGeral.toFixed(1)}%</div>
+              <div className="text-2xl font-bold text-blue-600">{Number(aproveitamentoGeral).toFixed(1)}%</div>
               <div className="text-sm text-gray-600">Aproveitamento</div>
             </div>
           </div>
@@ -109,7 +109,7 @@ export const MaterialUtilization = ({
               <h4 className="font-semibold">Aproveitamento Geral</h4>
               <span className="text-sm text-gray-600">Meta: 85%</span>
             </div>
-            <Progress value={aproveitamentoGeral} className="h-3" />
+            <Progress value={Number(aproveitamentoGeral)} className="h-3" />
           </div>
 
           {/* Detalhamento por Material */}
@@ -159,19 +159,19 @@ export const MaterialUtilization = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="text-yellow-700">
-                  <strong>Desperdício Total:</strong> {totalKgDesperdicio.toFixed(1)} kg
+                  <strong>Desperdício Total:</strong> {Number(totalKgDesperdicio).toFixed(1)} kg
                 </p>
                 <p className="text-yellow-700">
-                  <strong>Custo Estimado:</strong> R$ {(totalKgDesperdicio * 5.50).toFixed(2)} 
+                  <strong>Custo Estimado:</strong> R$ {(Number(totalKgDesperdicio) * 5.50).toFixed(2)} 
                   <span className="text-xs ml-1">(R$ 5,50/kg)</span>
                 </p>
               </div>
               <div>
                 <p className="text-yellow-700">
-                  <strong>Potencial de Melhoria:</strong> {Math.max(0, 85 - aproveitamentoGeral).toFixed(1)}%
+                  <strong>Potencial de Melhoria:</strong> {Math.max(0, 85 - Number(aproveitamentoGeral)).toFixed(1)}%
                 </p>
                 <p className="text-yellow-700">
-                  <strong>Economia Possível:</strong> R$ {(Math.max(0, 85 - aproveitamentoGeral) / 100 * totalKgDesperdicio * 5.50).toFixed(2)}/mês
+                  <strong>Economia Possível:</strong> R$ {(Math.max(0, 85 - Number(aproveitamentoGeral)) / 100 * Number(totalKgDesperdicio) * 5.50).toFixed(2)}/mês
                 </p>
               </div>
             </div>
