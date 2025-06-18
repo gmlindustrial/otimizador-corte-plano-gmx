@@ -1,5 +1,6 @@
 
 import { BaseService } from '../base/BaseService';
+import { supabase } from '@/integrations/supabase/client';
 import type { HistoricoOtimizacao } from '../interfaces';
 
 export class HistoricoOtimizacaoService extends BaseService<HistoricoOtimizacao> {
@@ -9,7 +10,7 @@ export class HistoricoOtimizacaoService extends BaseService<HistoricoOtimizacao>
 
   async getByProjeto(projetoId: string) {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await supabase
         .from(this.tableName)
         .select('*')
         .eq('projeto_id', projetoId)
@@ -26,10 +27,6 @@ export class HistoricoOtimizacaoService extends BaseService<HistoricoOtimizacao>
     } catch (error) {
       return this.handleError(error, 'Erro ao buscar histórico por projeto');
     }
-  }
-
-  private get supabase() {
-    return require('@/integrations/supabase/client').supabase;
   }
 
   private handleError(error: any, context: string) {

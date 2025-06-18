@@ -1,5 +1,6 @@
 
 import { BaseService } from '../base/BaseService';
+import { supabase } from '@/integrations/supabase/client';
 import type { InspetorQA } from '../interfaces';
 
 export class InspetorService extends BaseService<InspetorQA> {
@@ -9,7 +10,7 @@ export class InspetorService extends BaseService<InspetorQA> {
 
   async getByArea(area: string) {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await supabase
         .from(this.tableName)
         .select('*')
         .ilike('area', `%${area}%`)
@@ -26,10 +27,6 @@ export class InspetorService extends BaseService<InspetorQA> {
     } catch (error) {
       return this.handleError(error, 'Erro ao buscar inspetores por área');
     }
-  }
-
-  private get supabase() {
-    return require('@/integrations/supabase/client').supabase;
   }
 
   private handleError(error: any, context: string) {

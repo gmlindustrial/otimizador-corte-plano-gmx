@@ -1,5 +1,6 @@
 
 import { BaseService } from '../base/BaseService';
+import { supabase } from '@/integrations/supabase/client';
 import type { Cliente } from '../interfaces';
 
 export class ClienteService extends BaseService<Cliente> {
@@ -9,7 +10,7 @@ export class ClienteService extends BaseService<Cliente> {
 
   async getByNome(nome: string) {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await supabase
         .from(this.tableName)
         .select('*')
         .ilike('nome', `%${nome}%`)
@@ -26,10 +27,6 @@ export class ClienteService extends BaseService<Cliente> {
     } catch (error) {
       return this.handleError(error, 'Erro ao buscar clientes por nome');
     }
-  }
-
-  private get supabase() {
-    return require('@/integrations/supabase/client').supabase;
   }
 
   private handleError(error: any, context: string) {

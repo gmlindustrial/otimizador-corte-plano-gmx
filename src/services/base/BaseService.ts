@@ -20,7 +20,7 @@ export abstract class BaseService<T extends BaseEntity> {
 
   async getAll(options?: QueryOptions): Promise<ListResponse<T>> {
     try {
-      let query = supabase.from(this.tableName).select('*');
+      let query = supabase.from(this.tableName as any).select('*');
       
       if (options?.orderBy) {
         query = query.order(options.orderBy, { ascending: options.ascending ?? false });
@@ -41,7 +41,7 @@ export abstract class BaseService<T extends BaseEntity> {
       if (error) throw error;
 
       return {
-        data: data || [],
+        data: (data || []) as T[],
         error: null,
         success: true,
         total: data?.length || 0
@@ -60,7 +60,7 @@ export abstract class BaseService<T extends BaseEntity> {
   async getById(id: string): Promise<ServiceResponse<T>> {
     try {
       const { data, error } = await supabase
-        .from(this.tableName)
+        .from(this.tableName as any)
         .select('*')
         .eq('id', id)
         .single();
@@ -85,8 +85,8 @@ export abstract class BaseService<T extends BaseEntity> {
   async create(request: CreateRequest<T>): Promise<ServiceResponse<T>> {
     try {
       const { data, error } = await supabase
-        .from(this.tableName)
-        .insert([request.data])
+        .from(this.tableName as any)
+        .insert([request.data as any])
         .select()
         .single();
 
@@ -112,8 +112,8 @@ export abstract class BaseService<T extends BaseEntity> {
   async update(request: UpdateRequest<T>): Promise<ServiceResponse<T>> {
     try {
       const { data, error } = await supabase
-        .from(this.tableName)
-        .update(request.data)
+        .from(this.tableName as any)
+        .update(request.data as any)
         .eq('id', request.id)
         .select()
         .single();
@@ -140,7 +140,7 @@ export abstract class BaseService<T extends BaseEntity> {
   async delete(request: DeleteRequest): Promise<ServiceResponse<boolean>> {
     try {
       const { error } = await supabase
-        .from(this.tableName)
+        .from(this.tableName as any)
         .delete()
         .eq('id', request.id);
 

@@ -1,5 +1,6 @@
 
 import { BaseService } from '../base/BaseService';
+import { supabase } from '@/integrations/supabase/client';
 import type { Material } from '../interfaces';
 
 export class MaterialService extends BaseService<Material> {
@@ -9,7 +10,7 @@ export class MaterialService extends BaseService<Material> {
 
   async getByTipo(tipo: string) {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await supabase
         .from(this.tableName)
         .select('*')
         .ilike('tipo', `%${tipo}%`)
@@ -26,10 +27,6 @@ export class MaterialService extends BaseService<Material> {
     } catch (error) {
       return this.handleError(error, 'Erro ao buscar materiais por tipo');
     }
-  }
-
-  private get supabase() {
-    return require('@/integrations/supabase/client').supabase;
   }
 
   private handleError(error: any, context: string) {

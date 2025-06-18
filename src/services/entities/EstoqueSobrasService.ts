@@ -1,5 +1,6 @@
 
 import { BaseService } from '../base/BaseService';
+import { supabase } from '@/integrations/supabase/client';
 import type { EstoqueSobra } from '../interfaces';
 
 export class EstoqueSobrasService extends BaseService<EstoqueSobra> {
@@ -9,7 +10,7 @@ export class EstoqueSobrasService extends BaseService<EstoqueSobra> {
 
   async getByMaterial(materialId: string) {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await supabase
         .from(this.tableName)
         .select('*')
         .eq('material_id', materialId)
@@ -30,7 +31,7 @@ export class EstoqueSobrasService extends BaseService<EstoqueSobra> {
 
   async getDisponiveis(materialId?: string) {
     try {
-      let query = this.supabase
+      let query = supabase
         .from(this.tableName)
         .select('*')
         .eq('disponivel', true);
@@ -59,10 +60,6 @@ export class EstoqueSobrasService extends BaseService<EstoqueSobra> {
       id,
       data: { disponivel: false }
     });
-  }
-
-  private get supabase() {
-    return require('@/integrations/supabase/client').supabase;
   }
 
   private handleError(error: any, context: string) {

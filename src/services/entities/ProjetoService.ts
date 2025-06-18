@@ -1,5 +1,6 @@
 
 import { BaseService } from '../base/BaseService';
+import { supabase } from '@/integrations/supabase/client';
 import type { Projeto } from '../interfaces';
 
 export class ProjetoService extends BaseService<Projeto> {
@@ -9,7 +10,7 @@ export class ProjetoService extends BaseService<Projeto> {
 
   async getByCliente(clienteId: string) {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await supabase
         .from(this.tableName)
         .select('*')
         .eq('cliente_id', clienteId)
@@ -30,7 +31,7 @@ export class ProjetoService extends BaseService<Projeto> {
 
   async getByObra(obraId: string) {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await supabase
         .from(this.tableName)
         .select('*')
         .eq('obra_id', obraId)
@@ -47,10 +48,6 @@ export class ProjetoService extends BaseService<Projeto> {
     } catch (error) {
       return this.handleError(error, 'Erro ao buscar projetos por obra');
     }
-  }
-
-  private get supabase() {
-    return require('@/integrations/supabase/client').supabase;
   }
 
   private handleError(error: any, context: string) {

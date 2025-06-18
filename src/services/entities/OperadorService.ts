@@ -1,5 +1,6 @@
 
 import { BaseService } from '../base/BaseService';
+import { supabase } from '@/integrations/supabase/client';
 import type { Operador } from '../interfaces';
 
 export class OperadorService extends BaseService<Operador> {
@@ -9,7 +10,7 @@ export class OperadorService extends BaseService<Operador> {
 
   async getByTurno(turno: string) {
     try {
-      const { data, error } = await this.supabase
+      const { data, error } = await supabase
         .from(this.tableName)
         .select('*')
         .eq('turno', turno)
@@ -26,10 +27,6 @@ export class OperadorService extends BaseService<Operador> {
     } catch (error) {
       return this.handleError(error, 'Erro ao buscar operadores por turno');
     }
-  }
-
-  private get supabase() {
-    return require('@/integrations/supabase/client').supabase;
   }
 
   private handleError(error: any, context: string) {
