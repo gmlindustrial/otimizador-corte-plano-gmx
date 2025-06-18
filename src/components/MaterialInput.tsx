@@ -51,7 +51,7 @@ export const MaterialInput = ({ pieces, setPieces, onOptimize, disabled }: Mater
       console.log('Duplicatas resolvidas:', duplicates);
     }
     
-    setPieces(prev => [...prev, ...importedPieces]);
+    setPieces([...pieces, ...importedPieces]);
     console.log(`${importedPieces.length} peças importadas com sucesso!`);
   };
 
