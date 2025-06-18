@@ -11,7 +11,7 @@ export const Header = () => {
               <Ruler className="w-8 h-8" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Bar Optimization Pro</h1>
+              <h1 className="text-2xl font-bold">Optimizador Corte Plano GMX</h1>
               <p className="text-blue-200 text-sm">Sistema de Otimização de Corte Industrial</p>
             </div>
           </div>

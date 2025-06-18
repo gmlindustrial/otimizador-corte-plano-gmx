@@ -1,205 +1,164 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { CutPiece } from '@/pages/Index';
-import { Plus, Upload, Calculator, Trash2 } from 'lucide-react';
-import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
+import { Calculator, Trash2, Plus } from 'lucide-react';
+import { FileUpload } from './FileUpload';
+import type { CutPiece } from '@/pages/Index';
 
 interface MaterialInputProps {
   pieces: CutPiece[];
   setPieces: (pieces: CutPiece[]) => void;
   onOptimize: () => void;
-  disabled: boolean;
+  disabled?: boolean;
 }
 
 export const MaterialInput = ({ pieces, setPieces, onOptimize, disabled }: MaterialInputProps) => {
-  const [newPiece, setNewPiece] = useState({ length: '', quantity: '' });
+  const [length, setLength] = useState('');
+  const [quantity, setQuantity] = useState('1');
 
   const addPiece = () => {
-    const length = parseInt(newPiece.length);
-    const quantity = parseInt(newPiece.quantity);
+    const pieceLength = parseFloat(length);
+    const pieceQuantity = parseInt(quantity);
 
-    if (length > 0 && quantity > 0) {
-      const piece: CutPiece = {
+    if (pieceLength > 0 && pieceQuantity > 0) {
+      const newPiece: CutPiece = {
         id: Date.now().toString(),
-        length,
-        quantity
+        length: pieceLength,
+        quantity: pieceQuantity,
       };
-      setPieces([...pieces, piece]);
-      setNewPiece({ length: '', quantity: '' });
-      toast.success(`Adicionado: ${quantity}x ${length}mm`);
+      setPieces([...pieces, newPiece]);
+      setLength('');
+      setQuantity('1');
     }
   };
 
   const removePiece = (id: string) => {
-    setPieces(pieces.filter(p => p.id !== id));
-    toast.info('Peça removida da lista');
+    setPieces(pieces.filter(piece => piece.id !== id));
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const updatePiece = (id: string, field: 'length' | 'quantity', value: number) => {
+    setPieces(pieces.map(piece => 
+      piece.id === id ? { ...piece, [field]: value } : piece
+    ));
+  };
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target?.result as string;
-      const lines = content.split('\n').filter(line => line.trim());
-      
-      const newPieces: CutPiece[] = [];
-      
-      lines.forEach((line, index) => {
-        if (index === 0 && (line.toLowerCase().includes('comprimento') || line.toLowerCase().includes('length'))) {
-          return; // Skip header
-        }
-        
-        const parts = line.split(/[,;\t]/).map(p => p.trim());
-        if (parts.length >= 2) {
-          const length = parseInt(parts[0]);
-          const quantity = parseInt(parts[1]);
-          
-          if (length > 0 && quantity > 0) {
-            newPieces.push({
-              id: `${Date.now()}-${index}`,
-              length,
-              quantity
-            });
-          }
-        }
-      });
-
-      if (newPieces.length > 0) {
-        setPieces([...pieces, ...newPieces]);
-        toast.success(`${newPieces.length} peças importadas com sucesso!`);
-      } else {
-        toast.error('Nenhuma peça válida encontrada no arquivo');
-      }
-    };
+  const handleImportedData = (importedPieces: CutPiece[], duplicates?: any[]) => {
+    if (duplicates && duplicates.length > 0) {
+      console.log('Duplicatas resolvidas:', duplicates);
+    }
     
-    reader.readAsText(file);
-    event.target.value = '';
+    setPieces(prev => [...prev, ...importedPieces]);
+    console.log(`${importedPieces.length} peças importadas com sucesso!`);
   };
-
-  const totalPieces = pieces.reduce((sum, piece) => sum + piece.quantity, 0);
-  const totalLength = pieces.reduce((sum, piece) => sum + (piece.length * piece.quantity), 0);
 
   return (
-    <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-0">
-      <CardHeader className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-t-lg">
+    <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
+      <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
         <CardTitle className="flex items-center gap-2">
           <Calculator className="w-5 h-5" />
-          Lista de Peças para Corte
+          Lista de Peças - Optimizador Corte Plano GMX
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 space-y-6">
-        {/* Input Manual */}
-        <div className="grid md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label>Comprimento (mm)</Label>
-            <Input
-              type="number"
-              placeholder="Ex: 1500"
-              value={newPiece.length}
-              onChange={(e) => setNewPiece(prev => ({ ...prev, length: e.target.value }))}
-              disabled={disabled}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Quantidade</Label>
-            <Input
-              type="number"
-              placeholder="Ex: 5"
-              value={newPiece.quantity}
-              onChange={(e) => setNewPiece(prev => ({ ...prev, quantity: e.target.value }))}
-              disabled={disabled}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="invisible">Ação</Label>
-            <Button 
-              onClick={addPiece}
-              className="w-full"
-              disabled={!newPiece.length || !newPiece.quantity || disabled}
-            >
+        <FileUpload 
+          onDataImported={handleImportedData}
+          currentPieces={pieces}
+        />
+        
+        <div className="border-t pt-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Entrada Manual</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+            <div className="space-y-2">
+              <Label htmlFor="length">Comprimento (mm)</Label>
+              <Input
+                id="length"
+                type="number"
+                value={length}
+                onChange={(e) => setLength(e.target.value)}
+                placeholder="Ex: 2500"
+                className="h-12"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="quantity">Quantidade</Label>
+              <Input
+                id="quantity"
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                placeholder="1"
+                min="1"
+                className="h-12"
+              />
+            </div>
+            
+            <Button onClick={addPiece} className="h-12 bg-blue-600 hover:bg-blue-700">
               <Plus className="w-4 h-4 mr-2" />
               Adicionar
             </Button>
           </div>
         </div>
 
-        {/* Upload de Arquivo */}
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-          <div className="text-center">
-            <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-            <p className="text-sm text-gray-600 mb-2">
-              Ou faça upload de um arquivo CSV/TXT
-            </p>
-            <input
-              type="file"
-              accept=".csv,.txt,.xlsx"
-              onChange={handleFileUpload}
-              className="hidden"
-              id="file-upload"
-              disabled={disabled}
-            />
-            <Label 
-              htmlFor="file-upload" 
-              className="cursor-pointer bg-blue-50 hover:bg-blue-100 text-blue-600 px-4 py-2 rounded-lg transition-colors"
-            >
-              Selecionar Arquivo
-            </Label>
-          </div>
-        </div>
-
-        {/* Lista de Peças */}
         {pieces.length > 0 && (
-          <div className="space-y-3">
-            <h4 className="font-medium text-gray-900">Peças Adicionadas:</h4>
-            <div className="max-h-64 overflow-y-auto space-y-2">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium text-gray-900">
+                Peças Cadastradas ({pieces.length})
+              </h3>
+              <Badge variant="outline" className="text-sm">
+                Total: {pieces.reduce((sum, piece) => sum + piece.quantity, 0)} unidades
+              </Badge>
+            </div>
+            
+            <div className="space-y-2 max-h-60 overflow-y-auto">
               {pieces.map((piece) => (
-                <div key={piece.id} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                  <span className="text-sm">
-                    <strong>{piece.quantity}x</strong> peças de <strong>{piece.length}mm</strong>
-                  </span>
+                <div key={piece.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex-1 grid grid-cols-2 gap-4">
+                    <Input
+                      type="number"
+                      value={piece.length}
+                      onChange={(e) => updatePiece(piece.id, 'length', parseFloat(e.target.value) || 0)}
+                      className="h-10"
+                    />
+                    <Input
+                      type="number"
+                      value={piece.quantity}
+                      onChange={(e) => updatePiece(piece.id, 'quantity', parseInt(e.target.value) || 1)}
+                      min="1"
+                      className="h-10"
+                    />
+                  </div>
                   <Button
-                    variant="ghost"
+                    variant="destructive"
                     size="sm"
                     onClick={() => removePiece(piece.id)}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="h-10 w-10 p-0"
                   >
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               ))}
             </div>
-            
-            {/* Resumo */}
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-gray-600">Total de peças:</span>
-                  <span className="font-semibold ml-2">{totalPieces}</span>
-                </div>
-                <div>
-                  <span className="text-gray-600">Comprimento total:</span>
-                  <span className="font-semibold ml-2">{(totalLength / 1000).toFixed(2)}m</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Botão de Otimização */}
-            <Button 
-              onClick={onOptimize}
-              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3"
-              disabled={disabled || pieces.length === 0}
-            >
-              <Calculator className="w-5 h-5 mr-2" />
-              Iniciar Otimização
-            </Button>
           </div>
         )}
+
+        <div className="flex justify-center pt-4">
+          <Button
+            onClick={onOptimize}
+            disabled={disabled || pieces.length === 0}
+            className="px-8 py-3 text-lg bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50"
+            size="lg"
+          >
+            <Calculator className="w-5 h-5 mr-2" />
+            Otimizar Corte
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
