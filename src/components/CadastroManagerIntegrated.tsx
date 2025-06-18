@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,14 +32,27 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
   const [novoInspetor, setNovoInspetor] = useState({ nome: '', certificacao: '', area: '' });
 
   const handleSaveObra = async () => {
-    if (!novaObra.nome) return;
+    console.log('=== HANDLESA OBRA CHAMADO ===');
+    console.log('Dados do formulário:', novaObra);
+    
+    if (!novaObra.nome || novaObra.nome.trim() === '') {
+      console.log('Nome da obra está vazio');
+      return;
+    }
     
     try {
       setSaving(true);
-      console.log('Criando nova obra...');
-      await saveObra(novaObra);
+      console.log('Estado saving definido como true');
+      console.log('Chamando saveObra...');
+      
+      const result = await saveObra(novaObra);
+      console.log('Resultado do saveObra:', result);
+      
+      // Limpar formulário e fechar dialog
       setNovaObra({ nome: '', endereco: '', responsavel: '' });
       setOpenDialog(null);
+      
+      console.log('Formulário limpo e dialog fechado');
       
       // Force data refresh
       console.log('Forçando atualização dos dados...');
@@ -48,10 +60,12 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
         refetch();
         onUpdateData?.();
       }, 500);
+      
     } catch (error) {
-      console.error('Erro ao criar obra:', error);
+      console.error('Erro capturado no handleSaveObra:', error);
     } finally {
       setSaving(false);
+      console.log('Estado saving definido como false');
     }
   };
 
@@ -161,7 +175,10 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
           {/* Criar Nova Obra */}
           <Dialog open={openDialog === 'obra'} onOpenChange={(open) => setOpenDialog(open ? 'obra' : null)}>
             <DialogTrigger asChild>
-              <Button className="h-24 flex flex-col items-center gap-2 bg-blue-600 hover:bg-blue-700">
+              <Button 
+                className="h-24 flex flex-col items-center gap-2 bg-blue-600 hover:bg-blue-700"
+                onClick={() => console.log('Botão Criar Nova Obra clicado')}
+              >
                 <Building className="w-8 h-8" />
                 <span className="text-sm font-medium">+ Criar Nova Obra</span>
               </Button>
@@ -176,7 +193,10 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
                   <Input
                     id="obra-nome"
                     value={novaObra.nome}
-                    onChange={(e) => setNovaObra(prev => ({ ...prev, nome: e.target.value }))}
+                    onChange={(e) => {
+                      console.log('Nome da obra alterado:', e.target.value);
+                      setNovaObra(prev => ({ ...prev, nome: e.target.value }));
+                    }}
                     placeholder="Ex: Complexo Industrial ABC"
                   />
                 </div>
@@ -199,7 +219,10 @@ export const CadastroManagerIntegrated = ({ onUpdateData }: CadastroManagerInteg
                   />
                 </div>
                 <Button 
-                  onClick={handleSaveObra} 
+                  onClick={() => {
+                    console.log('Botão Salvar Obra clicado');
+                    handleSaveObra();
+                  }} 
                   className="w-full" 
                   disabled={!novaObra.nome || saving}
                 >

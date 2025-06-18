@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -68,29 +67,57 @@ export const useSupabaseData = () => {
 
   const saveObra = async (obra: { nome: string; endereco: string; responsavel: string }) => {
     try {
-      console.log('Salvando obra:', obra);
+      console.log('=== INICIANDO SALVAMENTO DA OBRA ===');
+      console.log('Dados da obra a serem salvos:', obra);
+      
+      // Validação básica
+      if (!obra.nome || obra.nome.trim() === '') {
+        console.error('Nome da obra é obrigatório');
+        toast.error('Nome da obra é obrigatório');
+        throw new Error('Nome da obra é obrigatório');
+      }
+
+      console.log('Fazendo chamada para o Supabase...');
       const { data, error } = await supabase
         .from('obras')
-        .insert([obra])
+        .insert([{
+          nome: obra.nome.trim(),
+          endereco: obra.endereco?.trim() || null,
+          responsavel: obra.responsavel?.trim() || null
+        }])
         .select()
         .single();
 
+      console.log('Resposta do Supabase:', { data, error });
+
       if (error) {
-        console.error('Erro ao salvar obra:', error);
+        console.error('Erro retornado pelo Supabase:', error);
+        toast.error(`Erro ao salvar obra: ${error.message}`);
         throw error;
       }
       
-      console.log('Obra salva:', data);
+      if (!data) {
+        console.error('Nenhum dado retornado pelo Supabase');
+        toast.error('Erro: nenhum dado retornado ao salvar obra');
+        throw new Error('Nenhum dado retornado');
+      }
+
+      console.log('Obra salva com sucesso:', data);
       setObras(prev => {
         const updated = [data, ...prev];
-        console.log('Lista de obras atualizada:', updated.length);
+        console.log('Lista de obras atualizada. Total:', updated.length);
         return updated;
       });
+      
       toast.success(`Obra "${obra.nome}" criada com sucesso!`);
+      console.log('=== SALVAMENTO DA OBRA CONCLUÍDO ===');
       return data;
-    } catch (error) {
-      console.error('Erro ao salvar obra:', error);
-      toast.error('Erro ao salvar obra');
+    } catch (error: any) {
+      console.error('=== ERRO NO SALVAMENTO DA OBRA ===');
+      console.error('Tipo do erro:', typeof error);
+      console.error('Erro completo:', error);
+      console.error('Stack trace:', error?.stack);
+      toast.error(`Erro ao salvar obra: ${error?.message || 'Erro desconhecido'}`);
       throw error;
     }
   };
