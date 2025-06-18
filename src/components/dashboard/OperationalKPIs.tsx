@@ -70,15 +70,15 @@ export const OperationalKPIs = ({
   const metaEficiencia = 85;
 
   const totalCortadas: number = Object.values(operatorStats).reduce((sum: number, op: any) => {
-    const cortadas = Number(op.cortadas || 0);
-    return sum + cortadas;
+    const cortadas = Number(op?.cortadas || 0);
+    return Number(sum) + cortadas;
   }, 0);
 
   const eficienciaGeral: number = Object.keys(operatorStats).length > 0 
-    ? Object.values(operatorStats).reduce((sum: number, op: any) => {
-        const eficiencia = Number(op.eficiencia || 0);
-        return sum + eficiencia;
-      }, 0) / Object.keys(operatorStats).length
+    ? Number(Object.values(operatorStats).reduce((sum: number, op: any) => {
+        const eficiencia = Number(op?.eficiencia || 0);
+        return Number(sum) + eficiencia;
+      }, 0)) / Object.keys(operatorStats).length
     : 0;
 
   return (
