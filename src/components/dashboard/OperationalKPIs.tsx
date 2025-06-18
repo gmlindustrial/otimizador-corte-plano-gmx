@@ -38,9 +38,9 @@ export const OperationalKPIs = ({
       };
     }
     
-    const totalPecas = item.pieces.reduce((sum, piece) => sum + piece.quantity, 0);
+    const totalPecas = item.pieces.reduce((sum: number, piece: any) => sum + Number(piece.quantity || 0), 0);
     acc[operador].cortadas += totalPecas;
-    acc[operador].eficiencia = (acc[operador].eficiencia + item.results.efficiency) / 2;
+    acc[operador].eficiencia = (acc[operador].eficiencia + Number(item.results.efficiency || 0)) / 2;
     
     if (!acc[operador].turnos[turno]) {
       acc[operador].turnos[turno] = { cortadas: 0, listas: 0 };
@@ -49,7 +49,7 @@ export const OperationalKPIs = ({
     acc[operador].turnos[turno].listas += 1;
     
     return acc;
-  }, {});
+  }, {} as Record<string, any>);
 
   const tempoMedioPorPeca = 2.5; // minutos (exemplo)
   const metaEficiencia = 85;
@@ -86,18 +86,18 @@ export const OperationalKPIs = ({
               <div key={operador} className="border rounded-lg p-4">
                 <div className="flex items-center justify-between mb-3">
                   <h4 className="font-semibold text-lg">{operador}</h4>
-                  <Badge variant={stats.eficiencia >= metaEficiencia ? "default" : "destructive"}>
-                    {stats.eficiencia.toFixed(1)}% eficiência
+                  <Badge variant={Number(stats.eficiencia) >= metaEficiencia ? "default" : "destructive"}>
+                    {Number(stats.eficiencia).toFixed(1)}% eficiência
                   </Badge>
                 </div>
                 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
                   <div className="text-center p-3 bg-green-50 rounded">
-                    <div className="text-2xl font-bold text-green-600">{stats.cortadas}</div>
+                    <div className="text-2xl font-bold text-green-600">{Number(stats.cortadas)}</div>
                     <div className="text-sm text-gray-600">Cortadas</div>
                   </div>
                   <div className="text-center p-3 bg-yellow-50 rounded">
-                    <div className="text-2xl font-bold text-yellow-600">{stats.pendentes}</div>
+                    <div className="text-2xl font-bold text-yellow-600">{Number(stats.pendentes)}</div>
                     <div className="text-sm text-gray-600">Pendentes</div>
                   </div>
                   <div className="text-center p-3 bg-blue-50 rounded">
@@ -106,7 +106,7 @@ export const OperationalKPIs = ({
                   </div>
                   <div className="text-center p-3 bg-purple-50 rounded">
                     <div className="text-2xl font-bold text-purple-600">
-                      {(stats.cortadas * tempoMedioPorPeca / 60).toFixed(1)}h
+                      {(Number(stats.cortadas) * tempoMedioPorPeca / 60).toFixed(1)}h
                     </div>
                     <div className="text-sm text-gray-600">Previsão Total</div>
                   </div>
@@ -120,7 +120,7 @@ export const OperationalKPIs = ({
                         {turno === 'Central' ? 'Central' : `${turno}º Turno`}
                       </div>
                       <div className="text-sm text-gray-600">
-                        {dados.cortadas} peças | {dados.listas} listas
+                        {Number(dados.cortadas)} peças | {Number(dados.listas)} listas
                       </div>
                     </div>
                   ))}
@@ -154,7 +154,7 @@ export const OperationalKPIs = ({
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Previsão Total</span>
                 <span className="text-lg font-semibold">
-                  {(Object.values(operatorStats).reduce((sum: number, op: any) => sum + op.cortadas, 0) * tempoMedioPorPeca / 60).toFixed(1)}h
+                  {(Object.values(operatorStats).reduce((sum: number, op: any) => sum + Number(op.cortadas || 0), 0) * tempoMedioPorPeca / 60).toFixed(1)}h
                 </span>
               </div>
               <Progress value={60} className="h-2" />
@@ -165,7 +165,7 @@ export const OperationalKPIs = ({
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Eficiência Geral</span>
                 <span className="text-lg font-semibold">
-                  {(Object.values(operatorStats).reduce((sum: number, op: any) => sum + op.eficiencia, 0) / Object.keys(operatorStats).length).toFixed(1)}%
+                  {(Object.values(operatorStats).reduce((sum: number, op: any) => sum + Number(op.eficiencia || 0), 0) / Object.keys(operatorStats).length).toFixed(1)}%
                 </span>
               </div>
               <Progress value={82} className="h-2" />
