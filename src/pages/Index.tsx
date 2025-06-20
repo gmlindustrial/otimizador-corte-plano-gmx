@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { ProjectSelector } from '@/components/ProjectSelector';
@@ -8,8 +7,14 @@ import { Dashboard } from '@/components/Dashboard';
 import { HistoryPanel } from '@/components/HistoryPanel';
 import { EstoqueSobras } from '@/components/EstoqueSobras';
 import { CadastroManager } from '@/components/CadastroManager';
+import { SheetProjectSelector } from '@/components/sheet/SheetProjectSelector';
+import { SheetMaterialInput } from '@/components/sheet/SheetMaterialInput';
+import { SheetOptimizationResults } from '@/components/sheet/SheetOptimizationResults';
+import { SheetVisualization } from '@/components/sheet/SheetVisualization';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, Calculator, History, Settings, Package } from 'lucide-react';
+import { BarChart3, Calculator, History, Settings, Package, Square } from 'lucide-react';
+import { BottomLeftFillOptimizer } from '@/algorithms/sheet/BottomLeftFill';
+import type { SheetCutPiece, SheetProject, SheetOptimizationResult } from '@/types/sheet';
 
 export interface CutPiece {
   length: number;
@@ -62,6 +67,11 @@ const Index = () => {
     date: string;
     barLength: number;
   }>>([]);
+
+  // Estados para corte de chapas
+  const [sheetProject, setSheetProject] = useState<SheetProject | null>(null);
+  const [sheetPieces, setSheetPieces] = useState<SheetCutPiece[]>([]);
+  const [sheetResults, setSheetResults] = useState<SheetOptimizationResult | null>(null);
 
   const handleOptimize = () => {
     if (pieces.length === 0) return;
@@ -162,20 +172,43 @@ const Index = () => {
     }
   };
 
+  const handleSheetOptimize = () => {
+    if (sheetPieces.length === 0 || !sheetProject) return;
+
+    const optimizer = new BottomLeftFillOptimizer(
+      sheetProject.sheetWidth,
+      sheetProject.sheetHeight,
+      sheetProject.kerf
+    );
+
+    const optimizationResult = optimizer.optimize(sheetPieces);
+    setSheetResults(optimizationResult);
+
+    console.log('Otimização de chapas concluída:', {
+      totalSheets: optimizationResult.totalSheets,
+      efficiency: optimizationResult.averageEfficiency,
+      totalWeight: optimizationResult.totalWeight
+    });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       <Header />
       
       <div className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
+          <TabsList className="grid w-full grid-cols-6 mb-6">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               Dashboard
             </TabsTrigger>
             <TabsTrigger value="optimize" className="flex items-center gap-2">
               <Calculator className="w-4 h-4" />
-              Otimização
+              Corte Linear
+            </TabsTrigger>
+            <TabsTrigger value="sheet-cutting" className="flex items-center gap-2">
+              <Square className="w-4 h-4" />
+              Corte Chapas
             </TabsTrigger>
             <TabsTrigger value="sobras" className="flex items-center gap-2">
               <Package className="w-4 h-4" />
@@ -225,6 +258,40 @@ const Index = () => {
             </div>
           </TabsContent>
 
+          <TabsContent value="sheet-cutting" className="space-y-6">
+            <div className="grid lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6">
+                <SheetProjectSelector
+                  project={sheetProject}
+                  setProject={setSheetProject}
+                />
+                
+                <SheetMaterialInput
+                  pieces={sheetPieces}
+                  setPieces={setSheetPieces}
+                  onOptimize={handleSheetOptimize}
+                  disabled={!sheetProject}
+                />
+              </div>
+              
+              <div className="lg:col-span-1">
+                {sheetResults && (
+                  <SheetOptimizationResults
+                    results={sheetResults}
+                    project={sheetProject}
+                  />
+                )}
+              </div>
+            </div>
+
+            {sheetResults && (
+              <SheetVisualization
+                results={sheetResults}
+                project={sheetProject}
+              />
+            )}
+          </TabsContent>
+
           <TabsContent value="sobras">
             <EstoqueSobras tipoMaterial={project?.tipoMaterial} />
           </TabsContent>
@@ -252,10 +319,16 @@ const Index = () => {
               <h3 className="text-xl font-semibold mb-4">Configurações do Sistema</h3>
               <div className="space-y-4">
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Configurações de Corte</h4>
+                  <h4 className="font-medium text-gray-900 mb-2">Configurações de Corte Linear</h4>
                   <p className="text-sm text-gray-600">• Perda por corte: 3mm</p>
                   <p className="text-sm text-gray-600">• Comprimento padrão de barras: 6000mm</p>
                   <p className="text-sm text-gray-600">• Algoritmo: First Fit Decreasing (FFD)</p>
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Configurações de Corte de Chapas</h4>
+                  <p className="text-sm text-gray-600">• Kerf padrão: 2mm (Plasma/Oxicorte)</p>
+                  <p className="text-sm text-gray-600">• Tamanho padrão: 2550x6000mm</p>
+                  <p className="text-sm text-gray-600">• Algoritmo: Bottom-Left-Fill (BLF)</p>
                 </div>
                 <div>
                   <h4 className="font-medium text-gray-900 mb-2">Integração Supabase</h4>
