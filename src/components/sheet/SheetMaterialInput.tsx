@@ -288,7 +288,7 @@ export const SheetMaterialInput = ({
                   <div className="flex-1 grid grid-cols-5 gap-4">
                     <Input
                       type="number"
-                      value={piece.width}
+                      value={piece.width.toString()}
                       onChange={(e) => {
                         const value = parseFloat(e.target.value);
                         if (!isNaN(value) && value > 0) {
@@ -301,7 +301,7 @@ export const SheetMaterialInput = ({
                     />
                     <Input
                       type="number"
-                      value={piece.height}
+                      value={piece.height.toString()}
                       onChange={(e) => {
                         const value = parseFloat(e.target.value);
                         if (!isNaN(value) && value > 0) {
@@ -314,7 +314,7 @@ export const SheetMaterialInput = ({
                     />
                     <Input
                       type="number"
-                      value={piece.quantity}
+                      value={piece.quantity.toString()}
                       onChange={(e) => {
                         const value = parseInt(e.target.value);
                         if (!isNaN(value) && value > 0) {
