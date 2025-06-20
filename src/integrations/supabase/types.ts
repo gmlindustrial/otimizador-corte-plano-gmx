@@ -308,6 +308,51 @@ export type Database = {
           },
         ]
       }
+      sheet_optimization_history: {
+        Row: {
+          algorithm: string
+          created_at: string
+          efficiency: number
+          id: string
+          material_cost: number
+          optimization_time: number
+          pieces: Json
+          project_id: string
+          project_name: string
+          results: Json
+          total_sheets: number
+          total_weight: number
+        }
+        Insert: {
+          algorithm?: string
+          created_at?: string
+          efficiency?: number
+          id?: string
+          material_cost?: number
+          optimization_time?: number
+          pieces: Json
+          project_id: string
+          project_name: string
+          results: Json
+          total_sheets?: number
+          total_weight?: number
+        }
+        Update: {
+          algorithm?: string
+          created_at?: string
+          efficiency?: number
+          id?: string
+          material_cost?: number
+          optimization_time?: number
+          pieces?: Json
+          project_id?: string
+          project_name?: string
+          results?: Json
+          total_sheets?: number
+          total_weight?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

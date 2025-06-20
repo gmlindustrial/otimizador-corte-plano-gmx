@@ -32,8 +32,8 @@ export class SheetHistoryService {
         .insert({
           project_id: project.id,
           project_name: project.name,
-          pieces: pieces,
-          results: results,
+          pieces: pieces as any,
+          results: results as any,
           algorithm: algorithm,
           optimization_time: optimizationTime,
           efficiency: results.averageEfficiency,
@@ -71,7 +71,11 @@ export class SheetHistoryService {
         return [];
       }
 
-      return data || [];
+      return (data as any[])?.map(item => ({
+        ...item,
+        pieces: item.pieces as SheetCutPiece[],
+        results: item.results as SheetOptimizationResult
+      })) || [];
     } catch (error) {
       console.error('Erro ao recuperar histórico:', error);
       return [];
@@ -101,8 +105,14 @@ export class SheetHistoryService {
         return { data: [], total: 0 };
       }
 
+      const transformedData = (data as any[])?.map(item => ({
+        ...item,
+        pieces: item.pieces as SheetCutPiece[],
+        results: item.results as SheetOptimizationResult
+      })) || [];
+
       return {
-        data: data || [],
+        data: transformedData,
         total: count || 0
       };
     } catch (error) {
@@ -153,7 +163,11 @@ export class SheetHistoryService {
         return [];
       }
 
-      return data || [];
+      return (data as any[])?.map(item => ({
+        ...item,
+        pieces: item.pieces as SheetCutPiece[],
+        results: item.results as SheetOptimizationResult
+      })) || [];
     } catch (error) {
       console.error('Erro ao buscar histórico:', error);
       return [];
@@ -318,8 +332,20 @@ export class SheetHistoryService {
         };
       }
 
-      const opt1 = data.find(item => item.id === id1);
-      const opt2 = data.find(item => item.id === id2);
+      const opt1Data = data.find(item => item.id === id1);
+      const opt2Data = data.find(item => item.id === id2);
+
+      const opt1: SheetOptimizationHistory | null = opt1Data ? {
+        ...opt1Data,
+        pieces: opt1Data.pieces as SheetCutPiece[],
+        results: opt1Data.results as SheetOptimizationResult
+      } : null;
+
+      const opt2: SheetOptimizationHistory | null = opt2Data ? {
+        ...opt2Data,
+        pieces: opt2Data.pieces as SheetCutPiece[],
+        results: opt2Data.results as SheetOptimizationResult
+      } : null;
 
       const comparison = {
         efficiency: {
@@ -345,8 +371,8 @@ export class SheetHistoryService {
       };
 
       return {
-        optimization1: opt1 || null,
-        optimization2: opt2 || null,
+        optimization1: opt1,
+        optimization2: opt2,
         comparison
       };
     } catch (error) {
