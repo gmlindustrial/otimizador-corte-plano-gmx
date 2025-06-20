@@ -73,8 +73,8 @@ export class SheetHistoryService {
 
       return (data as any[])?.map(item => ({
         ...item,
-        pieces: item.pieces as SheetCutPiece[],
-        results: item.results as SheetOptimizationResult
+        pieces: item.pieces as unknown as SheetCutPiece[],
+        results: item.results as unknown as SheetOptimizationResult
       })) || [];
     } catch (error) {
       console.error('Erro ao recuperar histórico:', error);
@@ -107,8 +107,8 @@ export class SheetHistoryService {
 
       const transformedData = (data as any[])?.map(item => ({
         ...item,
-        pieces: item.pieces as SheetCutPiece[],
-        results: item.results as SheetOptimizationResult
+        pieces: item.pieces as unknown as SheetCutPiece[],
+        results: item.results as unknown as SheetOptimizationResult
       })) || [];
 
       return {
@@ -165,8 +165,8 @@ export class SheetHistoryService {
 
       return (data as any[])?.map(item => ({
         ...item,
-        pieces: item.pieces as SheetCutPiece[],
-        results: item.results as SheetOptimizationResult
+        pieces: item.pieces as unknown as SheetCutPiece[],
+        results: item.results as unknown as SheetOptimizationResult
       })) || [];
     } catch (error) {
       console.error('Erro ao buscar histórico:', error);
@@ -337,14 +337,14 @@ export class SheetHistoryService {
 
       const opt1: SheetOptimizationHistory | null = opt1Data ? {
         ...opt1Data,
-        pieces: opt1Data.pieces as SheetCutPiece[],
-        results: opt1Data.results as SheetOptimizationResult
+        pieces: opt1Data.pieces as unknown as SheetCutPiece[],
+        results: opt1Data.results as unknown as SheetOptimizationResult
       } : null;
 
       const opt2: SheetOptimizationHistory | null = opt2Data ? {
         ...opt2Data,
-        pieces: opt2Data.pieces as SheetCutPiece[],
-        results: opt2Data.results as SheetOptimizationResult
+        pieces: opt2Data.pieces as unknown as SheetCutPiece[],
+        results: opt2Data.results as unknown as SheetOptimizationResult
       } : null;
 
       const comparison = {

@@ -1,147 +1,90 @@
 
 import type { SheetCutPiece, SheetProject, SheetOptimizationResult } from '@/types/sheet';
+import { BottomLeftFill } from '@/algorithms/sheet/BottomLeftFill';
+import { GeneticOptimizer } from '@/algorithms/sheet/GeneticOptimizer';
 import { MultiObjectiveOptimizer } from '@/algorithms/sheet/MultiObjectiveOptimizer';
-import { supabase } from '@/integrations/supabase/client';
-
-export interface OptimizationHistory {
-  id: string;
-  project_id: string;
-  pieces: SheetCutPiece[];
-  results: SheetOptimizationResult;
-  algorithm: string;
-  optimization_time: number;
-  created_at: string;
-}
 
 export class SheetOptimizationService {
-  private optimizer: MultiObjectiveOptimizer | null = null;
+  private bottomLeftFill: BottomLeftFill;
+  private geneticOptimizer: GeneticOptimizer;
+  private multiObjectiveOptimizer: MultiObjectiveOptimizer;
 
-  // Configurar otimizador baseado no projeto
-  configureOptimizer(project: SheetProject): void {
-    this.optimizer = new MultiObjectiveOptimizer(
-      project.sheetWidth,
-      project.sheetHeight,
-      project.kerf,
-      project.thickness,
-      project.material,
-      project.process
-    );
-
-    console.log('Otimizador configurado para projeto:', project.name);
+  constructor() {
+    this.bottomLeftFill = new BottomLeftFill();
+    this.geneticOptimizer = new GeneticOptimizer();
+    this.multiObjectiveOptimizer = new MultiObjectiveOptimizer();
   }
 
-  // Executar otimização
-  async optimize(pieces: SheetCutPiece[], project: SheetProject): Promise<SheetOptimizationResult & {
-    cuttingSequence?: any;
-    gcode?: string[];
-    optimizationMetrics?: any;
-  }> {
-    if (!this.optimizer) {
-      this.configureOptimizer(project);
-    }
-
-    console.log('Iniciando otimização para', pieces.length, 'tipos de peças');
+  // Otimização principal (Multi-Objetivo por padrão)
+  async optimize(pieces: SheetCutPiece[], project: SheetProject): Promise<SheetOptimizationResult> {
+    const sheetSize = { width: project.sheetWidth, height: project.sheetHeight };
     
-    const startTime = Date.now();
-    const result = await this.optimizer!.optimize(pieces);
-    const endTime = Date.now();
+    // Usar algoritmo multi-objetivo como padrão
+    const result = await this.multiObjectiveOptimizer.optimize(pieces, sheetSize, {
+      kerf: project.kerf,
+      thickness: project.thickness,
+      process: project.process,
+      material: project.material
+    });
 
-    // Salvar histórico no Supabase
-    await this.saveOptimizationHistory(project.id, pieces, result, endTime - startTime);
-
-    return result;
+    // Calcular métricas adicionais
+    const totalArea = sheetSize.width * sheetSize.height * result.totalSheets;
+    const usedArea = result.sheets.reduce((sum, sheet) => sum + sheet.utilizedArea, 0);
+    
+    return {
+      ...result,
+      averageEfficiency: (usedArea / totalArea) * 100,
+      totalWasteArea: totalArea - usedArea,
+      materialCost: this.calculateMaterialCost(result.totalWeight, project.material),
+      totalWeight: this.calculateTotalWeight(result.totalSheets, sheetSize, project.thickness, project.material)
+    };
   }
 
-  // Salvar histórico de otimização
-  private async saveOptimizationHistory(
-    projectId: string, 
-    pieces: SheetCutPiece[], 
-    results: SheetOptimizationResult,
-    optimizationTime: number
-  ): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from('sheet_optimization_history')
-        .insert({
-          project_id: projectId,
-          pieces: pieces,
-          results: results,
-          algorithm: 'MultiObjective',
-          optimization_time: optimizationTime
-        });
-
-      if (error) {
-        console.error('Erro ao salvar histórico:', error);
-      } else {
-        console.log('Histórico de otimização salvo com sucesso');
-      }
-    } catch (error) {
-      console.error('Erro ao salvar histórico:', error);
-    }
-  }
-
-  // Recuperar histórico de otimizações
-  async getOptimizationHistory(projectId: string): Promise<OptimizationHistory[]> {
-    try {
-      const { data, error } = await supabase
-        .from('sheet_optimization_history')
-        .select('*')
-        .eq('project_id', projectId)
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Erro ao recuperar histórico:', error);
-        return [];
-      }
-
-      return data || [];
-    } catch (error) {
-      console.error('Erro ao recuperar histórico:', error);
-      return [];
-    }
-  }
-
-  // Comparar diferentes algoritmos
+  // Comparar algoritmos
   async compareAlgorithms(pieces: SheetCutPiece[], project: SheetProject): Promise<{
     blf: SheetOptimizationResult;
     genetic: SheetOptimizationResult;
     comparison: any;
   }> {
-    this.configureOptimizer(project);
+    const sheetSize = { width: project.sheetWidth, height: project.sheetHeight };
+    
+    // Executar BLF
+    const blfResult = await this.bottomLeftFill.optimize(pieces, sheetSize, {
+      kerf: project.kerf
+    });
 
-    console.log('Comparando algoritmos BLF vs Genetic');
+    // Executar Genetic
+    const geneticResult = await this.geneticOptimizer.optimize(pieces, sheetSize, {
+      kerf: project.kerf,
+      generations: 50,
+      populationSize: 30
+    });
 
-    // Teste BLF
-    this.optimizer!.setOptimizationStrategy({ algorithm: 'BLF' });
-    const blfResult = await this.optimizer!.optimize(pieces);
-
-    // Teste Genetic
-    this.optimizer!.setOptimizationStrategy({ algorithm: 'Genetic' });
-    const geneticResult = await this.optimizer!.optimize(pieces);
+    // Calcular métricas para ambos
+    const blfFinal = this.enhanceResult(blfResult, sheetSize, project);
+    const geneticFinal = this.enhanceResult(geneticResult, sheetSize, project);
 
     const comparison = {
       efficiency: {
-        blf: blfResult.averageEfficiency,
-        genetic: geneticResult.averageEfficiency,
-        winner: blfResult.averageEfficiency > geneticResult.averageEfficiency ? 'BLF' : 'Genetic'
+        blf: blfFinal.averageEfficiency,
+        genetic: geneticFinal.averageEfficiency,
+        winner: blfFinal.averageEfficiency > geneticFinal.averageEfficiency ? 'BLF' : 'Genetic'
       },
       sheets: {
-        blf: blfResult.totalSheets,
-        genetic: geneticResult.totalSheets,
-        winner: blfResult.totalSheets < geneticResult.totalSheets ? 'BLF' : 'Genetic'
+        blf: blfFinal.totalSheets,
+        genetic: geneticFinal.totalSheets,
+        winner: blfFinal.totalSheets < geneticFinal.totalSheets ? 'BLF' : 'Genetic'
       },
-      waste: {
-        blf: blfResult.totalWasteArea,
-        genetic: geneticResult.totalWasteArea,
-        winner: blfResult.totalWasteArea < geneticResult.totalWasteArea ? 'BLF' : 'Genetic'
+      cost: {
+        blf: blfFinal.materialCost,
+        genetic: geneticFinal.materialCost,
+        winner: blfFinal.materialCost < geneticFinal.materialCost ? 'BLF' : 'Genetic'
       }
     };
 
-    console.log('Comparação concluída:', comparison);
-
     return {
-      blf: blfResult,
-      genetic: geneticResult,
+      blf: blfFinal,
+      genetic: geneticFinal,
       comparison
     };
   }
@@ -155,31 +98,51 @@ export class SheetOptimizationService {
     const errors: string[] = [];
     const warnings: string[] = [];
 
+    // Validações básicas
     pieces.forEach((piece, index) => {
-      // Verificar se cabe na chapa
-      const fitsNormal = piece.width <= project.sheetWidth && piece.height <= project.sheetHeight;
-      const fitsRotated = piece.allowRotation && 
-                         piece.height <= project.sheetWidth && 
-                         piece.width <= project.sheetHeight;
-
-      if (!fitsNormal && !fitsRotated) {
-        errors.push(`Peça ${piece.tag} (${piece.width}x${piece.height}mm) é muito grande para a chapa ${project.sheetWidth}x${project.sheetHeight}mm`);
+      if (piece.width <= 0 || piece.height <= 0) {
+        errors.push(`Peça ${index + 1} (${piece.tag}): Dimensões inválidas`);
       }
 
-      // Verificar kerf vs dimensões
-      if (piece.width < project.kerf * 3 || piece.height < project.kerf * 3) {
-        warnings.push(`Peça ${piece.tag} é muito pequena para o kerf ${project.kerf}mm (mínimo recomendado: ${project.kerf * 3}mm)`);
+      if (piece.quantity <= 0) {
+        errors.push(`Peça ${index + 1} (${piece.tag}): Quantidade deve ser maior que 0`);
       }
 
-      // Verificar processo vs espessura
-      if (project.process === 'plasma' && project.thickness > 50) {
-        warnings.push(`Plasma pode não ser adequado para espessura ${project.thickness}mm. Considere oxicorte.`);
+      if (!piece.tag || piece.tag.trim() === '') {
+        errors.push(`Peça ${index + 1}: Tag obrigatória`);
       }
 
-      if (project.process === 'oxicorte' && project.thickness < 6) {
-        warnings.push(`Oxicorte pode não ser adequado para espessura ${project.thickness}mm. Considere plasma.`);
+      // Verificar se peça cabe na chapa
+      const maxDim = Math.max(piece.width, piece.height);
+      const minDim = Math.min(piece.width, piece.height);
+      const sheetMaxDim = Math.max(project.sheetWidth, project.sheetHeight);
+      const sheetMinDim = Math.min(project.sheetWidth, project.sheetHeight);
+
+      if (maxDim > sheetMaxDim || minDim > sheetMinDim) {
+        if (!piece.allowRotation || (piece.width > sheetMaxDim || piece.height > sheetMaxDim)) {
+          errors.push(`Peça ${piece.tag}: Não cabe na chapa (${piece.width}x${piece.height}mm)`);
+        }
+      }
+
+      // Avisos
+      const pieceArea = piece.width * piece.height;
+      const sheetArea = project.sheetWidth * project.sheetHeight;
+      
+      if (pieceArea > sheetArea * 0.8) {
+        warnings.push(`Peça ${piece.tag}: Muito grande (>80% da chapa), pode reduzir eficiência`);
+      }
+
+      if (piece.width < 50 || piece.height < 50) {
+        warnings.push(`Peça ${piece.tag}: Muito pequena, considere agrupar peças similares`);
       }
     });
+
+    // Verificar tags duplicadas
+    const tags = pieces.map(p => p.tag);
+    const duplicateTags = tags.filter((tag, index) => tags.indexOf(tag) !== index);
+    if (duplicateTags.length > 0) {
+      warnings.push(`Tags duplicadas encontradas: ${[...new Set(duplicateTags)].join(', ')}`);
+    }
 
     return {
       valid: errors.length === 0,
@@ -189,26 +152,20 @@ export class SheetOptimizationService {
   }
 
   // Calcular estatísticas do projeto
-  calculateProjectStats(pieces: SheetCutPiece[], project: SheetProject): {
-    totalPieces: number;
-    totalArea: number;
-    estimatedSheets: number;
-    estimatedWeight: number;
-    estimatedCost: number;
-  } {
+  calculateProjectStats(pieces: SheetCutPiece[], project: SheetProject) {
     const totalPieces = pieces.reduce((sum, piece) => sum + piece.quantity, 0);
     const totalArea = pieces.reduce((sum, piece) => sum + (piece.width * piece.height * piece.quantity), 0);
     
     const sheetArea = project.sheetWidth * project.sheetHeight;
-    const estimatedSheets = Math.ceil(totalArea / (sheetArea * 0.85)); // 85% eficiência estimada
+    const estimatedSheets = Math.ceil(totalArea / (sheetArea * 0.85)); // 85% de eficiência estimada
     
-    const areaDm2 = (estimatedSheets * sheetArea) / 10000;
-    const thicknessDm = project.thickness / 10;
-    const volumeDm3 = areaDm2 * thicknessDm;
-    const estimatedWeight = volumeDm3 * 7.85; // Densidade do aço
+    const estimatedWeight = this.calculateTotalWeight(estimatedSheets, 
+      { width: project.sheetWidth, height: project.sheetHeight }, 
+      project.thickness, 
+      project.material
+    );
     
-    const costPerKg = 5.50; // Custo exemplo
-    const estimatedCost = estimatedWeight * costPerKg;
+    const estimatedCost = this.calculateMaterialCost(estimatedWeight, project.material);
 
     return {
       totalPieces,
@@ -219,83 +176,53 @@ export class SheetOptimizationService {
     };
   }
 
-  // Exportar dados para CAM/CNC
-  exportForCAM(result: SheetOptimizationResult, project: SheetProject): {
-    dxf: string;
-    gcode: string[];
-    report: string;
-  } {
-    const dxf = this.generateDXF(result, project);
-    const gcode = result.gcode || [];
-    const report = this.generateTechnicalReport(result, project);
-
+  // Método auxiliar para enriquecer resultados
+  private enhanceResult(result: SheetOptimizationResult, sheetSize: { width: number; height: number }, project: SheetProject): SheetOptimizationResult {
+    const totalArea = sheetSize.width * sheetSize.height * result.totalSheets;
+    const usedArea = result.sheets.reduce((sum, sheet) => sum + sheet.utilizedArea, 0);
+    
     return {
-      dxf,
-      gcode,
-      report
+      ...result,
+      averageEfficiency: (usedArea / totalArea) * 100,
+      totalWasteArea: totalArea - usedArea,
+      materialCost: this.calculateMaterialCost(result.totalWeight, project.material),
+      totalWeight: this.calculateTotalWeight(result.totalSheets, sheetSize, project.thickness, project.material)
     };
   }
 
-  private generateDXF(result: SheetOptimizationResult, project: SheetProject): string {
-    // Gerar DXF básico - implementação simplificada
-    let dxf = `0\nSECTION\n2\nENTITIES\n`;
+  // Calcular peso total
+  private calculateTotalWeight(totalSheets: number, sheetSize: { width: number; height: number }, thickness: number, material: string): number {
+    const sheetArea = (sheetSize.width * sheetSize.height) / 1000000; // m²
+    const volume = sheetArea * (thickness / 1000); // m³
     
-    result.sheets.forEach((sheet, sheetIndex) => {
-      sheet.pieces.forEach(piece => {
-        dxf += `0\nRECTANGLE\n`;
-        dxf += `10\n${piece.x}\n`;
-        dxf += `20\n${piece.y}\n`;
-        dxf += `11\n${piece.x + piece.width}\n`;
-        dxf += `21\n${piece.y + piece.height}\n`;
-        dxf += `8\n${piece.tag}\n`;
-      });
-    });
+    // Densidade dos materiais (kg/m³)
+    const densities: { [key: string]: number } = {
+      'A36': 7850,
+      'A572': 7850,
+      'A516': 7850,
+      'ASTM A36': 7850,
+      'default': 7850
+    };
     
-    dxf += `0\nENDSEC\n0\nEOF\n`;
-    return dxf;
+    const density = densities[material] || densities.default;
+    const sheetWeight = volume * density;
+    
+    return totalSheets * sheetWeight;
   }
 
-  private generateTechnicalReport(result: SheetOptimizationResult, project: SheetProject): string {
-    const report = `
-RELATÓRIO TÉCNICO - OTIMIZAÇÃO DE CHAPAS
-========================================
-
-Projeto: ${project.name}
-Número: ${project.projectNumber}
-Cliente: ${project.client}
-Data: ${new Date().toLocaleDateString('pt-BR')}
-
-ESPECIFICAÇÕES DA CHAPA:
-- Dimensões: ${project.sheetWidth}x${project.sheetHeight}mm
-- Espessura: ${project.thickness}mm
-- Material: ${project.material}
-- Processo: ${project.process.toUpperCase()}
-- Kerf: ${project.kerf}mm
-
-RESULTADOS DA OTIMIZAÇÃO:
-- Total de Chapas: ${result.totalSheets}
-- Eficiência Média: ${result.averageEfficiency.toFixed(2)}%
-- Área Desperdiçada: ${(result.totalWasteArea / 1000000).toFixed(2)} m²
-- Peso Total: ${result.totalWeight.toFixed(2)} kg
-- Custo Material: R$ ${result.materialCost.toFixed(2)}
-
-DETALHAMENTO POR CHAPA:
-${result.sheets.map((sheet, index) => `
-Chapa ${index + 1}:
-- Peças: ${sheet.pieces.length}
-- Eficiência: ${sheet.efficiency.toFixed(2)}%
-- Peso: ${sheet.weight.toFixed(2)} kg
-- Peças: ${sheet.pieces.map(p => p.tag).join(', ')}
-`).join('')}
-
-APROVAÇÃO QA:
-Operador: ${project.operador}
-Turno: ${project.turno}
-Data: ___/___/______
-Assinatura: _________________
-    `;
-
-    return report;
+  // Calcular custo do material
+  private calculateMaterialCost(weight: number, material: string): number {
+    // Preços por kg (valores exemplificativos)
+    const prices: { [key: string]: number } = {
+      'A36': 4.50,
+      'A572': 5.20,
+      'A516': 5.80,
+      'ASTM A36': 4.50,
+      'default': 4.50
+    };
+    
+    const pricePerKg = prices[material] || prices.default;
+    return weight * pricePerKg;
   }
 }
 
