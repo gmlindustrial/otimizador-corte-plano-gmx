@@ -8,20 +8,42 @@ interface Rectangle {
   height: number;
 }
 
+interface PlacePosition {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation: number;
+}
+
 export class BottomLeftFillOptimizer {
   private sheetWidth: number;
   private sheetHeight: number;
   private kerf: number;
-  private placedPieces: SheetPlacedPiece[] = [];
+  private thickness: number;
+  private material: string;
   private colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316'];
 
-  constructor(sheetWidth: number, sheetHeight: number, kerf: number = 2) {
+  constructor(sheetWidth: number, sheetHeight: number, kerf: number = 2, thickness: number = 6, material: string = 'A36') {
     this.sheetWidth = sheetWidth;
     this.sheetHeight = sheetHeight;
     this.kerf = kerf;
+    this.thickness = thickness;
+    this.material = material;
   }
 
   optimize(pieces: SheetCutPiece[]): SheetOptimizationResult {
+    // Validar se todas as peças cabem na chapa
+    const invalidPieces = pieces.filter(piece => {
+      const fitsNormal = piece.width <= this.sheetWidth && piece.height <= this.sheetHeight;
+      const fitsRotated = piece.allowRotation && piece.height <= this.sheetWidth && piece.width <= this.sheetHeight;
+      return !fitsNormal && !fitsRotated;
+    });
+
+    if (invalidPieces.length > 0) {
+      console.warn('Peças muito grandes para a chapa:', invalidPieces);
+    }
+
     const sheets: Array<{
       id: string;
       pieces: SheetPlacedPiece[];
@@ -43,7 +65,7 @@ export class BottomLeftFillOptimizer {
       }
     });
 
-    // Ordenar por área decrescente
+    // Ordenar por área decrescente para melhor aproveitamento
     expandedPieces.sort((a, b) => (b.width * b.height) - (a.width * a.height));
 
     let currentSheetIndex = 0;
@@ -53,18 +75,9 @@ export class BottomLeftFillOptimizer {
 
       // Tentar colocar na chapa atual
       if (sheets.length > 0) {
-        const position = this.findBestPosition(piece, sheets[currentSheetIndex].pieces);
+        const position = this.findBestBottomLeftPosition(piece, sheets[currentSheetIndex].pieces);
         if (position) {
-          const placedPiece: SheetPlacedPiece = {
-            x: position.x,
-            y: position.y,
-            width: position.width,
-            height: position.height,
-            rotation: position.rotation,
-            tag: piece.tag,
-            color: this.colors[expandedPieces.indexOf(piece) % this.colors.length],
-            originalPiece: piece
-          };
+          const placedPiece = this.createPlacedPiece(piece, position, expandedPieces.indexOf(piece));
           sheets[currentSheetIndex].pieces.push(placedPiece);
           placed = true;
         }
@@ -72,20 +85,10 @@ export class BottomLeftFillOptimizer {
 
       // Se não coube, criar nova chapa
       if (!placed) {
-        this.placedPieces = [];
-        const position = this.findBestPosition(piece, []);
+        const position = this.findBestBottomLeftPosition(piece, []);
         
         if (position) {
-          const placedPiece: SheetPlacedPiece = {
-            x: position.x,
-            y: position.y,
-            width: position.width,
-            height: position.height,
-            rotation: position.rotation,
-            tag: piece.tag,
-            color: this.colors[expandedPieces.indexOf(piece) % this.colors.length],
-            originalPiece: piece
-          };
+          const placedPiece = this.createPlacedPiece(piece, position, expandedPieces.indexOf(piece));
 
           sheets.push({
             id: `sheet-${sheets.length + 1}`,
@@ -101,18 +104,106 @@ export class BottomLeftFillOptimizer {
       }
     }
 
-    // Calcular eficiências
+    // Calcular eficiências e métricas
+    return this.calculateSheetMetrics(sheets);
+  }
+
+  private findBestBottomLeftPosition(piece: SheetCutPiece, existingPieces: SheetPlacedPiece[]): PlacePosition | null {
+    const orientations = piece.allowRotation ? 
+      [{ w: piece.width, h: piece.height, rot: 0 }, { w: piece.height, h: piece.width, rot: 90 }] :
+      [{ w: piece.width, h: piece.height, rot: 0 }];
+
+    let bestPosition: PlacePosition | null = null;
+    let bestScore = Infinity;
+
+    for (const orientation of orientations) {
+      // Tentar todas as posições possíveis com incremento de 1mm para maior precisão
+      for (let y = 0; y <= this.sheetHeight - orientation.h; y += 1) {
+        for (let x = 0; x <= this.sheetWidth - orientation.w; x += 1) {
+          if (this.canPlacePiece(x, y, orientation.w, orientation.h, existingPieces)) {
+            // Calcular score bottom-left (menor y, depois menor x)
+            const score = y * this.sheetWidth + x;
+            
+            if (score < bestScore) {
+              bestScore = score;
+              bestPosition = {
+                x,
+                y,
+                width: orientation.w,
+                height: orientation.h,
+                rotation: orientation.rot
+              };
+            }
+          }
+        }
+      }
+    }
+
+    return bestPosition;
+  }
+
+  private canPlacePiece(x: number, y: number, width: number, height: number, existingPieces: SheetPlacedPiece[]): boolean {
+    // Verificar limites da chapa
+    if (x + width > this.sheetWidth || y + height > this.sheetHeight) {
+      return false;
+    }
+
+    // Verificar sobreposição com peças existentes (considerando kerf)
+    const newRect: Rectangle = { 
+      x: x - this.kerf/2, 
+      y: y - this.kerf/2, 
+      width: width + this.kerf, 
+      height: height + this.kerf 
+    };
+    
+    for (const piece of existingPieces) {
+      const existingRect: Rectangle = { 
+        x: piece.x - this.kerf/2, 
+        y: piece.y - this.kerf/2, 
+        width: piece.width + this.kerf, 
+        height: piece.height + this.kerf 
+      };
+      
+      if (this.rectanglesOverlap(newRect, existingRect)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private rectanglesOverlap(rect1: Rectangle, rect2: Rectangle): boolean {
+    return !(rect1.x + rect1.width <= rect2.x || 
+             rect2.x + rect2.width <= rect1.x || 
+             rect1.y + rect1.height <= rect2.y || 
+             rect2.y + rect2.height <= rect1.y);
+  }
+
+  private createPlacedPiece(piece: SheetCutPiece, position: PlacePosition, colorIndex: number): SheetPlacedPiece {
+    return {
+      x: position.x,
+      y: position.y,
+      width: position.width,
+      height: position.height,
+      rotation: position.rotation,
+      tag: piece.tag,
+      color: this.colors[colorIndex % this.colors.length],
+      originalPiece: piece
+    };
+  }
+
+  private calculateSheetMetrics(sheets: Array<any>): SheetOptimizationResult {
     const sheetArea = this.sheetWidth * this.sheetHeight;
     let totalUtilizedArea = 0;
     let totalWeight = 0;
 
     sheets.forEach(sheet => {
-      sheet.utilizedArea = sheet.pieces.reduce((sum, piece) => 
+      sheet.utilizedArea = sheet.pieces.reduce((sum: number, piece: SheetPlacedPiece) => 
         sum + (piece.width * piece.height), 0
       );
       sheet.wasteArea = sheetArea - sheet.utilizedArea;
       sheet.efficiency = (sheet.utilizedArea / sheetArea) * 100;
-      sheet.weight = this.calculateSheetWeight(sheet.utilizedArea);
+      sheet.weight = this.calculateSheetWeight(sheetArea); // Peso da chapa inteira
       totalUtilizedArea += sheet.utilizedArea;
       totalWeight += sheet.weight;
     });
@@ -131,76 +222,33 @@ export class BottomLeftFillOptimizer {
     };
   }
 
-  private findBestPosition(piece: SheetCutPiece, existingPieces: SheetPlacedPiece[]): 
-    { x: number; y: number; width: number; height: number; rotation: number } | null {
-    
-    const orientations = piece.allowRotation ? 
-      [{ w: piece.width, h: piece.height, rot: 0 }, { w: piece.height, h: piece.width, rot: 90 }] :
-      [{ w: piece.width, h: piece.height, rot: 0 }];
-
-    for (const orientation of orientations) {
-      // Tentar posição bottom-left
-      for (let y = 0; y <= this.sheetHeight - orientation.h; y += 10) {
-        for (let x = 0; x <= this.sheetWidth - orientation.w; x += 10) {
-          if (this.canPlacePiece(x, y, orientation.w, orientation.h, existingPieces)) {
-            return {
-              x,
-              y,
-              width: orientation.w,
-              height: orientation.h,
-              rotation: orientation.rot
-            };
-          }
-        }
-      }
-    }
-
-    return null;
-  }
-
-  private canPlacePiece(x: number, y: number, width: number, height: number, existingPieces: SheetPlacedPiece[]): boolean {
-    // Verificar limites da chapa
-    if (x + width > this.sheetWidth || y + height > this.sheetHeight) {
-      return false;
-    }
-
-    // Verificar sobreposição com peças existentes (considerando kerf)
-    const newRect: Rectangle = { x: x - this.kerf, y: y - this.kerf, width: width + 2 * this.kerf, height: height + 2 * this.kerf };
-    
-    for (const piece of existingPieces) {
-      const existingRect: Rectangle = { 
-        x: piece.x - this.kerf, 
-        y: piece.y - this.kerf, 
-        width: piece.width + 2 * this.kerf, 
-        height: piece.height + 2 * this.kerf 
-      };
-      
-      if (this.rectanglesOverlap(newRect, existingRect)) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  private rectanglesOverlap(rect1: Rectangle, rect2: Rectangle): boolean {
-    return !(rect1.x + rect1.width <= rect2.x || 
-             rect2.x + rect2.width <= rect1.x || 
-             rect1.y + rect1.height <= rect2.y || 
-             rect2.y + rect2.height <= rect1.y);
-  }
-
-  private calculateSheetWeight(utilizedArea: number): number {
-    // A36: densidade 7.85 kg/dm³
+  private calculateSheetWeight(sheetArea: number): number {
+    // Cálculo correto: usar thickness do projeto, não sheetHeight
     // Área em mm² -> dm² -> volume em dm³ -> peso em kg
-    const areaDm2 = utilizedArea / 10000; // mm² para dm²
-    const volumeDm3 = areaDm2 * (this.sheetHeight / 1000); // assumindo espessura em mm
-    return volumeDm3 * 7.85; // kg
+    const areaDm2 = sheetArea / 10000; // mm² para dm²
+    const thicknessDm = this.thickness / 10; // mm para dm
+    const volumeDm3 = areaDm2 * thicknessDm;
+    
+    // Densidade por material
+    const densities: { [key: string]: number } = {
+      'A36': 7.85,
+      'A572': 7.85,
+      'A514': 7.85
+    };
+    
+    const density = densities[this.material] || 7.85;
+    return volumeDm3 * density; // kg
   }
 
   private calculateMaterialCost(totalWeight: number): number {
-    // Custo aproximado do aço A36 por kg (valor exemplo)
-    const costPerKg = 5.50; // R$ por kg
-    return totalWeight * costPerKg;
+    // Custo por material (valores exemplo - ajustar conforme mercado)
+    const costPerKg: { [key: string]: number } = {
+      'A36': 5.50,
+      'A572': 6.20,
+      'A514': 8.90
+    };
+    
+    const cost = costPerKg[this.material] || 5.50;
+    return totalWeight * cost;
   }
 }
