@@ -34,6 +34,9 @@ export const PieceInputForm = ({
   onAddPiece,
   onKeyPress
 }: PieceInputFormProps) => {
+  const isAddButtonDisabled = !width || !height || !tag.trim() || 
+    parseFloat(width) <= 0 || parseFloat(height) <= 0 || parseInt(quantity) <= 0;
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium text-gray-900">Entrada de Peças</h3>
@@ -109,7 +112,7 @@ export const PieceInputForm = ({
         <Button 
           onClick={onAddPiece} 
           className="h-12 bg-purple-600 hover:bg-purple-700"
-          disabled={!width || !height || !tag.trim() || parseFloat(width) <= 0 || parseFloat(height) <= 0}
+          disabled={isAddButtonDisabled}
         >
           <Plus className="w-4 h-4 mr-2" />
           Adicionar
