@@ -289,7 +289,12 @@ export const SheetMaterialInput = ({
                     <Input
                       type="number"
                       value={piece.width}
-                      onChange={(e) => updatePiece(piece.id, 'width', parseFloat(e.target.value) || 0)}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value);
+                        if (!isNaN(value)) {
+                          updatePiece(piece.id, 'width', value);
+                        }
+                      }}
                       className="h-10"
                       placeholder="Largura"
                       min="1"
@@ -297,7 +302,12 @@ export const SheetMaterialInput = ({
                     <Input
                       type="number"
                       value={piece.height}
-                      onChange={(e) => updatePiece(piece.id, 'height', parseFloat(e.target.value) || 0)}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value);
+                        if (!isNaN(value)) {
+                          updatePiece(piece.id, 'height', value);
+                        }
+                      }}
                       className="h-10"
                       placeholder="Altura"
                       min="1"
@@ -305,7 +315,12 @@ export const SheetMaterialInput = ({
                     <Input
                       type="number"
                       value={piece.quantity}
-                      onChange={(e) => updatePiece(piece.id, 'quantity', parseInt(e.target.value) || 1)}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
+                        if (!isNaN(value)) {
+                          updatePiece(piece.id, 'quantity', value);
+                        }
+                      }}
                       min="1"
                       className="h-10"
                       placeholder="Qtd"
