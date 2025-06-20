@@ -34,8 +34,12 @@ export const PieceInputForm = ({
   onAddPiece,
   onKeyPress
 }: PieceInputFormProps) => {
+  const widthNum = parseFloat(width) || 0;
+  const heightNum = parseFloat(height) || 0;
+  const quantityNum = parseInt(quantity) || 0;
+  
   const isAddButtonDisabled = !width || !height || !tag.trim() || 
-    parseFloat(width) <= 0 || parseFloat(height) <= 0 || parseInt(quantity) <= 0;
+    widthNum <= 0 || heightNum <= 0 || quantityNum <= 0;
 
   return (
     <div className="space-y-4">
