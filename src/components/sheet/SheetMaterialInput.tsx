@@ -291,7 +291,7 @@ export const SheetMaterialInput = ({
                       value={piece.width}
                       onChange={(e) => {
                         const value = parseFloat(e.target.value);
-                        if (!isNaN(value)) {
+                        if (!isNaN(value) && value > 0) {
                           updatePiece(piece.id, 'width', value);
                         }
                       }}
@@ -304,7 +304,7 @@ export const SheetMaterialInput = ({
                       value={piece.height}
                       onChange={(e) => {
                         const value = parseFloat(e.target.value);
-                        if (!isNaN(value)) {
+                        if (!isNaN(value) && value > 0) {
                           updatePiece(piece.id, 'height', value);
                         }
                       }}
@@ -317,7 +317,7 @@ export const SheetMaterialInput = ({
                       value={piece.quantity}
                       onChange={(e) => {
                         const value = parseInt(e.target.value);
-                        if (!isNaN(value)) {
+                        if (!isNaN(value) && value > 0) {
                           updatePiece(piece.id, 'quantity', value);
                         }
                       }}
