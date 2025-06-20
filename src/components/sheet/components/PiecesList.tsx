@@ -44,6 +44,10 @@ export const PiecesList = ({
     }
   };
 
+  const handleTagChange = (id: string, value: string) => {
+    onUpdatePiece(id, 'tag', value);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -93,7 +97,7 @@ export const PiecesList = ({
                 />
                 <Input
                   value={piece.tag}
-                  onChange={(e) => onUpdatePiece(piece.id, 'tag', e.target.value)}
+                  onChange={(e) => handleTagChange(piece.id, e.target.value)}
                   className="h-10"
                   placeholder="Tag"
                   maxLength="20"
