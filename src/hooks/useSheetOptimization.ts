@@ -7,11 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 
 interface UseSheetOptimizationReturn {
   isOptimizing: boolean;
-  results: (SheetOptimizationResult & {
-    cuttingSequence?: any;
-    gcode?: string[];
-    optimizationMetrics?: any;
-  }) | null;
+  results: SheetOptimizationResult | null;
   validation: {
     valid: boolean;
     errors: string[];
@@ -28,11 +24,7 @@ interface UseSheetOptimizationReturn {
 export const useSheetOptimization = (): UseSheetOptimizationReturn => {
   const { toast } = useToast();
   const [isOptimizing, setIsOptimizing] = useState(false);
-  const [results, setResults] = useState<(SheetOptimizationResult & {
-    cuttingSequence?: any;
-    gcode?: string[];
-    optimizationMetrics?: any;
-  }) | null>(null);
+  const [results, setResults] = useState<SheetOptimizationResult | null>(null);
   const [validation, setValidation] = useState<{
     valid: boolean;
     errors: string[];
@@ -87,11 +79,12 @@ export const useSheetOptimization = (): UseSheetOptimizationReturn => {
       setResults(optimizationResult);
 
       // Salvar no histórico
+      const algorithmUsed = optimizationResult.optimizationMetrics?.algorithm || 'MultiObjective';
       await sheetHistoryService.saveOptimization(
         project,
         pieces,
         optimizationResult,
-        optimizationResult.optimizationMetrics?.algorithm || 'MultiObjective',
+        algorithmUsed,
         optimizationTime
       );
 

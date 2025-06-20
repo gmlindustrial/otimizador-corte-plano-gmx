@@ -55,4 +55,11 @@ export interface SheetOptimizationResult {
   averageEfficiency: number;
   totalWeight: number;       // importante para A36/A572
   materialCost: number;
+  cuttingSequence?: any;     // sequência de corte
+  gcode?: string[];          // código G
+  optimizationMetrics?: {    // métricas de otimização
+    optimizationTime: number;
+    algorithm: string;
+    convergence: boolean;
+  };
 }
