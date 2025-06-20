@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -386,11 +387,11 @@ export const CadastroManager = ({ onUpdateData }: CadastroManagerProps) => {
                   <Input
                     id="material-comprimento"
                     type="number"
-                    value={novoMaterial.comprimeto_padrao}
+                    value={novoMaterial.comprimento_padrao}
                     onChange={(e) =>
                       setNovoMaterial((prev) => ({
                         ...prev,
-                        comprimeto_padrao: Number(e.target.value),
+                        comprimento_padrao: Number(e.target.value),
                       }))
                     }
                     placeholder="6000"
