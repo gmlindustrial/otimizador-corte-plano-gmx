@@ -4,7 +4,7 @@ import { Header } from '@/components/Header';
 import { Dashboard } from '@/components/Dashboard';
 import { HistoryPanel } from '@/components/HistoryPanel';
 import { EstoqueSobras } from '@/components/EstoqueSobras';
-import { CadastroManager } from '@/components/CadastroManager';
+import { CadastroManagerIntegrated } from '@/components/CadastroManagerIntegrated';
 import { SheetCuttingSettings } from '@/components/settings/SheetCuttingSettings';
 import { BarCuttingSettings } from '@/components/settings/BarCuttingSettings';
 import { ReportsManager } from '@/components/reports/ReportsManager';
@@ -188,7 +188,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
-            <CadastroManager onUpdateData={() => {
+            <CadastroManagerIntegrated onUpdateData={() => {
               console.log('Dados atualizados - recarregando listas...');
             }} />
             
