@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import type { SheetCutPiece, SheetProject, SheetOptimizationResult } from '@/types/sheet';
 import { sheetOptimizationService } from '@/services/SheetOptimizationService';
@@ -14,6 +13,16 @@ interface UseSheetOptimizationReturn {
     warnings: string[];
   } | null;
   projectStats: any | null;
+  optimizationSettings: {
+    algorithm: 'BLF' | 'Genetic' | 'MultiObjective';
+    maxGenerations: number;
+    populationSize: number;
+    mutationRate: number;
+    enableNesting: boolean;
+    priorityMode: 'efficiency' | 'speed' | 'balanced';
+    timeLimit: number;
+  };
+  setOptimizationSettings: (settings: any) => void;
   optimize: (pieces: SheetCutPiece[], project: SheetProject) => Promise<void>;
   validatePieces: (pieces: SheetCutPiece[], project: SheetProject) => void;
   calculateStats: (pieces: SheetCutPiece[], project: SheetProject) => void;
@@ -31,6 +40,15 @@ export const useSheetOptimization = (): UseSheetOptimizationReturn => {
     warnings: string[];
   } | null>(null);
   const [projectStats, setProjectStats] = useState<any | null>(null);
+  const [optimizationSettings, setOptimizationSettings] = useState({
+    algorithm: 'MultiObjective' as 'BLF' | 'Genetic' | 'MultiObjective',
+    maxGenerations: 250,
+    populationSize: 75,
+    mutationRate: 0.15,
+    enableNesting: true,
+    priorityMode: 'balanced' as 'efficiency' | 'speed' | 'balanced',
+    timeLimit: 120
+  });
 
   const optimize = useCallback(async (pieces: SheetCutPiece[], project: SheetProject) => {
     if (pieces.length === 0) {
@@ -67,11 +85,11 @@ export const useSheetOptimization = (): UseSheetOptimizationReturn => {
         });
       }
 
-      // Executar otimização
-      console.log('Iniciando otimização de chapas...');
+      // Executar otimização com configurações avançadas
+      console.log('Iniciando otimização de chapas com configurações:', optimizationSettings);
       const startTime = Date.now();
       
-      const optimizationResult = await sheetOptimizationService.optimize(pieces, project);
+      const optimizationResult = await sheetOptimizationService.optimize(pieces, project, optimizationSettings);
       
       const endTime = Date.now();
       const optimizationTime = endTime - startTime;
@@ -79,7 +97,7 @@ export const useSheetOptimization = (): UseSheetOptimizationReturn => {
       setResults(optimizationResult);
 
       // Salvar no histórico
-      const algorithmUsed = optimizationResult.optimizationMetrics?.algorithm || 'MultiObjective';
+      const algorithmUsed = optimizationSettings.algorithm;
       await sheetHistoryService.saveOptimization(
         project,
         pieces,
@@ -104,7 +122,7 @@ export const useSheetOptimization = (): UseSheetOptimizationReturn => {
     } finally {
       setIsOptimizing(false);
     }
-  }, [toast]);
+  }, [toast, optimizationSettings]);
 
   const validatePieces = useCallback((pieces: SheetCutPiece[], project: SheetProject) => {
     const validationResult = sheetOptimizationService.validatePieces(pieces, project);
@@ -181,6 +199,8 @@ export const useSheetOptimization = (): UseSheetOptimizationReturn => {
     results,
     validation,
     projectStats,
+    optimizationSettings,
+    setOptimizationSettings,
     optimize,
     validatePieces,
     calculateStats,
