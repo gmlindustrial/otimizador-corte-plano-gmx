@@ -57,7 +57,7 @@ export const PiecesList = ({
                   }}
                   className="h-10"
                   placeholder="Largura"
-                  min={1}
+                  min="1"
                 />
                 <Input
                   type="number"
@@ -70,7 +70,7 @@ export const PiecesList = ({
                   }}
                   className="h-10"
                   placeholder="Altura"
-                  min={1}
+                  min="1"
                 />
                 <Input
                   type="number"
@@ -81,7 +81,7 @@ export const PiecesList = ({
                       onUpdatePiece(piece.id, 'quantity', value);
                     }
                   }}
-                  min={1}
+                  min="1"
                   className="h-10"
                   placeholder="Qtd"
                 />

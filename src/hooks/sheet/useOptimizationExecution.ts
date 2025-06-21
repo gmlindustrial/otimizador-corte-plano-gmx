@@ -59,11 +59,14 @@ export const useOptimizationExecution = () => {
 
       try {
         await sheetHistoryService.saveOptimization(
-          project,
-          pieces,
-          optimizationResult,
-          optimizationSettings.algorithm,
-          optimizationTime
+          {
+            project,
+            pieces,
+            result: optimizationResult,
+            algorithm: optimizationSettings.algorithm,
+            optimizationTime
+          },
+          optimizationSettings.algorithm
         );
       } catch (historyError) {
         console.error('Erro ao salvar no histórico:', historyError);

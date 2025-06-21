@@ -56,8 +56,8 @@ export const PieceInputForm = ({
             onKeyPress={onKeyPress}
             placeholder="Ex: 200"
             className="h-12"
-            min={1}
-            step={1}
+            min="1"
+            step="1"
           />
         </div>
         
@@ -71,8 +71,8 @@ export const PieceInputForm = ({
             onKeyPress={onKeyPress}
             placeholder="Ex: 150"
             className="h-12"
-            min={1}
-            step={1}
+            min="1"
+            step="1"
           />
         </div>
         
@@ -85,7 +85,7 @@ export const PieceInputForm = ({
             onChange={(e) => setQuantity(e.target.value)}
             onKeyPress={onKeyPress}
             placeholder="1"
-            min={1}
+            min="1"
             className="h-12"
           />
         </div>
