@@ -8,6 +8,8 @@ import { ProjectStats } from './components/ProjectStats';
 import { PieceInputForm } from './components/PieceInputForm';
 import { PiecesList } from './components/PiecesList';
 import { OptimizeButton } from './components/OptimizeButton';
+import { SheetFileUpload } from './components/SheetFileUpload';
+import { SheetDuplicateManager } from './components/SheetDuplicateManager';
 
 interface SheetMaterialInputProps {
   pieces: SheetCutPiece[];
@@ -28,6 +30,12 @@ interface SheetMaterialInputProps {
   } | null;
 }
 
+interface DuplicateItem {
+  existing: SheetCutPiece;
+  imported: SheetCutPiece;
+  conflicts: string[];
+}
+
 export const SheetMaterialInput = ({ 
   pieces, 
   setPieces, 
@@ -42,6 +50,9 @@ export const SheetMaterialInput = ({
   const [tag, setTag] = useState('');
   const [allowRotation, setAllowRotation] = useState(true);
   const [showValidation, setShowValidation] = useState(false);
+  const [showDuplicateManager, setShowDuplicateManager] = useState(false);
+  const [pendingDuplicates, setPendingDuplicates] = useState<DuplicateItem[]>([]);
+  const [pendingImportedPieces, setPendingImportedPieces] = useState<SheetCutPiece[]>([]);
 
   useEffect(() => {
     setShowValidation(validation !== null);
@@ -60,6 +71,12 @@ export const SheetMaterialInput = ({
         quantity: pieceQuantity,
         tag: tag.trim().toUpperCase(),
         allowRotation,
+        geometry: {
+          type: 'rectangle',
+          boundingBox: { width: pieceWidth, height: pieceHeight },
+          area: pieceWidth * pieceHeight,
+          perimeter: 2 * (pieceWidth + pieceHeight)
+        }
       };
       setPieces([...pieces, newPiece]);
       setWidth('');
@@ -87,6 +104,43 @@ export const SheetMaterialInput = ({
     ));
   };
 
+  const handleImportedData = (importedPieces: SheetCutPiece[], duplicates?: DuplicateItem[]) => {
+    if (duplicates && duplicates.length > 0) {
+      setPendingDuplicates(duplicates);
+      setPendingImportedPieces(importedPieces);
+      setShowDuplicateManager(true);
+      return;
+    }
+    
+    setPieces([...pieces, ...importedPieces]);
+    console.log(`${importedPieces.length} peças importadas com sucesso!`);
+  };
+
+  const handleDuplicateResolution = (action: 'update' | 'ignore' | 'duplicate', resolvedPieces: SheetCutPiece[]) => {
+    setPieces([...pieces, ...resolvedPieces]);
+    setShowDuplicateManager(false);
+    setPendingDuplicates([]);
+    setPendingImportedPieces([]);
+    console.log(`${resolvedPieces.length} peças processadas após resolução de duplicidade!`);
+  };
+
+  const handleCancelDuplicateManager = () => {
+    setShowDuplicateManager(false);
+    setPendingDuplicates([]);
+    setPendingImportedPieces([]);
+    console.log('Importação cancelada pelo usuário.');
+  };
+
+  if (showDuplicateManager) {
+    return (
+      <SheetDuplicateManager
+        duplicates={pendingDuplicates}
+        onResolved={handleDuplicateResolution}
+        onCancel={handleCancelDuplicateManager}
+      />
+    );
+  }
+
   const totalArea = pieces.reduce((sum, piece) => sum + (piece.width * piece.height * piece.quantity), 0);
   const totalPieces = pieces.reduce((sum, piece) => sum + piece.quantity, 0);
 
@@ -101,7 +155,7 @@ export const SheetMaterialInput = ({
       <CardHeader className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-t-lg">
         <CardTitle className="flex items-center gap-2">
           <Square className="w-5 h-5" />
-          Lista de Peças - Corte de Chapas
+          Lista de Peças - Corte de Chapas 2D
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 space-y-6">
@@ -109,20 +163,27 @@ export const SheetMaterialInput = ({
         
         <ProjectStats projectStats={projectStats} />
 
-        <PieceInputForm
-          width={width}
-          height={height}
-          quantity={quantity}
-          tag={tag}
-          allowRotation={allowRotation}
-          setWidth={setWidth}
-          setHeight={setHeight}
-          setQuantity={setQuantity}
-          setTag={setTag}
-          setAllowRotation={setAllowRotation}
-          onAddPiece={addPiece}
-          onKeyPress={handleKeyPress}
+        <SheetFileUpload 
+          onDataImported={handleImportedData}
+          currentPieces={pieces}
         />
+
+        <div className="border-t pt-6">
+          <PieceInputForm
+            width={width}
+            height={height}
+            quantity={quantity}
+            tag={tag}
+            allowRotation={allowRotation}
+            setWidth={setWidth}
+            setHeight={setHeight}
+            setQuantity={setQuantity}
+            setTag={setTag}
+            setAllowRotation={setAllowRotation}
+            onAddPiece={addPiece}
+            onKeyPress={handleKeyPress}
+          />
+        </div>
 
         <PiecesList
           pieces={pieces}

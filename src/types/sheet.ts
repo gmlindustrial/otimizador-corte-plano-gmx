@@ -7,6 +7,16 @@ export interface SheetCutPiece {
   tag: string;        // CH581, CH582, etc.
   allowRotation: boolean; // permite rotação 90°
   thickness?: number; // para diferentes espessuras
+  geometry?: {
+    type: 'rectangle' | 'polygon' | 'circle' | 'complex';
+    points?: Array<{ x: number; y: number }>; // para polígonos complexos
+    radius?: number; // para círculos
+    boundingBox: { width: number; height: number };
+    area: number;
+    perimeter: number;
+  };
+  material?: string;
+  cadFile?: string; // nome do arquivo CAD original
 }
 
 export interface SheetProject {
