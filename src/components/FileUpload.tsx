@@ -22,6 +22,13 @@ export const FileUpload = ({ onDataImported, currentPieces }: FileUploadProps) =
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [previewData, setPreviewData] = useState<{
+    obra?: string;
+    totalPieces: number;
+    conjuntos: string[];
+    materiais: string[];
+    perfis: string[];
+  } | null>(null);
 
   const checkForDuplicates = (newPieces: CutPiece[]): DuplicateItem[] => {
     const duplicateItems: DuplicateItem[] = [];
@@ -40,10 +47,26 @@ export const FileUpload = ({ onDataImported, currentPieces }: FileUploadProps) =
     return duplicateItems;
   };
 
+  const generatePreviewData = (pieces: CutPiece[]) => {
+    const obra = (pieces[0] as any)?.obra || '';
+    const conjuntos = [...new Set(pieces.map((p: any) => p.conjunto).filter(Boolean))];
+    const materiais = [...new Set(pieces.map((p: any) => p.material).filter(Boolean))];
+    const perfis = [...new Set(pieces.map((p: any) => p.perfil).filter(Boolean))];
+    
+    setPreviewData({
+      obra,
+      totalPieces: pieces.length,
+      conjuntos,
+      materiais,
+      perfis
+    });
+  };
+
   const handleFileSelect = async (file: File) => {
     setUploading(true);
     setProgress(0);
     setError(null);
+    setPreviewData(null);
 
     try {
       let pieces: CutPiece[] = [];
@@ -85,6 +108,11 @@ export const FileUpload = ({ onDataImported, currentPieces }: FileUploadProps) =
         throw new Error('Nenhum dado válido encontrado no arquivo');
       }
 
+      // Gerar preview se for arquivo AutoCAD
+      if ((pieces[0] as any)?.obra) {
+        generatePreviewData(pieces);
+      }
+
       // Verificar duplicatas
       const duplicateItems = checkForDuplicates(pieces);
       
@@ -112,6 +140,25 @@ export const FileUpload = ({ onDataImported, currentPieces }: FileUploadProps) =
       <CardContent className="space-y-4">
         <FileUploadArea onFileSelect={handleFileSelect} uploading={uploading} />
         <FileProcessingStatus uploading={uploading} progress={progress} error={error} />
+        
+        {previewData && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
+            <h4 className="font-medium text-blue-900">Preview - Arquivo AutoCAD Detectado</h4>
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p><strong>Obra:</strong> {previewData.obra}</p>
+                <p><strong>Total de Peças:</strong> {previewData.totalPieces}</p>
+              </div>
+              <div>
+                <p><strong>Conjuntos:</strong> {previewData.conjuntos.join(', ')}</p>
+                <p><strong>Materiais:</strong> {previewData.materiais.join(', ')}</p>
+              </div>
+            </div>
+            <p className="text-sm text-blue-700">
+              <strong>Perfis:</strong> {previewData.perfis.join(', ')}
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

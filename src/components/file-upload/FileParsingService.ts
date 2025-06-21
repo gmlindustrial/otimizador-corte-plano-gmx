@@ -1,5 +1,5 @@
-
 import { CutPiece } from '@/pages/Index';
+import { AutoCADCutPiece } from '@/types/autocad';
 
 export class FileParsingService {
   static parseCSV(content: string): CutPiece[] {
@@ -27,6 +27,99 @@ export class FileParsingService {
     return pieces;
   }
 
+  static parseAutoCADReport(content: string): CutPiece[] {
+    console.log('Iniciando parsing de arquivo AutoCAD...');
+    
+    const lines = content.split('\n');
+    const pieces: CutPiece[] = [];
+    
+    // Verificar se é arquivo AutoCAD válido
+    const isAutoCADFile = lines.some(line => 
+      line.includes('LM por Conjunto') || 
+      line.includes('METALMAX') ||
+      line.includes('OBRA:')
+    );
+    
+    if (!isAutoCADFile) {
+      throw new Error('Arquivo não parece ser um relatório AutoCAD válido');
+    }
+
+    let obra = '';
+    let currentConjunto = '';
+    
+    // Extrair nome da obra
+    for (const line of lines) {
+      const obraMatch = line.match(/OBRA:\s*(.+?)(?:\s+Data:|$)/);
+      if (obraMatch) {
+        obra = obraMatch[1].trim();
+        console.log('Obra identificada:', obra);
+        break;
+      }
+    }
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // Detectar conjunto entre linhas pontilhadas
+      if (line.match(/^-{5,}$/)) {
+        // Verificar se a próxima linha contém um conjunto
+        if (i + 1 < lines.length) {
+          const nextLine = lines[i + 1].trim();
+          const conjuntoMatch = nextLine.match(/^(V\.\d+)\s+(\d+)\s+([A-Z])$/);
+          if (conjuntoMatch) {
+            currentConjunto = conjuntoMatch[1]; // V.172, V.173, etc.
+            console.log('Conjunto identificado:', currentConjunto);
+            i++; // Pular a linha do conjunto
+            continue;
+          }
+        }
+      }
+
+      // Parsear linha de peça
+      if (currentConjunto && line.length > 0 && !line.match(/^-+$/) && !line.includes('Conjunto')) {
+        // Regex para capturar: posição, quantidade, perfil, material, dimensões, peso
+        const pieceMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(L\s+\d+\s+X\s+[\d.]+)\s+(A\d+)\s+(\d+)\s+x\s+(\d+)\s+([\d.]+)$/);
+        
+        if (pieceMatch) {
+          const [, posicao, quantidade, perfil, material, comprimento, largura, peso] = pieceMatch;
+          
+          const piece: CutPiece = {
+            id: `autocad-${currentConjunto}-${posicao}-${Date.now()}`,
+            length: parseInt(comprimento),
+            quantity: parseInt(quantidade),
+            // Campos estendidos como propriedades customizadas
+            ...({
+              obra,
+              conjunto: currentConjunto,
+              posicao,
+              perfil: perfil.trim(),
+              material,
+              peso: parseFloat(peso),
+              tag: `${currentConjunto}-${posicao}`,
+              dimensoes: {
+                comprimento: parseInt(comprimento),
+                largura: parseInt(largura)
+              }
+            } as any)
+          };
+
+          pieces.push(piece);
+          
+          console.log(`Peça adicionada: ${piece.tag} - ${piece.length}mm - Qtd: ${piece.quantity}`);
+        }
+      }
+    }
+
+    if (pieces.length === 0) {
+      throw new Error('Nenhuma peça foi encontrada no arquivo AutoCAD');
+    }
+
+    console.log(`Total de peças extraídas: ${pieces.length}`);
+    console.log(`Obra: ${obra}`);
+    
+    return pieces;
+  }
+
   static async parseExcel(file: File): Promise<CutPiece[]> {
     // Simulação de parsing Excel - em produção usaria biblioteca como xlsx
     return new Promise((resolve) => {
@@ -41,6 +134,11 @@ export class FileParsingService {
   }
 
   static parseTXT(content: string): CutPiece[] {
+    // Verificar se é arquivo AutoCAD primeiro
+    if (content.includes('LM por Conjunto') || content.includes('OBRA:')) {
+      return this.parseAutoCADReport(content);
+    }
+    
     const lines = content.split('\n').filter(line => line.trim());
     const pieces: CutPiece[] = [];
     
