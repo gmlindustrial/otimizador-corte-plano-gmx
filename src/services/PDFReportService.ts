@@ -1,5 +1,5 @@
 
-import jsPDF from 'jspdf';
+import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import type { SheetOptimizationResult, SheetProject } from '@/types/sheet';
 import type { OptimizationHistoryEntry } from '@/hooks/useOptimizationHistory';
