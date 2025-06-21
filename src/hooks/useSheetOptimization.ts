@@ -96,14 +96,19 @@ export const useSheetOptimization = (): UseSheetOptimizationReturn => {
 
       setResults(optimizationResult);
 
-      // Salvar no histórico com todos os parâmetros necessários
-      await sheetHistoryService.saveOptimization(
-        project,
-        pieces,
-        optimizationResult,
-        optimizationSettings.algorithm,
-        optimizationTime
-      );
+      // Salvar no histórico - matching the expected signature
+      try {
+        await sheetHistoryService.saveOptimization(
+          project,
+          pieces,
+          optimizationResult,
+          optimizationSettings.algorithm,
+          optimizationTime
+        );
+      } catch (historyError) {
+        console.error('Erro ao salvar no histórico:', historyError);
+        // Continue even if history save fails
+      }
 
       toast({
         title: "Otimização Concluída",
