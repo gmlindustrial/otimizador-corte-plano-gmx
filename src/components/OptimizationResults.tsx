@@ -42,21 +42,11 @@ export const OptimizationResults = ({ results, barLength, project }: Optimizatio
         return;
       }
 
-      // Criar entrada temporária para o PDF
-      const historyEntry = {
-        id: Date.now().toString(),
-        date: new Date().toISOString(),
-        project,
-        pieces: [], // Será calculado a partir dos results
-        results,
-        barLength
-      };
-
-      await PDFReportService.generateLinearReport(historyEntry);
+      await PDFReportService.generateCompleteLinearReport(results, barLength, project);
       
       toast({
         title: "PDF Exportado",
-        description: "Relatório PDF foi gerado com sucesso",
+        description: "Relatório PDF completo foi gerado com sucesso",
       });
     } catch (error) {
       console.error('Erro ao exportar PDF:', error);
@@ -70,48 +60,101 @@ export const OptimizationResults = ({ results, barLength, project }: Optimizatio
 
   const handleExportExcel = () => {
     try {
-      // Criar dados para Excel
-      const headers = ['Barra', 'Peça', 'Comprimento (mm)', 'Sobra (mm)', 'Eficiência (%)'];
+      // Estrutura similar ao AutoCAD para facilitar validação
+      const headers = [
+        'Conjunto',
+        'Posição', 
+        'Quantidade',
+        'Perfil/Material',
+        'Comprimento (mm)',
+        'Barra Designada',
+        'Eficiência Barra (%)',
+        'Sobra (mm)',
+        'Status'
+      ];
+      
       const rows: string[][] = [headers];
 
+      // Adicionar cada peça com informações detalhadas
       results.bars.forEach((bar, barIndex) => {
         bar.pieces.forEach((piece, pieceIndex) => {
           rows.push([
-            `Barra ${barIndex + 1}`,
-            `Peça ${pieceIndex + 1}`,
-            piece.length.toString(),
-            pieceIndex === bar.pieces.length - 1 ? bar.waste.toString() : '0',
-            pieceIndex === bar.pieces.length - 1 ? ((bar.totalUsed / barLength) * 100).toFixed(1) : ''
+            project?.projectNumber || `V.${barIndex + 1}`, // Conjunto
+            `${pieceIndex + 1}`, // Posição
+            '1', // Quantidade (sempre 1 pois já foi expandida)
+            project?.tipoMaterial || 'Material', // Perfil/Material
+            piece.length.toString(), // Comprimento
+            `Barra ${barIndex + 1}`, // Barra Designada
+            ((bar.totalUsed / barLength) * 100).toFixed(1), // Eficiência da Barra
+            pieceIndex === bar.pieces.length - 1 ? bar.waste.toString() : '0', // Sobra apenas na última peça
+            'Otimizado' // Status
           ]);
         });
+        
+        // Adicionar linha de sobra se existir
+        if (bar.waste > 0) {
+          rows.push([
+            project?.projectNumber || `V.${barIndex + 1}`,
+            'Sobra',
+            '1',
+            'Desperdício',
+            bar.waste.toString(),
+            `Barra ${barIndex + 1}`,
+            '0',
+            bar.waste.toString(),
+            'Descarte'
+          ]);
+        }
       });
 
-      // Adicionar resumo
+      // Adicionar seção de resumo
       rows.push([]);
-      rows.push(['RESUMO']);
-      rows.push(['Total de Barras', results.totalBars.toString()]);
-      rows.push(['Eficiência Geral', `${results.efficiency.toFixed(1)}%`]);
-      rows.push(['Desperdício Total', `${(results.totalWaste / 1000).toFixed(2)}m`]);
+      rows.push(['=== RESUMO DA OTIMIZAÇÃO ===']);
+      rows.push(['Projeto:', project?.projectNumber || 'N/A']);
+      rows.push(['Cliente:', project?.client || 'N/A']);
+      rows.push(['Obra:', project?.obra || 'N/A']);
+      rows.push(['Total de Barras:', results.totalBars.toString()]);
+      rows.push(['Eficiência Geral:', `${results.efficiency.toFixed(1)}%`]);
+      rows.push(['Desperdício Total:', `${(results.totalWaste / 1000).toFixed(2)}m`]);
+      rows.push(['Comprimento da Barra:', `${barLength}mm`]);
+      rows.push(['Data da Otimização:', new Date().toLocaleDateString('pt-BR')]);
 
-      // Converter para CSV (compatível com Excel)
-      const csvContent = rows.map(row => 
-        row.map(cell => `"${cell}"`).join(',')
+      // Adicionar análise por barra
+      rows.push([]);
+      rows.push(['=== ANÁLISE POR BARRA ===']);
+      rows.push(['Barra', 'Peças', 'Utilizado (mm)', 'Sobra (mm)', 'Eficiência (%)']);
+      
+      results.bars.forEach((bar, index) => {
+        rows.push([
+          `Barra ${index + 1}`,
+          bar.pieces.length.toString(),
+          bar.totalUsed.toString(),
+          bar.waste.toString(),
+          ((bar.totalUsed / barLength) * 100).toFixed(1)
+        ]);
+      });
+
+      // Converter para CSV com encoding UTF-8 e separador adequado para Excel brasileiro
+      const BOM = '\uFEFF'; // Byte Order Mark para UTF-8
+      const csvContent = BOM + rows.map(row => 
+        row.map(cell => `"${cell}"`).join(';') // Usar ponto e vírgula para Excel brasileiro
       ).join('\n');
 
-      // Download
+      // Download com nome mais descritivo
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
-      link.setAttribute('download', `otimizacao-${project?.projectNumber || 'projeto'}-${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute('download', `otimizacao-detalhada-${project?.projectNumber || 'projeto'}-${new Date().toISOString().split('T')[0]}.csv`);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+      URL.revokeObjectURL(url);
 
       toast({
         title: "Excel Exportado",
-        description: "Arquivo Excel foi baixado com sucesso",
+        description: "Arquivo Excel detalhado foi baixado com estrutura AutoCAD",
       });
     } catch (error) {
       console.error('Erro ao exportar Excel:', error);
@@ -230,11 +273,11 @@ export const OptimizationResults = ({ results, barLength, project }: Optimizatio
               <div className="grid grid-cols-1 gap-2">
                 <Button onClick={handleExportPDF} variant="outline" className="justify-start">
                   <Download className="w-4 h-4 mr-2" />
-                  Exportar PDF
+                  Exportar PDF Completo
                 </Button>
                 <Button onClick={handleExportExcel} variant="outline" className="justify-start">
                   <FileSpreadsheet className="w-4 h-4 mr-2" />
-                  Exportar Excel
+                  Exportar Excel (Estrutura AutoCAD)
                 </Button>
               </div>
             </div>

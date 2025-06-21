@@ -3,8 +3,198 @@ import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 import type { SheetOptimizationResult, SheetProject } from '@/types/sheet';
 import type { OptimizationHistoryEntry } from '@/hooks/useOptimizationHistory';
+import type { OptimizationResult, Project } from '@/pages/Index';
 
 export class PDFReportService {
+  // Gerar PDF completo de relatório linear - NOVO MÉTODO
+  static async generateCompleteLinearReport(
+    results: OptimizationResult,
+    barLength: number,
+    project: Project
+  ): Promise<void> {
+    const pdf = new jsPDF();
+    let yPosition = 20;
+    
+    // Cabeçalho
+    pdf.setFontSize(18);
+    pdf.text('RELATÓRIO DE OTIMIZAÇÃO LINEAR', 20, yPosition);
+    yPosition += 15;
+    
+    pdf.setFontSize(12);
+    pdf.text(`Projeto: ${project.projectNumber}`, 20, yPosition);
+    yPosition += 8;
+    pdf.text(`Cliente: ${project.client}`, 20, yPosition);
+    yPosition += 8;
+    pdf.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 20, yPosition);
+    yPosition += 15;
+    
+    // Métricas principais
+    pdf.setFontSize(14);
+    pdf.text('MÉTRICAS PRINCIPAIS', 20, yPosition);
+    yPosition += 10;
+    
+    pdf.setFontSize(10);
+    pdf.text(`Total de Barras: ${results.totalBars}`, 20, yPosition);
+    yPosition += 6;
+    pdf.text(`Eficiência: ${results.efficiency.toFixed(1)}%`, 20, yPosition);
+    yPosition += 6;
+    pdf.text(`Desperdício: ${(results.totalWaste / 1000).toFixed(2)}m`, 20, yPosition);
+    yPosition += 6;
+    pdf.text(`Comprimento da Barra: ${barLength}mm`, 20, yPosition);
+    yPosition += 15;
+    
+    // Lista completa de peças organizadas por barra
+    pdf.setFontSize(14);
+    pdf.text('LISTA COMPLETA DE PEÇAS', 20, yPosition);
+    yPosition += 10;
+    
+    // Cabeçalho da tabela
+    pdf.setFontSize(9);
+    pdf.text('Barra', 20, yPosition);
+    pdf.text('Posição', 45, yPosition);
+    pdf.text('Comprimento (mm)', 70, yPosition);
+    pdf.text('Material', 130, yPosition);
+    pdf.text('Status', 170, yPosition);
+    yPosition += 8;
+    
+    // Linha separadora
+    pdf.line(20, yPosition - 2, 190, yPosition - 2);
+    
+    results.bars.forEach((bar, barIndex) => {
+      // Verificar se precisa de nova página
+      if (yPosition > 250) {
+        pdf.addPage();
+        yPosition = 20;
+        
+        // Repetir cabeçalho da tabela
+        pdf.setFontSize(9);
+        pdf.text('Barra', 20, yPosition);
+        pdf.text('Posição', 45, yPosition);
+        pdf.text('Comprimento (mm)', 70, yPosition);
+        pdf.text('Material', 130, yPosition);
+        pdf.text('Status', 170, yPosition);
+        yPosition += 8;
+        pdf.line(20, yPosition - 2, 190, yPosition - 2);
+      }
+      
+      // Título da barra
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`BARRA ${barIndex + 1} - Eficiência: ${((bar.totalUsed / barLength) * 100).toFixed(1)}%`, 20, yPosition);
+      yPosition += 8;
+      
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8);
+      
+      // Peças da barra
+      bar.pieces.forEach((piece, pieceIndex) => {
+        if (yPosition > 270) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        
+        pdf.text(`${barIndex + 1}`, 25, yPosition);
+        pdf.text(`${pieceIndex + 1}`, 50, yPosition);
+        pdf.text(`${piece.length}`, 85, yPosition);
+        pdf.text(`${project.tipoMaterial || 'Material'}`, 135, yPosition);
+        pdf.text('Otimizado', 175, yPosition);
+        yPosition += 6;
+      });
+      
+      // Sobra da barra
+      if (bar.waste > 0) {
+        if (yPosition > 270) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        
+        pdf.setTextColor(255, 0, 0); // Vermelho para sobra
+        pdf.text(`${barIndex + 1}`, 25, yPosition);
+        pdf.text('Sobra', 50, yPosition);
+        pdf.text(`${bar.waste}`, 85, yPosition);
+        pdf.text('Desperdício', 135, yPosition);
+        pdf.text('Descarte', 175, yPosition);
+        pdf.setTextColor(0, 0, 0); // Voltar para preto
+        yPosition += 8;
+      }
+      
+      yPosition += 4; // Espaço entre barras
+    });
+    
+    // Nova página para resumo detalhado
+    pdf.addPage();
+    yPosition = 20;
+    
+    pdf.setFontSize(14);
+    pdf.text('RESUMO DETALHADO POR BARRA', 20, yPosition);
+    yPosition += 15;
+    
+    // Cabeçalho da tabela resumo
+    pdf.setFontSize(9);
+    pdf.text('Barra', 20, yPosition);
+    pdf.text('Qtd Peças', 45, yPosition);
+    pdf.text('Utilizado (mm)', 75, yPosition);
+    pdf.text('Sobra (mm)', 115, yPosition);
+    pdf.text('Eficiência (%)', 150, yPosition);
+    yPosition += 8;
+    
+    pdf.line(20, yPosition - 2, 180, yPosition - 2);
+    
+    results.bars.forEach((bar, index) => {
+      if (yPosition > 250) {
+        pdf.addPage();
+        yPosition = 30;
+      }
+      
+      pdf.setFontSize(8);
+      pdf.text(`Barra ${index + 1}`, 25, yPosition);
+      pdf.text(`${bar.pieces.length}`, 55, yPosition);
+      pdf.text(`${bar.totalUsed}`, 85, yPosition);
+      pdf.text(`${bar.waste}`, 125, yPosition);
+      pdf.text(`${((bar.totalUsed / barLength) * 100).toFixed(1)}%`, 160, yPosition);
+      yPosition += 6;
+    });
+    
+    // Totais
+    yPosition += 5;
+    pdf.line(20, yPosition, 180, yPosition);
+    yPosition += 8;
+    
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('TOTAIS', 25, yPosition);
+    pdf.text(`${results.bars.reduce((sum, bar) => sum + bar.pieces.length, 0)}`, 55, yPosition);
+    pdf.text(`${results.bars.reduce((sum, bar) => sum + bar.totalUsed, 0)}`, 85, yPosition);
+    pdf.text(`${results.totalWaste}`, 125, yPosition);
+    pdf.text(`${results.efficiency.toFixed(1)}%`, 160, yPosition);
+    
+    // Análise final
+    yPosition += 15;
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(10);
+    pdf.text('ANÁLISE DE RESULTADOS:', 20, yPosition);
+    yPosition += 8;
+    
+    pdf.setFontSize(9);
+    const analysis = [
+      `• Eficiência Alcançada: ${results.efficiency.toFixed(1)}% (${results.efficiency >= 85 ? 'Excelente' : results.efficiency >= 75 ? 'Bom' : 'Pode melhorar'})`,
+      `• Material Utilizado: ${((results.totalBars * barLength - results.totalWaste) / 1000).toFixed(2)}m`,
+      `• Material Desperdiçado: ${(results.totalWaste / 1000).toFixed(2)}m`,
+      `• Economia vs Corte Linear: ~${Math.max(0, 25 - results.wastePercentage).toFixed(1)}% de redução`
+    ];
+    
+    analysis.forEach(line => {
+      if (yPosition > 270) {
+        pdf.addPage();
+        yPosition = 20;
+      }
+      pdf.text(line, 25, yPosition);
+      yPosition += 6;
+    });
+    
+    // Salvar o PDF
+    pdf.save(`relatorio-completo-${project.projectNumber}-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
   // Gerar PDF de relatório de chapas
   static async generateSheetReport(
     results: SheetOptimizationResult,
@@ -54,7 +244,7 @@ export class PDFReportService {
     pdf.save(`relatorio-chapas-${project.projectNumber}-${new Date().toISOString().split('T')[0]}.pdf`);
   }
 
-  // Gerar PDF de relatório linear
+  // Gerar PDF de relatório linear (método original mantido para compatibilidade)
   static async generateLinearReport(
     historyEntry: OptimizationHistoryEntry
   ): Promise<void> {
