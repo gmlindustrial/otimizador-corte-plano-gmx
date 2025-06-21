@@ -1,5 +1,4 @@
 
-
 import { useState, useCallback } from 'react';
 import type { SheetCutPiece, SheetProject, SheetOptimizationResult } from '@/types/sheet';
 import { sheetOptimizationService } from '@/services/SheetOptimizationService';
@@ -98,9 +97,15 @@ export const useSheetOptimization = (): UseSheetOptimizationReturn => {
 
       setResults(optimizationResult);
 
-      // Salvar no histórico - using only 2 arguments as expected
+      // Salvar no histórico - using the correct signature with 5 arguments
       try {
-        await sheetHistoryService.saveOptimization(optimizationResult, optimizationTime);
+        await sheetHistoryService.saveOptimization(
+          project,
+          pieces,
+          optimizationResult,
+          optimizationSettings.algorithm,
+          optimizationTime
+        );
       } catch (historyError) {
         console.error('Erro ao salvar no histórico:', historyError);
         // Continue even if history save fails
@@ -208,4 +213,3 @@ export const useSheetOptimization = (): UseSheetOptimizationReturn => {
     clearResults
   };
 };
-
