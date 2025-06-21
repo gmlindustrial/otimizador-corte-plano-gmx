@@ -96,10 +96,13 @@ export const useSheetOptimization = (): UseSheetOptimizationReturn => {
 
       setResults(optimizationResult);
 
-      // Salvar no histórico - fixing the function call to match expected signature
+      // Salvar no histórico com todos os parâmetros necessários
       await sheetHistoryService.saveOptimization(
         project,
-        pieces
+        pieces,
+        optimizationResult,
+        optimizationSettings.algorithm,
+        optimizationTime
       );
 
       toast({
