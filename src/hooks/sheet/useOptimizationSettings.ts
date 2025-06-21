@@ -1,0 +1,29 @@
+
+import { useState } from 'react';
+
+export interface OptimizationSettings {
+  algorithm: 'BLF' | 'Genetic' | 'MultiObjective';
+  maxGenerations: number;
+  populationSize: number;
+  mutationRate: number;
+  enableNesting: boolean;
+  priorityMode: 'efficiency' | 'speed' | 'balanced';
+  timeLimit: number;
+}
+
+export const useOptimizationSettings = () => {
+  const [optimizationSettings, setOptimizationSettings] = useState<OptimizationSettings>({
+    algorithm: 'MultiObjective' as 'BLF' | 'Genetic' | 'MultiObjective',
+    maxGenerations: 250,
+    populationSize: 75,
+    mutationRate: 0.15,
+    enableNesting: true,
+    priorityMode: 'balanced' as 'efficiency' | 'speed' | 'balanced',
+    timeLimit: 120
+  });
+
+  return {
+    optimizationSettings,
+    setOptimizationSettings
+  };
+};
