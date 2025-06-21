@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Header } from '@/components/Header';
 import { ProjectSelector } from '@/components/ProjectSelector';
@@ -13,9 +14,9 @@ import { SheetOptimizationResults } from '@/components/sheet/SheetOptimizationRe
 import { SheetVisualization } from '@/components/sheet/SheetVisualization';
 import { SheetCuttingSettings } from '@/components/settings/SheetCuttingSettings';
 import { BarCuttingSettings } from '@/components/settings/BarCuttingSettings';
-import { MaterialReportsManager } from '@/components/settings/MaterialReportsManager';
+import { ReportsManager } from '@/components/reports/ReportsManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, Calculator, History, Settings, Package, Square } from 'lucide-react';
+import { BarChart3, Calculator, History, Settings, Package, Square, FileText } from 'lucide-react';
 import { BottomLeftFillOptimizer } from '@/algorithms/sheet/BottomLeftFill';
 import type { SheetCutPiece, SheetProject, SheetOptimizationResult } from '@/types/sheet';
 
@@ -200,7 +201,7 @@ const Index = () => {
       
       <div className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6 mb-6">
+          <TabsList className="grid w-full grid-cols-7 mb-6">
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               Dashboard
@@ -220,6 +221,10 @@ const Index = () => {
             <TabsTrigger value="history" className="flex items-center gap-2">
               <History className="w-4 h-4" />
               Histórico
+            </TabsTrigger>
+            <TabsTrigger value="reports" className="flex items-center gap-2">
+              <FileText className="w-4 h-4" />
+              Relatórios
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex items-center gap-2">
               <Settings className="w-4 h-4" />
@@ -312,6 +317,10 @@ const Index = () => {
             />
           </TabsContent>
 
+          <TabsContent value="reports">
+            <ReportsManager optimizationHistory={optimizationHistory} />
+          </TabsContent>
+
           <TabsContent value="settings" className="space-y-6">
             <CadastroManager onUpdateData={() => {
               console.log('Dados atualizados - recarregando listas...');
@@ -320,8 +329,6 @@ const Index = () => {
             <BarCuttingSettings />
             
             <SheetCuttingSettings />
-            
-            <MaterialReportsManager />
           </TabsContent>
         </Tabs>
       </div>
