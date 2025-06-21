@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import type { SheetCutPiece, SheetProject, SheetOptimizationResult } from '@/types/sheet';
 import { sheetOptimizationService } from '@/services/SheetOptimizationService';
@@ -65,7 +66,7 @@ export const useSheetOptimization = (): UseSheetOptimizationReturn => {
 
     try {
       // Validar peças antes da otimização
-      const validationResult = sheetOptimizationService.validatePieces(pieces, project);
+      const validationResult = sheetOptimizationService.validatePieces(pieces);
       setValidation(validationResult);
 
       if (!validationResult.valid) {
@@ -129,7 +130,7 @@ export const useSheetOptimization = (): UseSheetOptimizationReturn => {
   }, [toast, optimizationSettings]);
 
   const validatePieces = useCallback((pieces: SheetCutPiece[], project: SheetProject) => {
-    const validationResult = sheetOptimizationService.validatePieces(pieces, project);
+    const validationResult = sheetOptimizationService.validatePieces(pieces);
     setValidation(validationResult);
 
     if (validationResult.errors.length > 0) {
