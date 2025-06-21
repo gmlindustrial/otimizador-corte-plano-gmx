@@ -83,29 +83,28 @@ export class FileParsingService {
         if (pieceMatch) {
           const [, posicao, quantidade, perfil, material, comprimento, largura, peso] = pieceMatch;
           
-          const piece: CutPiece = {
+          const tag = `${currentConjunto}-${posicao}`;
+          
+          const piece: CutPiece & AutoCADCutPiece = {
             id: `autocad-${currentConjunto}-${posicao}-${Date.now()}`,
             length: parseInt(comprimento),
             quantity: parseInt(quantidade),
-            // Campos estendidos como propriedades customizadas
-            ...({
-              obra,
-              conjunto: currentConjunto,
-              posicao,
-              perfil: perfil.trim(),
-              material,
-              peso: parseFloat(peso),
-              tag: `${currentConjunto}-${posicao}`,
-              dimensoes: {
-                comprimento: parseInt(comprimento),
-                largura: parseInt(largura)
-              }
-            } as any)
+            obra,
+            conjunto: currentConjunto,
+            posicao,
+            perfil: perfil.trim(),
+            material,
+            peso: parseFloat(peso),
+            tag,
+            dimensoes: {
+              comprimento: parseInt(comprimento),
+              largura: parseInt(largura)
+            }
           };
 
           pieces.push(piece);
           
-          console.log(`Peça adicionada: ${piece.tag} - ${piece.length}mm - Qtd: ${piece.quantity}`);
+          console.log(`Peça adicionada: ${tag} - ${piece.length}mm - Qtd: ${piece.quantity}`);
         }
       }
     }
