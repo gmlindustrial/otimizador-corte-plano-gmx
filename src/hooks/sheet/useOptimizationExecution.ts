@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import type { SheetCutPiece, SheetProject, SheetOptimizationResult } from '@/types/sheet';
 import { sheetOptimizationService } from '@/services/SheetOptimizationService';
@@ -58,13 +57,7 @@ export const useOptimizationExecution = () => {
       setResults(optimizationResult);
 
       try {
-        await sheetHistoryService.saveOptimization(
-          project,
-          pieces,
-          optimizationResult,
-          optimizationSettings.algorithm,
-          optimizationTime
-        );
+        await sheetHistoryService.saveOptimization(project, optimizationResult);
       } catch (historyError) {
         console.error('Erro ao salvar no histórico:', historyError);
       }
