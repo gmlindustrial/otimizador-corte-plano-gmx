@@ -41,22 +41,6 @@ export const PieceInputForm = ({
   const isAddButtonDisabled = !width || !height || !tag.trim() || 
     widthNum <= 0 || heightNum <= 0 || quantityNum <= 0;
 
-  const handleWidthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setWidth(e.target.value);
-  };
-
-  const handleHeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setHeight(e.target.value);
-  };
-
-  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setQuantity(e.target.value);
-  };
-
-  const handleTagChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTag(e.target.value);
-  };
-
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium text-gray-900">Entrada de Peças</h3>
@@ -68,7 +52,7 @@ export const PieceInputForm = ({
             id="width"
             type="number"
             value={width}
-            onChange={handleWidthChange}
+            onChange={(e) => setWidth(e.target.value)}
             onKeyPress={onKeyPress}
             placeholder="Ex: 200"
             className="h-12"
@@ -83,7 +67,7 @@ export const PieceInputForm = ({
             id="height"
             type="number"
             value={height}
-            onChange={handleHeightChange}
+            onChange={(e) => setHeight(e.target.value)}
             onKeyPress={onKeyPress}
             placeholder="Ex: 150"
             className="h-12"
@@ -98,7 +82,7 @@ export const PieceInputForm = ({
             id="quantity"
             type="number"
             value={quantity}
-            onChange={handleQuantityChange}
+            onChange={(e) => setQuantity(e.target.value)}
             onKeyPress={onKeyPress}
             placeholder="1"
             min={1}
@@ -111,7 +95,7 @@ export const PieceInputForm = ({
           <Input
             id="tag"
             value={tag}
-            onChange={handleTagChange}
+            onChange={(e) => setTag(e.target.value)}
             onKeyPress={onKeyPress}
             placeholder="Ex: CH581"
             className="h-12"

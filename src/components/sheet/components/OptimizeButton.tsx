@@ -15,12 +15,14 @@ interface OptimizeButtonProps {
 }
 
 export const OptimizeButton = ({ onOptimize, disabled, piecesLength, validation }: OptimizeButtonProps) => {
+  const isDisabled = disabled || piecesLength === 0 || (validation && !validation.valid);
+
   return (
     <div className="space-y-4">
       <div className="flex justify-center pt-4">
         <Button
           onClick={onOptimize}
-          disabled={disabled || piecesLength === 0 || (validation && !validation.valid)}
+          disabled={isDisabled}
           className="px-8 py-3 text-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50"
           size="lg"
         >
@@ -30,9 +32,9 @@ export const OptimizeButton = ({ onOptimize, disabled, piecesLength, validation 
       </div>
 
       {disabled && (
-        <div className="flex items-center justify-center space-y-2">
+        <div className="space-y-2">
           <Progress value={33} className="w-full h-2" />
-          <p className="text-sm text-gray-600 mt-2">Executando algoritmos de otimização...</p>
+          <p className="text-sm text-gray-600 text-center">Executando algoritmos de otimização...</p>
         </div>
       )}
     </div>

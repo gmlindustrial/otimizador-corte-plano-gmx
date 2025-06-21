@@ -23,31 +23,6 @@ export const PiecesList = ({
 }: PiecesListProps) => {
   if (pieces.length === 0) return null;
 
-  const handleWidthChange = (id: string, value: string) => {
-    const numValue = parseFloat(value);
-    if (!isNaN(numValue) && numValue > 0) {
-      onUpdatePiece(id, 'width', numValue);
-    }
-  };
-
-  const handleHeightChange = (id: string, value: string) => {
-    const numValue = parseFloat(value);
-    if (!isNaN(numValue) && numValue > 0) {
-      onUpdatePiece(id, 'height', numValue);
-    }
-  };
-
-  const handleQuantityChange = (id: string, value: string) => {
-    const numValue = parseInt(value);
-    if (!isNaN(numValue) && numValue > 0) {
-      onUpdatePiece(id, 'quantity', numValue);
-    }
-  };
-
-  const handleTagChange = (id: string, value: string) => {
-    onUpdatePiece(id, 'tag', value);
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -74,7 +49,12 @@ export const PiecesList = ({
                 <Input
                   type="number"
                   value={piece.width.toString()}
-                  onChange={(e) => handleWidthChange(piece.id, e.target.value)}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value);
+                    if (!isNaN(value) && value > 0) {
+                      onUpdatePiece(piece.id, 'width', value);
+                    }
+                  }}
                   className="h-10"
                   placeholder="Largura"
                   min={1}
@@ -82,7 +62,12 @@ export const PiecesList = ({
                 <Input
                   type="number"
                   value={piece.height.toString()}
-                  onChange={(e) => handleHeightChange(piece.id, e.target.value)}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value);
+                    if (!isNaN(value) && value > 0) {
+                      onUpdatePiece(piece.id, 'height', value);
+                    }
+                  }}
                   className="h-10"
                   placeholder="Altura"
                   min={1}
@@ -90,14 +75,19 @@ export const PiecesList = ({
                 <Input
                   type="number"
                   value={piece.quantity.toString()}
-                  onChange={(e) => handleQuantityChange(piece.id, e.target.value)}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (!isNaN(value) && value > 0) {
+                      onUpdatePiece(piece.id, 'quantity', value);
+                    }
+                  }}
                   min={1}
                   className="h-10"
                   placeholder="Qtd"
                 />
                 <Input
                   value={piece.tag}
-                  onChange={(e) => handleTagChange(piece.id, e.target.value)}
+                  onChange={(e) => onUpdatePiece(piece.id, 'tag', e.target.value)}
                   className="h-10"
                   placeholder="Tag"
                   maxLength={20}
