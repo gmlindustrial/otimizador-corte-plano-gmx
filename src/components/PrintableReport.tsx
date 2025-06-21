@@ -56,6 +56,18 @@ export const PrintableReport = ({ results, barLength, project, mode }: Printable
     }
   `;
 
+  // Função para quebrar barras em páginas
+  const getBarGroups = () => {
+    const barsPerPage = mode === 'simplified' ? 8 : 6; // Mais barras por página no modo simplificado
+    const groups = [];
+    for (let i = 0; i < results.bars.length; i += barsPerPage) {
+      groups.push(results.bars.slice(i, i + barsPerPage));
+    }
+    return groups;
+  };
+
+  const barGroups = getBarGroups();
+
   return (
     <div className="bg-white min-h-screen">
       <style dangerouslySetInnerHTML={{ __html: headerFooterStyles }} />
@@ -73,7 +85,7 @@ export const PrintableReport = ({ results, barLength, project, mode }: Printable
           </div>
           <div className="text-right text-sm text-gray-600">
             <div>Data: {currentDate}</div>
-            <div>Página: <span className="page-counter">1</span></div>
+            <div>Total de Barras: {results.totalBars}</div>
           </div>
         </div>
       </div>
@@ -82,7 +94,7 @@ export const PrintableReport = ({ results, barLength, project, mode }: Printable
       <div className="print-footer hidden print:block">
         <div className="flex justify-between items-center">
           <div>Versão do documento: {version}</div>
-          <div>© Sistema de Otimização de Corte</div>
+          <div>© Sistema de Otimização de Corte - Elite Soldas</div>
         </div>
       </div>
 
@@ -130,18 +142,33 @@ export const PrintableReport = ({ results, barLength, project, mode }: Printable
           </>
         )}
 
-        {/* Bar Visualizations */}
+        {/* Bar Visualizations - Agrupadas por página */}
         <div className="space-y-8">
-          {results.bars.map((bar, barIndex) => (
-            <div key={bar.id} className={barIndex > 0 ? 'page-break' : ''}>
+          {barGroups.map((barGroup, groupIndex) => (
+            <div key={groupIndex} className={groupIndex > 0 ? 'page-break' : ''}>
+              {mode === 'simplified' && (
+                <div className="mb-4">
+                  <h3 className="text-lg font-semibold">
+                    Barras {groupIndex * (mode === 'simplified' ? 8 : 6) + 1} a {Math.min((groupIndex + 1) * (mode === 'simplified' ? 8 : 6), results.totalBars)}
+                  </h3>
+                </div>
+              )}
+              
               <ReportVisualization 
                 results={{ 
                   ...results, 
-                  bars: [bar] 
+                  bars: barGroup 
                 }} 
                 barLength={barLength}
-                showLegend={barIndex === 0}
+                showLegend={groupIndex === 0}
               />
+              
+              {mode === 'simplified' && (
+                <div className="mt-4 text-sm">
+                  <p><strong>Eficiência do Grupo:</strong> {(barGroup.reduce((sum, bar) => sum + (bar.totalUsed / barLength), 0) / barGroup.length * 100).toFixed(1)}%</p>
+                  <p><strong>Desperdício do Grupo:</strong> {(barGroup.reduce((sum, bar) => sum + bar.waste, 0) / 1000).toFixed(2)}m</p>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -164,6 +191,35 @@ export const PrintableReport = ({ results, barLength, project, mode }: Printable
                 <strong>Economia vs. Corte Linear:</strong> Aproximadamente {Math.max(0, 25 - results.wastePercentage).toFixed(1)}% de redução de desperdício
               </p>
             </div>
+          </div>
+        )}
+
+        {/* Tabela Resumo para Modo Simplificado */}
+        {mode === 'simplified' && (
+          <div className="page-break">
+            <h2 className="text-xl font-semibold mb-4">Resumo das Barras</h2>
+            <table className="w-full border border-gray-300 text-xs">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border border-gray-300 p-2">Barra</th>
+                  <th className="border border-gray-300 p-2">Peças</th>
+                  <th className="border border-gray-300 p-2">Utilizado (mm)</th>
+                  <th className="border border-gray-300 p-2">Sobra (mm)</th>
+                  <th className="border border-gray-300 p-2">Eficiência (%)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {results.bars.map((bar, index) => (
+                  <tr key={bar.id}>
+                    <td className="border border-gray-300 p-2 text-center">{index + 1}</td>
+                    <td className="border border-gray-300 p-2 text-center">{bar.pieces.length}</td>
+                    <td className="border border-gray-300 p-2 text-center">{bar.totalUsed}</td>
+                    <td className="border border-gray-300 p-2 text-center">{bar.waste}</td>
+                    <td className="border border-gray-300 p-2 text-center">{((bar.totalUsed / barLength) * 100).toFixed(1)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

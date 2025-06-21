@@ -5,7 +5,9 @@ import { OptimizationResult, Project } from '@/pages/Index';
 import { BarChart, Download, Printer, FileSpreadsheet, FileText, Wrench } from 'lucide-react';
 import { ReportVisualization } from './ReportVisualization';
 import { PrintableReport } from './PrintableReport';
+import { PDFReportService } from '@/services/PDFReportService';
 import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 interface OptimizationResultsProps {
   results: OptimizationResult;
@@ -16,6 +18,7 @@ interface OptimizationResultsProps {
 export const OptimizationResults = ({ results, barLength, project }: OptimizationResultsProps) => {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [printMode, setPrintMode] = useState<'complete' | 'simplified'>('complete');
+  const { toast } = useToast();
 
   const handlePrint = (mode: 'complete' | 'simplified') => {
     setPrintMode(mode);
@@ -28,12 +31,96 @@ export const OptimizationResults = ({ results, barLength, project }: Optimizatio
     }, 100);
   };
 
-  const handleExportPDF = () => {
-    console.log('Export PDF - Implementação futura');
+  const handleExportPDF = async () => {
+    try {
+      if (!project) {
+        toast({
+          title: "Erro",
+          description: "Dados do projeto não encontrados",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Criar entrada temporária para o PDF
+      const historyEntry = {
+        id: Date.now().toString(),
+        date: new Date().toISOString(),
+        project,
+        pieces: [], // Será calculado a partir dos results
+        results,
+        barLength
+      };
+
+      await PDFReportService.generateLinearReport(historyEntry);
+      
+      toast({
+        title: "PDF Exportado",
+        description: "Relatório PDF foi gerado com sucesso",
+      });
+    } catch (error) {
+      console.error('Erro ao exportar PDF:', error);
+      toast({
+        title: "Erro ao exportar PDF",
+        description: "Não foi possível gerar o relatório PDF",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleExportExcel = () => {
-    console.log('Export Excel - Implementação futura');
+    try {
+      // Criar dados para Excel
+      const headers = ['Barra', 'Peça', 'Comprimento (mm)', 'Sobra (mm)', 'Eficiência (%)'];
+      const rows: string[][] = [headers];
+
+      results.bars.forEach((bar, barIndex) => {
+        bar.pieces.forEach((piece, pieceIndex) => {
+          rows.push([
+            `Barra ${barIndex + 1}`,
+            `Peça ${pieceIndex + 1}`,
+            piece.length.toString(),
+            pieceIndex === bar.pieces.length - 1 ? bar.waste.toString() : '0',
+            pieceIndex === bar.pieces.length - 1 ? ((bar.totalUsed / barLength) * 100).toFixed(1) : ''
+          ]);
+        });
+      });
+
+      // Adicionar resumo
+      rows.push([]);
+      rows.push(['RESUMO']);
+      rows.push(['Total de Barras', results.totalBars.toString()]);
+      rows.push(['Eficiência Geral', `${results.efficiency.toFixed(1)}%`]);
+      rows.push(['Desperdício Total', `${(results.totalWaste / 1000).toFixed(2)}m`]);
+
+      // Converter para CSV (compatível com Excel)
+      const csvContent = rows.map(row => 
+        row.map(cell => `"${cell}"`).join(',')
+      ).join('\n');
+
+      // Download
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `otimizacao-${project?.projectNumber || 'projeto'}-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "Excel Exportado",
+        description: "Arquivo Excel foi baixado com sucesso",
+      });
+    } catch (error) {
+      console.error('Erro ao exportar Excel:', error);
+      toast({
+        title: "Erro ao exportar Excel",
+        description: "Não foi possível gerar o arquivo Excel",
+        variant: "destructive",
+      });
+    }
   };
 
   if (showPrintPreview) {
