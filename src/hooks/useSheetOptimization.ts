@@ -1,4 +1,5 @@
 
+
 import { useState, useCallback } from 'react';
 import type { SheetCutPiece, SheetProject, SheetOptimizationResult } from '@/types/sheet';
 import { sheetOptimizationService } from '@/services/SheetOptimizationService';
@@ -66,7 +67,7 @@ export const useSheetOptimization = (): UseSheetOptimizationReturn => {
 
     try {
       // Validar peças antes da otimização
-      const validationResult = sheetOptimizationService.validatePieces(pieces);
+      const validationResult = sheetOptimizationService.validatePieces(pieces, project);
       setValidation(validationResult);
 
       if (!validationResult.valid) {
@@ -97,15 +98,9 @@ export const useSheetOptimization = (): UseSheetOptimizationReturn => {
 
       setResults(optimizationResult);
 
-      // Salvar no histórico - matching the expected signature
+      // Salvar no histórico - using only 2 arguments as expected
       try {
-        await sheetHistoryService.saveOptimization(
-          project,
-          pieces,
-          optimizationResult,
-          optimizationSettings.algorithm,
-          optimizationTime
-        );
+        await sheetHistoryService.saveOptimization(optimizationResult, optimizationTime);
       } catch (historyError) {
         console.error('Erro ao salvar no histórico:', historyError);
         // Continue even if history save fails
@@ -130,7 +125,7 @@ export const useSheetOptimization = (): UseSheetOptimizationReturn => {
   }, [toast, optimizationSettings]);
 
   const validatePieces = useCallback((pieces: SheetCutPiece[], project: SheetProject) => {
-    const validationResult = sheetOptimizationService.validatePieces(pieces);
+    const validationResult = sheetOptimizationService.validatePieces(pieces, project);
     setValidation(validationResult);
 
     if (validationResult.errors.length > 0) {
@@ -213,3 +208,4 @@ export const useSheetOptimization = (): UseSheetOptimizationReturn => {
     clearResults
   };
 };
+
