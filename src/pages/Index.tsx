@@ -11,6 +11,9 @@ import { SheetProjectSelector } from '@/components/sheet/SheetProjectSelector';
 import { SheetMaterialInput } from '@/components/sheet/SheetMaterialInput';
 import { SheetOptimizationResults } from '@/components/sheet/SheetOptimizationResults';
 import { SheetVisualization } from '@/components/sheet/SheetVisualization';
+import { SheetCuttingSettings } from '@/components/settings/SheetCuttingSettings';
+import { BarCuttingSettings } from '@/components/settings/BarCuttingSettings';
+import { MaterialReportsManager } from '@/components/settings/MaterialReportsManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart3, Calculator, History, Settings, Package, Square } from 'lucide-react';
 import { BottomLeftFillOptimizer } from '@/algorithms/sheet/BottomLeftFill';
@@ -311,32 +314,14 @@ const Index = () => {
 
           <TabsContent value="settings" className="space-y-6">
             <CadastroManager onUpdateData={() => {
-              // Callback para atualizar dados quando novos cadastros são criados
               console.log('Dados atualizados - recarregando listas...');
             }} />
             
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-xl font-semibold mb-4">Configurações do Sistema</h3>
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Configurações de Corte Linear</h4>
-                  <p className="text-sm text-gray-600">• Perda por corte: 3mm</p>
-                  <p className="text-sm text-gray-600">• Comprimento padrão de barras: 6000mm</p>
-                  <p className="text-sm text-gray-600">• Algoritmo: First Fit Decreasing (FFD)</p>
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Configurações de Corte de Chapas</h4>
-                  <p className="text-sm text-gray-600">• Kerf padrão: 2mm (Plasma/Oxicorte)</p>
-                  <p className="text-sm text-gray-600">• Tamanho padrão: 2550x6000mm</p>
-                  <p className="text-sm text-gray-600">• Algoritmo: Bottom-Left-Fill (BLF)</p>
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Integração Supabase</h4>
-                  <p className="text-sm text-gray-600">• Status: Conectado</p>
-                  <p className="text-sm text-gray-600">• Projeto: uspmlzuhzlbwubdrzooy</p>
-                </div>
-              </div>
-            </div>
+            <BarCuttingSettings />
+            
+            <SheetCuttingSettings />
+            
+            <MaterialReportsManager />
           </TabsContent>
         </Tabs>
       </div>

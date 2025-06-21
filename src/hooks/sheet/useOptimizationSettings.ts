@@ -9,6 +9,9 @@ export interface OptimizationSettings {
   enableNesting: boolean;
   priorityMode: 'efficiency' | 'speed' | 'balanced';
   timeLimit: number;
+  enableEdgeRounding: boolean;
+  roundingRadius: number;
+  kerf: number;
 }
 
 export const useOptimizationSettings = () => {
@@ -19,7 +22,10 @@ export const useOptimizationSettings = () => {
     mutationRate: 0.15,
     enableNesting: true,
     priorityMode: 'balanced' as 'efficiency' | 'speed' | 'balanced',
-    timeLimit: 120
+    timeLimit: 120,
+    enableEdgeRounding: false,
+    roundingRadius: 2,
+    kerf: 6 // Alterado de 2 para 6mm
   });
 
   return {
