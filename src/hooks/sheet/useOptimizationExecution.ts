@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import type { SheetCutPiece, SheetProject, SheetOptimizationResult } from '@/types/sheet';
 import { sheetOptimizationService } from '@/services/SheetOptimizationService';
@@ -49,7 +50,7 @@ export const useOptimizationExecution = () => {
       console.log('Iniciando otimização de chapas com configurações:', optimizationSettings);
       const startTime = Date.now();
       
-      const optimizationResult = await sheetOptimizationService.optimize(pieces, project, optimizationSettings);
+      const optimizationResult = await sheetOptimizationService.optimize(pieces, project);
       
       const endTime = Date.now();
       const optimizationTime = endTime - startTime;
