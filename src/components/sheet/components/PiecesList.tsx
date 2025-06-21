@@ -77,7 +77,7 @@ export const PiecesList = ({
                   onChange={(e) => handleWidthChange(piece.id, e.target.value)}
                   className="h-10"
                   placeholder="Largura"
-                  min="1"
+                  min={1}
                 />
                 <Input
                   type="number"
@@ -85,13 +85,13 @@ export const PiecesList = ({
                   onChange={(e) => handleHeightChange(piece.id, e.target.value)}
                   className="h-10"
                   placeholder="Altura"
-                  min="1"
+                  min={1}
                 />
                 <Input
                   type="number"
                   value={piece.quantity.toString()}
                   onChange={(e) => handleQuantityChange(piece.id, e.target.value)}
-                  min="1"
+                  min={1}
                   className="h-10"
                   placeholder="Qtd"
                 />
@@ -100,7 +100,7 @@ export const PiecesList = ({
                   onChange={(e) => handleTagChange(piece.id, e.target.value)}
                   className="h-10"
                   placeholder="Tag"
-                  maxLength="20"
+                  maxLength={20}
                 />
                 <div className="flex items-center justify-between">
                   <Switch
