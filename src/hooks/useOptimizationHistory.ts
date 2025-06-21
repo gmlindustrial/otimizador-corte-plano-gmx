@@ -38,10 +38,52 @@ export const useOptimizationHistory = () => {
         projeto: project.projectNumber
       });
     }
+
+    // Log para relatórios
+    console.log('Otimização adicionada ao histórico:', {
+      id: historyEntry.id,
+      efficiency: results.efficiency,
+      totalBars: results.totalBars,
+      waste: results.totalWaste
+    });
+  };
+
+  const clearHistory = () => {
+    setOptimizationHistory([]);
+  };
+
+  const removeFromHistory = (id: string) => {
+    setOptimizationHistory(prev => prev.filter(entry => entry.id !== id));
+  };
+
+  const getHistoryStats = () => {
+    if (optimizationHistory.length === 0) {
+      return {
+        totalOptimizations: 0,
+        averageEfficiency: 0,
+        totalMaterialSaved: 0,
+        bestEfficiency: 0
+      };
+    }
+
+    const totalOptimizations = optimizationHistory.length;
+    const averageEfficiency = optimizationHistory.reduce((sum, entry) => sum + entry.results.efficiency, 0) / totalOptimizations;
+    const totalMaterialSaved = optimizationHistory.reduce((sum, entry) => sum + entry.results.totalWaste, 0);
+    const bestEfficiency = Math.max(...optimizationHistory.map(entry => entry.results.efficiency));
+
+    return {
+      totalOptimizations,
+      averageEfficiency,
+      totalMaterialSaved,
+      bestEfficiency
+    };
   };
 
   return {
     optimizationHistory,
-    addToHistory
+    addToHistory,
+    clearHistory,
+    removeFromHistory,
+    getHistoryStats
   };
 };
