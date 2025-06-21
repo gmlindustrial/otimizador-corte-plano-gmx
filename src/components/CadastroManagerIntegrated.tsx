@@ -52,10 +52,19 @@ export const CadastroManagerIntegrated = ({
     email: "",
     telefone: "",
   });
-  const [novoMaterial, setNovoMaterial] = useState({
+  const [novoMaterialBarra, setNovoMaterialBarra] = useState({
     tipo: "",
     descricao: "",
     comprimentoPadrao: 6000,
+    perfil: "",
+    bitola: "",
+  });
+  const [novoMaterialChapa, setNovoMaterialChapa] = useState({
+    tipo: "",
+    descricao: "",
+    largura: 1000,
+    altura: 2000,
+    espessura: 6,
   });
   const [novoOperador, setNovoOperador] = useState({
     nome: "",
@@ -67,6 +76,66 @@ export const CadastroManagerIntegrated = ({
     certificacao: "",
     area: "",
   });
+
+  const handleSaveMaterialBarra = async () => {
+    if (!novoMaterialBarra.tipo) return;
+
+    try {
+      setSaving(true);
+      console.log("Criando novo material barra...");
+      
+      const materialData = {
+        tipo: `[BARRA] ${novoMaterialBarra.tipo}`,
+        descricao: `${novoMaterialBarra.descricao} - Perfil: ${novoMaterialBarra.perfil} - Bitola: ${novoMaterialBarra.bitola}`,
+        comprimentoPadrao: novoMaterialBarra.comprimentoPadrao,
+      };
+      
+      await saveMaterial(materialData);
+      setNovoMaterialBarra({ tipo: "", descricao: "", comprimentoPadrao: 6000, perfil: "", bitola: "" });
+      setOpenDialog(null);
+
+      // Force data refresh
+      console.log("Forçando atualização dos dados...");
+      setTimeout(() => {
+        refetch();
+        onUpdateData?.();
+      }, 500);
+    } catch (error) {
+      console.error("Erro ao criar material barra:", error);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveMaterialChapa = async () => {
+    if (!novoMaterialChapa.tipo) return;
+
+    try {
+      setSaving(true);
+      console.log("Criando novo material chapa...");
+      
+      const materialData = {
+        tipo: `[CHAPA] ${novoMaterialChapa.tipo}`,
+        descricao: `${novoMaterialChapa.descricao} - Dimensões: ${novoMaterialChapa.largura}x${novoMaterialChapa.altura}mm - Espessura: ${novoMaterialChapa.espessura}mm`,
+        comprimentoPadrao: Math.max(novoMaterialChapa.largura, novoMaterialChapa.altura), // Usar a maior dimensão como referência
+      };
+      
+      await saveMaterial(materialData);
+      setNovoMaterialChapa({ tipo: "", descricao: "", largura: 1000, altura: 2000, espessura: 6 });
+      setOpenDialog(null);
+
+      // Force data refresh
+      console.log("Forçando atualização dos dados...");
+      setTimeout(() => {
+        refetch();
+        onUpdateData?.();
+      }, 500);
+    } catch (error) {
+      console.error("Erro ao criar material chapa:", error);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleSaveObra = async () => {
     if (!novaObra.nome || novaObra.nome.trim() === "") {
@@ -117,29 +186,6 @@ export const CadastroManagerIntegrated = ({
       }, 500);
     } catch (error) {
       console.error("Erro ao criar cliente:", error);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleSaveMaterial = async () => {
-    if (!novoMaterial.tipo) return;
-
-    try {
-      setSaving(true);
-      console.log("Criando novo material...");
-      await saveMaterial(novoMaterial);
-      setNovoMaterial({ tipo: "", descricao: "", comprimentoPadrao: 6000 });
-      setOpenDialog(null);
-
-      // Force data refresh
-      console.log("Forçando atualização dos dados...");
-      setTimeout(() => {
-        refetch();
-        onUpdateData?.();
-      }, 500);
-    } catch (error) {
-      console.error("Erro ao criar material:", error);
     } finally {
       setSaving(false);
     }
@@ -364,45 +410,75 @@ export const CadastroManagerIntegrated = ({
             </DialogContent>
           </Dialog>
 
-          {/* Criar Novo Material */}
+          {/* Criar Material para Barras */}
           <Dialog
-            open={openDialog === "material"}
-            onOpenChange={(open) => setOpenDialog(open ? "material" : null)}
+            open={openDialog === "material-barra"}
+            onOpenChange={(open) => setOpenDialog(open ? "material-barra" : null)}
           >
             <DialogTrigger asChild>
               <Button className="h-24 flex flex-col items-center gap-2 bg-orange-600 hover:bg-orange-700">
-                <Package className="w-8 h-8" />
+                <div className="w-8 h-8 border-2 border-white rounded-sm flex items-center justify-center">
+                  <div className="w-6 h-1 bg-white rounded"></div>
+                </div>
                 <span className="text-sm font-medium">
-                  + Criar Novo Material
+                  + Material Barras
                 </span>
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Criar Novo Material</DialogTitle>
+                <DialogTitle>Criar Material para Barras</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="material-tipo">Tipo de Material *</Label>
+                  <Label htmlFor="material-barra-tipo">Tipo de Material *</Label>
                   <Input
-                    id="material-tipo"
-                    value={novoMaterial.tipo}
+                    id="material-barra-tipo"
+                    value={novoMaterialBarra.tipo}
                     onChange={(e) =>
-                      setNovoMaterial((prev) => ({
+                      setNovoMaterialBarra((prev) => ({
                         ...prev,
                         tipo: e.target.value,
                       }))
                     }
-                    placeholder="Ex: Perfil W 150x13"
+                    placeholder="Ex: Perfil W 150x13, Vergalhão CA-50"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="material-descricao">Descrição</Label>
+                  <Label htmlFor="material-barra-perfil">Perfil/Formato</Label>
                   <Input
-                    id="material-descricao"
-                    value={novoMaterial.descricao}
+                    id="material-barra-perfil"
+                    value={novoMaterialBarra.perfil}
                     onChange={(e) =>
-                      setNovoMaterial((prev) => ({
+                      setNovoMaterialBarra((prev) => ({
+                        ...prev,
+                        perfil: e.target.value,
+                      }))
+                    }
+                    placeholder="Ex: W, I, U, L, Redondo, Quadrado"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="material-barra-bitola">Bitola/Dimensão</Label>
+                  <Input
+                    id="material-barra-bitola"
+                    value={novoMaterialBarra.bitola}
+                    onChange={(e) =>
+                      setNovoMaterialBarra((prev) => ({
+                        ...prev,
+                        bitola: e.target.value,
+                      }))
+                    }
+                    placeholder="Ex: 150x13, Ø12mm, 50x50x6"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="material-barra-descricao">Descrição</Label>
+                  <Input
+                    id="material-barra-descricao"
+                    value={novoMaterialBarra.descricao}
+                    onChange={(e) =>
+                      setNovoMaterialBarra((prev) => ({
                         ...prev,
                         descricao: e.target.value,
                       }))
@@ -411,15 +487,15 @@ export const CadastroManagerIntegrated = ({
                   />
                 </div>
                 <div>
-                  <Label htmlFor="material-comprimento">
+                  <Label htmlFor="material-barra-comprimento">
                     Comprimento Padrão (mm)
                   </Label>
                   <Input
-                    id="material-comprimento"
+                    id="material-barra-comprimento"
                     type="number"
-                    value={novoMaterial.comprimentoPadrao}
+                    value={novoMaterialBarra.comprimentoPadrao}
                     onChange={(e) =>
-                      setNovoMaterial((prev) => ({
+                      setNovoMaterialBarra((prev) => ({
                         ...prev,
                         comprimentoPadrao: Number(e.target.value),
                       }))
@@ -428,12 +504,119 @@ export const CadastroManagerIntegrated = ({
                   />
                 </div>
                 <Button
-                  onClick={handleSaveMaterial}
+                  onClick={handleSaveMaterialBarra}
                   className="w-full"
-                  disabled={!novoMaterial.tipo || saving}
+                  disabled={!novoMaterialBarra.tipo || saving}
                 >
                   {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Salvar Material
+                  Salvar Material Barra
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Criar Material para Chapas */}
+          <Dialog
+            open={openDialog === "material-chapa"}
+            onOpenChange={(open) => setOpenDialog(open ? "material-chapa" : null)}
+          >
+            <DialogTrigger asChild>
+              <Button className="h-24 flex flex-col items-center gap-2 bg-teal-600 hover:bg-teal-700">
+                <div className="w-8 h-8 border-2 border-white rounded-sm flex items-center justify-center">
+                  <div className="w-5 h-5 bg-white rounded-sm"></div>
+                </div>
+                <span className="text-sm font-medium">
+                  + Material Chapas
+                </span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Criar Material para Chapas</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="material-chapa-tipo">Tipo de Material *</Label>
+                  <Input
+                    id="material-chapa-tipo"
+                    value={novoMaterialChapa.tipo}
+                    onChange={(e) =>
+                      setNovoMaterialChapa((prev) => ({
+                        ...prev,
+                        tipo: e.target.value,
+                      }))
+                    }
+                    placeholder="Ex: Chapa Aço A36, Chapa Inox 304"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="material-chapa-descricao">Descrição</Label>
+                  <Input
+                    id="material-chapa-descricao"
+                    value={novoMaterialChapa.descricao}
+                    onChange={(e) =>
+                      setNovoMaterialChapa((prev) => ({
+                        ...prev,
+                        descricao: e.target.value,
+                      }))
+                    }
+                    placeholder="Descrição detalhada do material"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="material-chapa-largura">Largura (mm)</Label>
+                    <Input
+                      id="material-chapa-largura"
+                      type="number"
+                      value={novoMaterialChapa.largura}
+                      onChange={(e) =>
+                        setNovoMaterialChapa((prev) => ({
+                          ...prev,
+                          largura: Number(e.target.value),
+                        }))
+                      }
+                      placeholder="1000"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="material-chapa-altura">Altura (mm)</Label>
+                    <Input
+                      id="material-chapa-altura"
+                      type="number"
+                      value={novoMaterialChapa.altura}
+                      onChange={(e) =>
+                        setNovoMaterialChapa((prev) => ({
+                          ...prev,
+                          altura: Number(e.target.value),
+                        }))
+                      }
+                      placeholder="2000"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="material-chapa-espessura">Espessura (mm)</Label>
+                  <Input
+                    id="material-chapa-espessura"
+                    type="number"
+                    value={novoMaterialChapa.espessura}
+                    onChange={(e) =>
+                      setNovoMaterialChapa((prev) => ({
+                        ...prev,
+                        espessura: Number(e.target.value),
+                      }))
+                    }
+                    placeholder="6"
+                  />
+                </div>
+                <Button
+                  onClick={handleSaveMaterialChapa}
+                  className="w-full"
+                  disabled={!novoMaterialChapa.tipo || saving}
+                >
+                  {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                  Salvar Material Chapa
                 </Button>
               </div>
             </DialogContent>
