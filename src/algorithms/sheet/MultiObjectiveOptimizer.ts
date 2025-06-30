@@ -204,7 +204,21 @@ export class MultiObjectiveOptimizer {
 
   // Configurar estratégias de otimização
   setOptimizationStrategy(strategy: Partial<AdvancedOptimizationConfig>): void {
-    this.config = { ...this.config, ...strategy };
+    if (strategy.strategies) {
+      const updatedStrategies = { ...this.config.strategies };
+
+      for (const key of Object.keys(strategy.strategies) as Array<keyof AdvancedOptimizationConfig['strategies']>) {
+        updatedStrategies[key] = {
+          ...updatedStrategies[key],
+          ...strategy.strategies[key]
+        };
+      }
+
+      this.config = { ...this.config, ...strategy, strategies: updatedStrategies };
+    } else {
+      this.config = { ...this.config, ...strategy };
+    }
+
     console.log('Estratégia de otimização atualizada:', this.config);
   }
 
