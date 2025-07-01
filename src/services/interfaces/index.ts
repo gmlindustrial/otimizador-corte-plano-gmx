@@ -64,3 +64,9 @@ export interface HistoricoOtimizacao extends BaseEntity {
   resultados: any;
   bar_length: number;
 }
+
+export interface Usuario extends BaseEntity {
+  nome: string;
+  email: string;
+  role: string;
+}

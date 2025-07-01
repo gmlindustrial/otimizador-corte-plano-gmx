@@ -18,10 +18,13 @@ export const Header = () => {
           </div>
           
           <div className="hidden md:flex items-center space-x-4">
-            <div className="text-right">
+            <div className="text-right mr-4">
               <p className="text-sm text-blue-100">Bem-vindo ao sistema</p>
               <p className="text-xs text-blue-200">Versão 2.0</p>
             </div>
+            <a href="/admin" className="text-sm underline hover:text-blue-200">
+              Admin
+            </a>
           </div>
           
           <Button variant="ghost" size="sm" className="md:hidden text-white">
