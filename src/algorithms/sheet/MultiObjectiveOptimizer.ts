@@ -1,5 +1,5 @@
 
-import type { SheetCutPiece, SheetOptimizationResult } from '@/types/sheet';
+import type { SheetCutPiece, SheetOptimizationResult, SheetPlacedPiece } from '@/types/sheet';
 import { BottomLeftFillOptimizer } from './BottomLeftFill';
 import { GeneticOptimizer } from './GeneticOptimizer';
 import { NoFitPolygonOptimizer } from './NoFitPolygon';
@@ -134,12 +134,53 @@ export class MultiObjectiveOptimizer {
 
   private async optimizeWithNFP(pieces: SheetCutPiece[]): Promise<SheetOptimizationResult> {
     console.log('Executando otimização No-Fit Polygon');
-    const nfp = new NoFitPolygonOptimizer(this.sheetWidth, this.sheetHeight, this.kerf);
-    const placedPieces = nfp.optimizeWithNFP(pieces);
-    
-    // Converter resultado NFP para formato padrão
-    const blf = new BottomLeftFillOptimizer(this.sheetWidth, this.sheetHeight, this.kerf, this.thickness, this.material);
-    return blf.optimize(pieces); // Usar BLF como fallback
+    try {
+      const nfp = new NoFitPolygonOptimizer(this.sheetWidth, this.sheetHeight, this.kerf);
+      const placedPieces = nfp.optimizeWithNFP(pieces);
+
+      if (!placedPieces || placedPieces.length === 0) {
+        throw new Error('Nenhuma peça posicionada com NFP');
+      }
+
+      const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316'];
+      const sheetArea = this.sheetWidth * this.sheetHeight;
+
+      const sheetPieces: SheetPlacedPiece[] = placedPieces.map((pp, idx) => ({
+        x: pp.x,
+        y: pp.y,
+        width: pp.piece.width,
+        height: pp.piece.height,
+        rotation: pp.rotation,
+        tag: pp.piece.tag,
+        color: colors[idx % colors.length],
+        originalPiece: pp.piece
+      }));
+
+      const utilizedArea = sheetPieces.reduce((sum, p) => sum + (p.width * p.height), 0);
+      const wasteArea = sheetArea - utilizedArea;
+      const efficiency = (utilizedArea / sheetArea) * 100;
+      const weight = this.calculateSheetWeight(sheetArea);
+      const materialCost = this.calculateMaterialCost(weight);
+
+      return {
+        sheets: [{
+          id: 'sheet-1',
+          pieces: sheetPieces,
+          efficiency,
+          wasteArea,
+          utilizedArea,
+          weight
+        }],
+        totalSheets: 1,
+        totalWasteArea: wasteArea,
+        averageEfficiency: efficiency,
+        totalWeight: weight,
+        materialCost
+      };
+    } catch (error) {
+      console.error('Erro na otimização NFP:', error);
+      throw error;
+    }
   }
 
   private async optimizeHybrid(pieces: SheetCutPiece[]): Promise<SheetOptimizationResult> {
@@ -286,5 +327,31 @@ export class MultiObjectiveOptimizer {
       },
       optimization: this.config
     };
+  }
+
+  private calculateSheetWeight(sheetArea: number): number {
+    const areaDm2 = sheetArea / 10000;
+    const thicknessDm = this.thickness / 10;
+    const volumeDm3 = areaDm2 * thicknessDm;
+
+    const densities: { [key: string]: number } = {
+      'A36': 7.85,
+      'A572': 7.85,
+      'A514': 7.85
+    };
+
+    const density = densities[this.material] || 7.85;
+    return volumeDm3 * density;
+  }
+
+  private calculateMaterialCost(totalWeight: number): number {
+    const costPerKg: { [key: string]: number } = {
+      'A36': 5.50,
+      'A572': 6.20,
+      'A514': 8.90
+    };
+
+    const cost = costPerKg[this.material] || 5.50;
+    return totalWeight * cost;
   }
 }
