@@ -24,3 +24,4 @@ export { inspetorService } from './entities/InspetorService';
 export { projetoService } from './entities/ProjetoService';
 export { estoqueSobrasService } from './entities/EstoqueSobrasService';
 export { historicoOtimizacaoService } from './entities/HistoricoOtimizacaoService';
+export { usuarioService } from './entities/UsuarioService';
