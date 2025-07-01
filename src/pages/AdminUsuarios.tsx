@@ -2,12 +2,20 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
 import { usuarioService } from '@/services';
 import type { Usuario } from '@/services';
 
 const AdminUsuarios = () => {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
-  const [novo, setNovo] = useState({ nome: '', email: '', role: 'user' });
+  const [novo, setNovo] = useState({ nome: '', email: '', password: '', role: 'usuario' });
   const [editando, setEditando] = useState<Usuario | null>(null);
 
   const carregar = async () => {
@@ -20,8 +28,27 @@ const AdminUsuarios = () => {
   }, []);
 
   const salvarNovo = async () => {
-    await usuarioService.create({ data: novo });
-    setNovo({ nome: '', email: '', role: 'user' });
+    // Cria usuário no sistema de autenticação do Supabase
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: novo.email,
+      password: novo.password,
+    });
+
+    if (authError || !authData?.user) {
+      console.error('Erro ao criar usuário', authError);
+      return;
+    }
+
+    await usuarioService.create({
+      data: {
+        id: authData.user.id,
+        nome: novo.nome,
+        email: novo.email,
+        role: novo.role,
+      },
+    });
+
+    setNovo({ nome: '', email: '', password: '', role: 'usuario' });
     carregar();
   };
 
@@ -45,7 +72,7 @@ const AdminUsuarios = () => {
             <CardTitle>Cadastro de Usuários</CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-4 gap-4">
               <Input
                 placeholder="Nome"
                 value={novo.nome}
@@ -57,12 +84,25 @@ const AdminUsuarios = () => {
                 onChange={(e) => setNovo({ ...novo, email: e.target.value })}
               />
               <Input
-                placeholder="Role"
-                value={novo.role}
-                onChange={(e) => setNovo({ ...novo, role: e.target.value })}
+                placeholder="Senha"
+                type="password"
+                value={novo.password}
+                onChange={(e) => setNovo({ ...novo, password: e.target.value })}
               />
+              <Select
+                value={novo.role}
+                onValueChange={(value) => setNovo({ ...novo, role: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a função" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="administrador">administrador</SelectItem>
+                  <SelectItem value="usuario">usuario</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Button onClick={salvarNovo} disabled={!novo.nome || !novo.email}>
+            <Button onClick={salvarNovo} disabled={!novo.nome || !novo.email || !novo.password}>
               Criar Usuário
             </Button>
           </CardContent>
@@ -120,11 +160,20 @@ const AdminUsuarios = () => {
                   value={editando.email}
                   onChange={(e) => setEditando({ ...editando, email: e.target.value })}
                 />
-                <Input
-                  placeholder="Role"
+                <Select
                   value={editando.role}
-                  onChange={(e) => setEditando({ ...editando, role: e.target.value })}
-                />
+                  onValueChange={(value) =>
+                    setEditando((prev) => (prev ? { ...prev, role: value } : prev))
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Função" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="administrador">administrador</SelectItem>
+                    <SelectItem value="usuario">usuario</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-x-2">
                 <Button onClick={salvarEdicao}>Salvar</Button>
