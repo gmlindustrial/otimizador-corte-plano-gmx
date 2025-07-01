@@ -223,8 +223,9 @@ export class BottomLeftFillOptimizer {
   }
 
   private calculateSheetWeight(sheetArea: number): number {
-    // Cálculo correto: usar thickness do projeto, não sheetHeight
-    // Área em mm² -> dm² -> volume em dm³ -> peso em kg
+    // Calculate weight using the sheet area and project thickness.
+    // Area (mm²) -> dm², then multiply by thickness in dm to get volume (dm³),
+    // finally apply material density to obtain kg.
     const areaDm2 = sheetArea / 10000; // mm² para dm²
     const thicknessDm = this.thickness / 10; // mm para dm
     const volumeDm3 = areaDm2 * thicknessDm;
