@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ import { usuarioService } from '@/services';
 import type { Usuario } from '@/services';
 
 const AdminUsuarios = () => {
+  useAuthGuard('administrador')
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [novo, setNovo] = useState({ nome: '', email: '', password: '', role: 'usuario' });
   const [editando, setEditando] = useState<Usuario | null>(null);

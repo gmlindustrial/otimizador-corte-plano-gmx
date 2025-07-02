@@ -1,5 +1,6 @@
 
 import { useState } from 'react';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { Header } from '@/components/Header';
 import { Dashboard } from '@/components/Dashboard';
 import { HistoryPanel } from '@/components/HistoryPanel';
@@ -55,6 +56,7 @@ export interface Project {
 }
 
 const Index = () => {
+  useAuthGuard()
   const [activeTab, setActiveTab] = useState('optimize');
   
   // Linear cutting optimization
