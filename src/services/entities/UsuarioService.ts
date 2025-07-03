@@ -1,5 +1,6 @@
 
 import { BaseService } from '../base/BaseService';
+import { supabase } from '@/integrations/supabase/client';
 import type { Usuario } from '../interfaces';
 
 export class UsuarioService extends BaseService<Usuario> {
@@ -11,7 +12,7 @@ export class UsuarioService extends BaseService<Usuario> {
   async create({ data, id }: { data: Omit<Usuario, 'id' | 'created_at'>; id?: string }) {
     const insertData = id ? { ...data, id } : data;
     
-    const { data: result, error } = await this.supabase
+    const { data: result, error } = await supabase
       .from(this.tableName)
       .insert(insertData)
       .select()
