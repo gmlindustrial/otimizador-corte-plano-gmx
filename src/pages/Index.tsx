@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { Header } from '@/components/Header';
 import { Dashboard } from '@/components/Dashboard';
 import { HistoryPanel } from '@/components/HistoryPanel';
-import { EstoqueSobras } from '@/components/EstoqueSobras';
+import { EstoqueSobrasIntegrated } from '@/components/EstoqueSobras';
 import { CadastroManagerIntegrated } from '@/components/CadastroManagerIntegrated';
 import { SheetCuttingSettings } from '@/components/settings/SheetCuttingSettings';
 import { BarCuttingSettings } from '@/components/settings/BarCuttingSettings';
@@ -17,8 +16,9 @@ import { supabase } from '@/integrations/supabase/client';
 import AdminUsuarios from './AdminUsuarios';
 import { cn } from '@/lib/utils';
 import { BottomLeftFillOptimizer } from '@/algorithms/sheet/BottomLeftFill';
-import { useOptimizationHistory } from '@/hooks/useOptimizationHistory';
-import { useLinearOptimization } from '@/hooks/useLinearOptimization';
+import { useOptimizationHistoryPersistent } from '@/hooks/useOptimizationHistoryPersistent';
+import { useLinearProjects } from '@/hooks/useLinearProjects';
+import { useSheetProjects } from '@/hooks/useSheetProjects';
 import type { SheetCutPiece, SheetProject, SheetOptimizationResult } from '@/types/sheet';
 
 export interface CutPiece {
@@ -63,7 +63,8 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState('optimize');
   const [isAdmin, setIsAdmin] = useState(false);
   
-  // Linear cutting optimization
+  // Linear cutting optimization with persistent projects
+  const { savedProjects: savedLinearProjects, saveProject: saveLinearProject } = useLinearProjects();
   const {
     project,
     setProject,
@@ -76,10 +77,15 @@ const Index = () => {
     handleOptimize
   } = useLinearOptimization();
 
-  // Optimization history
-  const { optimizationHistory, addToHistory } = useOptimizationHistory();
+  // Optimization history - now persistent
+  const { 
+    optimizationHistory, 
+    addToHistory,
+    loading: historyLoading 
+  } = useOptimizationHistoryPersistent();
 
-  // Estados para corte de chapas
+  // Sheet cutting with persistent projects
+  const { savedProjects: savedSheetProjects, saveProject: saveSheetProject } = useSheetProjects();
   const [sheetProject, setSheetProject] = useState<SheetProject | null>(null);
   const [sheetPieces, setSheetPieces] = useState<SheetCutPiece[]>([]);
   const [sheetResults, setSheetResults] = useState<SheetOptimizationResult | null>(null);
@@ -103,11 +109,24 @@ const Index = () => {
     void fetchRole();
   }, []);
 
-  const handleLinearOptimize = () => {
-    handleOptimize(addToHistory);
+  const handleLinearOptimize = async () => {
+    const result = handleOptimize();
+    
+    // Save project and add to history if project exists
+    if (project && pieces.length > 0 && result) {
+      try {
+        // Save project if not already saved
+        await saveLinearProject({ project, pieces, barLength });
+        
+        // Add to persistent history
+        await addToHistory(project, pieces, result, barLength);
+      } catch (error) {
+        console.error('Erro ao salvar projeto/histórico:', error);
+      }
+    }
   };
 
-  const handleSheetOptimize = () => {
+  const handleSheetOptimize = async () => {
     if (sheetPieces.length === 0 || !sheetProject) return;
 
     const optimizer = new BottomLeftFillOptimizer(
@@ -118,6 +137,14 @@ const Index = () => {
 
     const optimizationResult = optimizer.optimize(sheetPieces);
     setSheetResults(optimizationResult);
+
+    // Save sheet project
+    try {
+      await saveSheetProject({ project: sheetProject, pieces: sheetPieces });
+      console.log('Projeto de chapas salvo com sucesso');
+    } catch (error) {
+      console.error('Erro ao salvar projeto de chapas:', error);
+    }
 
     console.log('Otimização de chapas concluída:', {
       totalSheets: optimizationResult.totalSheets,
@@ -198,7 +225,10 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="sobras">
-            <EstoqueSobras tipoMaterial={project?.tipoMaterial} />
+            <EstoqueSobrasIntegrated 
+              materialId={project?.tipoMaterial} 
+              tipoMaterial={project?.tipoMaterial}
+            />
           </TabsContent>
 
           <TabsContent value="history">

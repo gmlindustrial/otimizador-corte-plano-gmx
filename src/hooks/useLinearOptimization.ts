@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import type { Project, CutPiece, OptimizationResult } from '@/pages/Index';
 
@@ -9,7 +8,7 @@ export const useLinearOptimization = () => {
   const [results, setResults] = useState<OptimizationResult | null>(null);
 
   const handleOptimize = (onAddToHistory?: (project: Project, pieces: CutPiece[], results: OptimizationResult, barLength: number) => void) => {
-    if (pieces.length === 0) return;
+    if (pieces.length === 0) return null;
 
     // Implementação do algoritmo First Fit Decreasing
     const sortedPieces: Array<{ length: number; originalIndex: number }> = [];
@@ -84,10 +83,12 @@ export const useLinearOptimization = () => {
 
     setResults(optimizationResult);
 
-    // Salvar no histórico se projeto existe e callback fornecido
+    // Call callback if provided (for backward compatibility)
     if (project && onAddToHistory) {
       onAddToHistory(project, pieces, optimizationResult, barLength);
     }
+
+    return optimizationResult;
   };
 
   return {
