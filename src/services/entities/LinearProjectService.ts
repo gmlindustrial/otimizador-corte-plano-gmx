@@ -41,7 +41,7 @@ export class LinearProjectService extends BaseService<Projeto> {
           pieces: pieces,
           barLength,
           originalProjectId: project.id
-        }
+        } as any // Cast to Json type for Supabase compatibility
       };
 
       const { data: result, error } = await supabase
