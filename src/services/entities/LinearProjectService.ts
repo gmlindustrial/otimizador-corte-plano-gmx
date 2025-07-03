@@ -41,7 +41,7 @@ export class LinearProjectService extends BaseService<Projeto> {
           pieces: pieces,
           barLength,
           originalProjectId: project.id
-        } as any // Cast to Json type for Supabase compatibility
+        }
       };
 
       const { data: result, error } = await supabase
@@ -60,7 +60,13 @@ export class LinearProjectService extends BaseService<Projeto> {
         success: true
       };
     } catch (error) {
-      return this.handleError(error, 'Erro ao salvar projeto linear') as ServiceResponse<Projeto>;
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao salvar projeto linear';
+      console.error('Erro ao salvar projeto linear:', error);
+      return {
+        data: null,
+        error: errorMessage,
+        success: false
+      };
     }
   }
 
