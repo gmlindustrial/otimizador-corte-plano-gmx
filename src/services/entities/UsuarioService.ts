@@ -11,7 +11,11 @@ export class UsuarioService extends BaseService<Usuario> {
 
   // Override create method to handle auth user ID
   async create(request: CreateRequest<Usuario> & { id?: string }): Promise<ServiceResponse<Usuario>> {
-    const insertData = request.id ? { ...request.data, id: request.id } : request.data;
+    // Ensure we always have an id for the usuarios table
+    const insertData = {
+      ...request.data,
+      id: request.id || crypto.randomUUID() // Fallback to generated UUID if no id provided
+    };
     
     const { data: result, error } = await supabase
       .from('usuarios')
