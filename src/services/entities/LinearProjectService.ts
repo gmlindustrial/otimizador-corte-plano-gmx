@@ -38,10 +38,10 @@ export class LinearProjectService extends BaseService<Projeto> {
           tipoMaterial: project.tipoMaterial,
           operador: project.operador,
           aprovadorQA: project.aprovadorQA,
-          pieces: pieces as any, // Cast to Json type
+          pieces: pieces,
           barLength,
           originalProjectId: project.id
-        } as any // Cast entire object to Json type
+        }
       };
 
       const { data: result, error } = await supabase
@@ -69,7 +69,7 @@ export class LinearProjectService extends BaseService<Projeto> {
       const { data, error } = await supabase
         .from('projetos')
         .select('*')
-        .not('dados_projeto->type', 'is', null)
+        .not('dados_projeto', 'is', null)
         .eq('dados_projeto->type', 'linear')
         .order('created_at', { ascending: false });
 
