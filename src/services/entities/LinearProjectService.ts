@@ -2,7 +2,7 @@
 import { BaseService } from '../base/BaseService';
 import { supabase } from '@/integrations/supabase/client';
 import type { Projeto } from '../interfaces';
-import type { ServiceResponse } from '../base/types';
+import type { ServiceResponse, ListResponse } from '../base/types';
 import type { Project, CutPiece } from '@/pages/Index';
 
 export interface LinearProjectData {
@@ -64,7 +64,7 @@ export class LinearProjectService extends BaseService<Projeto> {
     }
   }
 
-  async loadLinearProjects(): Promise<ServiceResponse<Projeto[]>> {
+  async loadLinearProjects(): Promise<ListResponse<Projeto>> {
     try {
       const { data, error } = await supabase
         .from('projetos')
@@ -82,7 +82,13 @@ export class LinearProjectService extends BaseService<Projeto> {
         total: data?.length || 0
       };
     } catch (error) {
-      return this.handleError(error, 'Erro ao carregar projetos lineares');
+      console.error('Erro ao carregar projetos lineares:', error);
+      return {
+        data: [],
+        error: error instanceof Error ? error.message : 'Erro ao carregar projetos lineares',
+        success: false,
+        total: 0
+      };
     }
   }
 

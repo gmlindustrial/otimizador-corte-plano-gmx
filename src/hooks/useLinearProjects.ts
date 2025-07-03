@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import { linearProjectService, type LinearProjectData } from '@/services/entities/LinearProjectService';
 import { toast } from 'sonner';
-import type { Projeto } from '@/services/interfaces';
 
 export const useLinearProjects = () => {
   const [savedProjects, setSavedProjects] = useState<LinearProjectData[]>([]);
