@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +9,9 @@ import { useToast } from '@/hooks/use-toast';
 import { ReportViewer } from '@/components/reports/ReportViewer';
 import { ShareDialog } from '@/components/reports/ShareDialog';
 import { PDFReportService } from '@/services/PDFReportService';
+import { useSupabaseData } from '@/hooks/useSupabaseData';
+import { useMaterialPrices } from '@/hooks/useMaterialPrices';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MaterialReport {
   id: string;
@@ -17,6 +20,8 @@ interface MaterialReport {
   count: number;
   lastUsed: string;
   status: 'active' | 'archived';
+  price?: number;
+  description?: string;
 }
 
 export const MaterialReportsManager = () => {
@@ -25,19 +30,91 @@ export const MaterialReportsManager = () => {
   const [viewerOpen, setViewerOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [selectedReport, setSelectedReport] = useState<any>(null);
+  const [barMaterials, setBarMaterials] = useState<MaterialReport[]>([]);
+  const [sheetMaterials, setSheetMaterials] = useState<MaterialReport[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  const { materiais } = useSupabaseData();
+  const { prices } = useMaterialPrices();
 
-  // Mock data - em produção viria do Supabase
-  const barMaterials: MaterialReport[] = [
-    { id: '1', name: 'Barra Aço A36 - 12mm', type: 'bars', count: 150, lastUsed: '2024-06-20', status: 'active' },
-    { id: '2', name: 'Barra Aço A572 - 16mm', type: 'bars', count: 80, lastUsed: '2024-06-19', status: 'active' },
-    { id: '3', name: 'Barra Inox 304 - 10mm', type: 'bars', count: 25, lastUsed: '2024-06-15', status: 'archived' },
-  ];
+  useEffect(() => {
+    const processRealMaterials = async () => {
+      if (!materiais.length) return;
+      
+      setLoading(true);
+      
+      try {
+        // Buscar último uso de cada material no histórico
+        const { data: historyData } = await supabase
+          .from('historico_otimizacoes')
+          .select('created_at, projeto_id, projetos(material_id)')
+          .order('created_at', { ascending: false });
 
-  const sheetMaterials: MaterialReport[] = [
-    { id: '4', name: 'Chapa Aço A36 - 6mm', type: 'sheets', count: 45, lastUsed: '2024-06-21', status: 'active' },
-    { id: '5', name: 'Chapa Aço A572 - 12mm', type: 'sheets', count: 32, lastUsed: '2024-06-20', status: 'active' },
-    { id: '6', name: 'Chapa Inox 316 - 8mm', type: 'sheets', count: 18, lastUsed: '2024-06-18', status: 'active' },
-  ];
+        const materialUsage: Record<string, { count: number; lastUsed: string }> = {};
+        
+        // Processar histórico para calcular uso
+        historyData?.forEach(entry => {
+          const materialId = entry.projetos?.material_id;
+          if (materialId) {
+            if (!materialUsage[materialId]) {
+              materialUsage[materialId] = { count: 0, lastUsed: entry.created_at };
+            }
+            materialUsage[materialId].count += 1;
+            // Manter a data mais recente
+            if (new Date(entry.created_at) > new Date(materialUsage[materialId].lastUsed)) {
+              materialUsage[materialId].lastUsed = entry.created_at;
+            }
+          }
+        });
+
+        // Processar materiais reais
+        const bars: MaterialReport[] = [];
+        const sheets: MaterialReport[] = [];
+        
+        materiais.forEach(material => {
+          const usage = materialUsage[material.id] || { count: 0, lastUsed: material.created_at };
+          const price = prices.find(p => p.material_id === material.id)?.price_per_kg || 0;
+          
+          // Determinar se é ativo ou arquivado (se não foi usado nos últimos 30 dias)
+          const lastUsedDate = new Date(usage.lastUsed);
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          const status = lastUsedDate > thirtyDaysAgo ? 'active' : 'archived';
+          
+          const materialReport: MaterialReport = {
+            id: material.id,
+            name: `${material.tipo} - ${material.descricao || 'Sem descrição'}`,
+            type: material.tipo.toLowerCase().includes('chapa') ? 'sheets' : 'bars',
+            count: usage.count,
+            lastUsed: new Date(usage.lastUsed).toLocaleDateString('pt-BR'),
+            status,
+            price,
+            description: material.descricao
+          };
+          
+          if (materialReport.type === 'sheets') {
+            sheets.push(materialReport);
+          } else {
+            bars.push(materialReport);
+          }
+        });
+        
+        setBarMaterials(bars);
+        setSheetMaterials(sheets);
+      } catch (error) {
+        console.error('Erro ao processar materiais:', error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar dados dos materiais",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    processRealMaterials();
+  }, [materiais, prices, toast]);
 
   const handleViewReport = (material: MaterialReport) => {
     const currentMaterials = activeTab === 'bars' ? barMaterials : sheetMaterials;
@@ -49,6 +126,7 @@ export const MaterialReportsManager = () => {
         activeMaterials: currentMaterials.filter(m => m.status === 'active').length,
         archivedMaterials: currentMaterials.filter(m => m.status === 'archived').length,
         totalUsage: currentMaterials.reduce((sum, m) => sum + m.count, 0),
+        totalValue: currentMaterials.reduce((sum, m) => sum + (m.price || 0), 0),
         materials: currentMaterials
       }
     });
@@ -101,6 +179,7 @@ export const MaterialReportsManager = () => {
         activeMaterials: materials.filter(m => m.status === 'active').length,
         archivedMaterials: materials.filter(m => m.status === 'archived').length,
         totalUsage: materials.reduce((sum, m) => sum + m.count, 0),
+        totalValue: materials.reduce((sum, m) => sum + (m.price || 0), 0),
         materials: materials
       }
     });
@@ -113,41 +192,54 @@ export const MaterialReportsManager = () => {
 
   const MaterialList = ({ materials }: { materials: MaterialReport[] }) => (
     <div className="space-y-4">
-      {materials.map((material) => (
-        <Card key={material.id} className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-3">
-                <h4 className="font-medium text-gray-900">{material.name}</h4>
-                <Badge variant={material.status === 'active' ? 'default' : 'secondary'}>
-                  {material.status === 'active' ? 'Ativo' : 'Arquivado'}
-                </Badge>
+      {loading ? (
+        <div className="text-center py-8">
+          <p>Carregando materiais...</p>
+        </div>
+      ) : materials.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-gray-500">Nenhum material encontrado</p>
+        </div>
+      ) : (
+        materials.map((material) => (
+          <Card key={material.id} className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-3">
+                  <h4 className="font-medium text-gray-900">{material.name}</h4>
+                  <Badge variant={material.status === 'active' ? 'default' : 'secondary'}>
+                    {material.status === 'active' ? 'Ativo' : 'Arquivado'}
+                  </Badge>
+                </div>
+                <p className="text-sm text-gray-600 mt-1">
+                  {material.count} usos • Último uso: {material.lastUsed}
+                  {material.price && material.price > 0 && (
+                    <span className="ml-2">• R$ {material.price.toFixed(2)}/kg</span>
+                  )}
+                </p>
               </div>
-              <p className="text-sm text-gray-600 mt-1">
-                {material.count} unidades • Último uso: {material.lastUsed}
-              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleViewReport(material)}
+                >
+                  <Eye className="w-4 h-4" />
+                  Ver
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleDownloadReport(material)}
+                >
+                  <Download className="w-4 h-4" />
+                  PDF
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleViewReport(material)}
-              >
-                <Eye className="w-4 h-4" />
-                Ver
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleDownloadReport(material)}
-              >
-                <Download className="w-4 h-4" />
-                PDF
-              </Button>
-            </div>
-          </div>
-        </Card>
-      ))}
+          </Card>
+        ))
+      )}
     </div>
   );
 

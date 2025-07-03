@@ -167,6 +167,41 @@ export type Database = {
         }
         Relationships: []
       }
+      material_prices: {
+        Row: {
+          created_at: string
+          effective_date: string
+          id: string
+          material_id: string
+          price_per_kg: number
+          price_per_m2: number | null
+        }
+        Insert: {
+          created_at?: string
+          effective_date?: string
+          id?: string
+          material_id: string
+          price_per_kg?: number
+          price_per_m2?: number | null
+        }
+        Update: {
+          created_at?: string
+          effective_date?: string
+          id?: string
+          material_id?: string
+          price_per_kg?: number
+          price_per_m2?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "material_prices_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materiais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obras: {
         Row: {
           created_at: string
@@ -350,6 +385,57 @@ export type Database = {
           results?: Json
           total_sheets?: number
           total_weight?: number
+        }
+        Relationships: []
+      }
+      system_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      usuarios: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          nome: string
+          role: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id: string
+          nome: string
+          role?: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          nome?: string
+          role?: string
         }
         Relationships: []
       }

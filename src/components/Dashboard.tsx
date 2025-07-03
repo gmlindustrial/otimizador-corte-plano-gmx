@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,8 @@ import { EfficiencyReport } from './dashboard/EfficiencyReport';
 import { BladeManagement } from './dashboard/BladeManagement';
 import { MaterialUtilization } from './dashboard/MaterialUtilization';
 import { DuplicityMonitor } from './dashboard/DuplicityMonitor';
+import { useSupabaseData } from '@/hooks/useSupabaseData';
+import { useSystemSettings } from '@/hooks/useSystemSettings';
 
 interface DashboardProps {
   history: Array<{
@@ -27,8 +29,9 @@ interface DashboardProps {
 export const Dashboard = ({ history }: DashboardProps) => {
   const [timeFilter, setTimeFilter] = useState('today');
   const [operatorFilter, setOperatorFilter] = useState('all');
-
-  const operadores = ['João Silva', 'Maria Santos', 'Pedro Costa', 'Ana Oliveira'];
+  
+  const { operadores, loading: loadingOperadores } = useSupabaseData();
+  const { settings } = useSystemSettings();
   
   // Cálculos de KPIs baseados no histórico
   const todayHistory = history.filter(item => {
@@ -40,11 +43,15 @@ export const Dashboard = ({ history }: DashboardProps) => {
   const totalPiecesToday = todayHistory.reduce((sum, item) => 
     sum + item.pieces.reduce((pieceSum, piece) => pieceSum + piece.quantity, 0), 0);
   
-  const totalBarsToday = todayHistory.reduce((sum, item) => sum + item.results.totalBars, 0);
+  const totalBarsToday = todayHistory.reduce((sum, item) => sum + (item.results?.totalBars || 0), 0);
   
   const avgEfficiency = todayHistory.length > 0 
-    ? todayHistory.reduce((sum, item) => sum + item.results.efficiency, 0) / todayHistory.length 
+    ? todayHistory.reduce((sum, item) => sum + (item.results?.efficiency || 0), 0) / todayHistory.length 
     : 0;
+
+  // Cálculo de tempo estimado baseado nas configurações
+  const tempoMedioPorPeca = parseFloat(settings.tempo_medio_por_peca || '2.5');
+  const tempoEstimadoHoras = (totalPiecesToday * tempoMedioPorPeca) / 60;
 
   const handleExportReport = (reportType: string) => {
     console.log(`Exportando relatório: ${reportType}`);
@@ -88,7 +95,7 @@ export const Dashboard = ({ history }: DashboardProps) => {
               <SelectContent>
                 <SelectItem value="all">Todos os Operadores</SelectItem>
                 {operadores.map(op => (
-                  <SelectItem key={op} value={op}>{op}</SelectItem>
+                  <SelectItem key={op.id} value={op.nome}>{op.nome}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -104,6 +111,7 @@ export const Dashboard = ({ history }: DashboardProps) => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Peças Cortadas Hoje</p>
                 <p className="text-2xl font-bold text-green-600">{totalPiecesToday}</p>
+                <p className="text-xs text-gray-500">~{tempoEstimadoHoras.toFixed(1)}h estimadas</p>
               </div>
               <Scissors className="w-8 h-8 text-green-600" />
             </div>
@@ -128,6 +136,9 @@ export const Dashboard = ({ history }: DashboardProps) => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Eficiência Média</p>
                 <p className="text-2xl font-bold text-orange-600">{avgEfficiency.toFixed(1)}%</p>
+                <p className="text-xs text-gray-500">
+                  Meta: {settings.meta_eficiencia || '85'}%
+                </p>
               </div>
               <TrendingUp className="w-8 h-8 text-orange-600" />
             </div>
@@ -140,6 +151,9 @@ export const Dashboard = ({ history }: DashboardProps) => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Listas Processadas</p>
                 <p className="text-2xl font-bold text-purple-600">{todayHistory.length}</p>
+                <p className="text-xs text-gray-500">
+                  {operadores.length} operadores ativos
+                </p>
               </div>
               <Users className="w-8 h-8 text-purple-600" />
             </div>
