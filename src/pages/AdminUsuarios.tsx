@@ -45,11 +45,11 @@ const AdminUsuarios = () => {
 
     await usuarioService.create({
       data: {
-        id: authData.user.id,
         nome: novo.nome,
         email: novo.email,
         role: novo.role,
       },
+      id: authData.user.id,
     });
 
     setNovo({ nome: '', email: '', password: '', role: 'usuario' });
