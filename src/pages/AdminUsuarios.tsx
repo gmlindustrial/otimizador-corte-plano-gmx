@@ -14,6 +14,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { usuarioService } from '@/services';
 import type { Usuario } from '@/services';
 import { useNavigate } from 'react-router-dom';
+import { LogOut } from 'lucide-react';
 
 const AdminUsuarios = () => {
   useAuthGuard('administrador')
@@ -21,6 +22,11 @@ const AdminUsuarios = () => {
   const [novo, setNovo] = useState({ nome: '', email: '', password: '', role: 'usuario' });
   const [editando, setEditando] = useState<Usuario | null>(null);
   const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate('/login');
+  };
 
   const carregar = async () => {
     const { data } = await usuarioService.getAll();
@@ -71,9 +77,15 @@ const AdminUsuarios = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 p-6">
       <div className="container mx-auto space-y-6">
-        <Button variant="secondary" className="mb-4" onClick={() => navigate(-1)}>
-          Voltar
-        </Button>
+        <div className="flex justify-between mb-4">
+          <Button variant="secondary" onClick={() => navigate(-1)}>
+            Voltar
+          </Button>
+          <Button variant="secondary" onClick={handleLogout}>
+            <LogOut className="w-4 h-4 mr-2" />
+            Sair
+          </Button>
+        </div>
         <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
           <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-t-lg">
             <CardTitle>Cadastro de Usuários</CardTitle>
