@@ -60,7 +60,7 @@ export class LinearProjectService extends BaseService<Projeto> {
         success: true
       };
     } catch (error) {
-      return this.handleError(error, 'Erro ao salvar projeto linear');
+      return this.handleError(error, 'Erro ao salvar projeto linear') as ServiceResponse<Projeto>;
     }
   }
 
@@ -76,7 +76,7 @@ export class LinearProjectService extends BaseService<Projeto> {
       if (error) throw error;
 
       return {
-        data: data || [],
+        data: (data as Projeto[]) || [],
         error: null,
         success: true,
         total: data?.length || 0
