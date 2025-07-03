@@ -20,7 +20,7 @@ export class LinearProjectService extends BaseService<Projeto> {
     try {
       const { project, pieces, barLength } = projectData;
 
-      // Prepare project data for database
+      // Prepare project data for database - cast to Json compatible format
       const insertData = {
         nome: project.name,
         numero_projeto: project.projectNumber,
@@ -31,7 +31,7 @@ export class LinearProjectService extends BaseService<Projeto> {
         validacao_qa: project.validacaoQA,
         enviar_sobras_estoque: project.enviarSobrasEstoque,
         qr_code: project.qrCode,
-        dados_projeto: {
+        dados_projeto: JSON.parse(JSON.stringify({
           type: 'linear',
           client: project.client,
           obra: project.obra,
@@ -41,7 +41,7 @@ export class LinearProjectService extends BaseService<Projeto> {
           pieces: pieces,
           barLength,
           originalProjectId: project.id
-        }
+        }))
       };
 
       const { data: result, error } = await supabase
