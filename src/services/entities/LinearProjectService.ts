@@ -2,7 +2,7 @@
 import { BaseService } from '../base/BaseService';
 import { supabase } from '@/integrations/supabase/client';
 import type { Projeto } from '../interfaces';
-import type { CreateRequest, ServiceResponse } from '../base/types';
+import type { ServiceResponse } from '../base/types';
 import type { Project, CutPiece } from '@/pages/Index';
 
 export interface LinearProjectData {
@@ -38,10 +38,10 @@ export class LinearProjectService extends BaseService<Projeto> {
           tipoMaterial: project.tipoMaterial,
           operador: project.operador,
           aprovadorQA: project.aprovadorQA,
-          pieces,
+          pieces: pieces as any, // Cast to Json type
           barLength,
           originalProjectId: project.id
-        }
+        } as any // Cast entire object to Json type
       };
 
       const { data: result, error } = await supabase

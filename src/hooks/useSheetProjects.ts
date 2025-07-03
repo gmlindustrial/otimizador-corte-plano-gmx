@@ -24,7 +24,7 @@ export const useSheetProjects = () => {
         lista: project.lista,
         revisao: project.revisao,
         validacao_qa: project.validacaoQA,
-        qr_code: project.qrCode || generateQRCode(project.id, project.lista),
+        qr_code: generateQRCode(project.id, project.lista),
         dados_projeto: {
           type: 'sheet',
           client: project.client,
@@ -37,9 +37,9 @@ export const useSheetProjects = () => {
           material: project.material,
           operador: project.operador,
           aprovadorQA: project.aprovadorQA,
-          pieces,
+          pieces: pieces as any, // Cast to Json type
           originalProjectId: project.id
-        }
+        } as any // Cast entire object to Json type
       };
 
       const { data, error } = await supabase
@@ -110,8 +110,7 @@ export const useSheetProjects = () => {
         turno: dbProject.turno,
         aprovadorQA: dadosProjeto.aprovadorQA || '',
         validacaoQA: dbProject.validacao_qa,
-        date: dbProject.created_at,
-        qrCode: dbProject.qr_code || ''
+        date: dbProject.created_at
       };
 
       return {

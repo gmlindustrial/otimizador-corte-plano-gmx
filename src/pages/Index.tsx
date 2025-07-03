@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { Header } from '@/components/Header';
 import { Dashboard } from '@/components/Dashboard';
 import { HistoryPanel } from '@/components/HistoryPanel';
-import { EstoqueSobrasIntegrated } from '@/components/EstoqueSobras';
+import { EstoqueSobrasIntegrated } from '@/components/EstoqueSobrasIntegrated';
 import { CadastroManagerIntegrated } from '@/components/CadastroManagerIntegrated';
 import { SheetCuttingSettings } from '@/components/settings/SheetCuttingSettings';
 import { BarCuttingSettings } from '@/components/settings/BarCuttingSettings';
@@ -19,6 +20,7 @@ import { BottomLeftFillOptimizer } from '@/algorithms/sheet/BottomLeftFill';
 import { useOptimizationHistoryPersistent } from '@/hooks/useOptimizationHistoryPersistent';
 import { useLinearProjects } from '@/hooks/useLinearProjects';
 import { useSheetProjects } from '@/hooks/useSheetProjects';
+import { useLinearOptimization } from '@/hooks/useLinearOptimization';
 import type { SheetCutPiece, SheetProject, SheetOptimizationResult } from '@/types/sheet';
 
 export interface CutPiece {

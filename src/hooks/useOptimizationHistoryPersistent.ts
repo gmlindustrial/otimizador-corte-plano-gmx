@@ -49,8 +49,8 @@ export const useOptimizationHistoryPersistent = () => {
       const historyData = {
         projeto_id: null, // Will be linked when project is saved
         bar_length: barLength,
-        pecas: pieces,
-        resultados: results
+        pecas: pieces as any, // Cast to Json type
+        resultados: results as any // Cast to Json type
       };
 
       const { data, error } = await supabase
