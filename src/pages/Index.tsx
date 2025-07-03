@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { Header } from '@/components/Header';
 import { Dashboard } from '@/components/Dashboard';
@@ -12,7 +12,10 @@ import { ReportsManager } from '@/components/reports/ReportsManager';
 import { LinearCuttingTab } from '@/components/optimization/LinearCuttingTab';
 import { SheetCuttingTab } from '@/components/optimization/SheetCuttingTab';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, Calculator, History, Settings, Package, Square, FileText } from 'lucide-react';
+import { BarChart3, Calculator, History, Settings, Package, Square, FileText, Shield } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import AdminUsuarios from './AdminUsuarios';
+import { cn } from '@/lib/utils';
 import { BottomLeftFillOptimizer } from '@/algorithms/sheet/BottomLeftFill';
 import { useOptimizationHistory } from '@/hooks/useOptimizationHistory';
 import { useLinearOptimization } from '@/hooks/useLinearOptimization';
@@ -58,6 +61,7 @@ export interface Project {
 const Index = () => {
   useAuthGuard()
   const [activeTab, setActiveTab] = useState('optimize');
+  const [isAdmin, setIsAdmin] = useState(false);
   
   // Linear cutting optimization
   const {
@@ -79,6 +83,25 @@ const Index = () => {
   const [sheetProject, setSheetProject] = useState<SheetProject | null>(null);
   const [sheetPieces, setSheetPieces] = useState<SheetCutPiece[]>([]);
   const [sheetResults, setSheetResults] = useState<SheetOptimizationResult | null>(null);
+
+  useEffect(() => {
+    const fetchRole = async () => {
+      const {
+        data: { session }
+      } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { data } = await supabase
+        .from('usuarios')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+      if (data?.role === 'administrador') {
+        setIsAdmin(true);
+      }
+    };
+    void fetchRole();
+  }, []);
 
   const handleLinearOptimize = () => {
     handleOptimize(addToHistory);
@@ -109,7 +132,7 @@ const Index = () => {
       
       <div className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-7 mb-6">
+          <TabsList className={cn("grid w-full mb-6", isAdmin ? "grid-cols-8" : "grid-cols-7")}>
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               Dashboard
@@ -138,6 +161,12 @@ const Index = () => {
               <Settings className="w-4 h-4" />
               Configurações
             </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger value="admin" className="flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                Administrador
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="dashboard">
@@ -193,11 +222,16 @@ const Index = () => {
             <CadastroManagerIntegrated onUpdateData={() => {
               console.log('Dados atualizados - recarregando listas...');
             }} />
-            
+
             <BarCuttingSettings />
-            
+
             <SheetCuttingSettings />
           </TabsContent>
+          {isAdmin && (
+            <TabsContent value="admin">
+              <AdminUsuarios />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>
