@@ -1,4 +1,3 @@
-
 import { CutPiece } from '@/pages/Index';
 
 export class FileParsingService {
@@ -75,15 +74,16 @@ export class FileParsingService {
         }
       }
 
-      // Parsear linha de peça
+      // Parsear linha de peça com regex mais flexível
       if (currentConjunto && line.length > 0 && !line.match(/^-+$/) && !line.includes('Conjunto')) {
-        // Regex para capturar: posição, quantidade, perfil, material, dimensões, peso
-        const pieceMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(L\s+\d+\s+X\s+[\d.]+)\s+(A\d+)\s+(\d+)\s+x\s+(\d+)\s+([\d.]+)$/);
+        // Regex melhorada para capturar diferentes formatos
+        const pieceMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(L\s+\d+\s+X\s+[\d.]+|[A-Z]\d*[\s\d]*)\s+(A\d+|[\w\d]+)\s+(\d+)\s+x?\s*(\d+)\s+([\d.]+)$/i);
         
         if (pieceMatch) {
           const [, posicao, quantidade, perfil, material, comprimento, largura, peso] = pieceMatch;
           
-          const tag = `${currentConjunto}-${posicao}`;
+          // Criar TAG mais descritiva
+          const tag = `${currentConjunto}-P${posicao}`;
           
           const piece: any = {
             id: `autocad-${currentConjunto}-${posicao}-${Date.now()}`,
@@ -91,9 +91,9 @@ export class FileParsingService {
             quantity: parseInt(quantidade),
             obra,
             conjunto: currentConjunto,
-            posicao,
+            posicao: parseInt(posicao),
             perfil: perfil.trim(),
-            material,
+            material: material.trim(),
             peso: parseFloat(peso),
             tag,
             dimensoes: {
@@ -104,7 +104,34 @@ export class FileParsingService {
 
           pieces.push(piece);
           
-          console.log(`Peça adicionada: ${tag} - ${piece.length}mm - Qtd: ${piece.quantity}`);
+          console.log(`Peça adicionada: ${tag} - ${piece.length}mm - Qtd: ${piece.quantity} - Perfil: ${piece.perfil}`);
+        } else {
+          // Tentar regex alternativa para formatos diferentes
+          const altMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(.+?)\s+(\d+)\s*(?:x\s*(\d+))?\s+([\d.]+)$/);
+          if (altMatch) {
+            const [, posicao, quantidade, descricao, comprimento, largura, peso] = altMatch;
+            
+            const tag = `${currentConjunto}-P${posicao}`;
+            
+            const piece: any = {
+              id: `autocad-alt-${currentConjunto}-${posicao}-${Date.now()}`,
+              length: parseInt(comprimento),
+              quantity: parseInt(quantidade),
+              obra,
+              conjunto: currentConjunto,
+              posicao: parseInt(posicao),
+              perfil: descricao.trim(),
+              peso: parseFloat(peso),
+              tag,
+              dimensoes: {
+                comprimento: parseInt(comprimento),
+                largura: largura ? parseInt(largura) : 0
+              }
+            };
+
+            pieces.push(piece);
+            console.log(`Peça alternativa adicionada: ${tag} - ${piece.length}mm - Qtd: ${piece.quantity}`);
+          }
         }
       }
     }
@@ -115,6 +142,7 @@ export class FileParsingService {
 
     console.log(`Total de peças extraídas: ${pieces.length}`);
     console.log(`Obra: ${obra}`);
+    console.log('Conjuntos encontrados:', [...new Set(pieces.map(p => (p as any).conjunto))]);
     
     return pieces;
   }
