@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { OptimizationResult, Project } from '@/pages/Index';
-import { BarChart, Download, Printer, FileSpreadsheet, FileText, Wrench, Fullscreen } from 'lucide-react';
+import { BarChart, Download, Printer, FileSpreadsheet, FileText, Wrench, Fullscreen, Recycle, MapPin, DollarSign, Leaf } from 'lucide-react';
 import { ReportVisualization } from './ReportVisualization';
 import { PrintableReport } from './PrintableReport';
 import { FullscreenReportViewer } from './reports/FullscreenReportViewer';
@@ -15,11 +16,26 @@ interface OptimizationResultsProps {
   project: Project | null;
 }
 
+// Interface estendida para suportar informações de sustentabilidade
+interface ExtendedOptimizationResult extends OptimizationResult {
+  sustainability?: {
+    leftoverBarsUsed: number;
+    newBarsUsed: number;
+    materialReused: number;
+    totalEconomy: number;
+    wasteReduction: number;
+  };
+}
+
 export const OptimizationResults = ({ results, barLength, project }: OptimizationResultsProps) => {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [printMode, setPrintMode] = useState<'complete' | 'simplified'>('complete');
   const { toast } = useToast();
+
+  // Cast para acessar propriedades de sustentabilidade se existirem
+  const extendedResults = results as ExtendedOptimizationResult;
+  const hasSustainabilityData = extendedResults.sustainability;
 
   const handlePrint = (mode: 'complete' | 'simplified') => {
     setPrintMode(mode);
@@ -88,15 +104,17 @@ export const OptimizationResults = ({ results, barLength, project }: Optimizatio
 
   const handleExportExcel = () => {
     try {
-      // Estrutura melhorada para operador com informações completas
+      // Estrutura melhorada com informações de sobras
       const headers = [
         'Barra',
+        'Tipo',
         'Posição na Barra', 
         'TAG',
         'Conjunto',
         'Comprimento (mm)',
         'Perfil/Material',
-        'Posição Original',
+        'Localização',
+        'Economia',
         'Obra',
         'Status',
         'Eficiência Barra (%)',
@@ -106,22 +124,27 @@ export const OptimizationResults = ({ results, barLength, project }: Optimizatio
       
       const rows: string[][] = [headers];
 
-      // Adicionar cada peça com informações completas organizadas por conjunto
-      results.bars.forEach((bar, barIndex) => {
+      // Adicionar cada peça com informações de sobras
+      results.bars.forEach((bar: any, barIndex) => {
+        const barType = bar.type || 'new';
+        const isLeftover = barType === 'leftover';
+        
         bar.pieces.forEach((piece: any, pieceIndex) => {
           rows.push([
             `Barra ${barIndex + 1}`, // Barra
+            isLeftover ? 'SOBRA' : 'NOVA', // Tipo
             `${pieceIndex + 1}`, // Posição na Barra
             piece.tag || `P${pieceIndex + 1}`, // TAG
             piece.conjunto || 'Entrada Manual', // Conjunto
             piece.length.toString(), // Comprimento
             piece.perfil || piece.material || project?.tipoMaterial || 'Material', // Perfil/Material
-            piece.posicao?.toString() || `${pieceIndex + 1}`, // Posição Original
+            isLeftover ? (bar.location || 'Estoque') : 'Compra Nova', // Localização
+            isLeftover ? `R$ ${((piece.length / 1000) * 8).toFixed(2)}` : 'R$ 0,00', // Economia
             piece.obra || project?.obra || 'N/A', // Obra
-            'Otimizado', // Status
-            ((bar.totalUsed / barLength) * 100).toFixed(1), // Eficiência da Barra
+            isLeftover ? 'Reaproveitado' : 'Novo Material', // Status
+            ((bar.totalUsed / (bar.originalLength || barLength)) * 100).toFixed(1), // Eficiência da Barra
             pieceIndex === bar.pieces.length - 1 ? bar.waste.toString() : '0', // Sobra apenas na última peça
-            piece.conjunto ? `Conjunto: ${piece.conjunto}` : 'Peça manual' // Observações
+            isLeftover ? `Sobra reutilizada - ${bar.location || 'Estoque'}` : 'Material novo' // Observações
           ]);
         });
         
@@ -129,17 +152,19 @@ export const OptimizationResults = ({ results, barLength, project }: Optimizatio
         if (bar.waste > 0) {
           rows.push([
             `Barra ${barIndex + 1}`,
+            barType.toUpperCase(),
             'Sobra',
             'DESCARTE',
             '-',
             bar.waste.toString(),
             'Desperdício',
-            '-',
+            isLeftover ? (bar.location || 'Estoque') : 'Descarte',
+            'R$ 0,00',
             project?.obra || 'N/A',
             'Descarte',
             '0',
             bar.waste.toString(),
-            'Material a ser descartado'
+            isLeftover ? 'Sobra da sobra reutilizada' : 'Material a ser descartado'
           ]);
         }
       });
@@ -174,6 +199,18 @@ export const OptimizationResults = ({ results, barLength, project }: Optimizatio
           Array.from(summary.barras).sort((a, b) => a - b).join(', ')
         ]);
       });
+
+      // Adicionar seção de sustentabilidade se houver dados
+      if (hasSustainabilityData) {
+        rows.push([]);
+        rows.push(['=== RELATÓRIO DE SUSTENTABILIDADE ===']);
+        rows.push(['Sobras Utilizadas:', hasSustainabilityData.leftoverBarsUsed.toString()]);
+        rows.push(['Barras Novas:', hasSustainabilityData.newBarsUsed.toString()]);
+        rows.push(['Material Reutilizado:', `${(hasSustainabilityData.materialReused / 1000).toFixed(2)}m`]);
+        rows.push(['Economia Total:', `R$ ${hasSustainabilityData.totalEconomy.toFixed(2)}`]);
+        rows.push(['Redução de Desperdício:', `${hasSustainabilityData.wasteReduction.toFixed(1)}%`]);
+        rows.push(['Taxa de Reaproveitamento:', `${((hasSustainabilityData.leftoverBarsUsed / results.totalBars) * 100).toFixed(1)}%`]);
+      }
 
       // Adicionar seção de controle de qualidade
       rows.push([]);
@@ -219,7 +256,7 @@ export const OptimizationResults = ({ results, barLength, project }: Optimizatio
 
       toast({
         title: "Excel Exportado",
-        description: "Plano de corte detalhado para operador foi baixado",
+        description: "Plano de corte com informações de sustentabilidade foi baixado",
       });
     } catch (error) {
       console.error('Erro ao exportar Excel:', error);
@@ -258,16 +295,22 @@ export const OptimizationResults = ({ results, barLength, project }: Optimizatio
   return (
     <>
       <div className="space-y-6">
-        {/* Resumo Estatístico */}
+        {/* Resumo Estatístico com Sustentabilidade */}
         <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
           <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
             <CardTitle className="flex items-center gap-2">
               <BarChart className="w-5 h-5" />
               Resumo da Otimização
+              {hasSustainabilityData && hasSustainabilityData.leftoverBarsUsed > 0 && (
+                <Badge variant="secondary" className="bg-green-200 text-green-800 ml-2">
+                  <Recycle className="w-3 h-3 mr-1" />
+                  Sustentável
+                </Badge>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="text-center p-3 bg-blue-50 rounded-lg">
                 <div className="text-2xl font-bold text-blue-600">{results.totalBars}</div>
                 <div className="text-sm text-gray-600">Barras Utilizadas</div>
@@ -285,22 +328,61 @@ export const OptimizationResults = ({ results, barLength, project }: Optimizatio
                 <div className="text-sm text-gray-600">% Desperdício</div>
               </div>
             </div>
+
+            {/* Métricas de Sustentabilidade */}
+            {hasSustainabilityData && (
+              <div className="border-t pt-4">
+                <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                  <Leaf className="w-4 h-4 text-green-600" />
+                  Impacto Sustentável
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                  <div className="text-center p-2 bg-green-50 rounded">
+                    <div className="text-lg font-bold text-green-600">{hasSustainabilityData.leftoverBarsUsed}</div>
+                    <div className="text-xs text-gray-600">Sobras Usadas</div>
+                  </div>
+                  <div className="text-center p-2 bg-blue-50 rounded">
+                    <div className="text-lg font-bold text-blue-600">{(hasSustainabilityData.materialReused / 1000).toFixed(1)}m</div>
+                    <div className="text-xs text-gray-600">Material Reutilizado</div>
+                  </div>
+                  <div className="text-center p-2 bg-emerald-50 rounded">
+                    <div className="text-lg font-bold text-emerald-600 flex items-center justify-center gap-1">
+                      <DollarSign className="w-3 h-3" />
+                      {hasSustainabilityData.totalEconomy.toFixed(0)}
+                    </div>
+                    <div className="text-xs text-gray-600">Economia (R$)</div>
+                  </div>
+                  <div className="text-center p-2 bg-teal-50 rounded">
+                    <div className="text-lg font-bold text-teal-600">{hasSustainabilityData.wasteReduction.toFixed(1)}%</div>
+                    <div className="text-xs text-gray-600">Redução Desperdício</div>
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Visualização Detalhada */}
+        {/* Visualização Detalhada com Indicadores de Sobras */}
         <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               <span className="text-lg">Plano de Corte Detalhado por Conjunto</span>
-              <Button 
-                onClick={() => setShowFullscreen(true)}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <Fullscreen className="w-4 h-4" />
-                Visualizar em Tela Cheia
-              </Button>
+              <div className="flex items-center gap-2">
+                {hasSustainabilityData && hasSustainabilityData.leftoverBarsUsed > 0 && (
+                  <Badge variant="outline" className="text-green-700 border-green-300">
+                    <Recycle className="w-3 h-3 mr-1" />
+                    {hasSustainabilityData.leftoverBarsUsed} sobra(s) reutilizada(s)
+                  </Badge>
+                )}
+                <Button 
+                  onClick={() => setShowFullscreen(true)}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Fullscreen className="w-4 h-4" />
+                  Visualizar em Tela Cheia
+                </Button>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
@@ -358,6 +440,9 @@ export const OptimizationResults = ({ results, barLength, project }: Optimizatio
                   <Button onClick={handleExportExcel} variant="outline" className="justify-start">
                     <FileSpreadsheet className="w-4 h-4 mr-2" />
                     Exportar Plano do Operador (Excel)
+                    {hasSustainabilityData && hasSustainabilityData.leftoverBarsUsed > 0 && (
+                      <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700">+Sustentabilidade</Badge>
+                    )}
                   </Button>
                 </div>
               </div>
