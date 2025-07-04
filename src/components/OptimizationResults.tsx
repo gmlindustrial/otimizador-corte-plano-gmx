@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { OptimizationResult, Project } from '@/pages/Index';
+import { OptimizationResult, Project, CutPiece } from '@/pages/Index';
 import { BarChart, Download, Printer, FileSpreadsheet, FileText, Wrench, Fullscreen, Recycle, MapPin, DollarSign, Leaf } from 'lucide-react';
 import { ReportVisualization } from './ReportVisualization';
 import { PrintableReport } from './PrintableReport';
@@ -14,6 +14,7 @@ interface OptimizationResultsProps {
   results: OptimizationResult;
   barLength: number;
   project: Project | null;
+  pieces: CutPiece[];
 }
 
 // Interface estendida para suportar informações de sustentabilidade
@@ -27,13 +28,13 @@ interface ExtendedOptimizationResult extends OptimizationResult {
   };
 }
 
-export const OptimizationResults = ({ results, barLength, project }: OptimizationResultsProps) => {
+export const OptimizationResults = ({ results, barLength, project, pieces }: OptimizationResultsProps) => {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [printMode, setPrintMode] = useState<'complete' | 'simplified'>('complete');
   const { toast } = useToast();
 
-  // Cast para acessar propriedades de sustentabilidade se existirem
+  // Cast for accessing sustainability properties if they exist
   const extendedResults = results as ExtendedOptimizationResult;
   const hasSustainabilityData = extendedResults.sustainability;
 
@@ -286,6 +287,7 @@ export const OptimizationResults = ({ results, barLength, project }: Optimizatio
           results={results}
           barLength={barLength}
           project={project}
+          pieces={pieces}
           mode={printMode}
         />
       </div>
