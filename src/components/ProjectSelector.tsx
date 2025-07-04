@@ -1,6 +1,6 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Project } from '@/pages/Index';
+import type { Project } from '@/types/project';
 import { ProjectWizard } from './ProjectWizard';
 import { Building2, Settings } from 'lucide-react';
 

@@ -1,5 +1,4 @@
-
-import { OptimizationResult } from '@/pages/Index';
+import type { OptimizationResult } from '@/types/optimization';
 
 interface ReportVisualizationProps {
   results: OptimizationResult;

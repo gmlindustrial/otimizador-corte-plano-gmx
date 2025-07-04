@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import {
   AlertDialog,
@@ -117,21 +118,21 @@ export const DuplicateManager = ({ duplicates, onResolved, onCancel }: Duplicate
                     <div className="flex gap-2">
                       <Button
                         variant={resolutions[item.existing.id] === 'update' ? 'secondary' : 'outline'}
-                        size="xs"
+                        size="sm"
                         onClick={() => handleResolutionChange(item.existing.id, 'update')}
                       >
                         Atualizar
                       </Button>
                       <Button
                         variant={resolutions[item.existing.id] === 'duplicate' ? 'secondary' : 'outline'}
-                        size="xs"
+                        size="sm"
                         onClick={() => handleResolutionChange(item.existing.id, 'duplicate')}
                       >
                         Duplicar
                       </Button>
                       <Button
                         variant={resolutions[item.existing.id] === 'ignore' ? 'secondary' : 'outline'}
-                        size="xs"
+                        size="sm"
                         onClick={() => handleResolutionChange(item.existing.id, 'ignore')}
                       >
                         Ignorar
