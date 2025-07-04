@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { OptimizationResult, Project } from '@/pages/Index';
@@ -53,6 +52,33 @@ export const OptimizationResults = ({ results, barLength, project }: Optimizatio
       toast({
         title: "Erro ao exportar PDF",
         description: "Não foi possível gerar o relatório PDF",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleExportSimplifiedPDF = async () => {
+    try {
+      if (!project) {
+        toast({
+          title: "Erro",
+          description: "Dados do projeto não encontrados",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      await PDFReportService.generateSimplifiedLinearReport(results, barLength, project);
+      
+      toast({
+        title: "PDF Simplificado Exportado",
+        description: "Plano de corte simplificado foi gerado com sucesso",
+      });
+    } catch (error) {
+      console.error('Erro ao exportar PDF simplificado:', error);
+      toast({
+        title: "Erro ao exportar PDF",
+        description: "Não foi possível gerar o plano simplificado",
         variant: "destructive",
       });
     }
@@ -311,6 +337,10 @@ export const OptimizationResults = ({ results, barLength, project }: Optimizatio
                 <Button onClick={handleExportPDF} variant="outline" className="justify-start">
                   <Download className="w-4 h-4 mr-2" />
                   Exportar PDF Completo
+                </Button>
+                <Button onClick={handleExportSimplifiedPDF} variant="outline" className="justify-start">
+                  <Download className="w-4 h-4 mr-2" />
+                  Exportar PDF Simplificado (Produção)
                 </Button>
                 <Button onClick={handleExportExcel} variant="outline" className="justify-start">
                   <FileSpreadsheet className="w-4 h-4 mr-2" />
