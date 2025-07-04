@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calculator } from 'lucide-react';
@@ -7,7 +6,7 @@ import { DuplicateManager } from './DuplicateManager';
 import { ManualEntryForm } from './material-input/ManualEntryForm';
 import { PieceList } from './material-input/PieceList';
 import { OptimizeSection } from './material-input/OptimizeSection';
-import type { CutPiece } from '@/pages/Index';
+import type { CutPiece } from '@/types/cutPiece';
 
 interface MaterialInputProps {
   pieces: CutPiece[];

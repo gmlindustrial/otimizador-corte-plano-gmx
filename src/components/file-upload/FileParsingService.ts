@@ -1,4 +1,5 @@
-import { CutPiece } from '@/pages/Index';
+
+import type { CutPiece } from '@/types/cutPiece';
 import { AutoCADCutPiece } from '@/types/autocad';
 
 export class FileParsingService {
@@ -75,27 +76,25 @@ export class FileParsingService {
         }
       }
 
-      // Parsear linha de peça
+      // Parsear linha de peça - ajustar regex para capturar TAG corretamente
       if (currentConjunto && line.length > 0 && !line.match(/^-+$/) && !line.includes('Conjunto')) {
-        // Regex para capturar: posição, quantidade, perfil, material, dimensões, peso
+        // Regex melhorada para capturar: TAG(posição), quantidade, perfil, material, dimensões, peso
         const pieceMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(L\s+\d+\s+X\s+[\d.]+)\s+(A\d+)\s+(\d+)\s+x\s+(\d+)\s+([\d.]+)$/);
         
         if (pieceMatch) {
-          const [, posicao, quantidade, perfil, material, comprimento, largura, peso] = pieceMatch;
+          const [, tag, quantidade, perfil, material, comprimento, largura, peso] = pieceMatch;
           
-          const tag = `${currentConjunto}-${posicao}`;
-          
-          const piece: CutPiece & AutoCADCutPiece = {
-            id: `autocad-${currentConjunto}-${posicao}-${Date.now()}`,
+          const piece: CutPiece = {
+            id: `autocad-${currentConjunto}-${tag}-${Date.now()}`,
             length: parseInt(comprimento),
             quantity: parseInt(quantidade),
+            tag: tag, // Esta é a TAG que o usuário quer ver (4228, 4229, etc.)
+            conjunto: currentConjunto, // V.172, V.173, etc.
             obra,
-            conjunto: currentConjunto,
-            posicao,
             perfil: perfil.trim(),
             material,
             peso: parseFloat(peso),
-            tag,
+            posicao: tag,
             dimensoes: {
               comprimento: parseInt(comprimento),
               largura: parseInt(largura)
@@ -104,7 +103,7 @@ export class FileParsingService {
 
           pieces.push(piece);
           
-          console.log(`Peça adicionada: ${tag} - ${piece.length}mm - Qtd: ${piece.quantity}`);
+          console.log(`Peça adicionada: ${currentConjunto}-${tag} - ${piece.length}mm - Qtd: ${piece.quantity}`);
         }
       }
     }

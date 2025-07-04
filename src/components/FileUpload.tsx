@@ -1,8 +1,7 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Upload } from 'lucide-react';
-import { CutPiece } from '@/pages/Index';
+import { CutPiece } from '@/types/cutPiece';
 import { FileUploadArea } from './file-upload/FileUploadArea';
 import { FileProcessingStatus } from './file-upload/FileProcessingStatus';
 import { FileParsingService } from './file-upload/FileParsingService';
