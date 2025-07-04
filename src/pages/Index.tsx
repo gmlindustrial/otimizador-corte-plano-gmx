@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { Header } from '@/components/Header';
@@ -10,8 +11,9 @@ import { BarCuttingSettings } from '@/components/settings/BarCuttingSettings';
 import { ReportsManager } from '@/components/reports/ReportsManager';
 import { LinearCuttingTab } from '@/components/optimization/LinearCuttingTab';
 import { SheetCuttingTab } from '@/components/optimization/SheetCuttingTab';
+import { ProjectsList } from '@/components/projects/ProjectsList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, Calculator, History, Settings, Package, Square, FileText, Shield } from 'lucide-react';
+import { BarChart3, Calculator, History, Settings, Package, Square, FileText, Shield, Folder } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import AdminUsuarios from './AdminUsuarios';
 import { cn } from '@/lib/utils';
@@ -160,6 +162,20 @@ const Index = () => {
     });
   };
 
+  // Handlers para carregar projetos salvos
+  const handleLoadLinearProject = (projectData: any) => {
+    setProject(projectData.project);
+    setPieces(projectData.pieces);
+    setBarLength(projectData.barLength);
+    setActiveTab('optimize');
+  };
+
+  const handleLoadSheetProject = (projectData: any) => {
+    setSheetProject(projectData.project);
+    setSheetPieces(projectData.pieces);
+    setActiveTab('sheet-cutting');
+  };
+
   // Helper function to find material info
   const findMaterialInfo = (materialId: string | undefined) => {
     if (!materialId) return { id: undefined, tipo: undefined };
@@ -188,7 +204,7 @@ const Index = () => {
       
       <div className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={cn("grid w-full mb-6", isAdmin ? "grid-cols-8" : "grid-cols-7")}>
+          <TabsList className={cn("grid w-full mb-6", isAdmin ? "grid-cols-9" : "grid-cols-8")}>
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               Dashboard
@@ -200,6 +216,10 @@ const Index = () => {
             <TabsTrigger value="sheet-cutting" className="flex items-center gap-2">
               <Square className="w-4 h-4" />
               Corte Chapas
+            </TabsTrigger>
+            <TabsTrigger value="projects" className="flex items-center gap-2">
+              <Folder className="w-4 h-4" />
+              Projetos
             </TabsTrigger>
             <TabsTrigger value="sobras" className="flex items-center gap-2">
               <Package className="w-4 h-4" />
@@ -250,6 +270,13 @@ const Index = () => {
               setSheetPieces={setSheetPieces}
               sheetResults={sheetResults}
               onOptimize={handleSheetOptimize}
+            />
+          </TabsContent>
+
+          <TabsContent value="projects">
+            <ProjectsList
+              onLoadLinearProject={handleLoadLinearProject}
+              onLoadSheetProject={handleLoadSheetProject}
             />
           </TabsContent>
 

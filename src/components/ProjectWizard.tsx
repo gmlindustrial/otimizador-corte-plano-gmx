@@ -21,6 +21,8 @@ import {
   materialService,
   operadorService,
 } from "@/services";
+import { useLinearProjects } from "@/hooks/useLinearProjects";
+import { toast } from "sonner";
 
 interface ProjectWizardProps {
   project: Project | null;
@@ -42,6 +44,9 @@ export const ProjectWizard = ({
   const [inspetoresQA, setInspetoresQA] = useState<InspetorQA[]>([]);
   const [currentStep, setCurrentStep] = useState(1);
   const [showQRCode, setShowQRCode] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const { saveProject } = useLinearProjects();
+
   const [formData, setFormData] = useState({
     obra: "",
     client: "",
@@ -60,17 +65,7 @@ export const ProjectWizard = ({
   // Funções helper para resolver IDs para nomes
   const findEntityNameById = (id: string, entities: any[], nameField: string = 'nome') => {
     const entity = entities.find(e => e.id === id);
-    return entity ? entity[nameField] : id;
-  };
-
-  const resolveEntityNames = () => {
-    return {
-      clienteNome: findEntityNameById(formData.client, clientes),
-      obraNome: findEntityNameById(formData.obra, obras),
-      materialNome: findEntityNameById(formData.tipoMaterial, tiposMaterial, 'tipo'),
-      operadorNome: findEntityNameById(formData.operador, operadores),
-      aprovadorQANome: findEntityNameById(formData.aprovadorQA, inspetoresQA)
-    };
+    return entity ? entity[nameField] : '';
   };
 
   useEffect(() => {
@@ -158,7 +153,7 @@ export const ProjectWizard = ({
     }
   };
 
-  const handleCreateProject = () => {
+  const handleCreateProject = async () => {
     const requiredFields = [
       "obra",
       "client",
@@ -175,36 +170,59 @@ export const ProjectWizard = ({
     );
 
     if (missingFields.length > 0) {
-      alert(`Campos obrigatórios não preenchidos: ${missingFields.join(", ")}`);
+      toast.error(`Campos obrigatórios não preenchidos: ${missingFields.join(", ")}`);
       return;
     }
 
     if (!formData.validacaoQA) {
-      alert("A validação QA é obrigatória para criar o projeto.");
+      toast.error("A validação QA é obrigatória para criar o projeto.");
       return;
     }
 
-    // Resolver IDs para nomes legíveis
-    const entityNames = resolveEntityNames();
+    setIsCreating(true);
 
-    const newProject: Project = {
-      id: Date.now().toString(),
-      name: formData.projectName,
-      projectNumber: formData.projectNumber,
-      client: entityNames.clienteNome,
-      obra: entityNames.obraNome,
-      lista: formData.lista,
-      revisao: formData.revisao,
-      tipoMaterial: entityNames.materialNome,
-      operador: entityNames.operadorNome,
-      turno: formData.turno,
-      aprovadorQA: entityNames.aprovadorQANome,
-      validacaoQA: formData.validacaoQA,
-      enviarSobrasEstoque: formData.enviarSobrasEstoque,
-      qrCode: generateQRCode(Date.now().toString(), formData.lista),
-      date: new Date().toISOString(),
-    };
-    setProject(newProject);
+    try {
+      // Resolver IDs para nomes legíveis para exibição
+      const clienteNome = findEntityNameById(formData.client, clientes);
+      const obraNome = findEntityNameById(formData.obra, obras);
+      const materialNome = findEntityNameById(formData.tipoMaterial, tiposMaterial, 'tipo');
+      const operadorNome = findEntityNameById(formData.operador, operadores);
+      const aprovadorQANome = findEntityNameById(formData.aprovadorQA, inspetoresQA);
+
+      const projectId = Date.now().toString();
+      
+      const newProject: Project = {
+        id: projectId,
+        name: formData.projectName,
+        projectNumber: formData.projectNumber,
+        client: clienteNome,
+        obra: obraNome,
+        lista: formData.lista,
+        revisao: formData.revisao,
+        tipoMaterial: materialNome,
+        operador: operadorNome,
+        turno: formData.turno,
+        aprovadorQA: aprovadorQANome,
+        validacaoQA: formData.validacaoQA,
+        enviarSobrasEstoque: formData.enviarSobrasEstoque,
+        qrCode: generateQRCode(projectId, formData.lista),
+        date: new Date().toISOString(),
+      };
+
+      // Salvar projeto imediatamente no Supabase
+      await saveProject({ project: newProject, pieces: [], barLength });
+      
+      // Definir o projeto no estado local
+      setProject(newProject);
+      
+      toast.success("Projeto criado e salvo com sucesso!");
+      
+    } catch (error) {
+      console.error('Erro ao criar projeto:', error);
+      toast.error("Erro ao criar projeto. Tente novamente.");
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const renderStep = () => {
@@ -323,11 +341,20 @@ export const ProjectWizard = ({
             ) : (
               <Button
                 onClick={handleCreateProject}
-                disabled={!validateStep(currentStep)}
+                disabled={!validateStep(currentStep) || isCreating}
                 className="flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
               >
-                <Save className="w-4 h-4" />
-                Criar Projeto
+                {isCreating ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Salvando...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    Criar Projeto
+                  </>
+                )}
               </Button>
             )}
           </div>

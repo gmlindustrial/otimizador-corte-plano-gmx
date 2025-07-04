@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SheetProject } from '@/types/sheet';
 import { Square, Save } from 'lucide-react';
+import { useSheetProjects } from '@/hooks/useSheetProjects';
+import { toast } from 'sonner';
 
 interface SheetProjectWizardProps {
   project: SheetProject | null;
@@ -14,6 +16,9 @@ interface SheetProjectWizardProps {
 }
 
 export const SheetProjectWizard = ({ project, setProject }: SheetProjectWizardProps) => {
+  const [isCreating, setIsCreating] = useState(false);
+  const { saveProject } = useSheetProjects();
+  
   const [formData, setFormData] = useState({
     name: '',
     projectNumber: '',
@@ -33,28 +38,52 @@ export const SheetProjectWizard = ({ project, setProject }: SheetProjectWizardPr
     validacaoQA: false
   });
 
-  const handleCreateProject = () => {
-    const newProject: SheetProject = {
-      id: Date.now().toString(),
-      name: formData.name,
-      projectNumber: formData.projectNumber,
-      client: formData.client, // Mantém como string pois é input direto
-      obra: formData.obra, // Mantém como string pois é input direto
-      lista: formData.lista,
-      revisao: formData.revisao,
-      sheetWidth: formData.sheetWidth,
-      sheetHeight: formData.sheetHeight,
-      thickness: formData.thickness,
-      kerf: formData.kerf,
-      process: formData.process,
-      material: formData.material,
-      operador: formData.operador, // Mantém como string pois é input direto
-      turno: formData.turno,
-      aprovadorQA: formData.aprovadorQA, // Mantém como string pois é input direto
-      validacaoQA: true,
-      date: new Date().toISOString(),
-    };
-    setProject(newProject);
+  const handleCreateProject = async () => {
+    if (!formData.name || !formData.projectNumber || !formData.obra || !formData.operador) {
+      toast.error('Por favor, preencha todos os campos obrigatórios');
+      return;
+    }
+
+    setIsCreating(true);
+
+    try {
+      const projectId = Date.now().toString();
+      
+      const newProject: SheetProject = {
+        id: projectId,
+        name: formData.name,
+        projectNumber: formData.projectNumber,
+        client: formData.client,
+        obra: formData.obra,
+        lista: formData.lista,
+        revisao: formData.revisao,
+        sheetWidth: formData.sheetWidth,
+        sheetHeight: formData.sheetHeight,
+        thickness: formData.thickness,
+        kerf: formData.kerf,
+        process: formData.process,
+        material: formData.material,
+        operador: formData.operador,
+        turno: formData.turno,
+        aprovadorQA: formData.aprovadorQA,
+        validacaoQA: true,
+        date: new Date().toISOString(),
+      };
+
+      // Salvar projeto imediatamente no Supabase
+      await saveProject({ project: newProject, pieces: [] });
+      
+      // Definir o projeto no estado local
+      setProject(newProject);
+      
+      toast.success("Projeto de chapas criado e salvo com sucesso!");
+      
+    } catch (error) {
+      console.error('Erro ao criar projeto de chapas:', error);
+      toast.error("Erro ao criar projeto. Tente novamente.");
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   const canCreateProject = formData.name && formData.projectNumber && formData.obra && formData.operador;
@@ -217,12 +246,21 @@ export const SheetProjectWizard = ({ project, setProject }: SheetProjectWizardPr
         <div className="flex justify-center pt-4">
           <Button
             onClick={handleCreateProject}
-            disabled={!canCreateProject}
+            disabled={!canCreateProject || isCreating}
             className="px-8 py-3 text-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 disabled:opacity-50"
             size="lg"
           >
-            <Save className="w-5 h-5 mr-2" />
-            Criar Projeto
+            {isCreating ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                Salvando...
+              </>
+            ) : (
+              <>
+                <Save className="w-5 h-5 mr-2" />
+                Criar Projeto
+              </>
+            )}
           </Button>
         </div>
       </CardContent>
