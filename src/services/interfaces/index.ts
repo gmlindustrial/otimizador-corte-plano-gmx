@@ -1,4 +1,3 @@
-
 import type { BaseEntity } from '../base/types';
 
 export interface Obra extends BaseEntity {
@@ -18,6 +17,7 @@ export interface Material extends BaseEntity {
   tipo: string;
   descricao?: string;
   comprimento_padrao: number;
+  tipo_corte: string;
 }
 
 export interface Operador extends BaseEntity {

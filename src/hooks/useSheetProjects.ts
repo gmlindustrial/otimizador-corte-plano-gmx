@@ -37,9 +37,9 @@ export const useSheetProjects = () => {
           material: project.material,
           operador: project.operador,
           aprovadorQA: project.aprovadorQA,
-          pieces: pieces as any, // Cast to Json type
+          pieces: pieces,
           originalProjectId: project.id
-        } as any // Cast entire object to Json type
+        }
       };
 
       const { data, error } = await supabase
@@ -66,14 +66,14 @@ export const useSheetProjects = () => {
       const { data, error } = await supabase
         .from('projetos')
         .select('*')
-        .eq('dados_projeto->type', 'sheet')
+        .eq('dados_projeto->>type', 'sheet')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
       const convertedProjects = data
         .map(convertFromDatabase)
-        .filter(project => project !== null) as SheetProjectData[];
+        .filter((project): project is SheetProjectData => project !== null);
 
       setSavedProjects(convertedProjects);
     } catch (error) {

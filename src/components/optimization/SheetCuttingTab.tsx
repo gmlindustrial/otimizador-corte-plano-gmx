@@ -1,4 +1,3 @@
-
 import { SheetProjectSelector } from '@/components/sheet/SheetProjectSelector';
 import { SheetMaterialInput } from '@/components/sheet/SheetMaterialInput';
 import { SheetOptimizationResults } from '@/components/sheet/SheetOptimizationResults';
@@ -123,7 +122,6 @@ export const SheetCuttingTab = ({
           <SheetProjectSelector
             project={sheetProject}
             setProject={setSheetProject}
-            cuttingType="sheet"
           />
           
           <SheetMaterialInput
