@@ -134,7 +134,7 @@ export const ProjectsList = ({ onLoadLinearProject, onLoadSheetProject }: Projec
                         
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600 mb-3">
                           <div className="flex items-center gap-1">
-                            <span className="font-medium">Projeto:</span> {item.project.projectNumber}
+                            <span className="font-medium">Número:</span> {item.project.projectNumber}
                           </div>
                           <div className="flex items-center gap-1">
                             <span className="font-medium">Lista:</span> {item.project.lista}
