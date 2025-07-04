@@ -21,6 +21,18 @@ export class LinearProjectService extends BaseService<Projeto> {
       const { project, pieces, barLength } = projectData;
 
       // Prepare project data for database - cast to Json compatible format
+      const projectDataForDb = {
+        type: 'linear',
+        client: project.client,
+        obra: project.obra,
+        tipoMaterial: project.tipoMaterial,
+        operador: project.operador,
+        aprovadorQA: project.aprovadorQA,
+        pieces: pieces,
+        barLength,
+        originalProjectId: project.id
+      };
+
       const insertData = {
         nome: project.name,
         numero_projeto: project.projectNumber,
@@ -31,17 +43,7 @@ export class LinearProjectService extends BaseService<Projeto> {
         validacao_qa: project.validacaoQA,
         enviar_sobras_estoque: project.enviarSobrasEstoque,
         qr_code: project.qrCode,
-        dados_projeto: JSON.parse(JSON.stringify({
-          type: 'linear',
-          client: project.client,
-          obra: project.obra,
-          tipoMaterial: project.tipoMaterial,
-          operador: project.operador,
-          aprovadorQA: project.aprovadorQA,
-          pieces: pieces,
-          barLength,
-          originalProjectId: project.id
-        }))
+        dados_projeto: projectDataForDb as any
       };
 
       const { data: result, error } = await supabase
@@ -81,17 +83,21 @@ export class LinearProjectService extends BaseService<Projeto> {
 
       if (error) throw error;
 
+      const projects: Projeto[] = data || [];
+
       return {
-        data: (data as Projeto[]) || [],
+        data: projects,
         error: null,
         success: true,
-        total: data?.length || 0
+        total: projects.length
       };
     } catch (error) {
       console.error('Erro ao carregar projetos lineares:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao carregar projetos lineares';
+      
       return {
         data: [],
-        error: error instanceof Error ? error.message : 'Erro ao carregar projetos lineares',
+        error: errorMessage,
         success: false,
         total: 0
       };
