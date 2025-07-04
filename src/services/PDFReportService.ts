@@ -1,3 +1,4 @@
+
 import jsPDF from 'jspdf';
 import type { OptimizationResult, Project } from '@/pages/Index';
 import type { SheetOptimizationResult, SheetProject } from '@/types/sheet';
@@ -156,14 +157,14 @@ export class PDFReportService {
     });
 
     this.addFooter(doc, project);
-    doc.save(`relatorio-completo-${project.projectNumber}-${new Date().toISOString().split('T')[0]}.pdf');
+    doc.save(`relatorio-completo-${project.projectNumber}-${new Date().toISOString().split('T')[0]}.pdf`);
   }
 
   static async generateSimplifiedLinearReport(results: OptimizationResult, barLength: number, project: Project): Promise<void> {
     const doc = new jsPDF();
     let currentY = 55;
     let pageNumber = 1;
-    const maxBarsPerPage = 4; // Reduzir para garantir que caiba tudo
+    const maxBarsPerPage = 4;
 
     this.addHeader(doc, project, 'Plano de Corte Simplificado - Produção', pageNumber);
 
@@ -179,7 +180,7 @@ export class PDFReportService {
     doc.text(`Eficiência: ${results.efficiency.toFixed(1)}%`, 100, currentY);
     currentY += 5;
     doc.text(`Desperdício: ${(results.totalWaste / 1000).toFixed(2)}m`, 20, currentY);
-    doc.text(`Material: ${project.tipoMaterial || 'N/A'}`, 100, currentY);
+    doc.text(`Material: ${(project as any).tipoMaterial || 'N/A'}`, 100, currentY);
     currentY += 15;
 
     // Processar barras em grupos para múltiplas páginas
@@ -208,7 +209,7 @@ export class PDFReportService {
       currentBars.forEach((bar, localIndex) => {
         const globalBarIndex = processedBars + localIndex;
         
-        // Verificar se há espaço suficiente para a barra (aproximadamente 45mm de altura)
+        // Verificar se há espaço suficiente para a barra
         if (currentY > 220) {
           doc.addPage();
           pageNumber++;
@@ -279,7 +280,7 @@ export class PDFReportService {
           currentY += 4;
         }
 
-        currentY += 8; // Espaço entre barras
+        currentY += 8;
       });
 
       processedBars += barsToProcess;
