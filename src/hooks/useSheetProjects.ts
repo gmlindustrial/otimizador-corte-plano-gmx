@@ -25,7 +25,7 @@ export const useSheetProjects = () => {
         revisao: project.revisao,
         validacao_qa: project.validacaoQA,
         qr_code: generateQRCode(project.id, project.lista),
-        dados_projeto: {
+        dados_projeto: JSON.parse(JSON.stringify({
           type: 'sheet',
           client: project.client,
           obra: project.obra,
@@ -39,7 +39,7 @@ export const useSheetProjects = () => {
           aprovadorQA: project.aprovadorQA,
           pieces: pieces,
           originalProjectId: project.id
-        }
+        }))
       };
 
       const { data, error } = await supabase
