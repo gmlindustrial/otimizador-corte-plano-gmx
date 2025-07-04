@@ -25,8 +25,17 @@ export const ReportsManager = ({ optimizationHistory }: ReportsManagerProps) => 
   const handleExportReport = async (type: string) => {
     try {
       if (type === 'efficiency' && optimizationHistory.length > 0) {
-        // Gerar relatório de eficiência baseado no histórico real
-        await PDFReportService.generateLinearReport(optimizationHistory[0]);
+        // Verificar se o item do histórico tem a estrutura correta
+        const historyItem = optimizationHistory[0];
+        if (historyItem.results && historyItem.barLength && historyItem.project) {
+          await PDFReportService.generateLinearReport(
+            historyItem.results, 
+            historyItem.barLength, 
+            historyItem.project
+          );
+        } else {
+          throw new Error('Dados do histórico incompletos');
+        }
       }
       
       toast({
@@ -83,8 +92,18 @@ export const ReportsManager = ({ optimizationHistory }: ReportsManagerProps) => 
     }
 
     try {
-      // Usar o primeiro item do histórico como exemplo
-      await PDFReportService.generateLinearReport(optimizationHistory[0]);
+      // Usar o primeiro item do histórico com estrutura correta
+      const historyItem = optimizationHistory[0];
+      if (historyItem.results && historyItem.barLength && historyItem.project) {
+        await PDFReportService.generateLinearReport(
+          historyItem.results, 
+          historyItem.barLength, 
+          historyItem.project
+        );
+      } else {
+        throw new Error('Dados do histórico incompletos');
+      }
+      
       toast({
         title: "PDF Gerado",
         description: "Relatório de produção baixado com sucesso",
@@ -251,7 +270,14 @@ export const ReportsManager = ({ optimizationHistory }: ReportsManagerProps) => 
           reportData={selectedReport.data}
           onDownload={async () => {
             if (optimizationHistory.length > 0) {
-              await PDFReportService.generateLinearReport(optimizationHistory[0]);
+              const historyItem = optimizationHistory[0];
+              if (historyItem.results && historyItem.barLength && historyItem.project) {
+                await PDFReportService.generateLinearReport(
+                  historyItem.results, 
+                  historyItem.barLength, 
+                  historyItem.project
+                );
+              }
               toast({
                 title: "PDF Baixado",
                 description: "Relatório baixado com sucesso",

@@ -156,7 +156,7 @@ export class PDFReportService {
     });
 
     this.addFooter(doc, project);
-    doc.save(`relatorio-completo-${project.projectNumber}-${new Date().toISOString().split('T')[0]}.pdf`);
+    doc.save(`relatorio-completo-${project.projectNumber}-${new Date().toISOString().split('T')[0]}.pdf');
   }
 
   static async generateSimplifiedLinearReport(results: OptimizationResult, barLength: number, project: Project): Promise<void> {
@@ -427,5 +427,84 @@ export class PDFReportService {
 
     this.addFooter(doc, project);
     doc.save(`relatorio-chapas-${project.projectNumber}-${new Date().toISOString().split('T')[0]}.pdf`);
+  }
+
+  static async generateMaterialReport(materials: any[]): Promise<void> {
+    const doc = new jsPDF();
+    let currentY = 30;
+
+    // Cabeçalho
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Relatório de Materiais', 105, 20, { align: 'center' });
+    
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Data: ${new Date().toLocaleDateString('pt-BR')}`, 150, 30);
+    
+    // Linha separadora
+    doc.setLineWidth(0.5);
+    doc.line(20, 35, 190, 35);
+    currentY = 45;
+
+    // Estatísticas gerais
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Resumo Geral', 20, currentY);
+    currentY += 10;
+
+    const activeMaterials = materials.filter(m => m.status === 'active').length;
+    const totalUsage = materials.reduce((sum, m) => sum + m.count, 0);
+    const totalValue = materials.reduce((sum, m) => sum + (m.price || 0), 0);
+
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Total de Materiais: ${materials.length}`, 20, currentY);
+    doc.text(`Materiais Ativos: ${activeMaterials}`, 20, currentY + 5);
+    doc.text(`Total de Usos: ${totalUsage}`, 20, currentY + 10);
+    doc.text(`Valor Total: R$ ${totalValue.toFixed(2)}`, 20, currentY + 15);
+    currentY += 25;
+
+    // Lista de materiais
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Detalhamento dos Materiais', 20, currentY);
+    currentY += 10;
+
+    // Cabeçalho da tabela
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Material', 20, currentY);
+    doc.text('Status', 80, currentY);
+    doc.text('Usos', 110, currentY);
+    doc.text('Último Uso', 130, currentY);
+    doc.text('Preço/kg', 170, currentY);
+    currentY += 5;
+
+    doc.line(20, currentY, 190, currentY);
+    currentY += 5;
+
+    // Dados dos materiais
+    doc.setFont('helvetica', 'normal');
+    materials.forEach((material) => {
+      if (currentY > 270) {
+        doc.addPage();
+        currentY = 30;
+      }
+
+      doc.text(material.name.substring(0, 40), 20, currentY);
+      doc.text(material.status === 'active' ? 'Ativo' : 'Arquivado', 80, currentY);
+      doc.text(material.count.toString(), 110, currentY);
+      doc.text(material.lastUsed, 130, currentY);
+      doc.text(material.price ? `R$ ${material.price.toFixed(2)}` : 'N/A', 170, currentY);
+      currentY += 5;
+    });
+
+    // Rodapé
+    const pageHeight = doc.internal.pageSize.height;
+    doc.setFontSize(8);
+    doc.text('© Sistema de Otimização - Elite Soldas', 105, pageHeight - 10, { align: 'center' });
+
+    doc.save(`relatorio-materiais-${new Date().toISOString().split('T')[0]}.pdf`);
   }
 }
