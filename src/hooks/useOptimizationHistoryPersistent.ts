@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -46,11 +45,60 @@ export const useOptimizationHistoryPersistent = () => {
     barLength: number
   ) => {
     try {
+      // Primeiro, salvar o projeto se ainda não existir no Supabase
+      let savedProjectId = null;
+      
+      try {
+        const { data: existingProject, error: projectError } = await supabase
+          .from('projetos')
+          .select('id')
+          .eq('numero_projeto', project.projectNumber)
+          .maybeSingle();
+
+        if (!projectError && existingProject) {
+          savedProjectId = existingProject.id;
+        } else {
+          // Salvar projeto no Supabase
+          const { data: newProject, error: createError } = await supabase
+            .from('projetos')
+            .insert({
+              nome: project.name,
+              numero_projeto: project.projectNumber,
+              cliente_id: await getClienteIdByName(project.client),
+              obra_id: await getObraIdByName(project.obra),
+              material_id: await getMaterialIdByType(project.tipoMaterial),
+              operador_id: await getOperadorIdByName(project.operador),
+              inspetor_id: await getInspetorIdByName(project.aprovadorQA),
+              lista: project.lista,
+              revisao: project.revisao,
+              turno: project.turno,
+              validacao_qa: project.validacaoQA,
+              enviar_sobras_estoque: project.enviarSobrasEstoque,
+              qr_code: project.qrCode,
+              dados_projeto: {
+                barLength,
+                pieces,
+                results
+              }
+            })
+            .select('id')
+            .single();
+
+          if (createError) {
+            console.error('Erro ao salvar projeto:', createError);
+          } else {
+            savedProjectId = newProject.id;
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao verificar/salvar projeto:', error);
+      }
+
       const historyData = {
-        projeto_id: null, // Will be linked when project is saved
+        projeto_id: savedProjectId,
         bar_length: barLength,
-        pecas: pieces as any, // Cast to Json type
-        resultados: results as any // Cast to Json type
+        pecas: pieces as any,
+        resultados: results as any
       };
 
       const { data, error } = await supabase
@@ -74,7 +122,7 @@ export const useOptimizationHistoryPersistent = () => {
 
       // Auto-enviar sobras para estoque se habilitado
       if (project.enviarSobrasEstoque && results.totalWaste > 0) {
-        await addWasteToStock(project, results);
+        await addWasteToStock(project, results, savedProjectId);
       }
 
       console.log('Otimização salva no histórico:', newEntry);
@@ -86,32 +134,148 @@ export const useOptimizationHistoryPersistent = () => {
     }
   };
 
-  const addWasteToStock = async (project: Project, results: OptimizationResult) => {
+  const addWasteToStock = async (project: Project, results: OptimizationResult, projectId: string | null) => {
     try {
-      // Adicionar sobras ao estoque automaticamente
+      console.log('=== ADICIONANDO SOBRAS AO ESTOQUE ===');
+      console.log('Project:', project);
+      console.log('Project ID:', projectId);
+      console.log('Material Type:', project.tipoMaterial);
+
+      // Buscar o ID do material baseado no tipo
+      const materialId = await getMaterialIdByType(project.tipoMaterial);
+      
+      console.log('Material ID encontrado:', materialId);
+
+      if (!materialId) {
+        console.error('Material ID não encontrado para tipo:', project.tipoMaterial);
+        toast.error('Erro: Material não encontrado para salvar sobras');
+        return;
+      }
+
+      // Filtrar sobras > 50mm e criar entradas para o estoque
       const wasteEntries = results.bars
-        .filter(bar => bar.waste > 50) // Só sobras > 50mm
+        .filter(bar => bar.waste > 50)
         .map(bar => ({
-          material_id: null, // Will be linked when material management is implemented
+          material_id: materialId,
           comprimento: Math.floor(bar.waste),
           localizacao: `Auto-${project.projectNumber}`,
-          projeto_origem: null, // Will be linked when project is saved
+          projeto_origem: projectId,
           quantidade: 1,
           disponivel: true
         }));
 
+      console.log('Sobras para adicionar:', wasteEntries);
+
       if (wasteEntries.length > 0) {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('estoque_sobras')
-          .insert(wasteEntries);
+          .insert(wasteEntries)
+          .select();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Erro ao inserir sobras:', error);
+          throw error;
+        }
 
+        console.log('Sobras inseridas com sucesso:', data);
         console.log(`${wasteEntries.length} sobras adicionadas automaticamente ao estoque`);
         toast.success(`${wasteEntries.length} sobras adicionadas ao estoque automaticamente`);
+      } else {
+        console.log('Nenhuma sobra > 50mm encontrada para adicionar ao estoque');
       }
     } catch (error) {
       console.error('Erro ao adicionar sobras ao estoque:', error);
+      toast.error('Erro ao adicionar sobras ao estoque');
+    }
+  };
+
+  // Funções auxiliares para buscar IDs
+  const getClienteIdByName = async (clienteName: string): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('clientes')
+        .select('id')
+        .eq('nome', clienteName)
+        .maybeSingle();
+      
+      return error ? null : data?.id || null;
+    } catch (error) {
+      console.error('Erro ao buscar cliente:', error);
+      return null;
+    }
+  };
+
+  const getObraIdByName = async (obraName: string): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('obras')
+        .select('id')
+        .eq('nome', obraName)
+        .maybeSingle();
+      
+      return error ? null : data?.id || null;
+    } catch (error) {
+      console.error('Erro ao buscar obra:', error);
+      return null;
+    }
+  };
+
+  const getMaterialIdByType = async (materialType: string): Promise<string | null> => {
+    try {
+      console.log('Buscando material por tipo:', materialType);
+      
+      // Se materialType já é um UUID, retorná-lo
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(materialType);
+      if (isUUID) {
+        return materialType;
+      }
+
+      const { data, error } = await supabase
+        .from('materiais')
+        .select('id')
+        .eq('tipo', materialType)
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Erro ao buscar material:', error);
+        return null;
+      }
+
+      console.log('Material encontrado:', data);
+      return data?.id || null;
+    } catch (error) {
+      console.error('Erro ao buscar material:', error);
+      return null;
+    }
+  };
+
+  const getOperadorIdByName = async (operadorName: string): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('operadores')
+        .select('id')
+        .eq('nome', operadorName)
+        .maybeSingle();
+      
+      return error ? null : data?.id || null;
+    } catch (error) {
+      console.error('Erro ao buscar operador:', error);
+      return null;
+    }
+  };
+
+  const getInspetorIdByName = async (inspetorName: string): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('inspetores_qa')
+        .select('id')
+        .eq('nome', inspetorName)
+        .maybeSingle();
+      
+      return error ? null : data?.id || null;
+    } catch (error) {
+      console.error('Erro ao buscar inspetor:', error);
+      return null;
     }
   };
 
@@ -152,7 +316,7 @@ export const useOptimizationHistoryPersistent = () => {
       const { error } = await supabase
         .from('historico_otimizacoes')
         .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+        .neq('id', '00000000-0000-0000-0000-000000000000');
 
       if (error) throw error;
 

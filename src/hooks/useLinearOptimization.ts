@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import type { Project, CutPiece, OptimizationResult } from '@/pages/Index';
 import { useEstoqueSobras } from '@/hooks/useEstoqueSobras';
@@ -62,12 +61,22 @@ export const useLinearOptimization = () => {
   const [pieces, setPieces] = useState<CutPiece[]>([]);
   const [results, setResults] = useState<ExtendedOptimizationResult | null>(null);
   
-  // Hook para gerenciar sobras
-  const { sobras } = useEstoqueSobras(project?.tipoMaterial);
+  // Hook para gerenciar sobras - usar o material ID correto
+  const materialId = project?.tipoMaterial ? 
+    (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(project.tipoMaterial) 
+      ? project.tipoMaterial 
+      : undefined) 
+    : undefined;
+  
+  const { sobras } = useEstoqueSobras(materialId);
 
-  // Algoritmo híbrido que considera sobras disponíveis
   const handleOptimize = () => {
     if (pieces.length === 0) return null;
+
+    console.log('=== INICIANDO OTIMIZAÇÃO ===');
+    console.log('Projeto:', project);
+    console.log('Material ID:', materialId);
+    console.log('Sobras disponíveis:', sobras.length);
 
     // Preparar peças para otimização
     const sortedPieces: ExpandedPiece[] = [];
@@ -273,6 +282,12 @@ export const useLinearOptimization = () => {
         wasteReduction
       }
     };
+
+    console.log('=== RESULTADO DA OTIMIZAÇÃO ===');
+    console.log('Total de barras:', optimizationResult.totalBars);
+    console.log('Eficiência:', optimizationResult.efficiency);
+    console.log('Sobras utilizadas:', leftoverBarsUsed);
+    console.log('Novas barras:', newBarsUsedCount);
 
     setResults(optimizationResult);
     return optimizationResult;
