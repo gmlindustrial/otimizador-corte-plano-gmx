@@ -13,13 +13,42 @@ export const useSheetProjects = () => {
   const [savedProjects, setSavedProjects] = useState<SheetProjectData[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Helper method to find entity ID by name
+  const findEntityIdByName = async (tableName: string, nameField: string, name: string): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase
+        .from(tableName)
+        .select('id')
+        .eq(nameField, name)
+        .single();
+
+      if (error || !data) return null;
+      return data.id;
+    } catch (error) {
+      console.error(`Erro ao buscar ID de ${tableName}:`, error);
+      return null;
+    }
+  };
+
   const saveProject = async (projectData: SheetProjectData) => {
     try {
       const { project, pieces } = projectData;
 
+      // Buscar IDs das entidades pelos nomes
+      const clienteId = await findEntityIdByName('clientes', 'nome', project.client);
+      const obraId = await findEntityIdByName('obras', 'nome', project.obra);
+      const materialId = await findEntityIdByName('materiais', 'tipo', project.material);
+      const operadorId = await findEntityIdByName('operadores', 'nome', project.operador);
+      const inspetorId = await findEntityIdByName('inspetores_qa', 'nome', project.aprovadorQA);
+
       const insertData = {
         nome: project.name,
         numero_projeto: project.projectNumber,
+        cliente_id: clienteId,
+        obra_id: obraId,
+        material_id: materialId,
+        operador_id: operadorId,
+        inspetor_id: inspetorId,
         turno: project.turno,
         lista: project.lista,
         revisao: project.revisao,
@@ -50,6 +79,7 @@ export const useSheetProjects = () => {
 
       if (error) throw error;
 
+      console.log('Projeto de chapas salvo com IDs mapeados:', data);
       toast.success('Projeto de chapas salvo com sucesso');
       await loadProjects();
       return data;
@@ -65,7 +95,14 @@ export const useSheetProjects = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from('projetos')
-        .select('*')
+        .select(`
+          *,
+          clientes:cliente_id(nome),
+          obras:obra_id(nome),
+          materiais:material_id(tipo),
+          operadores:operador_id(nome),
+          inspetores_qa:inspetor_id(nome)
+        `)
         .eq('dados_projeto->>type', 'sheet')
         .order('created_at', { ascending: false });
 
@@ -92,12 +129,19 @@ export const useSheetProjects = () => {
         return null;
       }
 
+      // Use foreign key relationships if available, fallback to JSON data
+      const clientName = dbProject.clientes?.nome || dadosProjeto.client || '';
+      const obraName = dbProject.obras?.nome || dadosProjeto.obra || '';
+      const materialType = dbProject.materiais?.tipo || dadosProjeto.material || '';
+      const operadorName = dbProject.operadores?.nome || dadosProjeto.operador || '';
+      const inspetorName = dbProject.inspetores_qa?.nome || dadosProjeto.aprovadorQA || '';
+
       const project: SheetProject = {
         id: dadosProjeto.originalProjectId || dbProject.id,
         name: dbProject.nome,
         projectNumber: dbProject.numero_projeto,
-        client: dadosProjeto.client || '',
-        obra: dadosProjeto.obra || '',
+        client: clientName,
+        obra: obraName,
         lista: dbProject.lista,
         revisao: dbProject.revisao,
         sheetWidth: dadosProjeto.sheetWidth || 2550,
@@ -105,10 +149,10 @@ export const useSheetProjects = () => {
         thickness: dadosProjeto.thickness || 6,
         kerf: dadosProjeto.kerf || 2,
         process: dadosProjeto.process || 'plasma',
-        material: dadosProjeto.material || 'A36',
-        operador: dadosProjeto.operador || '',
+        material: materialType,
+        operador: operadorName,
         turno: dbProject.turno,
-        aprovadorQA: dadosProjeto.aprovadorQA || '',
+        aprovadorQA: inspetorName,
         validacaoQA: dbProject.validacao_qa,
         date: dbProject.created_at
       };

@@ -16,9 +16,33 @@ export class LinearProjectService extends BaseService<Projeto> {
     super('projetos');
   }
 
+  // Helper method to find entity ID by name
+  private async findEntityIdByName(tableName: string, nameField: string, name: string): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .from(tableName)
+        .select('id')
+        .eq(nameField, name)
+        .single();
+
+      if (error || !data) return null;
+      return data.id;
+    } catch (error) {
+      console.error(`Erro ao buscar ID de ${tableName}:`, error);
+      return null;
+    }
+  }
+
   async saveLinearProject(projectData: LinearProjectData): Promise<ServiceResponse<Projeto>> {
     try {
       const { project, pieces, barLength } = projectData;
+
+      // Buscar IDs das entidades pelos nomes
+      const clienteId = await this.findEntityIdByName('clientes', 'nome', project.client);
+      const obraId = await this.findEntityIdByName('obras', 'nome', project.obra);
+      const materialId = await this.findEntityIdByName('materiais', 'tipo', project.tipoMaterial);
+      const operadorId = await this.findEntityIdByName('operadores', 'nome', project.operador);
+      const inspetorId = await this.findEntityIdByName('inspetores_qa', 'nome', project.aprovadorQA);
 
       // Prepare project data for database - cast to Json compatible format
       const projectDataForDb = {
@@ -36,7 +60,11 @@ export class LinearProjectService extends BaseService<Projeto> {
       const insertData = {
         nome: project.name,
         numero_projeto: project.projectNumber,
-        cliente_id: null, // Will be linked later when client management is implemented
+        cliente_id: clienteId,
+        obra_id: obraId,
+        material_id: materialId,
+        operador_id: operadorId,
+        inspetor_id: inspetorId,
         turno: project.turno,
         lista: project.lista,
         revisao: project.revisao,
@@ -54,7 +82,7 @@ export class LinearProjectService extends BaseService<Projeto> {
 
       if (error) throw error;
 
-      console.log('Projeto linear salvo no Supabase:', result);
+      console.log('Projeto linear salvo no Supabase com IDs mapeados:', result);
 
       return {
         data: result as Projeto,
@@ -76,7 +104,14 @@ export class LinearProjectService extends BaseService<Projeto> {
     try {
       const { data, error } = await supabase
         .from('projetos')
-        .select('*')
+        .select(`
+          *,
+          clientes:cliente_id(nome),
+          obras:obra_id(nome),
+          materiais:material_id(tipo),
+          operadores:operador_id(nome),
+          inspetores_qa:inspetor_id(nome)
+        `)
         .not('dados_projeto', 'is', null)
         .eq('dados_projeto->>type', 'linear')
         .order('created_at', { ascending: false });
@@ -112,18 +147,25 @@ export class LinearProjectService extends BaseService<Projeto> {
         return null;
       }
 
+      // Use foreign key relationships if available, fallback to JSON data
+      const clientName = (dbProject as any).clientes?.nome || dadosProjeto.client || '';
+      const obraName = (dbProject as any).obras?.nome || dadosProjeto.obra || '';
+      const materialType = (dbProject as any).materiais?.tipo || dadosProjeto.tipoMaterial || '';
+      const operadorName = (dbProject as any).operadores?.nome || dadosProjeto.operador || '';
+      const inspetorName = (dbProject as any).inspetores_qa?.nome || dadosProjeto.aprovadorQA || '';
+
       const project: Project = {
         id: dadosProjeto.originalProjectId || dbProject.id,
         name: dbProject.nome,
         projectNumber: dbProject.numero_projeto,
-        client: dadosProjeto.client || '',
-        obra: dadosProjeto.obra || '',
+        client: clientName,
+        obra: obraName,
         lista: dbProject.lista,
         revisao: dbProject.revisao,
-        tipoMaterial: dadosProjeto.tipoMaterial || '',
-        operador: dadosProjeto.operador || '',
+        tipoMaterial: materialType,
+        operador: operadorName,
         turno: dbProject.turno,
-        aprovadorQA: dadosProjeto.aprovadorQA || '',
+        aprovadorQA: inspetorName,
         validacaoQA: dbProject.validacao_qa,
         enviarSobrasEstoque: dbProject.enviar_sobras_estoque,
         qrCode: dbProject.qr_code || '',
