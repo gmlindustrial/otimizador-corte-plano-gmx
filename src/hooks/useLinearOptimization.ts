@@ -1,7 +1,6 @@
+
 import { useState } from 'react';
-import type { Project } from '@/types/project';
-import type { CutPiece } from '@/types/cutPiece';
-import type { OptimizationResult } from '@/types/optimization';
+import type { Project, CutPiece, OptimizationResult } from '@/pages/Index';
 
 export const useLinearOptimization = () => {
   const [project, setProject] = useState<Project | null>(null);

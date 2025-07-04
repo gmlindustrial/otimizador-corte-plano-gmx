@@ -1,7 +1,7 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import type { OptimizationResult } from '@/types/optimization';
-import type { Project } from '@/types/project';
+import { OptimizationResult, Project } from '@/pages/Index';
 import { BarChart, Download, Printer, FileSpreadsheet, FileText, Wrench } from 'lucide-react';
 import { ReportVisualization } from './ReportVisualization';
 import { PrintableReport } from './PrintableReport';

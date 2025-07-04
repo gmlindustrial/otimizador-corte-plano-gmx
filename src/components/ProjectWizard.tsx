@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import type { Project } from '@/types/project';
+import { Project } from "@/pages/Index";
 import { IdentificationStep } from "./wizard/IdentificationStep";
 import { ProductionStep } from "./wizard/ProductionStep";
 import { ValidationStep } from "./wizard/ValidationStep";

@@ -1,7 +1,6 @@
+
 import { useState } from 'react';
-import type { Project } from '@/types/project';
-import type { OptimizationResult } from '@/types/optimization';
-import type { CutPiece } from '@/types/cutPiece';
+import type { Project, OptimizationResult, CutPiece } from '@/pages/Index';
 
 export interface OptimizationHistoryEntry {
   id: string;

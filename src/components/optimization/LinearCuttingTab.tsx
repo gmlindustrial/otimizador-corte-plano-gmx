@@ -1,9 +1,8 @@
+
 import { ProjectSelector } from '@/components/ProjectSelector';
 import { MaterialInput } from '@/components/MaterialInput';
 import { OptimizationResults } from '@/components/OptimizationResults';
-import type { Project } from '@/types/project';
-import type { CutPiece } from '@/types/cutPiece';
-import type { OptimizationResult } from '@/types/optimization';
+import type { Project, CutPiece, OptimizationResult } from '@/pages/Index';
 
 interface LinearCuttingTabProps {
   project: Project | null;

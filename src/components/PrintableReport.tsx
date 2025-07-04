@@ -1,6 +1,5 @@
 
-import type { OptimizationResult } from '@/types/optimization';
-import type { Project } from '@/types/project';
+import { OptimizationResult, Project } from '@/pages/Index';
 import { ReportVisualization } from './ReportVisualization';
 
 interface PrintableReportProps {
