@@ -1,7 +1,7 @@
 
 import { OptimizationResult } from '@/pages/Index';
 import { Badge } from '@/components/ui/badge';
-import { Package, Tag, Wrench, Recycle, MapPin, DollarSign, Square } from 'lucide-react';
+import { Package, Tag, Wrench, Recycle, MapPin, DollarSign } from 'lucide-react';
 
 interface ReportVisualizationProps {
   results: OptimizationResult;
@@ -9,108 +9,11 @@ interface ReportVisualizationProps {
   showLegend?: boolean;
 }
 
-export const ReportVisualization = ({ results, barLength, showLegend = true }: ReportVisualizationProps) => {
+export const ReportVisualization = ({ results, barLength }: ReportVisualizationProps) => {
   const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316'];
-  
-  // Agrupar peças por conjunto para legenda
-  const conjuntoLegend = new Map<string, { color: string; count: number }>();
-  
-  results.bars.forEach(bar => {
-    bar.pieces.forEach((piece: any) => {
-      if (piece.conjunto && !conjuntoLegend.has(piece.conjunto)) {
-        conjuntoLegend.set(piece.conjunto, { 
-          color: piece.color, 
-          count: results.bars.reduce((total, b) => 
-            total + b.pieces.filter((p: any) => p.conjunto === piece.conjunto).length, 0
-          )
-        });
-      }
-    });
-  });
 
   return (
     <div className="space-y-6">
-      {showLegend && (
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <h4 className="font-semibold mb-3 text-gray-900">Legenda de Identificação</h4>
-          
-          {/* Legenda de Código de Cores das Barras */}
-          <div className="mb-4">
-            <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-              <Square className="w-4 h-4" />
-              Código de Cores das Barras
-            </h5>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4 p-3 bg-white rounded-lg border">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-4 rounded border bg-green-500" />
-                <span className="text-sm text-gray-700 font-medium">Verde: Barra de sobra utilizada</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-4 rounded border bg-blue-500" />
-                <span className="text-sm text-gray-700 font-medium">Azul: Barra nova</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-4 rounded border bg-orange-500" />
-                <span className="text-sm text-gray-700 font-medium">Laranja: Sobra parcialmente utilizada</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Indicadores de Tipo */}
-          <div className="mb-4">
-            <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-              <Recycle className="w-4 h-4" />
-              Indicadores de Tipo
-            </h5>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3 p-3 bg-white rounded-lg border">
-              <div className="flex items-center gap-2">
-                <Badge variant="default" className="bg-green-100 text-green-800">
-                  <Recycle className="w-3 h-3 mr-1" />
-                  SOBRA
-                </Badge>
-                <span className="text-sm text-gray-700">Material reutilizado</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                  NOVA
-                </Badge>
-                <span className="text-sm text-gray-700">Material novo</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-blue-600" />
-                <span className="text-sm text-gray-700">Localização</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <DollarSign className="w-4 h-4 text-green-600" />
-                <span className="text-sm text-gray-700">Economia</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Conjuntos */}
-          {conjuntoLegend.size > 0 && (
-            <div className="mb-4">
-              <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <Package className="w-4 h-4" />
-                Conjuntos
-              </h5>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                {Array.from(conjuntoLegend.entries()).map(([conjunto, data]) => (
-                  <div key={conjunto} className="flex items-center gap-2">
-                    <div 
-                      className="w-4 h-4 rounded border" 
-                      style={{ backgroundColor: data.color }}
-                    />
-                    <span className="text-sm text-gray-700">{conjunto}</span>
-                    <Badge variant="outline" className="text-xs">{data.count}</Badge>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
       <div className="space-y-8">
         {results.bars.map((bar: any, barIndex) => {
           const isLeftover = bar.type === 'leftover';

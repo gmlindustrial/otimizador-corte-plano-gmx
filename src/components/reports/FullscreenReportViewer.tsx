@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   X, ZoomIn, ZoomOut, Search, Filter, ChevronLeft, ChevronRight, 
-  Package, Tag, Wrench, Eye, EyeOff, Printer, Check, Square, Recycle, MapPin, DollarSign
+  Package, Tag, Wrench, Printer, Check, Square, Recycle, MapPin, DollarSign
 } from 'lucide-react';
 import type { OptimizationResult, Project } from '@/pages/Index';
 
@@ -163,7 +162,7 @@ export const FullscreenReportViewer = ({
                 <Printer className="w-4 h-4" />
               </Button>
               
-              {/* Fechar */}
+              {/* Single X button */}
               <Button variant="outline" size="sm" onClick={onClose}>
                 <X className="w-4 h-4" />
               </Button>
