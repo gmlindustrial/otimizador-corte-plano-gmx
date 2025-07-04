@@ -78,12 +78,12 @@ export class LinearProjectService extends BaseService<Projeto> {
         .from('projetos')
         .select('*')
         .not('dados_projeto', 'is', null)
-        .eq('dados_projeto->type', 'linear')
+        .eq('dados_projeto->>type', 'linear')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      const projects: Projeto[] = data || [];
+      const projects = data || [];
 
       return {
         data: projects,
