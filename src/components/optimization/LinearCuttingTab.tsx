@@ -53,6 +53,7 @@ export const LinearCuttingTab = ({
               results={results}
               barLength={barLength}
               project={project}
+              pieces={pieces}
             />
           )}
         </div>
