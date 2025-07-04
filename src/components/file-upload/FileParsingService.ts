@@ -82,8 +82,8 @@ export class FileParsingService {
         if (pieceMatch) {
           const [, posicao, quantidade, perfil, material, comprimento, largura, peso] = pieceMatch;
           
-          // Criar TAG mais descritiva
-          const tag = `${currentConjunto}-P${posicao}`;
+          // Criar TAG apenas com P + posição (sem o conjunto)
+          const tag = `P${posicao}`;
           
           const piece: any = {
             id: `autocad-${currentConjunto}-${posicao}-${Date.now()}`,
@@ -111,7 +111,8 @@ export class FileParsingService {
           if (altMatch) {
             const [, posicao, quantidade, descricao, comprimento, largura, peso] = altMatch;
             
-            const tag = `${currentConjunto}-P${posicao}`;
+            // Criar TAG apenas com P + posição (sem o conjunto)
+            const tag = `P${posicao}`;
             
             const piece: any = {
               id: `autocad-alt-${currentConjunto}-${posicao}-${Date.now()}`,
