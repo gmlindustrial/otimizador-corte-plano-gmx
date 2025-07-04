@@ -1,3 +1,4 @@
+
 import { OptimizationResult } from '@/pages/Index';
 import { Badge } from '@/components/ui/badge';
 import { Package, Tag, Wrench, Recycle, MapPin, DollarSign, Square } from 'lucide-react';
@@ -13,7 +14,6 @@ export const ReportVisualization = ({ results, barLength, showLegend = true }: R
   
   // Agrupar peças por conjunto para legenda
   const conjuntoLegend = new Map<string, { color: string; count: number }>();
-  const tagLegend = new Map<string, string>();
   
   results.bars.forEach(bar => {
     bar.pieces.forEach((piece: any) => {
@@ -24,9 +24,6 @@ export const ReportVisualization = ({ results, barLength, showLegend = true }: R
             total + b.pieces.filter((p: any) => p.conjunto === piece.conjunto).length, 0
           )
         });
-      }
-      if (piece.tag) {
-        tagLegend.set(piece.tag, piece.color);
       }
     });
   });
@@ -59,20 +56,25 @@ export const ReportVisualization = ({ results, barLength, showLegend = true }: R
             </div>
           </div>
 
-          {/* Legenda de Tipos de Barra */}
+          {/* Indicadores de Tipo */}
           <div className="mb-4">
             <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
               <Recycle className="w-4 h-4" />
-              Indicadores Adicionais
+              Indicadores de Tipo
             </h5>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3 p-3 bg-white rounded-lg border">
               <div className="flex items-center gap-2">
-                <Recycle className="w-4 h-4 text-green-600" />
-                <span className="text-sm text-gray-700">Sobra Reutilizada</span>
+                <Badge variant="default" className="bg-green-100 text-green-800">
+                  <Recycle className="w-3 h-3 mr-1" />
+                  SOBRA
+                </Badge>
+                <span className="text-sm text-gray-700">Material reutilizado</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded border bg-gray-300" />
-                <span className="text-sm text-gray-700">Desperdício</span>
+                <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                  NOVA
+                </Badge>
+                <span className="text-sm text-gray-700">Material novo</span>
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-blue-600" />
@@ -85,7 +87,7 @@ export const ReportVisualization = ({ results, barLength, showLegend = true }: R
             </div>
           </div>
 
-          {/* Legenda de Conjuntos */}
+          {/* Conjuntos */}
           {conjuntoLegend.size > 0 && (
             <div className="mb-4">
               <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
@@ -106,30 +108,6 @@ export const ReportVisualization = ({ results, barLength, showLegend = true }: R
               </div>
             </div>
           )}
-
-          {/* Legenda de TAGs (limitada para não ficar muito longa) */}
-          {tagLegend.size > 0 && tagLegend.size <= 12 && (
-            <div>
-              <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                <Tag className="w-4 h-4" />
-                TAGs das Peças
-              </h5>
-              <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                {Array.from(tagLegend.entries()).slice(0, 12).map(([tag, color]) => (
-                  <div key={tag} className="flex items-center gap-2">
-                    <div 
-                      className="w-3 h-3 rounded border" 
-                      style={{ backgroundColor: color }}
-                    />
-                    <span className="text-xs text-gray-700">{tag}</span>
-                  </div>
-                ))}
-              </div>
-              {tagLegend.size > 12 && (
-                <p className="text-xs text-gray-500 mt-2">+ {tagLegend.size - 12} TAGs adicionais...</p>
-              )}
-            </div>
-          )}
         </div>
       )}
 
@@ -144,17 +122,20 @@ export const ReportVisualization = ({ results, barLength, showLegend = true }: R
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                     Barra {barIndex + 1}
-                    {isLeftover && (
+                    
+                    {/* Indicadores NOVA/SOBRA */}
+                    {isLeftover ? (
                       <Badge variant="default" className="bg-green-100 text-green-800">
                         <Recycle className="w-3 h-3 mr-1" />
                         SOBRA
                       </Badge>
-                    )}
-                    {isNew && (
+                    ) : (
                       <Badge variant="outline" className="bg-blue-50 text-blue-700">
                         NOVA
                       </Badge>
                     )}
+                    
+                    {/* Localização para sobras */}
                     {isLeftover && bar.location && (
                       <Badge variant="secondary" className="bg-gray-100 text-gray-700">
                         <MapPin className="w-3 h-3 mr-1" />
@@ -164,6 +145,7 @@ export const ReportVisualization = ({ results, barLength, showLegend = true }: R
                   </h3>
                   
                   <div className="flex items-center gap-2 text-sm">
+                    {/* Economia para sobras */}
                     {isLeftover && bar.economySaved && (
                       <Badge variant="outline" className="bg-green-50 text-green-700">
                         <DollarSign className="w-3 h-3 mr-1" />
@@ -288,7 +270,7 @@ export const ReportVisualization = ({ results, barLength, showLegend = true }: R
                   </svg>
                 </div>
 
-                {/* Tabela Detalhada Melhorada com informações de sustentabilidade */}
+                {/* Tabela Detalhada */}
                 <div className="overflow-x-auto">
                   <table className="w-full border-collapse border border-gray-300 text-sm">
                     <thead className={`${isLeftover ? 'bg-green-50' : 'bg-gray-100'}`}>
@@ -360,7 +342,7 @@ export const ReportVisualization = ({ results, barLength, showLegend = true }: R
                         </tr>
                       ))}
                       
-                      {/* Linha de sobra com informações específicas */}
+                      {/* Linha de sobra */}
                       {bar.waste > 0 && (
                         <tr className={`${isLeftover ? 'bg-yellow-50' : 'bg-red-50'}`}>
                           <td className="border border-gray-300 px-3 py-2">

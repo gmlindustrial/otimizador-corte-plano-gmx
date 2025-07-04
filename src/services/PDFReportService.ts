@@ -1,4 +1,3 @@
-
 import jsPDF from 'jspdf';
 import type { OptimizationResult, Project } from '@/pages/Index';
 import type { SheetOptimizationResult, SheetProject } from '@/types/sheet';
@@ -34,6 +33,39 @@ export class PDFReportService {
     doc.text('© Sistema de Otimização - Elite Soldas', 105, pageHeight - 10, { align: 'center' });
   }
 
+  private static addLegend(doc: jsPDF, currentY: number): number {
+    // Legenda de cores e indicadores
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Legenda de Identificação', 20, currentY);
+    currentY += 8;
+
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    
+    // Cores das barras
+    doc.text('Código de Cores:', 20, currentY);
+    currentY += 4;
+    doc.text('• Verde: Barra de sobra reutilizada', 25, currentY);
+    currentY += 4;
+    doc.text('• Azul: Barra nova', 25, currentY);
+    currentY += 4;
+    doc.text('• Cinza: Desperdício/Sobra', 25, currentY);
+    currentY += 6;
+
+    // Indicadores
+    doc.text('Indicadores:', 20, currentY);
+    currentY += 4;
+    doc.text('• NOVA: Material novo do estoque', 25, currentY);
+    currentY += 4;
+    doc.text('• SOBRA: Material reutilizado (localização indicada)', 25, currentY);
+    currentY += 4;
+    doc.text('• ♻: Símbolo de reutilização', 25, currentY);
+    currentY += 10;
+
+    return currentY;
+  }
+
   static async generateCompleteLinearReport(results: OptimizationResult, barLength: number, project: Project): Promise<void> {
     const doc = new jsPDF();
     let currentY = 55;
@@ -53,7 +85,17 @@ export class PDFReportService {
     doc.text(`Eficiência: ${results.efficiency.toFixed(1)}%`, 20, currentY + 5);
     doc.text(`Desperdício: ${(results.totalWaste / 1000).toFixed(2)}m`, 20, currentY + 10);
     doc.text(`Comprimento da Barra: ${barLength}mm`, 20, currentY + 15);
+    
+    // Contagem de barras novas vs sobras
+    const sobraCount = results.bars.filter((bar: any) => bar.type === 'leftover').length;
+    const novaCount = results.bars.filter((bar: any) => bar.type !== 'leftover').length;
+    doc.text(`Barras NOVAS: ${novaCount}`, 100, currentY);
+    doc.text(`Barras SOBRA: ${sobraCount}`, 100, currentY + 5);
+    
     currentY += 25;
+
+    // Adicionar legenda
+    currentY = this.addLegend(doc, currentY);
 
     // Resumo por Conjunto
     const conjuntoSummary = new Map<string, { count: number; totalLength: number; barras: Set<number> }>();
@@ -95,8 +137,8 @@ export class PDFReportService {
     doc.text('Detalhamento das Barras', 20, currentY);
     currentY += 10;
 
-    results.bars.forEach((bar, barIndex) => {
-      if (currentY > 240) {
+    results.bars.forEach((bar: any, barIndex) => {
+      if (currentY > 220) {
         doc.addPage();
         pageNumber++;
         this.addHeader(doc, project, 'Relatório Completo de Otimização Linear', pageNumber);
@@ -105,17 +147,34 @@ export class PDFReportService {
 
       doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
-      doc.text(`Barra ${barIndex + 1}`, 20, currentY);
+      
+      // Título da barra com indicador NOVA/SOBRA
+      const barType = bar.type === 'leftover' ? 'SOBRA' : 'NOVA';
+      const barTitle = `Barra ${barIndex + 1} - ${barType}`;
+      doc.text(barTitle, 20, currentY);
+      
+      // Localização para sobras
+      if (bar.type === 'leftover' && bar.location) {
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Localização: ${bar.location}`, 120, currentY);
+      }
+      
       currentY += 5;
 
       doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
       doc.text(`Eficiência: ${((bar.totalUsed / barLength) * 100).toFixed(1)}%`, 20, currentY);
       doc.text(`Sobra: ${(bar.waste / 1000).toFixed(3)}m`, 80, currentY);
+      
+      // Economia para sobras
+      if (bar.type === 'leftover' && bar.economySaved) {
+        doc.text(`Economia: R$ ${bar.economySaved.toFixed(2)}`, 130, currentY);
+      }
+      
       currentY += 10;
 
       // Tabela de peças
-      const startY = currentY;
       doc.text('Seq.', 20, currentY);
       doc.text('TAG', 35, currentY);
       doc.text('Comprimento', 60, currentY);
@@ -141,6 +200,12 @@ export class PDFReportService {
         doc.text(piece.conjunto || 'Manual', 95, currentY);
         doc.text(piece.perfil || '-', 130, currentY);
         doc.text('☐', 165, currentY);
+        
+        // Indicador de reutilização para sobras
+        if (bar.type === 'leftover') {
+          doc.text('♻', 175, currentY);
+        }
+        
         currentY += 5;
       });
 
@@ -148,7 +213,7 @@ export class PDFReportService {
         doc.setFont('helvetica', 'bold');
         doc.text('Sobra', 20, currentY);
         doc.text(`${bar.waste}mm`, 60, currentY);
-        doc.text('Descarte', 95, currentY);
+        doc.text(bar.type === 'leftover' ? 'Sobra da Sobra' : 'Descarte', 95, currentY);
         doc.setFont('helvetica', 'normal');
         currentY += 5;
       }
@@ -181,7 +246,20 @@ export class PDFReportService {
     currentY += 5;
     doc.text(`Desperdício: ${(results.totalWaste / 1000).toFixed(2)}m`, 20, currentY);
     doc.text(`Material: ${(project as any).tipoMaterial || 'N/A'}`, 100, currentY);
+    currentY += 5;
+    
+    // Contagem de barras por tipo
+    const sobraCount = results.bars.filter((bar: any) => bar.type === 'leftover').length;
+    const novaCount = results.bars.filter((bar: any) => bar.type !== 'leftover').length;
+    doc.text(`Barras NOVAS: ${novaCount}`, 20, currentY);
+    doc.text(`Barras SOBRA: ${sobraCount}`, 100, currentY);
     currentY += 15;
+
+    // Adicionar legenda compacta
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Legenda: NOVA=Material novo | SOBRA=Reutilizado | ♻=Economia', 20, currentY);
+    currentY += 10;
 
     // Processar barras em grupos para múltiplas páginas
     const totalBars = results.bars.length;
@@ -206,7 +284,7 @@ export class PDFReportService {
       currentY += 10;
 
       // Processar cada barra do grupo atual
-      currentBars.forEach((bar, localIndex) => {
+      currentBars.forEach((bar: any, localIndex) => {
         const globalBarIndex = processedBars + localIndex;
         
         // Verificar se há espaço suficiente para a barra
@@ -217,7 +295,7 @@ export class PDFReportService {
           currentY = 55;
         }
 
-        // Cabeçalho da barra
+        // Cabeçalho da barra com indicador
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
         
@@ -226,7 +304,9 @@ export class PDFReportService {
           .filter(p => p.conjunto)
           .map(p => p.conjunto));
         
-        let barTitle = `Barra ${globalBarIndex + 1}`;
+        const barType = bar.type === 'leftover' ? 'SOBRA' : 'NOVA';
+        let barTitle = `Barra ${globalBarIndex + 1} - ${barType}`;
+        
         if (conjuntosNaBarra.size > 0) {
           barTitle += ` - Conjuntos: ${Array.from(conjuntosNaBarra).join(', ')}`;
         }
@@ -240,6 +320,18 @@ export class PDFReportService {
         doc.text(`Eficiência: ${((bar.totalUsed / barLength) * 100).toFixed(1)}%`, 20, currentY);
         doc.text(`Utilizado: ${(bar.totalUsed / 1000).toFixed(2)}m`, 70, currentY);
         doc.text(`Sobra: ${(bar.waste / 1000).toFixed(3)}m`, 120, currentY);
+        
+        // Localização ou economia
+        if (bar.type === 'leftover') {
+          if (bar.location) {
+            doc.text(`Local: ${bar.location}`, 20, currentY + 4);
+          }
+          if (bar.economySaved) {
+            doc.text(`Economia: R$ ${bar.economySaved.toFixed(2)}`, 70, currentY + 4);
+          }
+          currentY += 4;
+        }
+        
         currentY += 8;
 
         // Tabela de peças
@@ -251,10 +343,13 @@ export class PDFReportService {
         doc.text('Conjunto', 90, currentY);
         doc.text('Perfil', 120, currentY);
         doc.text('✓', 150, currentY);
+        if (bar.type === 'leftover') {
+          doc.text('♻', 160, currentY);
+        }
         currentY += 3;
 
         // Linha da tabela
-        doc.line(20, currentY, 155, currentY);
+        doc.line(20, currentY, 165, currentY);
         currentY += 3;
 
         // Peças da barra
@@ -266,6 +361,9 @@ export class PDFReportService {
           doc.text(piece.conjunto || 'Manual', 90, currentY);
           doc.text(piece.perfil || '-', 120, currentY);
           doc.text('☐', 150, currentY);
+          if (bar.type === 'leftover') {
+            doc.text('♻', 160, currentY);
+          }
           currentY += 4;
         });
 
@@ -274,7 +372,7 @@ export class PDFReportService {
           doc.setFont('helvetica', 'bold');
           doc.text('Sobra', 20, currentY);
           doc.text(`${bar.waste}mm`, 60, currentY);
-          doc.text('Descarte', 90, currentY);
+          doc.text(bar.type === 'leftover' ? 'Sobra da Sobra' : 'Descarte', 90, currentY);
           doc.text('☐', 150, currentY);
           doc.setFont('helvetica', 'normal');
           currentY += 4;
@@ -302,8 +400,9 @@ export class PDFReportService {
     doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
     doc.text('Barra', 20, currentY);
-    doc.text('Peças', 40, currentY);
-    doc.text('Conjuntos', 60, currentY);
+    doc.text('Tipo', 35, currentY);
+    doc.text('Peças', 50, currentY);
+    doc.text('Conjuntos', 70, currentY);
     doc.text('Eficiência', 100, currentY);
     doc.text('Sobra', 130, currentY);
     doc.text('Status', 150, currentY);
@@ -313,14 +412,17 @@ export class PDFReportService {
     currentY += 3;
 
     doc.setFont('helvetica', 'normal');
-    results.bars.forEach((bar, index) => {
+    results.bars.forEach((bar: any, index) => {
       const conjuntos = new Set((bar.pieces as any[])
         .filter(p => p.conjunto)
         .map(p => p.conjunto));
       
+      const barType = bar.type === 'leftover' ? 'SOBRA' : 'NOVA';
+      
       doc.text(`${index + 1}`, 20, currentY);
-      doc.text(`${bar.pieces.length}`, 40, currentY);
-      doc.text(conjuntos.size > 0 ? Array.from(conjuntos).join(',').substring(0, 10) : 'Manual', 60, currentY);
+      doc.text(barType, 35, currentY);
+      doc.text(`${bar.pieces.length}`, 50, currentY);
+      doc.text(conjuntos.size > 0 ? Array.from(conjuntos).join(',').substring(0, 8) : 'Manual', 70, currentY);
       doc.text(`${((bar.totalUsed / barLength) * 100).toFixed(1)}%`, 100, currentY);
       doc.text(`${(bar.waste / 1000).toFixed(3)}m`, 130, currentY);
       doc.text('☐', 150, currentY);
@@ -331,8 +433,8 @@ export class PDFReportService {
     currentY += 5;
     doc.setFont('helvetica', 'bold');
     doc.text('TOTAL', 20, currentY);
-    doc.text(`${results.bars.reduce((sum, bar) => sum + bar.pieces.length, 0)}`, 40, currentY);
-    doc.text(`${results.totalBars}`, 60, currentY);
+    doc.text(`${results.bars.reduce((sum, bar) => sum + bar.pieces.length, 0)}`, 50, currentY);
+    doc.text(`${results.totalBars}`, 70, currentY);
     doc.text(`${results.efficiency.toFixed(1)}%`, 100, currentY);
     doc.text(`${(results.totalWaste / 1000).toFixed(2)}m`, 130, currentY);
     currentY += 15;

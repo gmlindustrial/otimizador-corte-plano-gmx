@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -26,7 +27,7 @@ export const FullscreenReportViewer = ({
   project 
 }: FullscreenReportViewerProps) => {
   const [selectedBar, setSelectedBar] = useState<number>(0);
-  const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const [svgZoomLevel, setSvgZoomLevel] = useState<number>(1);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [filterByConjunto, setFilterByConjunto] = useState<string>('');
   const [showOnlyPending, setShowOnlyPending] = useState<boolean>(false);
@@ -76,10 +77,10 @@ export const FullscreenReportViewer = ({
           setSelectedBar(prev => Math.min(filteredBars.length - 1, prev + 1));
           break;
         case '+':
-          setZoomLevel(prev => Math.min(2, prev + 0.1));
+          setSvgZoomLevel(prev => Math.min(2, prev + 0.1));
           break;
         case '-':
-          setZoomLevel(prev => Math.max(0.5, prev - 0.1));
+          setSvgZoomLevel(prev => Math.max(0.5, prev - 0.1));
           break;
       }
     };
@@ -106,7 +107,6 @@ export const FullscreenReportViewer = ({
 
   // Agrupar peças por conjunto para legenda
   const conjuntoLegend = new Map<string, { color: string; count: number }>();
-  const tagLegend = new Map<string, string>();
   
   results.bars.forEach(bar => {
     bar.pieces.forEach((piece: any) => {
@@ -118,9 +118,6 @@ export const FullscreenReportViewer = ({
           )
         });
       }
-      if (piece.tag) {
-        tagLegend.set(piece.tag, piece.color);
-      }
     });
   });
 
@@ -129,9 +126,9 @@ export const FullscreenReportViewer = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[100vw] max-h-[100vh] w-full h-full p-0 bg-white">
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-screen">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b bg-gray-50">
+          <div className="flex items-center justify-between p-4 border-b bg-gray-50 flex-shrink-0">
             <div className="flex items-center gap-4">
               <h2 className="text-xl font-bold">
                 Visualização Completa - {project?.projectNumber || 'Projeto'}
@@ -142,12 +139,12 @@ export const FullscreenReportViewer = ({
             </div>
             
             <div className="flex items-center gap-2">
-              {/* Controles de Zoom */}
-              <Button variant="outline" size="sm" onClick={() => setZoomLevel(prev => Math.max(0.5, prev - 0.1))}>
+              {/* Controles de Zoom SVG */}
+              <Button variant="outline" size="sm" onClick={() => setSvgZoomLevel(prev => Math.max(0.5, prev - 0.1))}>
                 <ZoomOut className="w-4 h-4" />
               </Button>
-              <span className="text-sm font-mono">{(zoomLevel * 100).toFixed(0)}%</span>
-              <Button variant="outline" size="sm" onClick={() => setZoomLevel(prev => Math.min(2, prev + 0.1))}>
+              <span className="text-sm font-mono">{(svgZoomLevel * 100).toFixed(0)}%</span>
+              <Button variant="outline" size="sm" onClick={() => setSvgZoomLevel(prev => Math.min(2, prev + 0.1))}>
                 <ZoomIn className="w-4 h-4" />
               </Button>
               
@@ -159,16 +156,6 @@ export const FullscreenReportViewer = ({
               >
                 <Square className="w-4 h-4 mr-1" />
                 Legenda
-              </Button>
-              
-              {/* Modo de Visualização */}
-              <Button 
-                variant={viewMode === 'overview' ? 'default' : 'outline'} 
-                size="sm"
-                onClick={() => setViewMode(viewMode === 'overview' ? 'detailed' : 'overview')}
-              >
-                {viewMode === 'overview' ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                {viewMode === 'overview' ? 'Visão Geral' : 'Detalhado'}
               </Button>
               
               {/* Imprimir */}
@@ -185,7 +172,7 @@ export const FullscreenReportViewer = ({
 
           {/* Legenda de Identificação */}
           {showLegend && (
-            <div className="p-4 border-b bg-blue-50">
+            <div className="p-4 border-b bg-blue-50 flex-shrink-0">
               <h4 className="font-semibold mb-3 text-gray-900 flex items-center gap-2">
                 <Square className="w-4 h-4" />
                 Legenda de Identificação
@@ -210,25 +197,30 @@ export const FullscreenReportViewer = ({
                 </div>
               </div>
 
-              {/* Indicadores Adicionais */}
+              {/* Indicadores de Tipo de Barra */}
               <div className="mb-3">
-                <h5 className="text-sm font-medium text-gray-700 mb-2">Indicadores Adicionais</h5>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <h5 className="text-sm font-medium text-gray-700 mb-2">Indicadores de Tipo</h5>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3 p-3 bg-white rounded-lg border">
                   <div className="flex items-center gap-2">
-                    <Recycle className="w-4 h-4 text-green-600" />
-                    <span className="text-sm text-gray-700">Sobra Reutilizada</span>
+                    <Badge variant="default" className="bg-green-100 text-green-800">
+                      <Recycle className="w-3 h-3 mr-1" />
+                      SOBRA
+                    </Badge>
+                    <span className="text-sm text-gray-700">Material reutilizado</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded border bg-gray-300" />
-                    <span className="text-sm text-gray-700">Desperdício</span>
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                      NOVA
+                    </Badge>
+                    <span className="text-sm text-gray-700">Material novo</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-blue-600" />
-                    <span className="text-sm text-gray-700">Localização</span>
+                    <span className="text-sm text-gray-700">Localização no estoque</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <DollarSign className="w-4 h-4 text-green-600" />
-                    <span className="text-sm text-gray-700">Economia</span>
+                    <span className="text-sm text-gray-700">Economia gerada</span>
                   </div>
                 </div>
               </div>
@@ -261,7 +253,7 @@ export const FullscreenReportViewer = ({
           )}
 
           {/* Filtros */}
-          <div className="flex items-center gap-4 p-4 border-b bg-gray-50">
+          <div className="flex items-center gap-4 p-4 border-b bg-gray-50 flex-shrink-0">
             <div className="flex items-center gap-2">
               <Search className="w-4 h-4 text-gray-500" />
               <Input
@@ -298,7 +290,7 @@ export const FullscreenReportViewer = ({
           </div>
 
           {/* Navegação de Barras */}
-          <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex items-center justify-between p-4 border-b flex-shrink-0">
             <Button 
               variant="outline" 
               size="sm"
@@ -338,15 +330,46 @@ export const FullscreenReportViewer = ({
             </Button>
           </div>
 
-          {/* Conteúdo Principal */}
-          <div className="flex-1 overflow-auto p-6" style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top left' }}>
+          {/* Conteúdo Principal - com altura fixa e scroll independente */}
+          <div className="flex-1 overflow-auto">
             {currentBar && (
-              <div className="space-y-6">
+              <div className="p-6">
                 {/* Informações da Barra */}
-                <Card>
+                <Card className="mb-6">
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
-                      <span>Barra {currentBar.barIndex + 1}</span>
+                      <div className="flex items-center gap-3">
+                        <span>Barra {currentBar.barIndex + 1}</span>
+                        
+                        {/* Indicadores NOVA/SOBRA */}
+                        {(currentBar as any).type === 'leftover' ? (
+                          <Badge variant="default" className="bg-green-100 text-green-800">
+                            <Recycle className="w-3 h-3 mr-1" />
+                            SOBRA
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                            NOVA
+                          </Badge>
+                        )}
+                        
+                        {/* Localização para sobras */}
+                        {(currentBar as any).type === 'leftover' && (currentBar as any).location && (
+                          <Badge variant="secondary" className="bg-gray-100 text-gray-700">
+                            <MapPin className="w-3 h-3 mr-1" />
+                            {(currentBar as any).location}
+                          </Badge>
+                        )}
+                        
+                        {/* Economia para sobras */}
+                        {(currentBar as any).type === 'leftover' && (currentBar as any).economySaved && (
+                          <Badge variant="outline" className="bg-green-50 text-green-700">
+                            <DollarSign className="w-3 h-3 mr-1" />
+                            Economia: R$ {(currentBar as any).economySaved.toFixed(2)}
+                          </Badge>
+                        )}
+                      </div>
+                      
                       <div className="flex items-center gap-4 text-sm">
                         <span>Eficiência: {((currentBar.totalUsed / barLength) * 100).toFixed(1)}%</span>
                         <span>Sobra: {(currentBar.waste / 1000).toFixed(3)}m</span>
@@ -355,8 +378,8 @@ export const FullscreenReportViewer = ({
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {/* Visualização SVG da Barra */}
-                    <div className="mb-6">
+                    {/* Visualização SVG da Barra com zoom independente */}
+                    <div className="mb-6" style={{ transform: `scale(${svgZoomLevel})`, transformOrigin: 'top left' }}>
                       <svg width="100%" height="100" viewBox={`0 0 ${barLength / 10} 100`} className="border rounded">
                         {(() => {
                           let currentX = 0;
@@ -365,6 +388,9 @@ export const FullscreenReportViewer = ({
                             const pieceId = `${currentBar.barIndex}-${piece.tag || piece.length}`;
                             const isChecked = checkedPieces.has(pieceId);
                             
+                            // Cor baseada no tipo de barra
+                            const segmentColor = (currentBar as any).type === 'leftover' ? '#10B981' : piece.color || colors[pieceIndex % colors.length];
+                            
                             const segment = (
                               <g key={pieceIndex}>
                                 <rect
@@ -372,7 +398,7 @@ export const FullscreenReportViewer = ({
                                   y={30}
                                   width={segmentWidth}
                                   height={40}
-                                  fill={isChecked ? '#9CA3AF' : piece.color || colors[pieceIndex % colors.length]}
+                                  fill={isChecked ? '#9CA3AF' : segmentColor}
                                   stroke="#fff"
                                   strokeWidth="2"
                                   opacity={isChecked ? 0.5 : 1}
@@ -396,6 +422,18 @@ export const FullscreenReportViewer = ({
                                     fill="white"
                                   >
                                     ✓
+                                  </text>
+                                )}
+                                {/* Indicador de reutilização */}
+                                {(currentBar as any).type === 'leftover' && (
+                                  <text
+                                    x={currentX + segmentWidth / 2}
+                                    y={45}
+                                    textAnchor="middle"
+                                    fontSize="8"
+                                    fill="white"
+                                  >
+                                    ♻
                                   </text>
                                 )}
                               </g>
@@ -444,10 +482,10 @@ export const FullscreenReportViewer = ({
                       </svg>
                     </div>
 
-                    {/* Tabela Detalhada */}
-                    <div className="overflow-x-auto">
+                    {/* Tabela Detalhada - com scroll independente */}
+                    <div className="max-h-96 overflow-auto">
                       <table className="w-full border-collapse border border-gray-300">
-                        <thead className="bg-gray-100">
+                        <thead className={`sticky top-0 ${(currentBar as any).type === 'leftover' ? 'bg-green-50' : 'bg-gray-100'}`}>
                           <tr>
                             <th className="border border-gray-300 px-4 py-3 text-left">Status</th>
                             <th className="border border-gray-300 px-4 py-3 text-left">Peça</th>
@@ -478,9 +516,10 @@ export const FullscreenReportViewer = ({
                                   <div className="flex items-center gap-2">
                                     <div 
                                       className="w-4 h-4 rounded border" 
-                                      style={{ backgroundColor: piece.color || colors[pieceIndex % colors.length] }}
+                                      style={{ backgroundColor: (currentBar as any).type === 'leftover' ? '#10B981' : piece.color || colors[pieceIndex % colors.length] }}
                                     />
                                     Peça {pieceIndex + 1}
+                                    {(currentBar as any).type === 'leftover' && <Recycle className="w-3 h-3 text-green-600" />}
                                   </div>
                                 </td>
                                 <td className="border border-gray-300 px-4 py-3">
@@ -542,7 +581,9 @@ export const FullscreenReportViewer = ({
                                 {currentBar.waste}mm
                               </td>
                               <td className="border border-gray-300 px-4 py-3 text-gray-400">Descarte</td>
-                              <td className="border border-gray-300 px-4 py-3 text-gray-400">Desperdício</td>
+                              <td className="border border-gray-300 px-4 py-3 text-gray-400">
+                                {(currentBar as any).type === 'leftover' ? 'Sobra da Sobra' : 'Desperdício'}
+                              </td>
                               <td className="border border-gray-300 px-4 py-3 text-gray-400">Final</td>
                             </tr>
                           )}
@@ -556,7 +597,7 @@ export const FullscreenReportViewer = ({
           </div>
 
           {/* Footer com atalhos */}
-          <div className="p-4 border-t bg-gray-50 text-sm text-gray-600">
+          <div className="p-4 border-t bg-gray-50 text-sm text-gray-600 flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <span>Atalhos: ESC (sair) | ← → (navegar) | + - (zoom)</span>
