@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { OptimizationResult, Project } from '@/pages/Index';
@@ -323,16 +322,8 @@ export const OptimizationResults = ({ results, barLength, project }: Optimizatio
               
               {/* Modo de Impressão */}
               <div className="space-y-2">
-                <h5 className="text-sm font-medium text-gray-700">Modos de Visualização:</h5>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                  <Button 
-                    onClick={() => setShowFullscreen(true)} 
-                    variant="default" 
-                    className="justify-start"
-                  >
-                    <Fullscreen className="w-4 h-4 mr-2" />
-                    Tela Cheia Interativa
-                  </Button>
+                <h5 className="text-sm font-medium text-gray-700">Modos de Impressão:</h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   <Button 
                     onClick={() => handlePrint('complete')} 
                     variant="outline" 
