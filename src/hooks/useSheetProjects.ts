@@ -13,19 +13,83 @@ export const useSheetProjects = () => {
   const [savedProjects, setSavedProjects] = useState<SheetProjectData[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Helper method to find entity ID by name
-  const findEntityIdByName = async (tableName: string, nameField: string, name: string): Promise<string | null> => {
+  // Helper methods to find entity IDs by name with proper typing
+  const findClienteIdByName = async (name: string): Promise<string | null> => {
     try {
       const { data, error } = await supabase
-        .from(tableName)
+        .from('clientes')
         .select('id')
-        .eq(nameField, name)
+        .eq('nome', name)
         .single();
 
       if (error || !data) return null;
       return data.id;
     } catch (error) {
-      console.error(`Erro ao buscar ID de ${tableName}:`, error);
+      console.error(`Erro ao buscar ID de cliente:`, error);
+      return null;
+    }
+  };
+
+  const findObraIdByName = async (name: string): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('obras')
+        .select('id')
+        .eq('nome', name)
+        .single();
+
+      if (error || !data) return null;
+      return data.id;
+    } catch (error) {
+      console.error(`Erro ao buscar ID de obra:`, error);
+      return null;
+    }
+  };
+
+  const findMaterialIdByType = async (type: string): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('materiais')
+        .select('id')
+        .eq('tipo', type)
+        .single();
+
+      if (error || !data) return null;
+      return data.id;
+    } catch (error) {
+      console.error(`Erro ao buscar ID de material:`, error);
+      return null;
+    }
+  };
+
+  const findOperadorIdByName = async (name: string): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('operadores')
+        .select('id')
+        .eq('nome', name)
+        .single();
+
+      if (error || !data) return null;
+      return data.id;
+    } catch (error) {
+      console.error(`Erro ao buscar ID de operador:`, error);
+      return null;
+    }
+  };
+
+  const findInspetorIdByName = async (name: string): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('inspetores_qa')
+        .select('id')
+        .eq('nome', name)
+        .single();
+
+      if (error || !data) return null;
+      return data.id;
+    } catch (error) {
+      console.error(`Erro ao buscar ID de inspetor:`, error);
       return null;
     }
   };
@@ -35,11 +99,11 @@ export const useSheetProjects = () => {
       const { project, pieces } = projectData;
 
       // Buscar IDs das entidades pelos nomes
-      const clienteId = await findEntityIdByName('clientes', 'nome', project.client);
-      const obraId = await findEntityIdByName('obras', 'nome', project.obra);
-      const materialId = await findEntityIdByName('materiais', 'tipo', project.material);
-      const operadorId = await findEntityIdByName('operadores', 'nome', project.operador);
-      const inspetorId = await findEntityIdByName('inspetores_qa', 'nome', project.aprovadorQA);
+      const clienteId = await findClienteIdByName(project.client);
+      const obraId = await findObraIdByName(project.obra);
+      const materialId = await findMaterialIdByType(project.material);
+      const operadorId = await findOperadorIdByName(project.operador);
+      const inspetorId = await findInspetorIdByName(project.aprovadorQA);
 
       const insertData = {
         nome: project.name,
