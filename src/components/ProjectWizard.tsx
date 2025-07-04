@@ -39,7 +39,7 @@ export const ProjectWizard = ({
   const [clientes, setClieintes] = useState<Cliente[]>([]);
   const [tiposMaterial, setTiposMaterial] = useState<Material[]>([]);
   const [operadores, setOperadores] = useState<Operador[]>([]);
-  const [inspetoresQA, setInspetoresQA] = useState<InspetorQA[]>([]); // Assuming inspetoresQA is a list of strings
+  const [inspetoresQA, setInspetoresQA] = useState<InspetorQA[]>([]);
   const [currentStep, setCurrentStep] = useState(1);
   const [showQRCode, setShowQRCode] = useState(false);
   const [formData, setFormData] = useState({
@@ -56,6 +56,22 @@ export const ProjectWizard = ({
     validacaoQA: false,
     enviarSobrasEstoque: true,
   });
+
+  // Funções helper para resolver IDs para nomes
+  const findEntityNameById = (id: string, entities: any[], nameField: string = 'nome') => {
+    const entity = entities.find(e => e.id === id);
+    return entity ? entity[nameField] : id;
+  };
+
+  const resolveEntityNames = () => {
+    return {
+      clienteNome: findEntityNameById(formData.client, clientes),
+      obraNome: findEntityNameById(formData.obra, obras),
+      materialNome: findEntityNameById(formData.tipoMaterial, tiposMaterial, 'tipo'),
+      operadorNome: findEntityNameById(formData.operador, operadores),
+      aprovadorQANome: findEntityNameById(formData.aprovadorQA, inspetoresQA)
+    };
+  };
 
   useEffect(() => {
     const carregarObras = async () => {
@@ -168,18 +184,21 @@ export const ProjectWizard = ({
       return;
     }
 
+    // Resolver IDs para nomes legíveis
+    const entityNames = resolveEntityNames();
+
     const newProject: Project = {
       id: Date.now().toString(),
       name: formData.projectName,
       projectNumber: formData.projectNumber,
-      client: formData.client,
-      obra: formData.obra,
+      client: entityNames.clienteNome,
+      obra: entityNames.obraNome,
       lista: formData.lista,
       revisao: formData.revisao,
-      tipoMaterial: formData.tipoMaterial,
-      operador: formData.operador,
+      tipoMaterial: entityNames.materialNome,
+      operador: entityNames.operadorNome,
       turno: formData.turno,
-      aprovadorQA: formData.aprovadorQA,
+      aprovadorQA: entityNames.aprovadorQANome,
       validacaoQA: formData.validacaoQA,
       enviarSobrasEstoque: formData.enviarSobrasEstoque,
       qrCode: generateQRCode(Date.now().toString(), formData.lista),

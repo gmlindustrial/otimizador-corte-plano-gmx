@@ -38,8 +38,8 @@ export const SheetProjectWizard = ({ project, setProject }: SheetProjectWizardPr
       id: Date.now().toString(),
       name: formData.name,
       projectNumber: formData.projectNumber,
-      client: formData.client,
-      obra: formData.obra,
+      client: formData.client, // Mantém como string pois é input direto
+      obra: formData.obra, // Mantém como string pois é input direto
       lista: formData.lista,
       revisao: formData.revisao,
       sheetWidth: formData.sheetWidth,
@@ -48,9 +48,9 @@ export const SheetProjectWizard = ({ project, setProject }: SheetProjectWizardPr
       kerf: formData.kerf,
       process: formData.process,
       material: formData.material,
-      operador: formData.operador,
+      operador: formData.operador, // Mantém como string pois é input direto
       turno: formData.turno,
-      aprovadorQA: formData.aprovadorQA,
+      aprovadorQA: formData.aprovadorQA, // Mantém como string pois é input direto
       validacaoQA: true,
       date: new Date().toISOString(),
     };
