@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -10,8 +11,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Package, Users, Clock, Ruler } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Material, Operador } from "@/services";
+import { useMaterialByTypeService } from "@/hooks/services/useMaterialByTypeService";
 
 interface ProductionStepProps {
   formData: any;
@@ -20,6 +22,7 @@ interface ProductionStepProps {
   operadores: Operador[];
   barLength: number;
   setBarLength: (length: number) => void;
+  cuttingType?: 'linear' | 'sheet';
 }
 
 export const ProductionStep = ({
@@ -29,9 +32,27 @@ export const ProductionStep = ({
   operadores,
   barLength,
   setBarLength,
+  cuttingType = 'linear'
 }: ProductionStepProps) => {
   const [showNewOperatorInput, setShowNewOperatorInput] = useState(false);
   const [newOperator, setNewOperator] = useState("");
+  
+  const { 
+    materiaisBarras, 
+    materiaisChapas, 
+    loading: materialsLoading,
+    fetchMateriaisBarras,
+    fetchMateriaisChapas
+  } = useMaterialByTypeService();
+
+  // Carregar materiais baseado no tipo de corte
+  useEffect(() => {
+    if (cuttingType === 'linear') {
+      fetchMateriaisBarras();
+    } else {
+      fetchMateriaisChapas();
+    }
+  }, [cuttingType]);
 
   const handleAddNewOperator = () => {
     if (newOperator.trim()) {
@@ -41,35 +62,49 @@ export const ProductionStep = ({
     }
   };
 
+  // Determinar quais materiais mostrar baseado no tipo de corte
+  const materialsToShow = cuttingType === 'linear' ? materiaisBarras : materiaisChapas;
+  const materialTypeLabel = cuttingType === 'linear' ? 'Barras' : 'Chapas';
+
   return (
     <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
       <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
         <CardTitle className="flex items-center gap-2">
           <Package className="w-5 h-5" />
-          Etapa 2: Configuração de Produção
+          Etapa 2: Configuração de Produção - {materialTypeLabel}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-6 space-y-6">
         <div className="space-y-2">
           <Label className="flex items-center gap-2 font-medium">
             <Package className="w-4 h-4" />
-            Tipo de Material *
+            Tipo de Material ({materialTypeLabel}) *
           </Label>
           <Select
             value={formData.tipoMaterial}
             onValueChange={(value) =>
               setFormData((prev) => ({ ...prev, tipoMaterial: value }))
             }
+            disabled={materialsLoading}
           >
             <SelectTrigger className="h-12">
-              <SelectValue placeholder="Selecione o tipo de material" />
+              <SelectValue placeholder={
+                materialsLoading 
+                  ? "Carregando materiais..." 
+                  : `Selecione o material para ${materialTypeLabel.toLowerCase()}`
+              } />
             </SelectTrigger>
             <SelectContent>
-              {tiposMaterial.map((tipo) => (
+              {materialsToShow.map((tipo) => (
                 <SelectItem key={tipo.id} value={tipo.id}>
-                  {tipo.tipo}
+                  {tipo.tipo} - {tipo.descricao || 'Sem descrição'}
                 </SelectItem>
               ))}
+              {materialsToShow.length === 0 && !materialsLoading && (
+                <SelectItem value="none" disabled>
+                  Nenhum material de {materialTypeLabel.toLowerCase()} cadastrado
+                </SelectItem>
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -154,24 +189,26 @@ export const ProductionStep = ({
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label className="flex items-center gap-2 font-medium">
-            <Ruler className="w-4 h-4" />
-            Comprimento da Barra (mm)
-          </Label>
-          <Select
-            value={barLength.toString()}
-            onValueChange={(value) => setBarLength(parseInt(value))}
-          >
-            <SelectTrigger className="h-12">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="6000">6000mm (6 metros)</SelectItem>
-              <SelectItem value="12000">12000mm (12 metros)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {cuttingType === 'linear' && (
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2 font-medium">
+              <Ruler className="w-4 h-4" />
+              Comprimento da Barra (mm)
+            </Label>
+            <Select
+              value={barLength.toString()}
+              onValueChange={(value) => setBarLength(parseInt(value))}
+            >
+              <SelectTrigger className="h-12">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="6000">6000mm (6 metros)</SelectItem>
+                <SelectItem value="12000">12000mm (12 metros)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

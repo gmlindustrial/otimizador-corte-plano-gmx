@@ -123,6 +123,7 @@ export const SheetCuttingTab = ({
           <SheetProjectSelector
             project={sheetProject}
             setProject={setSheetProject}
+            cuttingType="sheet"
           />
           
           <SheetMaterialInput

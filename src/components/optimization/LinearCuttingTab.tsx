@@ -34,6 +34,7 @@ export const LinearCuttingTab = ({
             setProject={setProject}
             barLength={barLength}
             setBarLength={setBarLength}
+            cuttingType="linear"
           />
           
           <MaterialInput

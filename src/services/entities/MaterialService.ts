@@ -1,3 +1,4 @@
+
 import { BaseService } from "../base/BaseService";
 import { supabase } from "@/integrations/supabase/client";
 import type { Material } from "../interfaces";
@@ -12,13 +13,38 @@ export class MaterialService extends BaseService<Material> {
     tipo: string;
     descricao: string;
     comprimento_padrao: number;
+    tipo_corte?: string;
   }) {
     const { data, error } = await supabase
       .from("materiais")
-      .insert([novoMaterial]);
+      .insert([{
+        ...novoMaterial,
+        tipo_corte: novoMaterial.tipo_corte || 'barra'
+      }]);
 
     if (error) throw error;
     return;
+  }
+
+  async getByTipoCorte(tipoCorte: 'barra' | 'chapa') {
+    try {
+      const { data, error } = await supabase
+        .from("materiais")
+        .select("*")
+        .eq("tipo_corte", tipoCorte)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      return {
+        data: data || [],
+        error: null,
+        success: true,
+        total: data?.length || 0,
+      };
+    } catch (error) {
+      return this.handleError(error, `Erro ao buscar materiais do tipo ${tipoCorte}`);
+    }
   }
 
   async getByTipo(tipo: string) {

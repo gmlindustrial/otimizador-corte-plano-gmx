@@ -6,6 +6,8 @@ export const useSupabaseData = () => {
   const [obras, setObras] = useState<any[]>([]);
   const [clientes, setClientes] = useState<any[]>([]);
   const [materiais, setMateriais] = useState<any[]>([]);
+  const [materiaisBarras, setMateriaisBarras] = useState<any[]>([]);
+  const [materiaisChapas, setMateriaisChapas] = useState<any[]>([]);
   const [operadores, setOperadores] = useState<any[]>([]);
   const [inspetores, setInspetores] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,6 +57,12 @@ export const useSupabaseData = () => {
       setObras(obrasRes.data || []);
       setClientes(clientesRes.data || []);
       setMateriais(materiaisRes.data || []);
+      
+      // Separar materiais por tipo de corte
+      const allMaterials = materiaisRes.data || [];
+      setMateriaisBarras(allMaterials.filter(m => m.tipo_corte === 'barra'));
+      setMateriaisChapas(allMaterials.filter(m => m.tipo_corte === 'chapa'));
+      
       setOperadores(operadoresRes.data || []);
       setInspetores(inspetoresRes.data || []);
     } catch (error) {
@@ -151,7 +159,7 @@ export const useSupabaseData = () => {
     }
   };
 
-  const saveMaterial = async (material: { tipo: string; descricao: string; comprimentoPadrao: number }) => {
+  const saveMaterial = async (material: { tipo: string; descricao: string; comprimentoPadrao: number; tipoCorte?: string }) => {
     try {
       console.log('Salvando material:', material);
       const { data, error } = await supabase
@@ -159,7 +167,8 @@ export const useSupabaseData = () => {
         .insert([{
           tipo: material.tipo,
           descricao: material.descricao,
-          comprimento_padrao: material.comprimentoPadrao
+          comprimento_padrao: material.comprimentoPadrao,
+          tipo_corte: material.tipoCorte || 'barra'
         }])
         .select()
         .single();
@@ -175,6 +184,14 @@ export const useSupabaseData = () => {
         console.log('Lista de materiais atualizada:', updated.length);
         return updated;
       });
+      
+      // Atualizar listas separadas baseado no tipo de corte
+      if (data.tipo_corte === 'chapa') {
+        setMateriaisChapas(prev => [data, ...prev]);
+      } else {
+        setMateriaisBarras(prev => [data, ...prev]);
+      }
+      
       toast.success(`Material "${material.tipo}" criado com sucesso!`);
       return data;
     } catch (error) {
@@ -250,6 +267,8 @@ export const useSupabaseData = () => {
     obras,
     clientes,
     materiais,
+    materiaisBarras,
+    materiaisChapas,
     operadores,
     inspetores,
     loading,

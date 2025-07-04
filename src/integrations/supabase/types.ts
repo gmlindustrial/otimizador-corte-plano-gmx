@@ -150,6 +150,7 @@ export type Database = {
           descricao: string | null
           id: string
           tipo: string
+          tipo_corte: string
         }
         Insert: {
           comprimento_padrao?: number
@@ -157,6 +158,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           tipo: string
+          tipo_corte?: string
         }
         Update: {
           comprimento_padrao?: number
@@ -164,6 +166,7 @@ export type Database = {
           descricao?: string | null
           id?: string
           tipo?: string
+          tipo_corte?: string
         }
         Relationships: []
       }
