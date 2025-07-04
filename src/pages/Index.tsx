@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { Header } from '@/components/Header';
@@ -21,6 +20,7 @@ import { useOptimizationHistoryPersistent } from '@/hooks/useOptimizationHistory
 import { useLinearProjects } from '@/hooks/useLinearProjects';
 import { useSheetProjects } from '@/hooks/useSheetProjects';
 import { useLinearOptimization } from '@/hooks/useLinearOptimization';
+import { useSupabaseData } from '@/hooks/useSupabaseData';
 import type { SheetCutPiece, SheetProject, SheetOptimizationResult } from '@/types/sheet';
 
 export interface CutPiece {
@@ -64,6 +64,9 @@ const Index = () => {
   useAuthGuard()
   const [activeTab, setActiveTab] = useState('optimize');
   const [isAdmin, setIsAdmin] = useState(false);
+  
+  // Get materials data from useSupabaseData
+  const { materiaisBarras, materiaisChapas } = useSupabaseData();
   
   // Linear cutting optimization with persistent projects
   const { savedProjects: savedLinearProjects, saveProject: saveLinearProject } = useLinearProjects();
@@ -157,6 +160,28 @@ const Index = () => {
     });
   };
 
+  // Helper function to find material info
+  const findMaterialInfo = (materialId: string | undefined) => {
+    if (!materialId) return { id: undefined, tipo: undefined };
+    
+    // Check if materialId is already a valid UUID (from project data)
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(materialId);
+    
+    if (isUUID) {
+      // If it's a UUID, find the material type by ID
+      const allMaterials = [...materiaisBarras, ...materiaisChapas];
+      const material = allMaterials.find(m => m.id === materialId);
+      return { id: materialId, tipo: material?.tipo };
+    } else {
+      // If it's a material type string, find the ID
+      const allMaterials = [...materiaisBarras, ...materiaisChapas];
+      const material = allMaterials.find(m => m.tipo === materialId);
+      return { id: material?.id, tipo: material?.tipo };
+    }
+  };
+
+  const materialInfo = findMaterialInfo(project?.tipoMaterial);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       <Header />
@@ -230,8 +255,8 @@ const Index = () => {
 
           <TabsContent value="sobras">
             <EstoqueSobrasIntegrated 
-              materialId={project?.tipoMaterial} 
-              tipoMaterial={project?.tipoMaterial}
+              materialId={materialInfo.id} 
+              tipoMaterial={materialInfo.tipo}
             />
           </TabsContent>
 

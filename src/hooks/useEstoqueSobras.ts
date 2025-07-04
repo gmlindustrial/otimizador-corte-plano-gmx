@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -19,28 +18,44 @@ export const useEstoqueSobras = (materialId?: string) => {
   const [loading, setLoading] = useState(false);
 
   const fetchSobras = async () => {
-    if (!materialId) return;
+    // Only fetch if materialId is a valid UUID
+    if (!materialId || !isValidUUID(materialId)) {
+      console.log('Material ID inválido ou não fornecido:', materialId);
+      setSobras([]);
+      return;
+    }
     
     try {
       setLoading(true);
+      console.log('Buscando sobras para material:', materialId);
+      
       const { data, error } = await supabase
         .from('estoque_sobras')
         .select('*')
         .eq('material_id', materialId)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao buscar sobras:', error);
+        throw error;
+      }
+
+      console.log('Sobras encontradas:', data?.length || 0);
       setSobras(data || []);
     } catch (error) {
       console.error('Erro ao carregar sobras:', error);
       toast.error('Erro ao carregar estoque de sobras');
+      setSobras([]);
     } finally {
       setLoading(false);
     }
   };
 
   const adicionarSobra = async (comprimento: number, localizacao: string, projetoOrigem?: string) => {
-    if (!materialId) return;
+    if (!materialId || !isValidUUID(materialId)) {
+      toast.error('Material não selecionado ou inválido');
+      return;
+    }
 
     try {
       const { data, error } = await supabase
@@ -102,6 +117,12 @@ export const useEstoqueSobras = (materialId?: string) => {
       console.error('Erro ao remover sobra:', error);
       toast.error('Erro ao remover sobra');
     }
+  };
+
+  // Helper function to validate UUID
+  const isValidUUID = (str: string) => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(str);
   };
 
   useEffect(() => {
