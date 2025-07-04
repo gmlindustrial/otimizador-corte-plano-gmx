@@ -31,7 +31,7 @@ export const PieceList = ({ pieces, onUpdatePiece, onRemovePiece }: PieceListPro
 
   const renderPieceItem = (piece: CutPiece) => (
     <div key={piece.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-      <div className="flex-1 grid grid-cols-4 gap-3">
+      <div className="flex-1 grid grid-cols-5 gap-3">
         <div className="space-y-1">
           <label className="text-xs text-gray-600">Comprimento (mm)</label>
           <Input
@@ -54,10 +54,23 @@ export const PieceList = ({ pieces, onUpdatePiece, onRemovePiece }: PieceListPro
           />
         </div>
         <div className="space-y-1">
+          <label className="text-xs text-gray-600">Conjunto</label>
+          <div className="flex items-center h-9">
+            {(piece as any).conjunto ? (
+              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                <Package className="w-3 h-3 mr-1" />
+                {(piece as any).conjunto}
+              </Badge>
+            ) : (
+              <span className="text-xs text-gray-400">Manual</span>
+            )}
+          </div>
+        </div>
+        <div className="space-y-1">
           <label className="text-xs text-gray-600">TAG</label>
           <div className="flex items-center h-9">
             {(piece as any).tag ? (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="default" className="text-xs bg-green-100 text-green-800 border-green-200">
                 <Tag className="w-3 h-3 mr-1" />
                 {(piece as any).tag}
               </Badge>
