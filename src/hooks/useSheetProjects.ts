@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { isUUID } from '@/lib/utils';
 import { toast } from 'sonner';
 import type { SheetProject, SheetCutPiece } from '@/types/sheet';
 
@@ -15,15 +16,17 @@ export const useSheetProjects = () => {
 
   // Helper methods to find entity IDs by name with proper typing
   const findClienteIdByName = async (name: string): Promise<string | null> => {
+    if (!name) return null;
+    if (isUUID(name)) return name;
     try {
       const { data, error } = await supabase
         .from('clientes')
         .select('id')
-        .eq('nome', name)
-        .single();
+        .ilike('nome', name.trim())
+        .maybeSingle();
 
       if (error || !data) return null;
-      return data.id;
+      return data.id as string;
     } catch (error) {
       console.error(`Erro ao buscar ID de cliente:`, error);
       return null;
@@ -31,15 +34,17 @@ export const useSheetProjects = () => {
   };
 
   const findObraIdByName = async (name: string): Promise<string | null> => {
+    if (!name) return null;
+    if (isUUID(name)) return name;
     try {
       const { data, error } = await supabase
         .from('obras')
         .select('id')
-        .eq('nome', name)
-        .single();
+        .ilike('nome', name.trim())
+        .maybeSingle();
 
       if (error || !data) return null;
-      return data.id;
+      return data.id as string;
     } catch (error) {
       console.error(`Erro ao buscar ID de obra:`, error);
       return null;
@@ -47,15 +52,17 @@ export const useSheetProjects = () => {
   };
 
   const findMaterialIdByType = async (type: string): Promise<string | null> => {
+    if (!type) return null;
+    if (isUUID(type)) return type;
     try {
       const { data, error } = await supabase
         .from('materiais')
         .select('id')
-        .eq('tipo', type)
-        .single();
+        .ilike('tipo', type.trim())
+        .maybeSingle();
 
       if (error || !data) return null;
-      return data.id;
+      return data.id as string;
     } catch (error) {
       console.error(`Erro ao buscar ID de material:`, error);
       return null;
@@ -63,15 +70,17 @@ export const useSheetProjects = () => {
   };
 
   const findOperadorIdByName = async (name: string): Promise<string | null> => {
+    if (!name) return null;
+    if (isUUID(name)) return name;
     try {
       const { data, error } = await supabase
         .from('operadores')
         .select('id')
-        .eq('nome', name)
-        .single();
+        .ilike('nome', name.trim())
+        .maybeSingle();
 
       if (error || !data) return null;
-      return data.id;
+      return data.id as string;
     } catch (error) {
       console.error(`Erro ao buscar ID de operador:`, error);
       return null;
@@ -79,15 +88,17 @@ export const useSheetProjects = () => {
   };
 
   const findInspetorIdByName = async (name: string): Promise<string | null> => {
+    if (!name) return null;
+    if (isUUID(name)) return name;
     try {
       const { data, error } = await supabase
         .from('inspetores_qa')
         .select('id')
-        .eq('nome', name)
-        .single();
+        .ilike('nome', name.trim())
+        .maybeSingle();
 
       if (error || !data) return null;
-      return data.id;
+      return data.id as string;
     } catch (error) {
       console.error(`Erro ao buscar ID de inspetor:`, error);
       return null;

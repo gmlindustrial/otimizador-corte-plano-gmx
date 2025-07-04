@@ -1,6 +1,7 @@
 
 import { BaseService } from '../base/BaseService';
 import { supabase } from '@/integrations/supabase/client';
+import { isUUID } from '@/lib/utils';
 import type { Projeto } from '../interfaces';
 import type { ServiceResponse, ListResponse } from '../base/types';
 import type { Project, CutPiece } from '@/pages/Index';
@@ -18,15 +19,17 @@ export class LinearProjectService extends BaseService<Projeto> {
 
   // Helper methods to find entity IDs by name with proper typing
   private async findClienteIdByName(name: string): Promise<string | null> {
+    if (!name) return null;
+    if (isUUID(name)) return name;
     try {
       const { data, error } = await supabase
         .from('clientes')
         .select('id')
-        .eq('nome', name)
-        .single();
+        .ilike('nome', name.trim())
+        .maybeSingle();
 
       if (error || !data) return null;
-      return data.id;
+      return data.id as string;
     } catch (error) {
       console.error(`Erro ao buscar ID de cliente:`, error);
       return null;
@@ -34,15 +37,17 @@ export class LinearProjectService extends BaseService<Projeto> {
   }
 
   private async findObraIdByName(name: string): Promise<string | null> {
+    if (!name) return null;
+    if (isUUID(name)) return name;
     try {
       const { data, error } = await supabase
         .from('obras')
         .select('id')
-        .eq('nome', name)
-        .single();
+        .ilike('nome', name.trim())
+        .maybeSingle();
 
       if (error || !data) return null;
-      return data.id;
+      return data.id as string;
     } catch (error) {
       console.error(`Erro ao buscar ID de obra:`, error);
       return null;
@@ -50,15 +55,17 @@ export class LinearProjectService extends BaseService<Projeto> {
   }
 
   private async findMaterialIdByType(type: string): Promise<string | null> {
+    if (!type) return null;
+    if (isUUID(type)) return type;
     try {
       const { data, error } = await supabase
         .from('materiais')
         .select('id')
-        .eq('tipo', type)
-        .single();
+        .ilike('tipo', type.trim())
+        .maybeSingle();
 
       if (error || !data) return null;
-      return data.id;
+      return data.id as string;
     } catch (error) {
       console.error(`Erro ao buscar ID de material:`, error);
       return null;
@@ -66,15 +73,17 @@ export class LinearProjectService extends BaseService<Projeto> {
   }
 
   private async findOperadorIdByName(name: string): Promise<string | null> {
+    if (!name) return null;
+    if (isUUID(name)) return name;
     try {
       const { data, error } = await supabase
         .from('operadores')
         .select('id')
-        .eq('nome', name)
-        .single();
+        .ilike('nome', name.trim())
+        .maybeSingle();
 
       if (error || !data) return null;
-      return data.id;
+      return data.id as string;
     } catch (error) {
       console.error(`Erro ao buscar ID de operador:`, error);
       return null;
@@ -82,15 +91,17 @@ export class LinearProjectService extends BaseService<Projeto> {
   }
 
   private async findInspetorIdByName(name: string): Promise<string | null> {
+    if (!name) return null;
+    if (isUUID(name)) return name;
     try {
       const { data, error } = await supabase
         .from('inspetores_qa')
         .select('id')
-        .eq('nome', name)
-        .single();
+        .ilike('nome', name.trim())
+        .maybeSingle();
 
       if (error || !data) return null;
-      return data.id;
+      return data.id as string;
     } catch (error) {
       console.error(`Erro ao buscar ID de inspetor:`, error);
       return null;
