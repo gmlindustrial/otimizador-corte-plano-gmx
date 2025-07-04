@@ -12,7 +12,14 @@ export class ProjetoService extends BaseService<Projeto> {
     try {
       const { data, error } = await supabase
         .from('projetos' as any)
-        .select('*')
+        .select(`
+          *,
+          clientes (nome),
+          obras (nome),
+          operadores (nome),
+          inspetores_qa (nome),
+          materiais (tipo)
+        `)
         .eq('cliente_id', clienteId)
         .order('created_at', { ascending: false });
 
@@ -33,7 +40,14 @@ export class ProjetoService extends BaseService<Projeto> {
     try {
       const { data, error } = await supabase
         .from('projetos' as any)
-        .select('*')
+        .select(`
+          *,
+          clientes (nome),
+          obras (nome),
+          operadores (nome),
+          inspetores_qa (nome),
+          materiais (tipo)
+        `)
         .eq('obra_id', obraId)
         .order('created_at', { ascending: false });
 
@@ -47,6 +61,33 @@ export class ProjetoService extends BaseService<Projeto> {
       };
     } catch (error) {
       return this.handleError(error, 'Erro ao buscar projetos por obra');
+    }
+  }
+
+  async getWithRelations(id: string) {
+    try {
+      const { data, error } = await supabase
+        .from('projetos' as any)
+        .select(`
+          *,
+          clientes (nome),
+          obras (nome),
+          operadores (nome),
+          inspetores_qa (nome),
+          materiais (tipo)
+        `)
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+
+      return {
+        data: data || null,
+        error: null,
+        success: true
+      };
+    } catch (error) {
+      return this.handleError(error, 'Erro ao buscar projeto com relações');
     }
   }
 }

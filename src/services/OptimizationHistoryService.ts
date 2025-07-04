@@ -15,7 +15,17 @@ export class OptimizationHistoryService {
   static async loadHistory(): Promise<OptimizationHistoryEntry[]> {
     const { data, error } = await supabase
       .from('historico_otimizacoes')
-      .select('*')
+      .select(`
+        *,
+        projetos (
+          *,
+          clientes (nome),
+          obras (nome),
+          operadores (nome),
+          inspetores_qa (nome),
+          materiais (tipo)
+        )
+      `)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -40,7 +50,17 @@ export class OptimizationHistoryService {
     const { data, error } = await supabase
       .from('historico_otimizacoes')
       .insert(historyData)
-      .select()
+      .select(`
+        *,
+        projetos (
+          *,
+          clientes (nome),
+          obras (nome),
+          operadores (nome),
+          inspetores_qa (nome),
+          materiais (tipo)
+        )
+      `)
       .single();
 
     if (error) throw error;
@@ -75,23 +95,25 @@ export class OptimizationHistoryService {
 
   private static convertFromDatabase(dbEntry: any): OptimizationHistoryEntry | null {
     try {
+      const projeto = dbEntry.projetos;
+      
       return {
         id: dbEntry.id,
-        project: dbEntry.projeto_data || {
-          id: 'temp-' + dbEntry.id,
-          name: 'Projeto Carregado',
-          projectNumber: 'TEMP-001',
-          client: 'Cliente',
-          obra: 'Obra',
-          lista: 'LISTA 01',
-          revisao: 'REV-00',
-          tipoMaterial: 'Material',
-          operador: 'Operador',
-          turno: '1',
-          aprovadorQA: 'QA',
-          validacaoQA: true,
-          enviarSobrasEstoque: false,
-          qrCode: '',
+        project: {
+          id: projeto?.id || 'temp-' + dbEntry.id,
+          name: projeto?.nome || 'Projeto Carregado',
+          projectNumber: projeto?.numero_projeto || 'TEMP-001',
+          client: projeto?.clientes?.nome || 'Cliente',
+          obra: projeto?.obras?.nome || 'Obra',
+          lista: projeto?.lista || 'LISTA 01',
+          revisao: projeto?.revisao || 'REV-00',
+          tipoMaterial: projeto?.materiais?.tipo || 'Material',
+          operador: projeto?.operadores?.nome || 'Operador',
+          turno: projeto?.turno || '1',
+          aprovadorQA: projeto?.inspetores_qa?.nome || 'QA',
+          validacaoQA: projeto?.validacao_qa || true,
+          enviarSobrasEstoque: projeto?.enviar_sobras_estoque || false,
+          qrCode: projeto?.qr_code || '',
           date: dbEntry.created_at
         },
         pieces: dbEntry.pecas || [],
