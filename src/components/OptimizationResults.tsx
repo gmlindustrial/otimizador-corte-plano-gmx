@@ -60,79 +60,116 @@ export const OptimizationResults = ({ results, barLength, project }: Optimizatio
 
   const handleExportExcel = () => {
     try {
-      // Estrutura similar ao AutoCAD para facilitar validação
+      // Estrutura melhorada para operador com informações completas
       const headers = [
+        'Barra',
+        'Posição na Barra', 
+        'TAG',
         'Conjunto',
-        'Posição', 
-        'Quantidade',
-        'Perfil/Material',
         'Comprimento (mm)',
-        'Barra Designada',
+        'Perfil/Material',
+        'Posição Original',
+        'Obra',
+        'Status',
         'Eficiência Barra (%)',
-        'Sobra (mm)',
-        'Status'
+        'Sobra Barra (mm)',
+        'Observações'
       ];
       
       const rows: string[][] = [headers];
 
-      // Adicionar cada peça com informações detalhadas
+      // Adicionar cada peça com informações completas organizadas por conjunto
       results.bars.forEach((bar, barIndex) => {
-        bar.pieces.forEach((piece, pieceIndex) => {
+        bar.pieces.forEach((piece: any, pieceIndex) => {
           rows.push([
-            project?.projectNumber || `V.${barIndex + 1}`, // Conjunto
-            `${pieceIndex + 1}`, // Posição
-            '1', // Quantidade (sempre 1 pois já foi expandida)
-            project?.tipoMaterial || 'Material', // Perfil/Material
+            `Barra ${barIndex + 1}`, // Barra
+            `${pieceIndex + 1}`, // Posição na Barra
+            piece.tag || `P${pieceIndex + 1}`, // TAG
+            piece.conjunto || 'Entrada Manual', // Conjunto
             piece.length.toString(), // Comprimento
-            `Barra ${barIndex + 1}`, // Barra Designada
+            piece.perfil || piece.material || project?.tipoMaterial || 'Material', // Perfil/Material
+            piece.posicao?.toString() || `${pieceIndex + 1}`, // Posição Original
+            piece.obra || project?.obra || 'N/A', // Obra
+            'Otimizado', // Status
             ((bar.totalUsed / barLength) * 100).toFixed(1), // Eficiência da Barra
             pieceIndex === bar.pieces.length - 1 ? bar.waste.toString() : '0', // Sobra apenas na última peça
-            'Otimizado' // Status
+            piece.conjunto ? `Conjunto: ${piece.conjunto}` : 'Peça manual' // Observações
           ]);
         });
         
         // Adicionar linha de sobra se existir
         if (bar.waste > 0) {
           rows.push([
-            project?.projectNumber || `V.${barIndex + 1}`,
-            'Sobra',
-            '1',
-            'Desperdício',
-            bar.waste.toString(),
             `Barra ${barIndex + 1}`,
+            'Sobra',
+            'DESCARTE',
+            '-',
+            bar.waste.toString(),
+            'Desperdício',
+            '-',
+            project?.obra || 'N/A',
+            'Descarte',
             '0',
             bar.waste.toString(),
-            'Descarte'
+            'Material a ser descartado'
           ]);
         }
       });
 
-      // Adicionar seção de resumo
+      // Adicionar seção de resumo por conjunto
       rows.push([]);
-      rows.push(['=== RESUMO DA OTIMIZAÇÃO ===']);
+      rows.push(['=== RESUMO POR CONJUNTO ===']);
+      
+      // Agrupar por conjunto para resumo
+      const conjuntoSummary = new Map<string, { count: number; totalLength: number; barras: Set<number> }>();
+      
+      results.bars.forEach((bar, barIndex) => {
+        bar.pieces.forEach((piece: any) => {
+          const conjunto = piece.conjunto || 'Entrada Manual';
+          if (!conjuntoSummary.has(conjunto)) {
+            conjuntoSummary.set(conjunto, { count: 0, totalLength: 0, barras: new Set() });
+          }
+          const summary = conjuntoSummary.get(conjunto)!;
+          summary.count++;
+          summary.totalLength += piece.length;
+          summary.barras.add(barIndex + 1);
+        });
+      });
+
+      rows.push(['Conjunto', 'Qtd Peças', 'Comprimento Total (mm)', 'Barras Utilizadas', 'Distribuição']);
+      conjuntoSummary.forEach((summary, conjunto) => {
+        rows.push([
+          conjunto,
+          summary.count.toString(),
+          summary.totalLength.toString(),
+          summary.barras.size.toString(),
+          Array.from(summary.barras).sort((a, b) => a - b).join(', ')
+        ]);
+      });
+
+      // Adicionar seção de controle de qualidade
+      rows.push([]);
+      rows.push(['=== CONTROLE DE QUALIDADE ===']);
       rows.push(['Projeto:', project?.projectNumber || 'N/A']);
       rows.push(['Cliente:', project?.client || 'N/A']);
       rows.push(['Obra:', project?.obra || 'N/A']);
+      rows.push(['Operador:', project?.operador || 'N/A']);
+      rows.push(['Turno:', project?.turno || 'N/A']);
+      rows.push(['Aprovador QA:', project?.aprovadorQA || 'Pendente']);
+      rows.push(['Material:', project?.tipoMaterial || 'N/A']);
       rows.push(['Total de Barras:', results.totalBars.toString()]);
       rows.push(['Eficiência Geral:', `${results.efficiency.toFixed(1)}%`]);
       rows.push(['Desperdício Total:', `${(results.totalWaste / 1000).toFixed(2)}m`]);
-      rows.push(['Comprimento da Barra:', `${barLength}mm`]);
       rows.push(['Data da Otimização:', new Date().toLocaleDateString('pt-BR')]);
-
-      // Adicionar análise por barra
       rows.push([]);
-      rows.push(['=== ANÁLISE POR BARRA ===']);
-      rows.push(['Barra', 'Peças', 'Utilizado (mm)', 'Sobra (mm)', 'Eficiência (%)']);
-      
-      results.bars.forEach((bar, index) => {
-        rows.push([
-          `Barra ${index + 1}`,
-          bar.pieces.length.toString(),
-          bar.totalUsed.toString(),
-          bar.waste.toString(),
-          ((bar.totalUsed / barLength) * 100).toFixed(1)
-        ]);
-      });
+      rows.push(['=== VALIDAÇÕES ===']);
+      rows.push(['☐ Dimensões das barras conferidas']);
+      rows.push(['☐ Material correto selecionado']);
+      rows.push(['☐ TAGs das peças verificadas']);
+      rows.push(['☐ Conjuntos organizados corretamente']);
+      rows.push(['☐ Primeira peça cortada e validada']);
+      rows.push(['☐ Relatório aprovado pelo operador']);
+      rows.push(['☐ Assinatura do inspetor QA']);
 
       // Converter para CSV com encoding UTF-8 e separador adequado para Excel brasileiro
       const BOM = '\uFEFF'; // Byte Order Mark para UTF-8
@@ -145,7 +182,7 @@ export const OptimizationResults = ({ results, barLength, project }: Optimizatio
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
-      link.setAttribute('download', `otimizacao-detalhada-${project?.projectNumber || 'projeto'}-${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute('download', `plano-corte-operador-${project?.projectNumber || 'projeto'}-${new Date().toISOString().split('T')[0]}.csv`);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
@@ -154,7 +191,7 @@ export const OptimizationResults = ({ results, barLength, project }: Optimizatio
 
       toast({
         title: "Excel Exportado",
-        description: "Arquivo Excel detalhado foi baixado com estrutura AutoCAD",
+        description: "Plano de corte detalhado para operador foi baixado",
       });
     } catch (error) {
       console.error('Erro ao exportar Excel:', error);
@@ -225,7 +262,7 @@ export const OptimizationResults = ({ results, barLength, project }: Optimizatio
       {/* Visualização Detalhada */}
       <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
         <CardHeader>
-          <CardTitle className="text-lg">Plano de Corte Detalhado</CardTitle>
+          <CardTitle className="text-lg">Plano de Corte Detalhado por Conjunto</CardTitle>
         </CardHeader>
         <CardContent className="p-6">
           <div className="max-h-96 overflow-y-auto">
@@ -277,7 +314,7 @@ export const OptimizationResults = ({ results, barLength, project }: Optimizatio
                 </Button>
                 <Button onClick={handleExportExcel} variant="outline" className="justify-start">
                   <FileSpreadsheet className="w-4 h-4 mr-2" />
-                  Exportar Excel (Estrutura AutoCAD)
+                  Exportar Plano do Operador (Excel)
                 </Button>
               </div>
             </div>

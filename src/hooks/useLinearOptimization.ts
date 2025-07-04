@@ -2,6 +2,35 @@
 import { useState } from 'react';
 import type { Project, CutPiece, OptimizationResult } from '@/pages/Index';
 
+// Expandir interface para incluir informações detalhadas das peças
+interface ExpandedPiece {
+  length: number;
+  originalIndex: number;
+  originalPiece: CutPiece;
+  // Informações preservadas do AutoCAD
+  conjunto?: string;
+  tag?: string;
+  perfil?: string;
+  material?: string;
+  peso?: number;
+  obra?: string;
+  posicao?: number;
+}
+
+interface EnhancedBarPiece {
+  length: number;
+  color: string;
+  label: string;
+  // Informações adicionais preservadas
+  conjunto?: string;
+  tag?: string;
+  perfil?: string;
+  material?: string;
+  peso?: number;
+  obra?: string;
+  posicao?: number;
+}
+
 export const useLinearOptimization = () => {
   const [project, setProject] = useState<Project | null>(null);
   const [barLength, setBarLength] = useState(6000);
@@ -11,11 +40,23 @@ export const useLinearOptimization = () => {
   const handleOptimize = () => {
     if (pieces.length === 0) return null;
 
-    // Implementação do algoritmo First Fit Decreasing
-    const sortedPieces: Array<{ length: number; originalIndex: number }> = [];
+    // Implementação do algoritmo First Fit Decreasing com preservação de dados
+    const sortedPieces: ExpandedPiece[] = [];
     pieces.forEach((piece, index) => {
       for (let i = 0; i < piece.quantity; i++) {
-        sortedPieces.push({ length: piece.length, originalIndex: index });
+        sortedPieces.push({ 
+          length: piece.length, 
+          originalIndex: index,
+          originalPiece: piece,
+          // Preservar informações do AutoCAD se existirem
+          conjunto: (piece as any).conjunto,
+          tag: (piece as any).tag,
+          perfil: (piece as any).perfil,
+          material: (piece as any).material,
+          peso: (piece as any).peso,
+          obra: (piece as any).obra,
+          posicao: (piece as any).posicao
+        });
       }
     });
     
@@ -24,7 +65,7 @@ export const useLinearOptimization = () => {
 
     const bars: Array<{
       id: string;
-      pieces: Array<{ length: number; color: string; label: string }>;
+      pieces: EnhancedBarPiece[];
       waste: number;
       totalUsed: number;
     }> = [];
@@ -44,7 +85,15 @@ export const useLinearOptimization = () => {
           bar.pieces.push({
             length: piece.length,
             color: colors[piece.originalIndex % colors.length],
-            label: `${piece.length}mm`
+            label: piece.tag || `${piece.length}mm`,
+            // Preservar todas as informações
+            conjunto: piece.conjunto,
+            tag: piece.tag,
+            perfil: piece.perfil,
+            material: piece.material,
+            peso: piece.peso,
+            obra: piece.obra,
+            posicao: piece.posicao
           });
           bar.totalUsed += spaceNeeded;
           bar.waste = barLength - bar.totalUsed;
@@ -60,7 +109,15 @@ export const useLinearOptimization = () => {
           pieces: [{
             length: piece.length,
             color: colors[piece.originalIndex % colors.length],
-            label: `${piece.length}mm`
+            label: piece.tag || `${piece.length}mm`,
+            // Preservar todas as informações
+            conjunto: piece.conjunto,
+            tag: piece.tag,
+            perfil: piece.perfil,
+            material: piece.material,
+            peso: piece.peso,
+            obra: piece.obra,
+            posicao: piece.posicao
           }],
           waste: 0,
           totalUsed: piece.length
