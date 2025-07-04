@@ -37,42 +37,205 @@ export class OptimizationHistoryService {
     project: Project,
     pieces: CutPiece[],
     results: OptimizationResult,
-    barLength: number,
-    savedProjectId: string | null
+    barLength: number
   ): Promise<OptimizationHistoryEntry> {
-    const historyData = {
-      projeto_id: savedProjectId,
-      bar_length: barLength,
-      pecas: pieces as any,
-      resultados: results as any
-    };
+    try {
+      // Primeiro, verificar se o projeto já existe no banco
+      let savedProjectId: string | null = null;
+      
+      const { data: existingProject, error: searchError } = await supabase
+        .from('projetos')
+        .select('id')
+        .eq('numero_projeto', project.projectNumber)
+        .maybeSingle();
 
-    const { data, error } = await supabase
-      .from('historico_otimizacoes')
-      .insert(historyData)
-      .select(`
-        *,
-        projetos (
+      if (searchError) {
+        console.error('Erro ao buscar projeto existente:', searchError);
+      }
+
+      if (existingProject) {
+        // Projeto já existe, usar o ID existente
+        savedProjectId = existingProject.id;
+        console.log('Projeto já existe, usando ID:', savedProjectId);
+      } else {
+        // Projeto não existe, criar novo
+        savedProjectId = await this.createProject(project, pieces, results, barLength);
+        console.log('Projeto criado com ID:', savedProjectId);
+      }
+
+      // Agora salvar a entrada no histórico
+      const historyData = {
+        projeto_id: savedProjectId,
+        bar_length: barLength,
+        pecas: pieces as any,
+        resultados: results as any
+      };
+
+      const { data, error } = await supabase
+        .from('historico_otimizacoes')
+        .insert(historyData)
+        .select(`
           *,
-          clientes (nome),
-          obras (nome),
-          operadores (nome),
-          inspetores_qa (nome),
-          materiais (tipo)
-        )
-      `)
-      .single();
+          projetos (
+            *,
+            clientes (nome),
+            obras (nome),
+            operadores (nome),
+            inspetores_qa (nome),
+            materiais (tipo)
+          )
+        `)
+        .single();
 
-    if (error) throw error;
+      if (error) throw error;
 
-    return {
-      id: data.id,
-      project,
-      pieces: [...pieces],
-      results,
-      date: data.created_at,
-      barLength
-    };
+      return {
+        id: data.id,
+        project,
+        pieces: [...pieces],
+        results,
+        date: data.created_at,
+        barLength
+      };
+    } catch (error) {
+      console.error('Erro ao salvar histórico:', error);
+      throw error;
+    }
+  }
+
+  private static async createProject(
+    project: Project,
+    pieces: CutPiece[],
+    results: OptimizationResult,
+    barLength: number
+  ): Promise<string | null> {
+    try {
+      // Buscar IDs das entidades pelos nomes
+      const clienteId = await this.findClienteIdByName(project.client);
+      const obraId = await this.findObraIdByName(project.obra);
+      const materialId = await this.findMaterialIdByType(project.tipoMaterial);
+      const operadorId = await this.findOperadorIdByName(project.operador);
+      const inspetorId = await this.findInspetorIdByName(project.aprovadorQA);
+
+      // Preparar dados do projeto
+      const projectDataForDb = {
+        type: 'linear',
+        client: project.client,
+        obra: project.obra,
+        tipoMaterial: project.tipoMaterial,
+        operador: project.operador,
+        aprovadorQA: project.aprovadorQA,
+        pieces: pieces,
+        barLength,
+        originalProjectId: project.id
+      };
+
+      const insertData = {
+        nome: project.name,
+        numero_projeto: project.projectNumber,
+        cliente_id: clienteId,
+        obra_id: obraId,
+        material_id: materialId,
+        operador_id: operadorId,
+        inspetor_id: inspetorId,
+        turno: project.turno,
+        lista: project.lista,
+        revisao: project.revisao,
+        validacao_qa: project.validacaoQA,
+        enviar_sobras_estoque: project.enviarSobrasEstoque,
+        qr_code: project.qrCode,
+        dados_projeto: projectDataForDb as any
+      };
+
+      const { data: result, error } = await supabase
+        .from('projetos')
+        .insert(insertData)
+        .select('id')
+        .single();
+
+      if (error) throw error;
+
+      return result.id;
+    } catch (error) {
+      console.error('Erro ao criar projeto:', error);
+      return null;
+    }
+  }
+
+  // Helper methods para buscar IDs por nomes
+  private static async findClienteIdByName(clienteName: string): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .from('clientes')
+        .select('id')
+        .eq('nome', clienteName)
+        .maybeSingle();
+      
+      return error ? null : data?.id || null;
+    } catch (error) {
+      console.error('Erro ao buscar cliente:', error);
+      return null;
+    }
+  }
+
+  private static async findObraIdByName(obraName: string): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .from('obras')
+        .select('id')
+        .eq('nome', obraName)
+        .maybeSingle();
+      
+      return error ? null : data?.id || null;
+    } catch (error) {
+      console.error('Erro ao buscar obra:', error);
+      return null;
+    }
+  }
+
+  private static async findMaterialIdByType(materialType: string): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .from('materiais')
+        .select('id')
+        .eq('tipo', materialType)
+        .maybeSingle();
+      
+      return error ? null : data?.id || null;
+    } catch (error) {
+      console.error('Erro ao buscar material:', error);
+      return null;
+    }
+  }
+
+  private static async findOperadorIdByName(operadorName: string): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .from('operadores')
+        .select('id')
+        .eq('nome', operadorName)
+        .maybeSingle();
+      
+      return error ? null : data?.id || null;
+    } catch (error) {
+      console.error('Erro ao buscar operador:', error);
+      return null;
+    }
+  }
+
+  private static async findInspetorIdByName(inspetorName: string): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .from('inspetores_qa')
+        .select('id')
+        .eq('nome', inspetorName)
+        .maybeSingle();
+      
+      return error ? null : data?.id || null;
+    } catch (error) {
+      console.error('Erro ao buscar inspetor:', error);
+      return null;
+    }
   }
 
   static async clearHistory(): Promise<void> {

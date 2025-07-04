@@ -21,7 +21,6 @@ import {
   materialService,
   operadorService,
 } from "@/services";
-import { useLinearProjects } from "@/hooks/useLinearProjects";
 import { toast } from "sonner";
 
 interface ProjectWizardProps {
@@ -45,7 +44,6 @@ export const ProjectWizard = ({
   const [currentStep, setCurrentStep] = useState(1);
   const [showQRCode, setShowQRCode] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const { saveProject } = useLinearProjects();
 
   const [formData, setFormData] = useState({
     obra: "",
@@ -209,13 +207,11 @@ export const ProjectWizard = ({
         date: new Date().toISOString(),
       };
 
-      // Salvar projeto imediatamente no Supabase
-      await saveProject({ project: newProject, pieces: [], barLength });
-      
-      // Definir o projeto no estado local
+      // Apenas definir o projeto no estado local, NÃO salvar no Supabase ainda
+      // O salvamento será feito apenas quando o usuário otimizar
       setProject(newProject);
       
-      toast.success("Projeto criado e salvo com sucesso!");
+      toast.success("Projeto criado com sucesso! Adicione peças e otimize para salvar definitivamente.");
       
     } catch (error) {
       console.error('Erro ao criar projeto:', error);
@@ -377,6 +373,9 @@ export const ProjectWizard = ({
               {project.turno === "Central"
                 ? "Turno Central"
                 : `${project.turno}º Turno`}
+            </p>
+            <p className="text-xs text-orange-600 mt-2 font-medium">
+              💡 Adicione peças e clique em "Otimizar" para salvar o projeto no banco de dados
             </p>
           </div>
 

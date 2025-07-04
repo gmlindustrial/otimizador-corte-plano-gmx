@@ -1,9 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import type { Project, OptimizationResult, CutPiece } from '@/pages/Index';
 import { OptimizationHistoryService, type OptimizationHistoryEntry } from '@/services/OptimizationHistoryService';
-import { ProjectService } from '@/services/ProjectService';
 import { WasteStockService } from '@/services/WasteStockService';
 import { useOptimizationStats } from './useOptimizationStats';
 
@@ -33,27 +31,24 @@ export const useOptimizationHistoryPersistent = () => {
     barLength: number
   ) => {
     try {
-      // Salvar ou obter projeto
-      const savedProjectId = await ProjectService.saveOrGetProject(project, pieces, results, barLength);
-
-      // Salvar entrada no histórico
+      // Salvar entrada no histórico (que agora também gerencia o projeto)
       const newEntry = await OptimizationHistoryService.saveHistoryEntry(
         project,
         pieces,
         results,
-        barLength,
-        savedProjectId
+        barLength
       );
 
       setOptimizationHistory(prev => [newEntry, ...prev]);
 
       // Auto-enviar sobras para estoque se habilitado
       if (project.enviarSobrasEstoque && results.totalWaste > 0) {
-        await WasteStockService.addWasteToStock(project, results, savedProjectId);
+        // Buscar o projeto salvo para obter o ID correto
+        await WasteStockService.addWasteToStock(project, results, newEntry.project.id);
       }
 
       console.log('Otimização salva no histórico:', newEntry);
-      toast.success('Otimização salva no histórico');
+      toast.success('Projeto salvo e otimização adicionada ao histórico');
 
     } catch (error) {
       console.error('Erro ao salvar no histórico:', error);
