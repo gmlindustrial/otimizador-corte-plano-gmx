@@ -58,11 +58,18 @@ export const useOptimizationHistoryPersistent = () => {
         if (!projectError && existingProject) {
           savedProjectId = existingProject.id;
         } else {
+          // Preparar dados do projeto com conversão explícita para JSON
+          const projectData = {
+            barLength,
+            pieces: pieces as any, // Forçar conversão para JSON
+            results: results as any // Forçar conversão para JSON
+          };
+
           // Salvar projeto no Supabase
           const { data: newProject, error: createError } = await supabase
             .from('projetos')
             .insert({
-              nome: project.name,
+              nome: project.name, // Usar 'nome' que é o campo correto na tabela
               numero_projeto: project.projectNumber,
               cliente_id: await getClienteIdByName(project.client),
               obra_id: await getObraIdByName(project.obra),
@@ -75,11 +82,7 @@ export const useOptimizationHistoryPersistent = () => {
               validacao_qa: project.validacaoQA,
               enviar_sobras_estoque: project.enviarSobrasEstoque,
               qr_code: project.qrCode,
-              dados_projeto: {
-                barLength,
-                pieces,
-                results
-              }
+              dados_projeto: projectData as any
             })
             .select('id')
             .single();
@@ -189,7 +192,6 @@ export const useOptimizationHistoryPersistent = () => {
     }
   };
 
-  // Funções auxiliares para buscar IDs
   const getClienteIdByName = async (clienteName: string): Promise<string | null> => {
     try {
       const { data, error } = await supabase
