@@ -13,12 +13,21 @@ interface EstoqueSobrasIntegratedProps {
 }
 
 export const EstoqueSobrasIntegrated = ({ materialId, tipoMaterial }: EstoqueSobrasIntegratedProps) => {
+  console.log('EstoqueSobrasIntegrated - Props recebidas:', { materialId, tipoMaterial });
+  
   const { sobras, loading, adicionarSobra, marcarComoUsada, removerSobra } = useEstoqueSobras(materialId);
   const [novaSobra, setNovaSobra] = useState({
     comprimento: '',
     localizacao: ''
   });
   const [saving, setSaving] = useState(false);
+
+  console.log('EstoqueSobrasIntegrated - Estado atual:', {
+    sobras: sobras?.length || 0,
+    loading,
+    materialId,
+    tipoMaterial
+  });
 
   const handleAdicionarSobra = async () => {
     const comprimento = parseInt(novaSobra.comprimento);
@@ -49,6 +58,15 @@ export const EstoqueSobrasIntegrated = ({ materialId, tipoMaterial }: EstoqueSob
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6 space-y-4">
+          {/* Debug Info */}
+          <div className="bg-gray-100 p-3 rounded text-sm text-gray-600">
+            <strong>Debug Info:</strong><br/>
+            Material ID: {materialId || 'undefined'}<br/>
+            Tipo Material: {tipoMaterial || 'undefined'}<br/>
+            Total Sobras: {sobras?.length || 0}<br/>
+            Loading: {loading ? 'Sim' : 'Não'}
+          </div>
+
           {!materialId ? (
             <div className="text-center py-8">
               <Package className="w-12 h-12 mx-auto text-gray-400 mb-3" />
@@ -189,6 +207,17 @@ export const EstoqueSobrasIntegrated = ({ materialId, tipoMaterial }: EstoqueSob
                       <p className="text-gray-600 text-sm">
                         Nenhuma sobra cadastrada para este material
                       </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-3"
+                        onClick={() => {
+                          console.log('Forçando recarga das sobras...');
+                          window.location.reload();
+                        }}
+                      >
+                        Recarregar
+                      </Button>
                     </div>
                   )}
                 </>

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -18,6 +19,10 @@ export const useEstoqueSobras = (materialId?: string) => {
   const [loading, setLoading] = useState(false);
 
   const fetchSobras = async () => {
+    console.log('=== FETCH SOBRAS INICIADO ===');
+    console.log('Material ID recebido:', materialId);
+    console.log('Tipo do Material ID:', typeof materialId);
+    
     // Only fetch if materialId is a valid UUID
     if (!materialId || !isValidUUID(materialId)) {
       console.log('Material ID inválido ou não fornecido:', materialId);
@@ -28,6 +33,19 @@ export const useEstoqueSobras = (materialId?: string) => {
     try {
       setLoading(true);
       console.log('Buscando sobras para material:', materialId);
+      
+      // First, let's check if the material exists
+      const { data: materialCheck, error: materialError } = await supabase
+        .from('materiais')
+        .select('id, tipo')
+        .eq('id', materialId)
+        .single();
+        
+      if (materialError) {
+        console.error('Erro ao verificar material:', materialError);
+      } else {
+        console.log('Material encontrado:', materialCheck);
+      }
       
       const { data, error } = await supabase
         .from('estoque_sobras')
@@ -40,6 +58,7 @@ export const useEstoqueSobras = (materialId?: string) => {
         throw error;
       }
 
+      console.log('Resposta da consulta de sobras:', data);
       console.log('Sobras encontradas:', data?.length || 0);
       setSobras(data || []);
     } catch (error) {
@@ -48,10 +67,14 @@ export const useEstoqueSobras = (materialId?: string) => {
       setSobras([]);
     } finally {
       setLoading(false);
+      console.log('=== FETCH SOBRAS FINALIZADO ===');
     }
   };
 
   const adicionarSobra = async (comprimento: number, localizacao: string, projetoOrigem?: string) => {
+    console.log('=== ADICIONAR SOBRA ===');
+    console.log('Dados:', { materialId, comprimento, localizacao, projetoOrigem });
+    
     if (!materialId || !isValidUUID(materialId)) {
       toast.error('Material não selecionado ou inválido');
       return;
@@ -71,8 +94,12 @@ export const useEstoqueSobras = (materialId?: string) => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro ao inserir sobra:', error);
+        throw error;
+      }
       
+      console.log('Sobra inserida com sucesso:', data);
       setSobras(prev => [data, ...prev]);
       toast.success(`Sobra adicionada: ${comprimento}mm - ${localizacao}`);
       return data;
@@ -126,6 +153,7 @@ export const useEstoqueSobras = (materialId?: string) => {
   };
 
   useEffect(() => {
+    console.log('useEffect disparado - materialId mudou:', materialId);
     fetchSobras();
   }, [materialId]);
 
