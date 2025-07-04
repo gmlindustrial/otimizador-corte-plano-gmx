@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -7,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
   X, ZoomIn, ZoomOut, Search, Filter, ChevronLeft, ChevronRight, 
-  Package, Tag, Wrench, Eye, EyeOff, Printer, Check
+  Package, Tag, Wrench, Eye, EyeOff, Printer, Check, Square, Recycle, MapPin, DollarSign
 } from 'lucide-react';
 import type { OptimizationResult, Project } from '@/pages/Index';
 
@@ -33,6 +32,7 @@ export const FullscreenReportViewer = ({
   const [showOnlyPending, setShowOnlyPending] = useState<boolean>(false);
   const [checkedPieces, setCheckedPieces] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'overview' | 'detailed'>('detailed');
+  const [showLegend, setShowLegend] = useState<boolean>(true);
 
   // Extrair conjuntos únicos
   const allConjuntos = new Set<string>();
@@ -104,6 +104,26 @@ export const FullscreenReportViewer = ({
   const currentBar = filteredBars[selectedBar];
   const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316'];
 
+  // Agrupar peças por conjunto para legenda
+  const conjuntoLegend = new Map<string, { color: string; count: number }>();
+  const tagLegend = new Map<string, string>();
+  
+  results.bars.forEach(bar => {
+    bar.pieces.forEach((piece: any) => {
+      if (piece.conjunto && !conjuntoLegend.has(piece.conjunto)) {
+        conjuntoLegend.set(piece.conjunto, { 
+          color: piece.color, 
+          count: results.bars.reduce((total, b) => 
+            total + b.pieces.filter((p: any) => p.conjunto === piece.conjunto).length, 0
+          )
+        });
+      }
+      if (piece.tag) {
+        tagLegend.set(piece.tag, piece.color);
+      }
+    });
+  });
+
   if (!isOpen) return null;
 
   return (
@@ -131,6 +151,16 @@ export const FullscreenReportViewer = ({
                 <ZoomIn className="w-4 h-4" />
               </Button>
               
+              {/* Toggle Legenda */}
+              <Button 
+                variant={showLegend ? 'default' : 'outline'} 
+                size="sm"
+                onClick={() => setShowLegend(!showLegend)}
+              >
+                <Square className="w-4 h-4 mr-1" />
+                Legenda
+              </Button>
+              
               {/* Modo de Visualização */}
               <Button 
                 variant={viewMode === 'overview' ? 'default' : 'outline'} 
@@ -152,6 +182,83 @@ export const FullscreenReportViewer = ({
               </Button>
             </div>
           </div>
+
+          {/* Legenda de Identificação */}
+          {showLegend && (
+            <div className="p-4 border-b bg-blue-50">
+              <h4 className="font-semibold mb-3 text-gray-900 flex items-center gap-2">
+                <Square className="w-4 h-4" />
+                Legenda de Identificação
+              </h4>
+              
+              {/* Código de Cores das Barras */}
+              <div className="mb-3">
+                <h5 className="text-sm font-medium text-gray-700 mb-2">Código de Cores das Barras</h5>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3 p-3 bg-white rounded-lg border">
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-4 rounded border bg-green-500" />
+                    <span className="text-sm text-gray-700 font-medium">Verde: Barra de sobra utilizada</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-4 rounded border bg-blue-500" />
+                    <span className="text-sm text-gray-700 font-medium">Azul: Barra nova</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-4 rounded border bg-orange-500" />
+                    <span className="text-sm text-gray-700 font-medium">Laranja: Sobra parcialmente utilizada</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Indicadores Adicionais */}
+              <div className="mb-3">
+                <h5 className="text-sm font-medium text-gray-700 mb-2">Indicadores Adicionais</h5>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  <div className="flex items-center gap-2">
+                    <Recycle className="w-4 h-4 text-green-600" />
+                    <span className="text-sm text-gray-700">Sobra Reutilizada</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded border bg-gray-300" />
+                    <span className="text-sm text-gray-700">Desperdício</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm text-gray-700">Localização</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <DollarSign className="w-4 h-4 text-green-600" />
+                    <span className="text-sm text-gray-700">Economia</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Conjuntos compactos */}
+              {conjuntoLegend.size > 0 && (
+                <div className="mb-2">
+                  <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                    <Package className="w-4 h-4" />
+                    Conjuntos
+                  </h5>
+                  <div className="flex flex-wrap gap-2">
+                    {Array.from(conjuntoLegend.entries()).slice(0, 8).map(([conjunto, data]) => (
+                      <div key={conjunto} className="flex items-center gap-1 bg-white px-2 py-1 rounded border">
+                        <div 
+                          className="w-3 h-3 rounded border" 
+                          style={{ backgroundColor: data.color }}
+                        />
+                        <span className="text-xs text-gray-700">{conjunto}</span>
+                        <Badge variant="outline" className="text-xs h-4 px-1">{data.count}</Badge>
+                      </div>
+                    ))}
+                    {conjuntoLegend.size > 8 && (
+                      <span className="text-xs text-gray-500 self-center">+{conjuntoLegend.size - 8} mais...</span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Filtros */}
           <div className="flex items-center gap-4 p-4 border-b bg-gray-50">
