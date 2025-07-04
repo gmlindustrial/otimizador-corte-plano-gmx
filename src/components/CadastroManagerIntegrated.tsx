@@ -18,8 +18,10 @@ import {
   UserCheck,
   Factory,
   Loader2,
+  Settings,
 } from "lucide-react";
 import { useSupabaseData } from "@/hooks/useSupabaseData";
+import { ManagementTabs } from "./management/ManagementTabs";
 
 interface CadastroManagerIntegratedProps {
   onUpdateData?: () => void;
@@ -29,14 +31,13 @@ export const CadastroManagerIntegrated = ({
   onUpdateData,
 }: CadastroManagerIntegratedProps) => {
   const {
-    saveObra,
-    saveCliente,
     saveMaterial,
     saveOperador,
     saveInspetor,
     refetch,
   } = useSupabaseData();
 
+  const [showManagement, setShowManagement] = useState(false);
   const [openDialog, setOpenDialog] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -52,6 +53,7 @@ export const CadastroManagerIntegrated = ({
     email: "",
     telefone: "",
   });
+
   const [novoMaterialBarra, setNovoMaterialBarra] = useState({
     tipo: "",
     descricao: "",
@@ -94,8 +96,6 @@ export const CadastroManagerIntegrated = ({
       setNovoMaterialBarra({ tipo: "", descricao: "", comprimentoPadrao: 6000, perfil: "", bitola: "" });
       setOpenDialog(null);
 
-      // Force data refresh
-      console.log("Forçando atualização dos dados...");
       setTimeout(() => {
         refetch();
         onUpdateData?.();
@@ -117,75 +117,19 @@ export const CadastroManagerIntegrated = ({
       const materialData = {
         tipo: `[CHAPA] ${novoMaterialChapa.tipo}`,
         descricao: `${novoMaterialChapa.descricao} - Dimensões: ${novoMaterialChapa.largura}x${novoMaterialChapa.altura}mm - Espessura: ${novoMaterialChapa.espessura}mm`,
-        comprimentoPadrao: Math.max(novoMaterialChapa.largura, novoMaterialChapa.altura), // Usar a maior dimensão como referência
+        comprimentoPadrao: Math.max(novoMaterialChapa.largura, novoMaterialChapa.altura),
       };
       
       await saveMaterial(materialData);
       setNovoMaterialChapa({ tipo: "", descricao: "", largura: 1000, altura: 2000, espessura: 6 });
       setOpenDialog(null);
 
-      // Force data refresh
-      console.log("Forçando atualização dos dados...");
       setTimeout(() => {
         refetch();
         onUpdateData?.();
       }, 500);
     } catch (error) {
       console.error("Erro ao criar material chapa:", error);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleSaveObra = async () => {
-    if (!novaObra.nome || novaObra.nome.trim() === "") {
-      console.log("Nome da obra está vazio");
-      return;
-    }
-
-    try {
-      setSaving(true);
-
-      const result = await saveObra(novaObra);
-
-      // Limpar formulário e fechar dialog
-      setNovaObra({ nome: "", endereco: "", responsavel: "" });
-      setOpenDialog(null);
-
-      console.log("Formulário limpo e dialog fechado");
-
-      // Force data refresh
-      console.log("Forçando atualização dos dados...");
-      setTimeout(() => {
-        refetch();
-        onUpdateData?.();
-      }, 500);
-    } catch (error) {
-      console.error("Erro capturado no handleSaveObra:", error);
-    } finally {
-      setSaving(false);
-      console.log("Estado saving definido como false");
-    }
-  };
-
-  const handleSaveCliente = async () => {
-    if (!novoCliente.nome) return;
-
-    try {
-      setSaving(true);
-      console.log("Criando novo cliente...");
-      await saveCliente(novoCliente);
-      setNovoCliente({ nome: "", contato: "", email: "", telefone: "" });
-      setOpenDialog(null);
-
-      // Force data refresh
-      console.log("Forçando atualização dos dados...");
-      setTimeout(() => {
-        refetch();
-        onUpdateData?.();
-      }, 500);
-    } catch (error) {
-      console.error("Erro ao criar cliente:", error);
     } finally {
       setSaving(false);
     }
@@ -201,8 +145,6 @@ export const CadastroManagerIntegrated = ({
       setNovoOperador({ nome: "", turno: "1", especialidade: "" });
       setOpenDialog(null);
 
-      // Force data refresh
-      console.log("Forçando atualização dos dados...");
       setTimeout(() => {
         refetch();
         onUpdateData?.();
@@ -224,8 +166,6 @@ export const CadastroManagerIntegrated = ({
       setNovoInspetor({ nome: "", certificacao: "", area: "" });
       setOpenDialog(null);
 
-      // Force data refresh
-      console.log("Forçando atualização dos dados...");
       setTimeout(() => {
         refetch();
         onUpdateData?.();
@@ -237,6 +177,10 @@ export const CadastroManagerIntegrated = ({
     }
   };
 
+  if (showManagement) {
+    return <ManagementTabs onBack={() => setShowManagement(false)} />;
+  }
+
   return (
     <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
       <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
@@ -247,168 +191,14 @@ export const CadastroManagerIntegrated = ({
       </CardHeader>
       <CardContent className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Criar Nova Obra */}
-          <Dialog
-            open={openDialog === "obra"}
-            onOpenChange={(open) => setOpenDialog(open ? "obra" : null)}
+          {/* Gerenciar Obras e Clientes */}
+          <Button
+            className="h-24 flex flex-col items-center gap-2 bg-indigo-600 hover:bg-indigo-700"
+            onClick={() => setShowManagement(true)}
           >
-            <DialogTrigger asChild>
-              <Button
-                className="h-24 flex flex-col items-center gap-2 bg-blue-600 hover:bg-blue-700"
-                onClick={() => console.log("Botão Criar Nova Obra clicado")}
-              >
-                <Building className="w-8 h-8" />
-                <span className="text-sm font-medium">+ Criar Nova Obra</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Criar Nova Obra</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="obra-nome">Nome da Obra *</Label>
-                  <Input
-                    id="obra-nome"
-                    value={novaObra.nome}
-                    onChange={(e) => {
-                      console.log("Nome da obra alterado:", e.target.value);
-                      setNovaObra((prev) => ({
-                        ...prev,
-                        nome: e.target.value,
-                      }));
-                    }}
-                    placeholder="Ex: Complexo Industrial ABC"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="obra-endereco">Endereço</Label>
-                  <Input
-                    id="obra-endereco"
-                    value={novaObra.endereco}
-                    onChange={(e) =>
-                      setNovaObra((prev) => ({
-                        ...prev,
-                        endereco: e.target.value,
-                      }))
-                    }
-                    placeholder="Endereço da obra"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="obra-responsavel">Responsável</Label>
-                  <Input
-                    id="obra-responsavel"
-                    value={novaObra.responsavel}
-                    onChange={(e) =>
-                      setNovaObra((prev) => ({
-                        ...prev,
-                        responsavel: e.target.value,
-                      }))
-                    }
-                    placeholder="Nome do responsável"
-                  />
-                </div>
-                <Button
-                  onClick={() => {
-                    handleSaveObra();
-                  }}
-                  className="w-full"
-                  disabled={!novaObra.nome || saving}
-                >
-                  {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Salvar Obra
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
-
-          {/* Criar Novo Cliente */}
-          <Dialog
-            open={openDialog === "cliente"}
-            onOpenChange={(open) => setOpenDialog(open ? "cliente" : null)}
-          >
-            <DialogTrigger asChild>
-              <Button className="h-24 flex flex-col items-center gap-2 bg-purple-600 hover:bg-purple-700">
-                <Users className="w-8 h-8" />
-                <span className="text-sm font-medium">
-                  + Criar Novo Cliente
-                </span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Criar Novo Cliente</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="cliente-nome">Nome do Cliente *</Label>
-                  <Input
-                    id="cliente-nome"
-                    value={novoCliente.nome}
-                    onChange={(e) =>
-                      setNovoCliente((prev) => ({
-                        ...prev,
-                        nome: e.target.value,
-                      }))
-                    }
-                    placeholder="Ex: Construtora Alpha Ltda"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="cliente-contato">Pessoa de Contato</Label>
-                  <Input
-                    id="cliente-contato"
-                    value={novoCliente.contato}
-                    onChange={(e) =>
-                      setNovoCliente((prev) => ({
-                        ...prev,
-                        contato: e.target.value,
-                      }))
-                    }
-                    placeholder="Nome do contato"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="cliente-email">Email</Label>
-                  <Input
-                    id="cliente-email"
-                    type="email"
-                    value={novoCliente.email}
-                    onChange={(e) =>
-                      setNovoCliente((prev) => ({
-                        ...prev,
-                        email: e.target.value,
-                      }))
-                    }
-                    placeholder="email@empresa.com"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="cliente-telefone">Telefone</Label>
-                  <Input
-                    id="cliente-telefone"
-                    value={novoCliente.telefone}
-                    onChange={(e) =>
-                      setNovoCliente((prev) => ({
-                        ...prev,
-                        telefone: e.target.value,
-                      }))
-                    }
-                    placeholder="(11) 99999-9999"
-                  />
-                </div>
-                <Button
-                  onClick={handleSaveCliente}
-                  className="w-full"
-                  disabled={!novoCliente.nome || saving}
-                >
-                  {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                  Salvar Cliente
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+            <Settings className="w-8 h-8" />
+            <span className="text-sm font-medium">Gerenciar Obras & Clientes</span>
+          </Button>
 
           {/* Criar Material para Barras */}
           <Dialog
