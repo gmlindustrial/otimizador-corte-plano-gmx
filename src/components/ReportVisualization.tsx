@@ -1,6 +1,6 @@
 import { OptimizationResult } from '@/pages/Index';
 import { Badge } from '@/components/ui/badge';
-import { Package, Tag, Wrench, Recycle, MapPin, DollarSign } from 'lucide-react';
+import { Package, Tag, Wrench, Recycle, MapPin, DollarSign, Square } from 'lucide-react';
 
 interface ReportVisualizationProps {
   results: OptimizationResult;
@@ -33,32 +33,54 @@ export const ReportVisualization = ({ results, barLength, showLegend = true }: R
 
   return (
     <div className="space-y-6">
-      {showLegend && (conjuntoLegend.size > 0 || tagLegend.size > 0) && (
+      {showLegend && (
         <div className="bg-gray-50 p-4 rounded-lg">
           <h4 className="font-semibold mb-3 text-gray-900">Legenda de Identificação</h4>
           
+          {/* Legenda de Código de Cores das Barras */}
+          <div className="mb-4">
+            <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+              <Square className="w-4 h-4" />
+              Código de Cores das Barras
+            </h5>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4 p-3 bg-white rounded-lg border">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-4 rounded border bg-green-500" />
+                <span className="text-sm text-gray-700 font-medium">Verde: Barra de sobra utilizada</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-4 rounded border bg-blue-500" />
+                <span className="text-sm text-gray-700 font-medium">Azul: Barra nova</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-4 rounded border bg-orange-500" />
+                <span className="text-sm text-gray-700 font-medium">Laranja: Sobra parcialmente utilizada</span>
+              </div>
+            </div>
+          </div>
+
           {/* Legenda de Tipos de Barra */}
           <div className="mb-4">
             <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
               <Recycle className="w-4 h-4" />
-              Tipos de Barra
+              Indicadores Adicionais
             </h5>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3">
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded border bg-green-500" />
+                <Recycle className="w-4 h-4 text-green-600" />
                 <span className="text-sm text-gray-700">Sobra Reutilizada</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="w-4 h-4 rounded border bg-blue-500" />
-                <span className="text-sm text-gray-700">Barra Nova</span>
-              </div>
-              <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded border bg-gray-300" />
-                <span className="text-sm text-gray-700">Sobra/Desperdício</span>
+                <span className="text-sm text-gray-700">Desperdício</span>
               </div>
               <div className="flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-blue-600" />
                 <span className="text-sm text-gray-700">Localização</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-4 h-4 text-green-600" />
+                <span className="text-sm text-gray-700">Economia</span>
               </div>
             </div>
           </div>
@@ -108,11 +130,6 @@ export const ReportVisualization = ({ results, barLength, showLegend = true }: R
               )}
             </div>
           )}
-
-          <div className="flex items-center gap-2 mt-4 pt-2 border-t">
-            <div className="w-4 h-4 rounded border bg-gray-300" />
-            <span className="text-sm text-gray-700">Sobra/Desperdício</span>
-          </div>
         </div>
       )}
 
