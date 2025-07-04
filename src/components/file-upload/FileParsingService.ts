@@ -1,5 +1,5 @@
+
 import { CutPiece } from '@/pages/Index';
-import { AutoCADCutPiece } from '@/types/autocad';
 
 export class FileParsingService {
   static parseCSV(content: string): CutPiece[] {
@@ -85,7 +85,7 @@ export class FileParsingService {
           
           const tag = `${currentConjunto}-${posicao}`;
           
-          const piece: CutPiece & AutoCADCutPiece = {
+          const piece: any = {
             id: `autocad-${currentConjunto}-${posicao}-${Date.now()}`,
             length: parseInt(comprimento),
             quantity: parseInt(quantidade),
