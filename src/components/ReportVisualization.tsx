@@ -1,15 +1,16 @@
 
-import { OptimizationResult } from '@/pages/Index';
+import { OptimizationResult, Project } from '@/pages/Index';
 import { Badge } from '@/components/ui/badge';
 import { Package, Tag, Wrench, Recycle, MapPin, DollarSign } from 'lucide-react';
 
 interface ReportVisualizationProps {
   results: OptimizationResult;
   barLength: number;
+  project?: Project | null;
   showLegend?: boolean;
 }
 
-export const ReportVisualization = ({ results, barLength }: ReportVisualizationProps) => {
+export const ReportVisualization = ({ results, barLength, project }: ReportVisualizationProps) => {
   const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316'];
 
   return (

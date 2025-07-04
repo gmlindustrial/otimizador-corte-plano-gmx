@@ -1,5 +1,4 @@
-
-import { OptimizationResult, Project } from '@/pages/Index';
+import { OptimizationResult, Project, CutPiece } from '@/pages/Index';
 import { Badge } from '@/components/ui/badge';
 import { Package, Tag, Wrench } from 'lucide-react';
 
@@ -7,10 +6,11 @@ interface PrintableReportProps {
   results: OptimizationResult;
   barLength: number;
   project: Project | null;
-  mode: 'complete' | 'simplified';
+  pieces: CutPiece[];
+  mode?: 'complete' | 'simplified';
 }
 
-export const PrintableReport = ({ results, barLength, project, mode }: PrintableReportProps) => {
+export const PrintableReport = ({ results, barLength, project, pieces, mode = 'complete' }: PrintableReportProps) => {
   const currentDate = new Date().toLocaleDateString('pt-BR');
   const version = '1.0';
 
@@ -60,7 +60,6 @@ export const PrintableReport = ({ results, barLength, project, mode }: Printable
     }
   `;
 
-  // Função para quebrar barras em páginas
   const getBarGroups = () => {
     const barsPerPage = mode === 'simplified' ? 6 : 4;
     const groups = [];
@@ -70,7 +69,6 @@ export const PrintableReport = ({ results, barLength, project, mode }: Printable
     return groups;
   };
 
-  // Agrupar resumo por conjunto
   const getConjuntoSummary = () => {
     const conjuntoMap = new Map<string, { 
       pieces: number; 
