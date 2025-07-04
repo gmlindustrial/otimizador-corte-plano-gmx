@@ -2,6 +2,8 @@
 import { ProjectSelector } from '@/components/ProjectSelector';
 import { MaterialInput } from '@/components/MaterialInput';
 import { OptimizationResults } from '@/components/OptimizationResults';
+import { ReportVisualization } from '@/components/ReportVisualization';
+import { PrintableReport } from '@/components/PrintableReport';
 import type { Project, CutPiece, OptimizationResult } from '@/pages/Index';
 
 interface LinearCuttingTabProps {
@@ -41,6 +43,7 @@ export const LinearCuttingTab = ({
             setPieces={setPieces}
             onOptimize={onOptimize}
             disabled={!project}
+            project={project}
           />
         </div>
         
@@ -54,6 +57,23 @@ export const LinearCuttingTab = ({
           )}
         </div>
       </div>
+
+      {results && (
+        <ReportVisualization
+          results={results}
+          barLength={barLength}
+          project={project}
+        />
+      )}
+
+      {results && project && (
+        <PrintableReport
+          results={results}
+          barLength={barLength}
+          project={project}
+          pieces={pieces}
+        />
+      )}
     </div>
   );
 };

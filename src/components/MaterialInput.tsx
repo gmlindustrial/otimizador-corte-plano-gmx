@@ -7,13 +7,14 @@ import { DuplicateManager } from './DuplicateManager';
 import { ManualEntryForm } from './material-input/ManualEntryForm';
 import { PieceList } from './material-input/PieceList';
 import { OptimizeSection } from './material-input/OptimizeSection';
-import type { CutPiece } from '@/pages/Index';
+import type { CutPiece, Project } from '@/pages/Index';
 
 interface MaterialInputProps {
   pieces: CutPiece[];
   setPieces: (pieces: CutPiece[]) => void;
   onOptimize: () => void;
   disabled?: boolean;
+  project?: Project | null;
 }
 
 interface DuplicateItem {
@@ -25,12 +26,17 @@ interface DuplicateItem {
   project?: string;
 }
 
-export const MaterialInput = ({ pieces, setPieces, onOptimize, disabled }: MaterialInputProps) => {
+export const MaterialInput = ({ pieces, setPieces, onOptimize, disabled, project }: MaterialInputProps) => {
   const [length, setLength] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [showDuplicateManager, setShowDuplicateManager] = useState(false);
   const [pendingDuplicates, setPendingDuplicates] = useState<DuplicateItem[]>([]);
   const [pendingImportedPieces, setPendingImportedPieces] = useState<CutPiece[]>([]);
+
+  // Se não há projeto carregado, não mostra o componente
+  if (!project) {
+    return null;
+  }
 
   const addPiece = () => {
     const pieceLength = parseFloat(length);
