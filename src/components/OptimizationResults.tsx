@@ -41,12 +41,6 @@ export const OptimizationResults = ({ results, barLength, project, pieces }: Opt
   const handlePrint = (mode: 'complete' | 'simplified') => {
     setPrintMode(mode);
     setShowPrintPreview(true);
-    
-    // Small delay to ensure the content is rendered before printing
-    setTimeout(() => {
-      window.print();
-      setShowPrintPreview(false);
-    }, 100);
   };
 
   const handleExportPDF = async () => {
@@ -272,24 +266,28 @@ export const OptimizationResults = ({ results, barLength, project, pieces }: Opt
   if (showPrintPreview) {
     return (
       <div className="fixed inset-0 bg-white z-50 overflow-auto">
-        <div className="no-print p-4 bg-gray-100 border-b flex justify-between items-center">
+        <div className="p-4 bg-gray-100 border-b flex justify-between items-center">
           <h2 className="text-lg font-semibold">
-            Visualização de Impressão - {printMode === 'complete' ? 'Relatório Completo' : 'Plano Simplificado'}
+            {printMode === 'complete' ? 'Relatório Completo' : 'Plano Simplificado'}
           </h2>
-          <Button 
-            onClick={() => setShowPrintPreview(false)} 
-            variant="outline"
-          >
+          <Button onClick={() => setShowPrintPreview(false)} variant="outline">
             Fechar Visualização
           </Button>
         </div>
-        <PrintableReport 
-          results={results}
-          barLength={barLength}
-          project={project}
-          pieces={pieces}
-          mode={printMode}
-        />
+        <div className="p-4 space-y-6">
+          <ReportVisualization
+            results={results}
+            barLength={barLength}
+            showLegend={true}
+          />
+          <PrintableReport
+            results={results}
+            barLength={barLength}
+            project={project}
+            pieces={pieces}
+            mode={printMode}
+          />
+        </div>
       </div>
     );
   }
