@@ -392,13 +392,11 @@ export const OptimizationResults = ({ results, barLength, project, pieces }: Opt
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <div className="max-h-96 overflow-y-auto">
-              <ReportVisualization 
-                results={results}
-                barLength={barLength}
-                showLegend={true}
-              />
-            </div>
+            <ReportVisualization 
+              results={results}
+              barLength={barLength}
+              showLegend={true}
+            />
           </CardContent>
         </Card>
 
