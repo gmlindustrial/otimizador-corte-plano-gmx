@@ -214,6 +214,33 @@ export class LinearProjectService extends BaseService<Projeto> {
     }
   }
 
+  async deleteLinearProject(projectId: string): Promise<ServiceResponse<void>> {
+    try {
+      const { error } = await supabase
+        .from('projetos')
+        .delete()
+        .eq('id', projectId);
+
+      if (error) throw error;
+
+      console.log('Projeto linear excluído:', projectId);
+
+      return {
+        data: null,
+        error: null,
+        success: true
+      };
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao excluir projeto linear';
+      console.error('Erro ao excluir projeto linear:', error);
+      return {
+        data: null,
+        error: errorMessage,
+        success: false
+      };
+    }
+  }
+
   convertFromDatabase(dbProject: Projeto): LinearProjectData | null {
     try {
       const dadosProjeto = dbProject.dados_projeto as any;

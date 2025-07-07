@@ -14,8 +14,15 @@ export const useLinearProjects = () => {
       
       if (response.success && response.data) {
         const convertedProjects = response.data
-          .map(dbProject => linearProjectService.convertFromDatabase(dbProject))
-          .filter(project => project !== null) as LinearProjectData[];
+          .map(dbProject => {
+            const converted = linearProjectService.convertFromDatabase(dbProject);
+            if (converted) {
+              // Adicionar o ID do banco de dados
+              return { ...converted, dbId: dbProject.id };
+            }
+            return null;
+          })
+          .filter(project => project !== null) as (LinearProjectData & { dbId: string })[];
         
         setSavedProjects(convertedProjects);
         console.log('Projetos lineares carregados:', convertedProjects);
