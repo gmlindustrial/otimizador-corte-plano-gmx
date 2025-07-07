@@ -122,10 +122,7 @@ const Index = () => {
     // Save project and add to history if project exists
     if (project && pieces.length > 0 && result) {
       try {
-        // Save project to Supabase
-        await saveLinearProject({ project, pieces, barLength });
-        
-        // Add to persistent history
+        // Only save to history - OptimizationHistoryService will handle project creation
         await addToHistory(project, pieces, result, barLength);
         
         console.log('Projeto salvo com sucesso no Supabase');
