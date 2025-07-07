@@ -270,9 +270,15 @@ export const OptimizationResults = ({ results, barLength, project, pieces }: Opt
           <h2 className="text-lg font-semibold">
             {printMode === 'complete' ? 'Relatório Completo' : 'Plano Simplificado'}
           </h2>
-          <Button onClick={() => setShowPrintPreview(false)} variant="outline">
-            Fechar Visualização
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => window.print()} variant="outline" className="flex items-center gap-1">
+              <Printer className="w-4 h-4" />
+              Imprimir
+            </Button>
+            <Button onClick={() => setShowPrintPreview(false)} variant="outline">
+              Fechar Visualização
+            </Button>
+          </div>
         </div>
         <div className="p-4 space-y-6">
           <ReportVisualization
