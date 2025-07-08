@@ -29,16 +29,22 @@ export class FileParsingService {
 
   static parseAutoCADReport(content: string): CutPiece[] {
     console.log('Iniciando parsing de arquivo AutoCAD...');
+    console.log('Primeiras 10 linhas do arquivo:', content.split('\n').slice(0, 10));
     
     const lines = content.split('\n');
     const pieces: CutPiece[] = [];
     
-    // Verificar se é arquivo AutoCAD válido
+    // Verificar se é arquivo AutoCAD válido com critérios mais flexíveis
     const isAutoCADFile = lines.some(line => 
       line.includes('LM por Conjunto') || 
       line.includes('METALMAX') ||
-      line.includes('OBRA:')
+      line.includes('OBRA:') ||
+      line.includes('C34') ||
+      line.includes('C35') ||
+      line.match(/[A-Z]\d+/) // Qualquer padrão tipo C34, V172, etc.
     );
+    
+    console.log('Arquivo identificado como AutoCAD:', isAutoCADFile);
     
     if (!isAutoCADFile) {
       throw new Error('Arquivo não parece ser um relatório AutoCAD válido');
@@ -85,13 +91,33 @@ export class FileParsingService {
       }
 
       // Parsear linha de peça com regex mais flexível
-      if (currentConjunto && line.length > 0 && !line.match(/^-+$/) && !line.includes('Conjunto')) {
+      if (line.length > 0 && !line.match(/^-+$/) && !line.includes('Conjunto')) {
+        console.log(`Analisando linha: "${line}"`);
+        
         // Regex melhorada para capturar diferentes formatos - incluindo W150X13 A572-50
         const pieceMatch = line.match(/^\s*(\d+)\s+(\d+)\s+([\w\d\-\s\.\+\*]+?)\s+([\w\d\-]+)\s+(\d+)\s+x?\s*(\d+)\s+([\d\.]+)$/i);
         
         if (pieceMatch) {
           const [, posicao, quantidade, perfil, material, comprimento, largura, peso] = pieceMatch;
           console.log(`Regex principal detectou: pos=${posicao}, qty=${quantidade}, perfil=${perfil}, mat=${material}, comp=${comprimento}, larg=${largura}, peso=${peso}`);
+          
+          // Se não temos conjunto ainda, tenta extrair da linha atual
+          if (!currentConjunto) {
+            // Buscar por linhas que contenham padrões de conjunto nas proximidades
+            for (let j = Math.max(0, i - 5); j <= Math.min(lines.length - 1, i + 5); j++) {
+              const nearLine = lines[j].trim();
+              const conjuntoNearMatch = nearLine.match(/([A-Z]\d+)/);
+              if (conjuntoNearMatch) {
+                currentConjunto = conjuntoNearMatch[1];
+                console.log('Conjunto identificado próximo à peça:', currentConjunto);
+                break;
+              }
+            }
+            // Se ainda não encontrou, usa um padrão genérico
+            if (!currentConjunto) {
+              currentConjunto = 'CONJUNTO';
+            }
+          }
           
           // Criar TAG apenas com a posição (sem P)
           const tag = posicao;
@@ -117,16 +143,22 @@ export class FileParsingService {
           
           console.log(`Peça adicionada: ${tag} - ${piece.length}mm - Qtd: ${piece.quantity} - Perfil: ${piece.perfil}`);
         } else {
-          // Tentar regex alternativa para formatos diferentes
-          const altMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(.+?)\s+(\d+)\s*(?:x\s*(\d+))?\s+([\d.]+)$/);
-          if (altMatch) {
-            const [, posicao, quantidade, descricao, comprimento, largura, peso] = altMatch;
+          // Tentar regex mais simples para formato: pos qty descricao comprimento peso
+          const simpleMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(.+?)\s+(\d+)\s+([\d\.]+)$/);
+          if (simpleMatch) {
+            const [, posicao, quantidade, descricao, comprimento, peso] = simpleMatch;
+            console.log(`Regex simples detectou: pos=${posicao}, qty=${quantidade}, desc=${descricao}, comp=${comprimento}, peso=${peso}`);
             
-            // Criar TAG apenas com a posição (sem P)
+            // Se não temos conjunto ainda, usa um padrão genérico
+            if (!currentConjunto) {
+              currentConjunto = 'CONJUNTO';
+            }
+            
+            // Criar TAG apenas com a posição
             const tag = posicao;
             
             const piece: any = {
-              id: `autocad-alt-${currentConjunto}-${posicao}-${Date.now()}`,
+              id: `autocad-simple-${currentConjunto}-${posicao}-${Date.now()}`,
               length: parseInt(comprimento),
               quantity: parseInt(quantidade),
               obra,
@@ -137,12 +169,14 @@ export class FileParsingService {
               tag,
               dimensoes: {
                 comprimento: parseInt(comprimento),
-                largura: largura ? parseInt(largura) : 0
+                largura: 0
               }
             };
 
             pieces.push(piece);
-            console.log(`Peça alternativa adicionada: ${tag} - ${piece.length}mm - Qtd: ${piece.quantity}`);
+            console.log(`Peça simples adicionada: ${tag} - ${piece.length}mm - Qtd: ${piece.quantity}`);
+          } else {
+            console.log(`Linha não reconhecida: "${line}"`);
           }
         }
       }
