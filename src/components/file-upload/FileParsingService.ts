@@ -72,11 +72,12 @@ export class FileParsingService {
         continue;
       }
 
-      // Detectar conjunto (formato: C34, C35, etc.)
-      const conjuntoMatch = line.match(/^([A-Z]\d+)\s*(\d+)?\s*([A-Z].*)?$/);
+      // Detectar conjunto (formatos: C34, C35, CE-16, CE-17, etc.)
+      const conjuntoMatch = line.match(/^([A-Z]+(?:-\d+|\d+))\s*(\d+)?\s*([A-Z].*)?$/);
       if (conjuntoMatch) {
         currentConjunto = conjuntoMatch[1];
-        console.log('Novo conjunto identificado:', currentConjunto);
+        const descricao = conjuntoMatch[3] || '';
+        console.log(`Novo conjunto identificado: ${currentConjunto}${descricao ? ` (${descricao})` : ''}`);
         continue;
       }
 
@@ -95,7 +96,7 @@ export class FileParsingService {
           if (!currentConjunto) {
             for (let j = Math.max(0, i - 10); j <= Math.min(lines.length - 1, i + 5); j++) {
               const nearLine = lines[j].trim();
-              const conjuntoNearMatch = nearLine.match(/^([A-Z]\d+)/);
+              const conjuntoNearMatch = nearLine.match(/^([A-Z]+(?:-\d+|\d+))/);
               if (conjuntoNearMatch) {
                 currentConjunto = conjuntoNearMatch[1];
                 console.log('Conjunto identificado próximo à peça:', currentConjunto);
