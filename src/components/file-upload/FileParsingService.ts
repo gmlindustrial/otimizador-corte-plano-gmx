@@ -76,8 +76,9 @@ export class FileParsingService {
       }
 
       // Detectar conjunto apenas se estiver esperando após linha pontilhada
+      // Conjuntos devem começar apenas com V ou C
       if (esperandoConjunto && line.length > 0) {
-        const conjuntoMatch = line.match(/^([A-Z]+(?:-\d+|\d+))\s*(\d+)?\s*([A-Z].*)?$/);
+        const conjuntoMatch = line.match(/^([VC]\d+(?:-\d+)?)\s*(\d+)?\s*([A-Z].*)?$/);
         if (conjuntoMatch) {
           currentConjunto = conjuntoMatch[1];
           const descricao = conjuntoMatch[3] || '';
@@ -101,20 +102,9 @@ export class FileParsingService {
           const [, posicao, quantidade, perfil, material, comprimento, largura, peso] = pieceMatch;
           console.log(`Regex principal detectou: pos=${posicao}, qty=${quantidade}, perfil=${perfil}, mat=${material}, comp=${comprimento}, larg=${largura}, peso=${peso} - Conjunto: ${currentConjunto}`);
           
-          // Se não temos conjunto, buscar nas proximidades
+          // Se não temos conjunto, usar conjunto padrão
           if (!currentConjunto) {
-            for (let j = Math.max(0, i - 10); j <= Math.min(lines.length - 1, i + 5); j++) {
-              const nearLine = lines[j].trim();
-              const conjuntoNearMatch = nearLine.match(/^([A-Z]+(?:-\d+|\d+))/);
-              if (conjuntoNearMatch) {
-                currentConjunto = conjuntoNearMatch[1];
-                console.log('Conjunto identificado próximo à peça:', currentConjunto);
-                break;
-              }
-            }
-            if (!currentConjunto) {
-              currentConjunto = 'CONJUNTO';
-            }
+            currentConjunto = 'CONJUNTO';
           }
           
           const tag = `${currentConjunto}-${posicao}`;
