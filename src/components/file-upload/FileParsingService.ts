@@ -66,65 +66,48 @@ export class FileParsingService {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
       
-      // Detectar conjunto entre linhas pontilhadas
+      // Resetar conjunto atual quando encontrar nova linha pontilhada
       if (line.match(/^-{5,}$/)) {
-        // Verificar se a próxima linha contém um conjunto
-        if (i + 1 < lines.length) {
-          const nextLine = lines[i + 1].trim();
-          // Suporte para diferentes formatos: V.172, C34, etc.
-          const conjuntoMatch = nextLine.match(/^([A-Z]\d*\.?\d+)\s*(\d+)?\s*([A-Z])?$/);
-          if (conjuntoMatch) {
-            currentConjunto = conjuntoMatch[1]; // V.172, C34, etc.
-            console.log('Conjunto identificado:', currentConjunto);
-            i++; // Pular a linha do conjunto
-            continue;
-          }
-        }
+        currentConjunto = ''; // Reset para detectar novo conjunto
+        continue;
       }
 
-      // Detectar conjunto diretamente (sem linhas pontilhadas) - SEMPRE verificar
-      const conjuntoDirectMatch = line.match(/^([A-Z]\d*\.?\d+)\s*(\d+)?\s*([A-Z])?$/);
-      if (conjuntoDirectMatch) {
-        const novoConjunto = conjuntoDirectMatch[1];
-        // Só atualizar se for diferente do atual ou se não temos conjunto ainda
-        if (!currentConjunto || novoConjunto !== currentConjunto) {
-          currentConjunto = novoConjunto;
-          console.log('Conjunto identificado/alterado para:', currentConjunto);
-        }
+      // Detectar conjunto (formato: C34, C35, etc.)
+      const conjuntoMatch = line.match(/^([A-Z]\d+)\s*(\d+)?\s*([A-Z].*)?$/);
+      if (conjuntoMatch) {
+        currentConjunto = conjuntoMatch[1];
+        console.log('Novo conjunto identificado:', currentConjunto);
         continue;
       }
 
       // Parsear linha de peça com regex mais flexível
-      if (line.length > 0 && !line.match(/^-+$/) && !line.includes('Conjunto')) {
-        console.log(`Analisando linha: "${line}"`);
+      if (line.length > 0 && !line.match(/^-+$/) && !line.includes('Conjunto') && !line.includes('OBRA:')) {
+        console.log(`Analisando linha: "${line}" - Conjunto atual: ${currentConjunto}`);
         
-        // Regex melhorada para capturar diferentes formatos - incluindo W150X13 A572-50
+        // Regex melhorada para capturar diferentes formatos
         const pieceMatch = line.match(/^\s*(\d+)\s+(\d+)\s+([\w\d\-\s\.\+\*]+?)\s+([\w\d\-]+)\s+(\d+)\s+x?\s*(\d+)\s+([\d\.]+)$/i);
         
         if (pieceMatch) {
           const [, posicao, quantidade, perfil, material, comprimento, largura, peso] = pieceMatch;
-          console.log(`Regex principal detectou: pos=${posicao}, qty=${quantidade}, perfil=${perfil}, mat=${material}, comp=${comprimento}, larg=${largura}, peso=${peso}`);
+          console.log(`Regex principal detectou: pos=${posicao}, qty=${quantidade}, perfil=${perfil}, mat=${material}, comp=${comprimento}, larg=${largura}, peso=${peso} - Conjunto: ${currentConjunto}`);
           
-          // Se não temos conjunto ainda, tenta extrair da linha atual
+          // Se não temos conjunto, buscar nas proximidades
           if (!currentConjunto) {
-            // Buscar por linhas que contenham padrões de conjunto nas proximidades
-            for (let j = Math.max(0, i - 5); j <= Math.min(lines.length - 1, i + 5); j++) {
+            for (let j = Math.max(0, i - 10); j <= Math.min(lines.length - 1, i + 5); j++) {
               const nearLine = lines[j].trim();
-              const conjuntoNearMatch = nearLine.match(/([A-Z]\d+)/);
+              const conjuntoNearMatch = nearLine.match(/^([A-Z]\d+)/);
               if (conjuntoNearMatch) {
                 currentConjunto = conjuntoNearMatch[1];
                 console.log('Conjunto identificado próximo à peça:', currentConjunto);
                 break;
               }
             }
-            // Se ainda não encontrou, usa um padrão genérico
             if (!currentConjunto) {
               currentConjunto = 'CONJUNTO';
             }
           }
           
-          // Criar TAG apenas com a posição (sem P)
-          const tag = posicao;
+          const tag = `${currentConjunto}-${posicao}`;
           
           const piece: any = {
             id: `autocad-${currentConjunto}-${posicao}-${Date.now()}`,
@@ -145,21 +128,19 @@ export class FileParsingService {
 
           pieces.push(piece);
           
-          console.log(`Peça adicionada: ${tag} - ${piece.length}mm - Qtd: ${piece.quantity} - Perfil: ${piece.perfil}`);
+          console.log(`Peça adicionada: ${tag} - ${piece.length}mm - Qtd: ${piece.quantity} - Perfil: ${piece.perfil} - Conjunto: ${currentConjunto}`);
         } else {
           // Tentar regex mais simples para formato: pos qty descricao comprimento peso
           const simpleMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(.+?)\s+(\d+)\s+([\d\.]+)$/);
           if (simpleMatch) {
             const [, posicao, quantidade, descricao, comprimento, peso] = simpleMatch;
-            console.log(`Regex simples detectou: pos=${posicao}, qty=${quantidade}, desc=${descricao}, comp=${comprimento}, peso=${peso}`);
+            console.log(`Regex simples detectou: pos=${posicao}, qty=${quantidade}, desc=${descricao}, comp=${comprimento}, peso=${peso} - Conjunto: ${currentConjunto}`);
             
-            // Se não temos conjunto ainda, usa um padrão genérico
             if (!currentConjunto) {
               currentConjunto = 'CONJUNTO';
             }
             
-            // Criar TAG apenas com a posição
-            const tag = posicao;
+            const tag = `${currentConjunto}-${posicao}`;
             
             const piece: any = {
               id: `autocad-simple-${currentConjunto}-${posicao}-${Date.now()}`,
@@ -178,7 +159,7 @@ export class FileParsingService {
             };
 
             pieces.push(piece);
-            console.log(`Peça simples adicionada: ${tag} - ${piece.length}mm - Qtd: ${piece.quantity}`);
+            console.log(`Peça simples adicionada: ${tag} - ${piece.length}mm - Qtd: ${piece.quantity} - Conjunto: ${currentConjunto}`);
           } else {
             console.log(`Linha não reconhecida: "${line}"`);
           }
