@@ -65,9 +65,10 @@ export class FileParsingService {
         // Verificar se a próxima linha contém um conjunto
         if (i + 1 < lines.length) {
           const nextLine = lines[i + 1].trim();
-          const conjuntoMatch = nextLine.match(/^(V\.\d+)\s+(\d+)\s+([A-Z])$/);
+          // Suporte para diferentes formatos: V.172, C34, etc.
+          const conjuntoMatch = nextLine.match(/^([A-Z]\d*\.?\d+)\s*(\d+)?\s*([A-Z])?$/);
           if (conjuntoMatch) {
-            currentConjunto = conjuntoMatch[1]; // V.172, V.173, etc.
+            currentConjunto = conjuntoMatch[1]; // V.172, C34, etc.
             console.log('Conjunto identificado:', currentConjunto);
             i++; // Pular a linha do conjunto
             continue;
@@ -75,13 +76,22 @@ export class FileParsingService {
         }
       }
 
+      // Detectar conjunto diretamente (sem linhas pontilhadas)
+      const conjuntoDirectMatch = line.match(/^([A-Z]\d*\.?\d+)\s*(\d+)?\s*([A-Z])?$/);
+      if (conjuntoDirectMatch && !currentConjunto) {
+        currentConjunto = conjuntoDirectMatch[1];
+        console.log('Conjunto identificado diretamente:', currentConjunto);
+        continue;
+      }
+
       // Parsear linha de peça com regex mais flexível
       if (currentConjunto && line.length > 0 && !line.match(/^-+$/) && !line.includes('Conjunto')) {
-        // Regex melhorada para capturar diferentes formatos
-        const pieceMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(L\s+\d+\s+X\s+[\d.]+|[A-Z]\d*[\s\d]*)\s+(A\d+|[\w\d]+)\s+(\d+)\s+x?\s*(\d+)\s+([\d.]+)$/i);
+        // Regex melhorada para capturar diferentes formatos - incluindo W150X13 A572-50
+        const pieceMatch = line.match(/^\s*(\d+)\s+(\d+)\s+([\w\d\-\s\.\+\*]+?)\s+([\w\d\-]+)\s+(\d+)\s+x?\s*(\d+)\s+([\d\.]+)$/i);
         
         if (pieceMatch) {
           const [, posicao, quantidade, perfil, material, comprimento, largura, peso] = pieceMatch;
+          console.log(`Regex principal detectou: pos=${posicao}, qty=${quantidade}, perfil=${perfil}, mat=${material}, comp=${comprimento}, larg=${largura}, peso=${peso}`);
           
           // Criar TAG apenas com a posição (sem P)
           const tag = posicao;
