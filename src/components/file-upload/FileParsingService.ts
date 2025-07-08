@@ -82,11 +82,15 @@ export class FileParsingService {
         }
       }
 
-      // Detectar conjunto diretamente (sem linhas pontilhadas)
+      // Detectar conjunto diretamente (sem linhas pontilhadas) - SEMPRE verificar
       const conjuntoDirectMatch = line.match(/^([A-Z]\d*\.?\d+)\s*(\d+)?\s*([A-Z])?$/);
-      if (conjuntoDirectMatch && !currentConjunto) {
-        currentConjunto = conjuntoDirectMatch[1];
-        console.log('Conjunto identificado diretamente:', currentConjunto);
+      if (conjuntoDirectMatch) {
+        const novoConjunto = conjuntoDirectMatch[1];
+        // Só atualizar se for diferente do atual ou se não temos conjunto ainda
+        if (!currentConjunto || novoConjunto !== currentConjunto) {
+          currentConjunto = novoConjunto;
+          console.log('Conjunto identificado/alterado para:', currentConjunto);
+        }
         continue;
       }
 
