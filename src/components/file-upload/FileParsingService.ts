@@ -101,10 +101,20 @@ export class FileParsingService {
           const [, posicao, quantidade, perfil, material, comprimento, largura, peso] = pieceMatch;
           console.log(`Regex principal detectou: pos=${posicao}, qty=${quantidade}, perfil=${perfil}, mat=${material}, comp=${comprimento}, larg=${largura}, peso=${peso} - Conjunto: ${currentConjunto}`);
           
-          // Se não temos conjunto válido (definido por linha pontilhada), usar genérico
+          // Se não temos conjunto, buscar nas proximidades
           if (!currentConjunto) {
-            currentConjunto = 'CONJUNTO';
-            console.log('Nenhum conjunto válido encontrado, usando CONJUNTO genérico');
+            for (let j = Math.max(0, i - 10); j <= Math.min(lines.length - 1, i + 5); j++) {
+              const nearLine = lines[j].trim();
+              const conjuntoNearMatch = nearLine.match(/^([A-Z]+(?:-\d+|\d+))/);
+              if (conjuntoNearMatch) {
+                currentConjunto = conjuntoNearMatch[1];
+                console.log('Conjunto identificado próximo à peça:', currentConjunto);
+                break;
+              }
+            }
+            if (!currentConjunto) {
+              currentConjunto = 'CONJUNTO';
+            }
           }
           
           const tag = `${currentConjunto}-${posicao}`;
