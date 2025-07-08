@@ -52,6 +52,7 @@ export class FileParsingService {
 
     let obra = '';
     let currentConjunto = '';
+    let esperandoConjunto = false; // Flag para indicar que esperamos um conjunto após linha pontilhada
     
     // Extrair nome da obra
     for (const line of lines) {
@@ -66,19 +67,27 @@ export class FileParsingService {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
       
-      // Resetar conjunto atual quando encontrar nova linha pontilhada
+      // Detectar linha pontilhada - prepara para novo conjunto
       if (line.match(/^-{5,}$/)) {
-        currentConjunto = ''; // Reset para detectar novo conjunto
+        console.log('Linha pontilhada detectada - preparando para novo conjunto');
+        esperandoConjunto = true; // Próxima linha não-vazia pode ser conjunto
+        currentConjunto = ''; // Reset conjunto atual
         continue;
       }
 
-      // Detectar conjunto (formatos: C34, C35, CE-16, CE-17, etc.)
-      const conjuntoMatch = line.match(/^([A-Z]+(?:-\d+|\d+))\s*(\d+)?\s*([A-Z].*)?$/);
-      if (conjuntoMatch) {
-        currentConjunto = conjuntoMatch[1];
-        const descricao = conjuntoMatch[3] || '';
-        console.log(`Novo conjunto identificado: ${currentConjunto}${descricao ? ` (${descricao})` : ''}`);
-        continue;
+      // Detectar conjunto apenas se estiver esperando após linha pontilhada
+      if (esperandoConjunto && line.length > 0) {
+        const conjuntoMatch = line.match(/^([A-Z]+(?:-\d+|\d+))\s*(\d+)?\s*([A-Z].*)?$/);
+        if (conjuntoMatch) {
+          currentConjunto = conjuntoMatch[1];
+          const descricao = conjuntoMatch[3] || '';
+          console.log(`Conjunto identificado após linha pontilhada: ${currentConjunto}${descricao ? ` (${descricao})` : ''}`);
+          esperandoConjunto = false; // Conjunto encontrado, não precisa mais esperar
+          continue;
+        } else {
+          // Linha não é conjunto, pode ser início das peças
+          esperandoConjunto = false;
+        }
       }
 
       // Parsear linha de peça com regex mais flexível
