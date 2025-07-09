@@ -28,7 +28,7 @@ import AdminUsuarios from "./AdminUsuarios";
 import { cn } from "@/lib/utils";
 import { BottomLeftFillOptimizer } from "@/algorithms/sheet/BottomLeftFill";
 import { useOptimizationHistoryPersistent } from "@/hooks/useOptimizationHistoryPersistent";
-import { useLinearProjects } from "@/hooks/useLinearProjects";
+import { useProjects } from "@/hooks/useProjects";
 import { useSheetProjects } from "@/hooks/useSheetProjects";
 import { useLinearOptimization } from "@/hooks/useLinearOptimization";
 import { useSupabaseData } from "@/hooks/useSupabaseData";
@@ -77,8 +77,8 @@ const Index = () => {
   const { materiaisBarras, materiaisChapas } = useSupabaseData();
 
   // Linear cutting optimization with persistent projects
-  const { savedProjects: savedLinearProjects, saveProject: saveLinearProject } =
-    useLinearProjects();
+  const { savedProjects: savedProjectsList, saveProject } =
+    useProjects();
   const {
     project,
     setProject,

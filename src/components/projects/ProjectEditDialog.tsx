@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSupabaseData } from '@/hooks/useSupabaseData';
-import { linearProjectService } from '@/services/entities/LinearProjectService';
+import { projectService } from '@/services/entities/ProjectService';
 import type { Project } from '@/pages/Index';
 import { toast } from 'sonner';
 
@@ -31,7 +31,7 @@ export const ProjectEditDialog = ({ project, open, onOpenChange, onUpdated }: Pr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await linearProjectService.updateLinearProject(project.id, {
+      await projectService.updateProject(project.id, {
         nome: formData.name,
         numero_projeto: formData.projectNumber,
         cliente_id: formData.clienteId || null,

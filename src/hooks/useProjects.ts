@@ -1,31 +1,31 @@
 
 import { useState, useEffect } from 'react';
-import { linearProjectService, type LinearProjectData } from '@/services/entities/LinearProjectService';
+import { projectService, type ProjectData } from '@/services/entities/ProjectService';
 import { toast } from 'sonner';
 
-export const useLinearProjects = () => {
-  const [savedProjects, setSavedProjects] = useState<LinearProjectData[]>([]);
+export const useProjects = () => {
+  const [savedProjects, setSavedProjects] = useState<ProjectData[]>([]);
   const [loading, setLoading] = useState(false);
 
   const loadProjects = async () => {
     try {
       setLoading(true);
-      const response = await linearProjectService.loadLinearProjects();
+      const response = await projectService.loadProjects();
       
       if (response.success && response.data) {
         const convertedProjects = response.data
           .map(dbProject => {
-            const converted = linearProjectService.convertFromDatabase(dbProject);
+            const converted = projectService.convertFromDatabase(dbProject);
             if (converted) {
               // Adicionar o ID do banco de dados
               return { ...converted, dbId: dbProject.id };
             }
             return null;
           })
-          .filter(project => project !== null) as (LinearProjectData & { dbId: string })[];
+          .filter(project => project !== null) as (ProjectData & { dbId: string })[];
         
         setSavedProjects(convertedProjects);
-        console.log('Projetos lineares carregados:', convertedProjects);
+        console.log('Projetos carregados:', convertedProjects);
       }
     } catch (error) {
       console.error('Erro ao carregar projetos:', error);
@@ -35,9 +35,9 @@ export const useLinearProjects = () => {
     }
   };
 
-  const saveProject = async (projectData: LinearProjectData) => {
+  const saveProject = async (projectData: ProjectData) => {
     try {
-      const response = await linearProjectService.saveLinearProject(projectData);
+      const response = await projectService.saveProject(projectData);
       
       if (response.success) {
         toast.success('Projeto salvo com sucesso');

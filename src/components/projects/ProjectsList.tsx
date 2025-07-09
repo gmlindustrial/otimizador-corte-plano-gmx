@@ -6,13 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { useLinearProjects } from '@/hooks/useLinearProjects';
+import { useProjects } from '@/hooks/useProjects';
 import { useSheetProjects } from '@/hooks/useSheetProjects';
 import { Building2, Square, Play, Eye, Copy, Trash2, Search, Calendar, User, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
-import { linearProjectService } from '@/services/entities/LinearProjectService';
+import { projectService } from '@/services/entities/ProjectService';
 import { ProjectEditDialog } from './ProjectEditDialog';
 
 interface ProjectsListProps {
@@ -22,7 +22,7 @@ interface ProjectsListProps {
 }
 
 export const ProjectsList = ({ onLoadLinearProject, onLoadSheetProject, onSelectProject }: ProjectsListProps) => {
-  const { savedProjects: linearProjects, loading: linearLoading, loadProjects: loadLinearProjects } = useLinearProjects();
+  const { savedProjects: linearProjects, loading: linearLoading, loadProjects: loadLinearProjects } = useProjects();
   const { savedProjects: sheetProjects, loading: sheetLoading, loadProjects: loadSheetProjects } = useSheetProjects();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<'all' | 'linear' | 'sheet'>('all');
@@ -62,7 +62,7 @@ export const ProjectsList = ({ onLoadLinearProject, onLoadSheetProject, onSelect
       if (item.type === 'linear') {
         // Use o ID do banco de dados, não o ID original do projeto
         const dbId = item.dbId || item.project.id;
-        await linearProjectService.deleteLinearProject(dbId);
+        await projectService.deleteProject(dbId);
         await loadLinearProjects();
         toast.success(`Projeto linear "${item.project.name}" excluído com sucesso`);
       } else {

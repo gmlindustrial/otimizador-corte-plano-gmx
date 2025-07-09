@@ -6,13 +6,13 @@ import type { Projeto } from '../interfaces';
 import type { ServiceResponse, ListResponse } from '../base/types';
 import type { Project, CutPiece } from '@/pages/Index';
 
-export interface LinearProjectData {
+export interface ProjectData {
   project: Project;
   pieces: CutPiece[];
   barLength: number;
 }
 
-export class LinearProjectService extends BaseService<Projeto> {
+export class ProjectService extends BaseService<Projeto> {
   constructor() {
     super('projetos');
   }
@@ -108,7 +108,7 @@ export class LinearProjectService extends BaseService<Projeto> {
     }
   }
 
-  async saveLinearProject(projectData: LinearProjectData): Promise<ServiceResponse<Projeto>> {
+  async saveProject(projectData: ProjectData): Promise<ServiceResponse<Projeto>> {
     try {
       const { project, pieces, barLength } = projectData;
 
@@ -175,7 +175,7 @@ export class LinearProjectService extends BaseService<Projeto> {
     }
   }
 
-  async loadLinearProjects(): Promise<ListResponse<Projeto>> {
+  async loadProjects(): Promise<ListResponse<Projeto>> {
     try {
       const { data, error } = await supabase
         .from('projetos')
@@ -202,8 +202,8 @@ export class LinearProjectService extends BaseService<Projeto> {
         total: projects.length
       };
     } catch (error) {
-      console.error('Erro ao carregar projetos lineares:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Erro ao carregar projetos lineares';
+      console.error('Erro ao carregar projetos:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao carregar projetos';
       
       return {
         data: [],
@@ -214,7 +214,7 @@ export class LinearProjectService extends BaseService<Projeto> {
     }
   }
 
-  async deleteLinearProject(projectId: string): Promise<ServiceResponse<void>> {
+  async deleteProject(projectId: string): Promise<ServiceResponse<void>> {
     try {
       // Delete related pieces first to mimic cascade behavior
       const { error: piecesError } = await supabase
@@ -231,7 +231,7 @@ export class LinearProjectService extends BaseService<Projeto> {
 
       if (error) throw error;
 
-      console.log('Projeto linear excluído:', projectId);
+      console.log('Projeto excluído:', projectId);
 
       return {
         data: null,
@@ -239,8 +239,8 @@ export class LinearProjectService extends BaseService<Projeto> {
         success: true
       };
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro ao excluir projeto linear';
-      console.error('Erro ao excluir projeto linear:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao excluir projeto';
+      console.error('Erro ao excluir projeto:', error);
       return {
         data: null,
         error: errorMessage,
@@ -249,7 +249,7 @@ export class LinearProjectService extends BaseService<Projeto> {
     }
   }
 
-  async updateLinearProject(
+  async updateProject(
     projectId: string,
     updates: Partial<Projeto>
   ): Promise<ServiceResponse<Projeto>> {
@@ -266,13 +266,13 @@ export class LinearProjectService extends BaseService<Projeto> {
       return { data: data as Projeto, error: null, success: true };
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : 'Erro ao atualizar projeto linear';
-      console.error('Erro ao atualizar projeto linear:', error);
+        error instanceof Error ? error.message : 'Erro ao atualizar projeto';
+      console.error('Erro ao atualizar projeto:', error);
       return { data: null, error: errorMessage, success: false };
     }
   }
 
-  convertFromDatabase(dbProject: Projeto): LinearProjectData | null {
+  convertFromDatabase(dbProject: Projeto): ProjectData | null {
     try {
       const dadosProjeto = dbProject.dados_projeto as any;
       
@@ -317,4 +317,4 @@ export class LinearProjectService extends BaseService<Projeto> {
   }
 }
 
-export const linearProjectService = new LinearProjectService();
+export const projectService = new ProjectService();
