@@ -258,6 +258,135 @@ export type Database = {
         }
         Relationships: []
       }
+      perfis_materiais: {
+        Row: {
+          created_at: string
+          descricao_perfil: string
+          id: string
+          kg_por_metro: number
+          tipo_perfil: string
+        }
+        Insert: {
+          created_at?: string
+          descricao_perfil: string
+          id?: string
+          kg_por_metro: number
+          tipo_perfil: string
+        }
+        Update: {
+          created_at?: string
+          descricao_perfil?: string
+          id?: string
+          kg_por_metro?: number
+          tipo_perfil?: string
+        }
+        Relationships: []
+      }
+      projeto_otimizacoes: {
+        Row: {
+          created_at: string
+          id: string
+          nome_lista: string
+          pecas_selecionadas: Json
+          perfil_id: string | null
+          projeto_id: string
+          resultados: Json | null
+          tamanho_barra: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome_lista: string
+          pecas_selecionadas?: Json
+          perfil_id?: string | null
+          projeto_id: string
+          resultados?: Json | null
+          tamanho_barra: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome_lista?: string
+          pecas_selecionadas?: Json
+          perfil_id?: string | null
+          projeto_id?: string
+          resultados?: Json | null
+          tamanho_barra?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projeto_otimizacoes_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_materiais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_otimizacoes_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projeto_pecas: {
+        Row: {
+          comprimento_mm: number
+          conjunto: string | null
+          created_at: string
+          descricao_perfil_raw: string | null
+          id: string
+          perfil_id: string | null
+          perfil_nao_encontrado: boolean
+          peso_por_metro: number | null
+          projeto_id: string
+          quantidade: number
+          tag_peca: string
+        }
+        Insert: {
+          comprimento_mm: number
+          conjunto?: string | null
+          created_at?: string
+          descricao_perfil_raw?: string | null
+          id?: string
+          perfil_id?: string | null
+          perfil_nao_encontrado?: boolean
+          peso_por_metro?: number | null
+          projeto_id: string
+          quantidade?: number
+          tag_peca: string
+        }
+        Update: {
+          comprimento_mm?: number
+          conjunto?: string | null
+          created_at?: string
+          descricao_perfil_raw?: string | null
+          id?: string
+          perfil_id?: string | null
+          perfil_nao_encontrado?: boolean
+          peso_por_metro?: number | null
+          projeto_id?: string
+          quantidade?: number
+          tag_peca?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projeto_pecas_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_materiais"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_pecas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projetos: {
         Row: {
           cliente_id: string | null

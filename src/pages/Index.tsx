@@ -11,7 +11,7 @@ import { BarCuttingSettings } from '@/components/settings/BarCuttingSettings';
 import { ReportsManager } from '@/components/reports/ReportsManager';
 import { LinearCuttingTab } from '@/components/optimization/LinearCuttingTab';
 import { SheetCuttingTab } from '@/components/optimization/SheetCuttingTab';
-import { ProjectsList } from '@/components/projects/ProjectsList';
+import { ProjectManagementTab } from '@/components/projects/ProjectManagementTab';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart3, Calculator, History, Settings, Package, Square, FileText, Shield, Folder } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -64,8 +64,9 @@ export interface Project {
 
 const Index = () => {
   useAuthGuard()
-  const [activeTab, setActiveTab] = useState('optimize');
+  const [activeTab, setActiveTab] = useState('projects');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   
   // Get materials data from useSupabaseData
   const { materiaisBarras, materiaisChapas } = useSupabaseData();
@@ -201,18 +202,10 @@ const Index = () => {
       
       <div className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={cn("grid w-full mb-6", isAdmin ? "grid-cols-9" : "grid-cols-8")}>
+          <TabsList className={cn("grid w-full mb-6", isAdmin ? "grid-cols-7" : "grid-cols-6")}>
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="optimize" className="flex items-center gap-2">
-              <Calculator className="w-4 h-4" />
-              Corte Linear
-            </TabsTrigger>
-            <TabsTrigger value="sheet-cutting" className="flex items-center gap-2">
-              <Square className="w-4 h-4" />
-              Corte Chapas
             </TabsTrigger>
             <TabsTrigger value="projects" className="flex items-center gap-2">
               <Folder className="w-4 h-4" />
@@ -271,9 +264,9 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="projects">
-            <ProjectsList
-              onLoadLinearProject={handleLoadLinearProject}
-              onLoadSheetProject={handleLoadSheetProject}
+            <ProjectManagementTab
+              selectedProject={selectedProject}
+              onProjectSelect={setSelectedProject}
             />
           </TabsContent>
 
