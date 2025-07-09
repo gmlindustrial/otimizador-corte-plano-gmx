@@ -9,20 +9,29 @@ import { PieceRegistrationForm } from './PieceRegistrationForm';
 import { FileUploadDialog } from './FileUploadDialog';
 import { ProfileGroupingView } from './ProfileGroupingView';
 import { ProjectValidationAlert } from './ProjectValidationAlert';
+import { ProjectsList } from './ProjectsList';
 import { projetoPecaService } from '@/services/entities/ProjetoPecaService';
 import type { ProjetoPeca, ProjectPieceValidation } from '@/types/project';
 
 interface ProjectManagementTabProps {
   selectedProject: Project | null;
   onProjectSelect: (project: Project) => void;
+  onLoadLinearProject?: (projectData: any) => void;
+  onLoadSheetProject?: (projectData: any) => void;
 }
 
-export const ProjectManagementTab = ({ selectedProject, onProjectSelect }: ProjectManagementTabProps) => {
+export const ProjectManagementTab = ({
+  selectedProject,
+  onProjectSelect,
+  onLoadLinearProject,
+  onLoadSheetProject
+}: ProjectManagementTabProps) => {
   const [activeStep, setActiveStep] = useState<'create' | 'pieces' | 'optimize'>('create');
   const [pieces, setPieces] = useState<ProjetoPeca[]>([]);
   const [invalidPieces, setInvalidPieces] = useState<ProjectPieceValidation[]>([]);
   const [loading, setLoading] = useState(false);
   const [showFileUpload, setShowFileUpload] = useState(false);
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     if (selectedProject) {
@@ -58,6 +67,7 @@ export const ProjectManagementTab = ({ selectedProject, onProjectSelect }: Proje
   const handleProjectCreated = (project: Project) => {
     onProjectSelect(project);
     setActiveStep('pieces');
+    setCreating(false);
   };
 
   const handlePieceAdded = (newPiece: ProjetoPeca) => {
@@ -112,18 +122,40 @@ export const ProjectManagementTab = ({ selectedProject, onProjectSelect }: Proje
   };
 
   if (!selectedProject) {
+    if (creating) {
+      return (
+        <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
+          <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
+            <CardTitle className="flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <FolderPlus className="w-5 h-5" />
+                Novo Projeto
+              </span>
+              <Button variant="outline" size="sm" onClick={() => setCreating(false)}>
+                Cancelar
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <ProjectCreationWizard onProjectCreated={handleProjectCreated} />
+          </CardContent>
+        </Card>
+      );
+    }
+
     return (
-      <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
-        <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
-          <CardTitle className="flex items-center gap-2">
-            <FolderPlus className="w-5 h-5" />
-            Criar Novo Projeto
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-6">
-          <ProjectCreationWizard onProjectCreated={handleProjectCreated} />
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <div className="flex justify-end">
+          <Button onClick={() => setCreating(true)} className="bg-blue-600 text-white hover:bg-blue-700">
+            <FolderPlus className="w-4 h-4 mr-2" /> Novo Projeto
+          </Button>
+        </div>
+        <ProjectsList
+          onLoadLinearProject={onLoadLinearProject || (() => {})}
+          onLoadSheetProject={onLoadSheetProject || (() => {})}
+          onSelectProject={(item) => onProjectSelect(item.project)}
+        />
+      </div>
     );
   }
 
@@ -142,7 +174,10 @@ export const ProjectManagementTab = ({ selectedProject, onProjectSelect }: Proje
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onProjectSelect(null)}
+              onClick={() => {
+                setCreating(false);
+                onProjectSelect(null);
+              }}
               className="text-white border-white hover:bg-white hover:text-green-600"
             >
               Novo Projeto

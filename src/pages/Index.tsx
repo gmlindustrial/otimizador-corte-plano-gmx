@@ -283,6 +283,8 @@ const Index = () => {
             <ProjectManagementTab
               selectedProject={selectedProject}
               onProjectSelect={setSelectedProject}
+              onLoadLinearProject={handleLoadLinearProject}
+              onLoadSheetProject={handleLoadSheetProject}
             />
           </TabsContent>
 

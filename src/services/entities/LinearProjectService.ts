@@ -216,6 +216,14 @@ export class LinearProjectService extends BaseService<Projeto> {
 
   async deleteLinearProject(projectId: string): Promise<ServiceResponse<void>> {
     try {
+      // Delete related pieces first to mimic cascade behavior
+      const { error: piecesError } = await supabase
+        .from('projeto_pecas')
+        .delete()
+        .eq('projeto_id', projectId);
+
+      if (piecesError) throw piecesError;
+
       const { error } = await supabase
         .from('projetos')
         .delete()
@@ -238,6 +246,29 @@ export class LinearProjectService extends BaseService<Projeto> {
         error: errorMessage,
         success: false
       };
+    }
+  }
+
+  async updateLinearProject(
+    projectId: string,
+    updates: Partial<Projeto>
+  ): Promise<ServiceResponse<Projeto>> {
+    try {
+      const { data, error } = await supabase
+        .from('projetos')
+        .update(updates)
+        .eq('id', projectId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return { data: data as Projeto, error: null, success: true };
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'Erro ao atualizar projeto linear';
+      console.error('Erro ao atualizar projeto linear:', error);
+      return { data: null, error: errorMessage, success: false };
     }
   }
 

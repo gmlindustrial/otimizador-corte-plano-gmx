@@ -8,23 +8,26 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useLinearProjects } from '@/hooks/useLinearProjects';
 import { useSheetProjects } from '@/hooks/useSheetProjects';
-import { Building2, Square, Play, Eye, Copy, Trash2, Search, Calendar, User } from 'lucide-react';
+import { Building2, Square, Play, Eye, Copy, Trash2, Search, Calendar, User, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
 import { linearProjectService } from '@/services/entities/LinearProjectService';
+import { ProjectEditDialog } from './ProjectEditDialog';
 
 interface ProjectsListProps {
   onLoadLinearProject: (projectData: any) => void;
   onLoadSheetProject: (projectData: any) => void;
+  onSelectProject?: (project: any) => void;
 }
 
-export const ProjectsList = ({ onLoadLinearProject, onLoadSheetProject }: ProjectsListProps) => {
+export const ProjectsList = ({ onLoadLinearProject, onLoadSheetProject, onSelectProject }: ProjectsListProps) => {
   const { savedProjects: linearProjects, loading: linearLoading, loadProjects: loadLinearProjects } = useLinearProjects();
   const { savedProjects: sheetProjects, loading: sheetLoading, loadProjects: loadSheetProjects } = useSheetProjects();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<'all' | 'linear' | 'sheet'>('all');
   const [selectedProject, setSelectedProject] = useState<any>(null);
+  const [editingProject, setEditingProject] = useState<any>(null);
 
   // Combinar e filtrar projetos
   const allProjects = [
@@ -223,10 +226,10 @@ export const ProjectsList = ({ onLoadLinearProject, onLoadSheetProject }: Projec
                               Detalhes
                             </Button>
                           </DialogTrigger>
-                          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-                            <DialogHeader>
-                              <DialogTitle>Detalhes do Projeto - {item.project.name}</DialogTitle>
-                            </DialogHeader>
+                        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>Detalhes do Projeto - {item.project.name}</DialogTitle>
+                          </DialogHeader>
                             {selectedProject && (
                               <div className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
@@ -275,6 +278,28 @@ export const ProjectsList = ({ onLoadLinearProject, onLoadSheetProject }: Projec
                           </DialogContent>
                         </Dialog>
 
+                        {onSelectProject && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => onSelectProject(item)}
+                            className="flex items-center gap-1"
+                          >
+                            <Copy className="w-3 h-3" />
+                            Gerenciar
+                          </Button>
+                        )}
+
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingProject(item)}
+                          className="flex items-center gap-1"
+                        >
+                          <Edit className="w-3 h-3" />
+                          Editar
+                        </Button>
+
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
@@ -314,6 +339,12 @@ export const ProjectsList = ({ onLoadLinearProject, onLoadSheetProject }: Projec
           )}
         </CardContent>
       </Card>
+      <ProjectEditDialog
+        project={editingProject?.project}
+        open={!!editingProject}
+        onOpenChange={(open) => !open && setEditingProject(null)}
+        onUpdated={loadLinearProjects}
+      />
     </div>
   );
 };
