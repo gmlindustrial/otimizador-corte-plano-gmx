@@ -1,29 +1,42 @@
-
-import { useState, useEffect } from 'react';
-import { useAuthGuard } from '@/hooks/useAuthGuard';
-import { Header } from '@/components/Header';
-import { Dashboard } from '@/components/Dashboard';
-import { HistoryPanel } from '@/components/HistoryPanel';
-import { EstoqueSobrasIntegrated } from '@/components/EstoqueSobrasIntegrated';
-import { CadastroManagerIntegrated } from '@/components/CadastroManagerIntegrated';
-import { SheetCuttingSettings } from '@/components/settings/SheetCuttingSettings';
-import { BarCuttingSettings } from '@/components/settings/BarCuttingSettings';
-import { ReportsManager } from '@/components/reports/ReportsManager';
-import { LinearCuttingTab } from '@/components/optimization/LinearCuttingTab';
-import { SheetCuttingTab } from '@/components/optimization/SheetCuttingTab';
-import { ProjectManagementTab } from '@/components/projects/ProjectManagementTab';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BarChart3, Calculator, History, Settings, Package, Square, FileText, Shield, Folder } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
-import AdminUsuarios from './AdminUsuarios';
-import { cn } from '@/lib/utils';
-import { BottomLeftFillOptimizer } from '@/algorithms/sheet/BottomLeftFill';
-import { useOptimizationHistoryPersistent } from '@/hooks/useOptimizationHistoryPersistent';
-import { useLinearProjects } from '@/hooks/useLinearProjects';
-import { useSheetProjects } from '@/hooks/useSheetProjects';
-import { useLinearOptimization } from '@/hooks/useLinearOptimization';
-import { useSupabaseData } from '@/hooks/useSupabaseData';
-import type { SheetCutPiece, SheetProject, SheetOptimizationResult } from '@/types/sheet';
+import { useState, useEffect } from "react";
+import { useAuthGuard } from "@/hooks/useAuthGuard";
+import { Header } from "@/components/Header";
+import { Dashboard } from "@/components/Dashboard";
+import { HistoryPanel } from "@/components/HistoryPanel";
+import { EstoqueSobrasIntegrated } from "@/components/EstoqueSobrasIntegrated";
+import { CadastroManagerIntegrated } from "@/components/CadastroManagerIntegrated";
+import { SheetCuttingSettings } from "@/components/settings/SheetCuttingSettings";
+import { BarCuttingSettings } from "@/components/settings/BarCuttingSettings";
+import { ReportsManager } from "@/components/reports/ReportsManager";
+import { LinearCuttingTab } from "@/components/optimization/LinearCuttingTab";
+import { SheetCuttingTab } from "@/components/optimization/SheetCuttingTab";
+import { ProjectManagementTab } from "@/components/projects/ProjectManagementTab";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  BarChart3,
+  Calculator,
+  History,
+  Settings,
+  Package,
+  Square,
+  FileText,
+  Shield,
+  Folder,
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import AdminUsuarios from "./AdminUsuarios";
+import { cn } from "@/lib/utils";
+import { BottomLeftFillOptimizer } from "@/algorithms/sheet/BottomLeftFill";
+import { useOptimizationHistoryPersistent } from "@/hooks/useOptimizationHistoryPersistent";
+import { useLinearProjects } from "@/hooks/useLinearProjects";
+import { useSheetProjects } from "@/hooks/useSheetProjects";
+import { useLinearOptimization } from "@/hooks/useLinearOptimization";
+import { useSupabaseData } from "@/hooks/useSupabaseData";
+import type {
+  SheetCutPiece,
+  SheetProject,
+  SheetOptimizationResult,
+} from "@/types/sheet";
 
 export interface CutPiece {
   length: number;
@@ -50,29 +63,22 @@ export interface Project {
   projectNumber: string;
   client: string;
   obra: string;
-  lista: string;
-  revisao: string;
-  tipoMaterial: string;
-  operador: string;
-  turno: string;
-  aprovadorQA: string;
-  validacaoQA: boolean;
   enviarSobrasEstoque: boolean;
-  qrCode: string;
   date: string;
 }
 
 const Index = () => {
-  useAuthGuard()
-  const [activeTab, setActiveTab] = useState('projects');
+  useAuthGuard();
+  const [activeTab, setActiveTab] = useState("projects");
   const [isAdmin, setIsAdmin] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
-  
+
   // Get materials data from useSupabaseData
   const { materiaisBarras, materiaisChapas } = useSupabaseData();
-  
+
   // Linear cutting optimization with persistent projects
-  const { savedProjects: savedLinearProjects, saveProject: saveLinearProject } = useLinearProjects();
+  const { savedProjects: savedLinearProjects, saveProject: saveLinearProject } =
+    useLinearProjects();
   const {
     project,
     setProject,
@@ -82,35 +88,37 @@ const Index = () => {
     setPieces,
     results,
     setResults,
-    handleOptimize
+    handleOptimize,
   } = useLinearOptimization();
 
   // Optimization history - now persistent
-  const { 
-    optimizationHistory, 
+  const {
+    optimizationHistory,
     addToHistory,
-    loading: historyLoading 
+    loading: historyLoading,
   } = useOptimizationHistoryPersistent();
 
   // Sheet cutting with persistent projects
-  const { savedProjects: savedSheetProjects, saveProject: saveSheetProject } = useSheetProjects();
+  const { savedProjects: savedSheetProjects, saveProject: saveSheetProject } =
+    useSheetProjects();
   const [sheetProject, setSheetProject] = useState<SheetProject | null>(null);
   const [sheetPieces, setSheetPieces] = useState<SheetCutPiece[]>([]);
-  const [sheetResults, setSheetResults] = useState<SheetOptimizationResult | null>(null);
+  const [sheetResults, setSheetResults] =
+    useState<SheetOptimizationResult | null>(null);
 
   useEffect(() => {
     const fetchRole = async () => {
       const {
-        data: { session }
+        data: { session },
       } = await supabase.auth.getSession();
       if (!session) return;
 
       const { data } = await supabase
-        .from('usuarios')
-        .select('role')
-        .eq('id', session.user.id)
+        .from("usuarios")
+        .select("role")
+        .eq("id", session.user.id)
         .single();
-      if (data?.role === 'administrador') {
+      if (data?.role === "administrador") {
         setIsAdmin(true);
       }
     };
@@ -119,16 +127,16 @@ const Index = () => {
 
   const handleLinearOptimize = async () => {
     const result = handleOptimize();
-    
+
     // Save project and add to history if project exists
     if (project && pieces.length > 0 && result) {
       try {
         // Only save to history - OptimizationHistoryService will handle project creation
         await addToHistory(project, pieces, result, barLength);
-        
-        console.log('Projeto salvo com sucesso no Supabase');
+
+        console.log("Projeto salvo com sucesso no Supabase");
       } catch (error) {
-        console.error('Erro ao salvar projeto/histórico:', error);
+        console.error("Erro ao salvar projeto/histórico:", error);
       }
     }
   };
@@ -148,15 +156,15 @@ const Index = () => {
     // Save sheet project
     try {
       await saveSheetProject({ project: sheetProject, pieces: sheetPieces });
-      console.log('Projeto de chapas salvo com sucesso');
+      console.log("Projeto de chapas salvo com sucesso");
     } catch (error) {
-      console.error('Erro ao salvar projeto de chapas:', error);
+      console.error("Erro ao salvar projeto de chapas:", error);
     }
 
-    console.log('Otimização de chapas concluída:', {
+    console.log("Otimização de chapas concluída:", {
       totalSheets: optimizationResult.totalSheets,
       efficiency: optimizationResult.averageEfficiency,
-      totalWeight: optimizationResult.totalWeight
+      totalWeight: optimizationResult.totalWeight,
     });
   };
 
@@ -165,31 +173,34 @@ const Index = () => {
     setProject(projectData.project);
     setPieces(projectData.pieces);
     setBarLength(projectData.barLength);
-    setActiveTab('optimize');
+    setActiveTab("optimize");
   };
 
   const handleLoadSheetProject = (projectData: any) => {
     setSheetProject(projectData.project);
     setSheetPieces(projectData.pieces);
-    setActiveTab('sheet-cutting');
+    setActiveTab("sheet-cutting");
   };
 
   // Helper function to find material info
   const findMaterialInfo = (materialId: string | undefined) => {
     if (!materialId) return { id: undefined, tipo: undefined };
-    
+
     // Check if materialId is already a valid UUID (from project data)
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(materialId);
-    
+    const isUUID =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        materialId
+      );
+
     if (isUUID) {
       // If it's a UUID, find the material type by ID
       const allMaterials = [...materiaisBarras, ...materiaisChapas];
-      const material = allMaterials.find(m => m.id === materialId);
+      const material = allMaterials.find((m) => m.id === materialId);
       return { id: materialId, tipo: material?.tipo };
     } else {
       // If it's a material type string, find the ID
       const allMaterials = [...materiaisBarras, ...materiaisChapas];
-      const material = allMaterials.find(m => m.tipo === materialId);
+      const material = allMaterials.find((m) => m.tipo === materialId);
       return { id: material?.id, tipo: material?.tipo };
     }
   };
@@ -199,10 +210,15 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
       <Header />
-      
+
       <div className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className={cn("grid w-full mb-6", isAdmin ? "grid-cols-7" : "grid-cols-6")}>
+          <TabsList
+            className={cn(
+              "grid w-full mb-6",
+              isAdmin ? "grid-cols-7" : "grid-cols-6"
+            )}
+          >
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
               <BarChart3 className="w-4 h-4" />
               Dashboard
@@ -271,8 +287,8 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="sobras">
-            <EstoqueSobrasIntegrated 
-              materialId={materialInfo.id} 
+            <EstoqueSobrasIntegrated
+              materialId={materialInfo.id}
               tipoMaterial={materialInfo.tipo}
             />
           </TabsContent>
@@ -285,7 +301,7 @@ const Index = () => {
                 setPieces(entry.pieces);
                 setResults(entry.results);
                 setBarLength(entry.barLength);
-                setActiveTab('optimize');
+                setActiveTab("optimize");
               }}
             />
           </TabsContent>
@@ -295,9 +311,11 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
-            <CadastroManagerIntegrated onUpdateData={() => {
-              console.log('Dados atualizados - recarregando listas...');
-            }} />
+            <CadastroManagerIntegrated
+              onUpdateData={() => {
+                console.log("Dados atualizados - recarregando listas...");
+              }}
+            />
 
             <BarCuttingSettings />
 
