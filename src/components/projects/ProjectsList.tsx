@@ -172,22 +172,6 @@ export const ProjectsList = ({
                   </div>
                 </div>
 
-                {/* Estatísticas de Produção */}
-                <div className="grid grid-cols-2 gap-2 mb-4">
-                  <div className="bg-blue-50 p-2 rounded-lg text-center">
-                    <div className="text-lg font-bold text-blue-600">
-                      {project._stats?.total_pecas_individuais || 0}
-                    </div>
-                    <div className="text-xs text-blue-600">Tipos de Peças</div>
-                  </div>
-                  <div className="bg-green-50 p-2 rounded-lg text-center">
-                    <div className="text-lg font-bold text-green-600">
-                      {project._stats?.total_quantidade_pecas || 0}
-                    </div>
-                    <div className="text-xs text-green-600">Peças p/ Cortar</div>
-                  </div>
-                </div>
-
                 {/* Badges de Status */}
                 <div className="flex gap-2 mb-4">
                   <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700">
