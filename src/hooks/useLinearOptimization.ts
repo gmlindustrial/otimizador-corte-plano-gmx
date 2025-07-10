@@ -39,7 +39,6 @@ interface OptimizedBar {
   pieces: EnhancedBarPiece[];
   waste: number;
   totalUsed: number;
-  location?: string;
   estoque_id?: string;
   economySaved?: number;
 }
@@ -61,14 +60,7 @@ export const useLinearOptimization = () => {
   const [pieces, setPieces] = useState<CutPiece[]>([]);
   const [results, setResults] = useState<ExtendedOptimizationResult | null>(null);
   
-  // Hook para gerenciar sobras - usar o material ID correto
-  const materialId = project?.tipoMaterial ? 
-    (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(project.tipoMaterial) 
-      ? project.tipoMaterial 
-      : undefined) 
-    : undefined;
-  
-  const { sobras } = useEstoqueSobras(materialId);
+  const { sobras, usarSobra } = useEstoqueSobras();
 
   const handleOptimize = () => {
     if (pieces.length === 0) return null;
@@ -102,9 +94,13 @@ export const useLinearOptimization = () => {
     sortedPieces.sort((a, b) => b.length - a.length);
 
     // Filtrar e ordenar sobras disponíveis
-    const availableLeftovers = sobras
-      .filter(sobra => sobra.disponivel && sobra.comprimento >= 100) // Mínimo 100mm útil
-      .sort((a, b) => b.comprimento - a.comprimento); // Maiores primeiro
+    const expandedLeftovers = sobras.flatMap(s =>
+      Array.from({ length: s.quantidade }).map((_, i) => ({
+        ...s,
+        uniqueId: `${s.id}-${i}`
+      }))
+    ).filter(s => s.comprimento >= 100)
+      .sort((a, b) => b.comprimento - a.comprimento);
 
     const bars: OptimizedBar[] = [];
     const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316'];
@@ -118,31 +114,31 @@ export const useLinearOptimization = () => {
 
     // FASE 1: Tentar usar sobras disponíveis primeiro
     const usedLeftovers = new Set<string>();
+    const usageCount: Record<string, number> = {};
     
     for (const piece of [...sortedPieces]) {
       let placed = false;
 
       // Tentar colocar na sobra disponível
-      for (const leftover of availableLeftovers) {
-        if (usedLeftovers.has(leftover.id)) continue;
+      for (const leftover of expandedLeftovers) {
+        if (usedLeftovers.has(leftover.uniqueId)) continue;
 
         // Verificar se existe barra de sobra já iniciada
         let leftoverBar = bars.find(bar => 
-          bar.type === 'leftover' && 
-          bar.estoque_id === leftover.id
+          bar.type === 'leftover' &&
+          bar.estoque_id === leftover.uniqueId
         );
 
         if (!leftoverBar) {
           // Criar nova barra de sobra
           leftoverBar = {
-            id: `leftover-${leftover.id}`,
+            id: `leftover-${leftover.uniqueId}`,
             type: 'leftover',
             originalLength: leftover.comprimento,
             pieces: [],
             waste: 0,
             totalUsed: 0,
-            location: leftover.localizacao,
-            estoque_id: leftover.id,
+            estoque_id: leftover.uniqueId,
             economySaved: 0
           };
           bars.push(leftoverBar);
@@ -177,7 +173,8 @@ export const useLinearOptimization = () => {
           materialReused += piece.length;
           
           placed = true;
-          usedLeftovers.add(leftover.id);
+          usedLeftovers.add(leftover.uniqueId);
+          usageCount[leftover.id] = (usageCount[leftover.id] || 0) + 1;
           
           // Remover peça da lista
           const pieceIndex = sortedPieces.indexOf(piece);
@@ -260,7 +257,6 @@ export const useLinearOptimization = () => {
         // Preservar informações extras para visualização
         ...(bar.type === 'leftover' && {
           type: bar.type,
-          location: bar.location,
           estoque_id: bar.estoque_id,
           economySaved: bar.economySaved,
           originalLength: bar.originalLength
@@ -288,6 +284,11 @@ export const useLinearOptimization = () => {
     console.log('Eficiência:', optimizationResult.efficiency);
     console.log('Sobras utilizadas:', leftoverBarsUsed);
     console.log('Novas barras:', newBarsUsedCount);
+
+    // Atualizar estoque de sobras consumidas
+    Object.entries(usageCount).forEach(([id, qty]) => {
+      usarSobra(id, qty);
+    });
 
     setResults(optimizationResult);
     return optimizationResult;

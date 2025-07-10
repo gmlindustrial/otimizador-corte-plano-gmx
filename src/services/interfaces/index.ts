@@ -50,12 +50,9 @@ export interface Projeto extends BaseEntity {
 }
 
 export interface EstoqueSobra extends BaseEntity {
-  material_id?: string;
   comprimento: number;
   quantidade: number;
-  localizacao: string;
-  projeto_origem?: string;
-  disponivel: boolean;
+  id_projeto_otimizacao?: string;
 }
 
 export interface HistoricoOtimizacao extends BaseEntity {

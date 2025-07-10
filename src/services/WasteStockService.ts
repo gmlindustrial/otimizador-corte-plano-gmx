@@ -1,42 +1,24 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import type { Project, OptimizationResult } from '@/pages/Index';
-import { ProjectService } from './ProjectService';
+import type { LinearOptimizationWithLeftoversResult } from '@/lib/runLinearOptimization';
 
 export class WasteStockService {
   static async addWasteToStock(
-    project: Project,
-    results: OptimizationResult,
-    projectId: string | null
+    optimizationId: string,
+    results: LinearOptimizationWithLeftoversResult
   ): Promise<void> {
     try {
       console.log('=== ADICIONANDO SOBRAS AO ESTOQUE ===');
-      console.log('Project:', project);
-      console.log('Project ID:', projectId);
-      console.log('Material Type:', project.tipoMaterial);
-
-      // Buscar o ID do material baseado no tipo
-      const materialId = await ProjectService.getMaterialIdByType(project.tipoMaterial);
-      
-      console.log('Material ID encontrado:', materialId);
-
-      if (!materialId) {
-        console.error('Material ID não encontrado para tipo:', project.tipoMaterial);
-        toast.error('Erro: Material não encontrado para salvar sobras');
-        return;
-      }
+      console.log('Optimization ID:', optimizationId);
 
       // Filtrar sobras > 50mm e criar entradas para o estoque
       const wasteEntries = results.bars
         .filter(bar => bar.waste > 50)
         .map(bar => ({
-          material_id: materialId,
           comprimento: Math.floor(bar.waste),
-          localizacao: `Auto-${project.projectNumber}`,
-          projeto_origem: projectId,
           quantidade: 1,
-          disponivel: true
+          id_projeto_otimizacao: optimizationId
         }));
 
       console.log('Sobras para adicionar:', wasteEntries);

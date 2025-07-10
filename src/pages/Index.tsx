@@ -301,10 +301,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="sobras">
-            <EstoqueSobrasIntegrated
-              materialId={materialInfo.id}
-              tipoMaterial={materialInfo.tipo}
-            />
+            <EstoqueSobrasIntegrated />
           </TabsContent>
 
           <TabsContent value="history">

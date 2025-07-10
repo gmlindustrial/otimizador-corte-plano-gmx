@@ -15,7 +15,9 @@ import { ProjectValidationAlert } from './ProjectValidationAlert';
 import { projetoPecaService } from '@/services/entities/ProjetoPecaService';
 import { projetoOtimizacaoService } from '@/services/entities/ProjetoOtimizacaoService';
 import type { ProjetoPeca, ProjectPieceValidation } from '@/types/project';
-import { runLinearOptimization } from '@/lib/runLinearOptimization';
+import { runLinearOptimizationWithLeftovers } from '@/lib/runLinearOptimization';
+import { estoqueSobrasService } from '@/services/entities/EstoqueSobrasService';
+import { WasteStockService } from '@/services/WasteStockService';
 import { toast } from 'sonner';
 
 interface Projeto {
@@ -100,17 +102,30 @@ export const ProjectManagementTab = () => {
         peso: p.peso_por_metro || undefined
       }));
 
-      const result = runLinearOptimization(piecesForAlgo, barLength);
+      const stockResp = await estoqueSobrasService.getAll();
+      const sobras = stockResp.success && stockResp.data ? stockResp.data : [];
+      const resultWithLeftovers = runLinearOptimizationWithLeftovers(
+        piecesForAlgo,
+        barLength,
+        sobras
+      );
 
-      await projetoOtimizacaoService.create({
+      const created = await projetoOtimizacaoService.create({
         data: {
           projeto_id: selectedProject.id,
           nome_lista: name,
           tamanho_barra: barLength,
           pecas_selecionadas: selectedPieces.map(p => p.id) as any,
-          resultados: result as any
+          resultados: resultWithLeftovers as any
         }
       });
+
+      if (created.success && created.data) {
+        for (const [id, qty] of Object.entries(resultWithLeftovers.leftoverUsage)) {
+          await estoqueSobrasService.useQuantity(id, qty as number);
+        }
+        await WasteStockService.addWasteToStock(created.data.id, resultWithLeftovers);
+      }
 
       // remove optimized pieces from project
       await Promise.all(selectedPieces.map(p => projetoPecaService.delete(p.id)));
