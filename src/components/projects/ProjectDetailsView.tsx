@@ -262,7 +262,7 @@ export const ProjectDetailsView = ({
                 onClick={onBack}
                 variant="outline"
                 size="sm"
-                className="text-white border-white hover:bg-white hover:text-green-600"
+                className="bg-transparent text-white border-white hover:bg-white hover:text-green-600"
               >
                 <ArrowLeft className="w-4 h-4 mr-1" />
                 Voltar
@@ -279,7 +279,7 @@ export const ProjectDetailsView = ({
                 onClick={onEdit}
                 variant="outline"
                 size="sm"
-                className="text-white border-white hover:bg-white hover:text-green-600"
+                className="bg-transparent text-white border-white hover:bg-white hover:text-green-600"
               >
                 <Edit className="w-4 h-4 mr-1" />
                 Editar
@@ -288,7 +288,7 @@ export const ProjectDetailsView = ({
                 onClick={onDelete}
                 variant="outline"
                 size="sm"
-                className="text-white border-white hover:bg-white hover:text-red-600"
+                className="bg-transparent text-white border-white hover:bg-white hover:text-red-600"
               >
                 <Trash2 className="w-4 h-4 mr-1" />
                 Excluir
