@@ -43,8 +43,7 @@ export const useOptimizationHistoryPersistent = () => {
 
       // Auto-enviar sobras para estoque se habilitado
       if (project.enviarSobrasEstoque && results.totalWaste > 0) {
-        // Buscar o projeto salvo para obter o ID correto
-        await WasteStockService.addWasteToStock(project, results, newEntry.project.id);
+        await WasteStockService.addWasteToStock(newEntry.id, results as any);
       }
 
       console.log('Otimização salva no histórico:', newEntry);

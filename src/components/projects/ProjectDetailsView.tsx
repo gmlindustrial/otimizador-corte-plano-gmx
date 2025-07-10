@@ -2,24 +2,39 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger
+} from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   ArrowLeft, 
   Edit, 
   Trash2, 
-  Plus, 
-  Calendar, 
-  Building, 
+  Plus,
+  Upload,
+  Calendar,
+  Building,
   User,
   Package,
   Calculator,
   Settings
 } from 'lucide-react';
 import { projetoPecaService } from '@/services/entities/ProjetoPecaService';
+import { projetoOtimizacaoService } from '@/services/entities/ProjetoOtimizacaoService';
+import { OptimizationCreateDialog } from './OptimizationCreateDialog';
+import { OptimizationResultsDialog } from './OptimizationResultsDialog';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import type { ProjetoPeca, ProjetoOtimizacao } from '@/types/project';
+import type { ProjetoPeca, ProjetoOtimizacao, ProjectPieceValidation, PerfilMaterial } from '@/types/project';
 import { PieceRegistrationForm } from './PieceRegistrationForm';
+import { FileUploadDialog } from './FileUploadDialog';
+import { ProjectValidationAlert } from './ProjectValidationAlert';
+import { ProjectDuplicateManager } from './ProjectDuplicateManager';
+import { DeleteConfirmDialog } from '../management/DeleteConfirmDialog';
 
 interface Projeto {
   id: string;
@@ -37,7 +52,11 @@ interface ProjectDetailsViewProps {
   onBack: () => void;
   onEdit: () => void;
   onDelete: () => void;
-  onCreateOptimization: () => void;
+  onCreateOptimization: (
+    pieces: ProjetoPeca[],
+    name: string,
+    barLength: number
+  ) => Promise<void>;
 }
 
 export const ProjectDetailsView = ({ 
@@ -50,6 +69,16 @@ export const ProjectDetailsView = ({
   const [pieces, setPieces] = useState<ProjetoPeca[]>([]);
   const [optimizations, setOptimizations] = useState<ProjetoOtimizacao[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showUpload, setShowUpload] = useState(false);
+  const [validations, setValidations] = useState<ProjectPieceValidation[]>([]);
+  const [activeTab, setActiveTab] = useState<'pieces' | 'register' | 'optimizations'>('pieces');
+  const [importing, setImporting] = useState(false);
+  const [duplicateItems, setDuplicateItems] = useState<{ existing: ProjetoPeca; imported: ProjetoPeca }[]>([]);
+  const [selectedPieces, setSelectedPieces] = useState<Set<string>>(new Set());
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showOptimizationDialog, setShowOptimizationDialog] = useState(false);
+  const [viewResults, setViewResults] = useState<{ res: any; bar: number; id: string } | null>(null);
 
   useEffect(() => {
     loadProjectData();
@@ -64,8 +93,10 @@ export const ProjectDetailsView = ({
         setPieces(piecesResponse.data);
       }
 
-      // TODO: Carregar otimizações quando service estiver pronto
-      setOptimizations([]);
+      const optResponse = await projetoOtimizacaoService.getByProjectId(project.id);
+      if (optResponse.success && optResponse.data) {
+        setOptimizations(optResponse.data);
+      }
     } catch (error) {
       console.error('Erro ao carregar dados do projeto:', error);
       toast.error('Erro ao carregar dados do projeto');
@@ -76,6 +107,119 @@ export const ProjectDetailsView = ({
 
   const handlePieceAdded = (piece: ProjetoPeca) => {
     setPieces(prev => [...prev, piece]);
+    setActiveTab('pieces');
+  };
+
+  const handleImportStart = () => {
+    setImporting(true);
+  };
+
+  const handleFileProcessed = async (imported: any[]) => {
+    const { validPieces, invalidPieces } =
+      await projetoPecaService.validateAndProcessPieces(imported, project.id);
+
+    const duplicates = validPieces.filter((vp) =>
+      pieces.some((p) => p.tag_peca === vp.tag_peca)
+    ).map((vp) => ({ existing: pieces.find(p => p.tag_peca === vp.tag_peca)!, imported: vp }));
+
+    const uniqueValid = validPieces.filter(
+      (vp) => !pieces.some((p) => p.tag_peca === vp.tag_peca)
+    );
+
+    if (uniqueValid.length > 0) {
+      const resp = await projetoPecaService.createBatch(uniqueValid);
+      if (resp.success && resp.data) {
+        toast.success(`${resp.data.length} peça(s) cadastradas`);
+        await loadProjectData();
+      } else {
+        toast.error('Erro ao cadastrar peças');
+      }
+    }
+
+    if (duplicates.length > 0) {
+      setDuplicateItems(duplicates);
+      setActiveTab('register');
+    }
+
+    if (invalidPieces.length > 0) {
+      setValidations(invalidPieces);
+      toast.warning('Algumas peças precisam ser revisadas');
+      setActiveTab('register');
+    } else {
+      setActiveTab('pieces');
+    }
+
+    // Fechar diálogo após processamento
+    setShowUpload(false);
+    setImporting(false);
+  };
+
+  const handleResolveValidation = async (validation: ProjectPieceValidation, perfil: PerfilMaterial) => {
+    const resp = await projetoPecaService.create({
+      ...validation.peca,
+      perfil_id: perfil.id,
+      peso_por_metro: perfil.kg_por_metro,
+      perfil_nao_encontrado: false
+    });
+    if (resp.success && resp.data) {
+      setPieces(prev => [...prev, resp.data]);
+      setValidations(prev => prev.filter(v => v !== validation));
+      toast.success('Peça validada e cadastrada');
+    } else {
+      toast.error('Erro ao cadastrar peça');
+    }
+  };
+
+  const handleDuplicateResolved = async (selected: ProjetoPeca[]) => {
+    if (selected.length > 0) {
+      const resp = await projetoPecaService.createBatch(selected);
+      if (resp.success && resp.data) {
+        toast.success(`${resp.data.length} peça(s) adicionadas`);
+        await loadProjectData();
+      } else {
+        toast.error('Erro ao cadastrar peças');
+      }
+    }
+    setDuplicateItems([]);
+    setActiveTab('pieces');
+  };
+
+  const togglePieceSelection = (id: string) => {
+    setSelectedPieces(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) newSet.delete(id);
+      else newSet.add(id);
+      return newSet;
+    });
+  };
+
+  const toggleProfileSelection = (key: string, pieces: ProjetoPeca[]) => {
+    const allSelected = pieces.every(p => selectedPieces.has(p.id));
+    setSelectedPieces(prev => {
+      const newSet = new Set(prev);
+      pieces.forEach(p => {
+        if (allSelected) newSet.delete(p.id);
+        else newSet.add(p.id);
+      });
+      return newSet;
+    });
+  };
+
+  const handleDeleteSelected = async () => {
+    setDeleting(true);
+    try {
+      for (const id of selectedPieces) {
+        await projetoPecaService.delete(id);
+      }
+      setSelectedPieces(new Set());
+      await loadProjectData();
+      toast.success('Peças excluídas');
+    } catch (err) {
+      toast.error('Erro ao excluir peças');
+    } finally {
+      setDeleting(false);
+      setConfirmDelete(false);
+    }
   };
 
   const groupedPieces = pieces.reduce((acc, piece) => {
@@ -85,12 +229,15 @@ export const ProjectDetailsView = ({
         perfil: piece.perfil,
         pieces: [],
         totalQuantity: 0,
-        totalLength: 0
+        totalLength: 0,
+        totalWeight: 0
       };
     }
     acc[key].pieces.push(piece);
     acc[key].totalQuantity += piece.quantidade;
     acc[key].totalLength += piece.comprimento_mm * piece.quantidade;
+    acc[key].totalWeight +=
+      (piece.peso_por_metro || 0) * piece.comprimento_mm * piece.quantidade / 1000;
     return acc;
   }, {} as Record<string, any>);
 
@@ -115,7 +262,7 @@ export const ProjectDetailsView = ({
                 onClick={onBack}
                 variant="outline"
                 size="sm"
-                className="text-white border-white hover:bg-white hover:text-green-600"
+                className="bg-transparent text-white border-white hover:bg-white hover:text-green-600"
               >
                 <ArrowLeft className="w-4 h-4 mr-1" />
                 Voltar
@@ -132,7 +279,7 @@ export const ProjectDetailsView = ({
                 onClick={onEdit}
                 variant="outline"
                 size="sm"
-                className="text-white border-white hover:bg-white hover:text-green-600"
+                className="bg-transparent text-white border-white hover:bg-white hover:text-green-600"
               >
                 <Edit className="w-4 h-4 mr-1" />
                 Editar
@@ -141,7 +288,7 @@ export const ProjectDetailsView = ({
                 onClick={onDelete}
                 variant="outline"
                 size="sm"
-                className="text-white border-white hover:bg-white hover:text-red-600"
+                className="bg-transparent text-white border-white hover:bg-white hover:text-red-600"
               >
                 <Trash2 className="w-4 h-4 mr-1" />
                 Excluir
@@ -187,7 +334,7 @@ export const ProjectDetailsView = ({
       </Card>
 
       {/* Tabs */}
-      <Tabs defaultValue="pieces" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="pieces" className="flex items-center gap-2">
             <Package className="w-4 h-4" />
@@ -209,10 +356,42 @@ export const ProjectDetailsView = ({
               <CardTitle>Cadastrar Nova Peça</CardTitle>
             </CardHeader>
             <CardContent>
-              <PieceRegistrationForm
-                projectId={project.id}
-                onPieceAdded={handlePieceAdded}
-              />
+              {importing ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2" />
+                  Extraindo peças do arquivo...
+                </div>
+              ) : duplicateItems.length > 0 ? (
+                <ProjectDuplicateManager
+                  duplicates={duplicateItems}
+                  onResolved={handleDuplicateResolved}
+                  onCancel={() => setDuplicateItems([])}
+                />
+              ) : (
+                <>
+                  <PieceRegistrationForm
+                    projectId={project.id}
+                    onPieceAdded={handlePieceAdded}
+                  />
+                  {validations.length > 0 && (
+                    <div className="mt-4">
+                      <ProjectValidationAlert validations={validations} onResolve={handleResolveValidation} />
+                    </div>
+                  )}
+                  <div className="mt-4 flex justify-end">
+                    <Button variant="outline" onClick={() => setShowUpload(true)}>
+                      <Upload className="w-4 h-4 mr-2" />
+                      Anexar Arquivo
+                    </Button>
+                  </div>
+                  <FileUploadDialog
+                    open={showUpload}
+                    onOpenChange={setShowUpload}
+                    onProcessStart={handleImportStart}
+                    onFileProcessed={handleFileProcessed}
+                  />
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -222,63 +401,115 @@ export const ProjectDetailsView = ({
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>Peças por Perfil</span>
-                <Button 
-                  onClick={onCreateOptimization}
-                  disabled={pieces.length === 0}
-                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Nova Otimização
-                </Button>
+                <div className="flex gap-2">
+                  {selectedPieces.size > 0 && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setConfirmDelete(true)}
+                    >
+                      Excluir Selecionadas
+                    </Button>
+                  )}
+                  <Button
+                    onClick={() => setShowOptimizationDialog(true)}
+                    disabled={pieces.length === 0 || selectedPieces.size === 0}
+                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  >
+                    <Plus className="w-4 h-4 mr-1" />
+                    Nova Otimização
+                  </Button>
+                </div>
               </CardTitle>
             </CardHeader>
             <CardContent>
               {pieces.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  Nenhuma peça cadastrada neste projeto.
-                </div>
+                <div className="text-center py-8 text-gray-500">Nenhuma peça cadastrada neste projeto.</div>
               ) : (
-                <div className="space-y-4">
-                  {Object.entries(groupedPieces).map(([key, group]) => (
-                    <Card key={key} className="border">
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-lg flex items-center justify-between">
-                          <span>
-                            {group.perfil?.descricao_perfil || 'Perfil não definido'}
-                          </span>
-                          <div className="flex gap-2">
-                            <Badge variant="secondary">
-                              {group.totalQuantity} peças
-                            </Badge>
-                            <Badge variant="outline">
-                              {(group.totalLength / 1000).toFixed(2)}m total
-                            </Badge>
-                          </div>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                          {group.pieces.map((piece: ProjetoPeca) => (
-                            <div key={piece.id} className="p-3 bg-gray-50 rounded-lg">
-                              <div className="font-medium text-sm">{piece.tag_peca}</div>
-                              {piece.conjunto && (
-                                <div className="text-xs text-blue-600">{piece.conjunto}</div>
-                              )}
-                              <div className="text-sm text-gray-600">
-                                {piece.comprimento_mm}mm × {piece.quantidade}
-                              </div>
-                              {piece.peso_por_metro && (
-                                <div className="text-xs text-gray-500">
-                                  {(piece.peso_por_metro * piece.comprimento_mm * piece.quantidade / 1000).toFixed(2)}kg
-                                </div>
+                <Accordion type="multiple" className="space-y-4" defaultValue={Object.keys(groupedPieces)}>
+                  {Object.entries(groupedPieces).map(([key, group]) => {
+                    const allSelected = group.pieces.every((p: ProjetoPeca) => selectedPieces.has(p.id));
+                    return (
+                      <AccordionItem key={key} value={key} className="border rounded-lg">
+                        <AccordionTrigger className="hover:no-underline">
+                          <div className="flex items-center gap-3 flex-1">
+                            <Checkbox
+                              checked={allSelected}
+                              onCheckedChange={() => toggleProfileSelection(key, group.pieces)}
+                              className="mr-2"
+                            />
+                            <span className="font-medium">
+                              {group.perfil?.descricao_perfil || 'Perfil não definido'}
+                            </span>
+                            <div className="flex gap-2 ml-auto">
+                              <Badge variant="secondary">{group.totalQuantity} peças</Badge>
+                              <Badge variant="outline">{(group.totalLength / 1000).toFixed(2)}m</Badge>
+                              {group.totalWeight > 0 && (
+                                <Badge variant="outline">{group.totalWeight.toFixed(2)}kg</Badge>
                               )}
                             </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                          <div className="space-y-2 py-2">
+                            {group.pieces.map((piece: ProjetoPeca) => {
+                              const selected = selectedPieces.has(piece.id);
+                              const peso = piece.peso_por_metro
+                                ? (piece.peso_por_metro * piece.comprimento_mm) / 1000
+                                : null;
+                              return (
+                                <div key={piece.id} className="flex items-center justify-between border rounded-md p-2 bg-gray-50">
+                                  <div className="flex items-start gap-3">
+                                    <Checkbox
+                                      checked={selected}
+                                      onCheckedChange={() => togglePieceSelection(piece.id)}
+                                      className="mt-0.5"
+                                    />
+                                    <div className="text-xs space-y-1">
+                                      {piece.perfil && (
+                                        <div>
+                                          <span className="font-semibold">Descrição Perfil:</span>{' '}
+                                          {piece.perfil.descricao_perfil}
+                                        </div>
+                                      )}
+                                      <div>
+                                        <span className="font-semibold">Tag:</span> {piece.tag_peca}
+                                      </div>
+                                      {piece.conjunto && (
+                                        <div className="text-blue-600">
+                                          <span className="font-semibold">Conjunto:</span> {piece.conjunto}
+                                        </div>
+                                      )}
+                                      <div>
+                                        <span className="font-semibold">Comprimento:</span> {piece.comprimento_mm}mm × {piece.quantidade}
+                                      </div>
+                                      {peso !== null && (
+                                        <div>
+                                          <span className="font-semibold">Peso:</span> {peso.toFixed(2)}kg
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <Button
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => {
+                                      setSelectedPieces(new Set([piece.id]));
+                                      setConfirmDelete(true);
+                                    }}
+                                    className="text-red-600 hover:bg-red-50"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    );
+                  })}
+                </Accordion>
               )}
             </CardContent>
           </Card>
@@ -296,32 +527,89 @@ export const ProjectDetailsView = ({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {optimizations.map((optimization) => (
-                    <Card key={optimization.id} className="border">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h4 className="font-medium">{optimization.nome_lista}</h4>
-                            <p className="text-sm text-gray-600">
-                              Barra: {optimization.tamanho_barra}mm
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {format(new Date(optimization.created_at), 'dd/MM/yyyy HH:mm')}
-                            </p>
+                  {optimizations.map((optimization) => {
+                    const totalPieces = optimization.resultados?.bars?.reduce(
+                      (sum: number, b: any) => sum + b.pieces.length,
+                      0
+                    ) || 0;
+                    const cutPieces = optimization.resultados?.bars?.reduce(
+                      (sum: number, b: any) =>
+                        sum + b.pieces.filter((p: any) => p.cortada).length,
+                      0
+                    ) || 0;
+                    const percent = totalPieces > 0 ? Math.round((cutPieces / totalPieces) * 100) : 0;
+
+                    return (
+                      <Card key={optimization.id} className="border">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="font-medium">{optimization.nome_lista}</h4>
+                              <p className="text-sm text-gray-600">
+                                Barra: {optimization.tamanho_barra}mm
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {format(new Date(optimization.created_at), 'dd/MM/yyyy HH:mm')}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {cutPieces}/{totalPieces} peças cortadas ({percent}%)
+                              </p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                setViewResults({
+                                  res: optimization.resultados,
+                                  bar: optimization.tamanho_barra,
+                                  id: optimization.id
+                                })
+                              }
+                            >
+                              Visualizar
+                            </Button>
                           </div>
-                          <Button variant="outline" size="sm">
-                            Visualizar
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+      <OptimizationCreateDialog
+        open={showOptimizationDialog}
+        onOpenChange={setShowOptimizationDialog}
+        onCreate={(name, bar) =>
+          onCreateOptimization(
+            pieces.filter(p => selectedPieces.has(p.id)),
+            name,
+            bar
+          ).then(() => {
+            setShowOptimizationDialog(false);
+            setActiveTab('optimizations');
+            void loadProjectData();
+          })
+        }
+      />
+      <OptimizationResultsDialog
+        open={!!viewResults}
+        onOpenChange={() => setViewResults(null)}
+        results={viewResults?.res || null}
+        barLength={viewResults?.bar || 0}
+        project={null}
+        optimizationId={viewResults?.id || null}
+      />
+      <DeleteConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        onConfirm={handleDeleteSelected}
+        title="Excluir Peças"
+        description={`Tem certeza que deseja excluir ${selectedPieces.size} peça(s)? Esta ação não pode ser desfeita.`}
+        loading={deleting}
+      />
     </div>
   );
 };

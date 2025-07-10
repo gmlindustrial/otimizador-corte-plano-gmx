@@ -47,7 +47,16 @@ export interface CutPiece {
 export interface OptimizationResult {
   bars: Array<{
     id: string;
-    pieces: Array<{ length: number; color: string; label: string }>;
+    pieces: Array<{
+      length: number;
+      color: string;
+      label: string;
+      tag?: string;
+      conjunto?: string;
+      perfil?: string;
+      peso?: number;
+      cortada?: boolean;
+    }>;
     waste: number;
     totalUsed: number;
   }>;
@@ -292,10 +301,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="sobras">
-            <EstoqueSobrasIntegrated
-              materialId={materialInfo.id}
-              tipoMaterial={materialInfo.tipo}
-            />
+            <EstoqueSobrasIntegrated />
           </TabsContent>
 
           <TabsContent value="history">

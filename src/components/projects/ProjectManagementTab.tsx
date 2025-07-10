@@ -13,7 +13,11 @@ import { FileUploadDialog } from './FileUploadDialog';
 import { ProfileGroupingView } from './ProfileGroupingView';
 import { ProjectValidationAlert } from './ProjectValidationAlert';
 import { projetoPecaService } from '@/services/entities/ProjetoPecaService';
+import { projetoOtimizacaoService } from '@/services/entities/ProjetoOtimizacaoService';
 import type { ProjetoPeca, ProjectPieceValidation } from '@/types/project';
+import { runLinearOptimizationWithLeftovers } from '@/lib/runLinearOptimization';
+import { estoqueSobrasService } from '@/services/entities/EstoqueSobrasService';
+import { WasteStockService } from '@/services/WasteStockService';
 import { toast } from 'sonner';
 
 interface Projeto {
@@ -81,10 +85,56 @@ export const ProjectManagementTab = () => {
     setView('list');
   };
 
-  const handleCreateOptimization = () => {
-    // TODO: Implementar criação de otimização
-    console.log('Criar nova otimização para projeto:', selectedProject?.id);
-    toast.info('Funcionalidade de otimização em desenvolvimento');
+  const handleCreateOptimization = async (
+    selectedPieces: ProjetoPeca[],
+    name: string,
+    barLength: number
+  ) => {
+    if (!selectedProject || selectedPieces.length === 0) return;
+
+    try {
+      const piecesForAlgo = selectedPieces.map(p => ({
+        length: p.comprimento_mm,
+        quantity: p.quantidade,
+        tag: p.tag_peca,
+        conjunto: p.conjunto || undefined,
+        perfil: p.perfil?.descricao_perfil || p.descricao_perfil_raw || undefined,
+        peso: p.peso_por_metro || undefined
+      }));
+
+      const stockResp = await estoqueSobrasService.getAll();
+      const sobras = stockResp.success && stockResp.data ? stockResp.data : [];
+      const resultWithLeftovers = runLinearOptimizationWithLeftovers(
+        piecesForAlgo,
+        barLength,
+        sobras
+      );
+
+      const created = await projetoOtimizacaoService.create({
+        data: {
+          projeto_id: selectedProject.id,
+          nome_lista: name,
+          tamanho_barra: barLength,
+          pecas_selecionadas: selectedPieces.map(p => p.id) as any,
+          resultados: resultWithLeftovers as any
+        }
+      });
+
+      if (created.success && created.data) {
+        for (const [id, qty] of Object.entries(resultWithLeftovers.leftoverUsage)) {
+          await estoqueSobrasService.useQuantity(id, qty as number);
+        }
+        await WasteStockService.addWasteToStock(created.data.id, resultWithLeftovers);
+      }
+
+      // remove optimized pieces from project
+      await Promise.all(selectedPieces.map(p => projetoPecaService.delete(p.id)));
+
+      toast.success('Otimização criada com sucesso');
+    } catch (err) {
+      console.error('Erro ao criar otimização:', err);
+      toast.error('Erro ao criar otimização');
+    }
   };
 
   if (view === 'create') {

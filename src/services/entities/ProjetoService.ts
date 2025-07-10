@@ -8,6 +8,36 @@ export class ProjetoService extends BaseService<Projeto> {
     super('projetos');
   }
 
+  async getAllWithCounts() {
+    try {
+      const { data, error } = await supabase
+        .from('projetos' as any)
+        .select(
+          `*, clientes (nome), obras (nome), projeto_pecas(count), projeto_otimizacoes(count)`
+        )
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const mapped = (data || []).map((p: any) => ({
+        ...p,
+        _count: {
+          projeto_pecas: p.projeto_pecas?.count ?? 0,
+          projeto_otimizacoes: p.projeto_otimizacoes?.count ?? 0
+        }
+      }));
+
+      return {
+        data: mapped,
+        error: null,
+        success: true,
+        total: mapped.length
+      };
+    } catch (error) {
+      return this.handleError(error, 'Erro ao buscar projetos');
+    }
+  }
+
   async getByCliente(clienteId: string) {
     try {
       const { data, error } = await supabase

@@ -9,9 +9,10 @@ interface FileUploadDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onFileProcessed: (pieces: any[]) => void;
+  onProcessStart: () => void;
 }
 
-export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed }: FileUploadDialogProps) => {
+export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed, onProcessStart }: FileUploadDialogProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [processing, setProcessing] = useState(false);
 
@@ -30,6 +31,8 @@ export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed }: FileUp
     if (!file) return;
 
     setProcessing(true);
+    onOpenChange(false);
+    onProcessStart();
     try {
       const text = await file.text();
       const pieces = FileParsingService.parseAutoCADReport(text);
