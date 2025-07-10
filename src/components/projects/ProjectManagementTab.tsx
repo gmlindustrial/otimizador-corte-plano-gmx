@@ -81,9 +81,8 @@ export const ProjectManagementTab = () => {
     setView('list');
   };
 
-  const handleCreateOptimization = () => {
-    // TODO: Implementar criação de otimização
-    console.log('Criar nova otimização para projeto:', selectedProject?.id);
+  const handleCreateOptimization = (selectedPieces: ProjetoPeca[]) => {
+    console.log('Criar nova otimização para projeto:', selectedProject?.id, selectedPieces);
     toast.info('Funcionalidade de otimização em desenvolvimento');
   };
 
