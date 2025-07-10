@@ -45,49 +45,25 @@ export type Database = {
         Row: {
           comprimento: number
           created_at: string
-          disponivel: boolean
           id: string
-          localizacao: string
-          material_id: string | null
-          projeto_origem: string | null
+          id_projeto_otimizacao: string | null
           quantidade: number
         }
         Insert: {
           comprimento: number
           created_at?: string
-          disponivel?: boolean
           id?: string
-          localizacao: string
-          material_id?: string | null
-          projeto_origem?: string | null
+          id_projeto_otimizacao?: string | null
           quantidade?: number
         }
         Update: {
           comprimento?: number
           created_at?: string
-          disponivel?: boolean
           id?: string
-          localizacao?: string
-          material_id?: string | null
-          projeto_origem?: string | null
+          id_projeto_otimizacao?: string | null
           quantidade?: number
         }
-        Relationships: [
-          {
-            foreignKeyName: "estoque_sobras_material_id_fkey"
-            columns: ["material_id"]
-            isOneToOne: false
-            referencedRelation: "materiais"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "estoque_sobras_projeto_origem_fkey"
-            columns: ["projeto_origem"]
-            isOneToOne: false
-            referencedRelation: "projetos"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       historico_otimizacoes: {
         Row: {

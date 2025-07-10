@@ -334,7 +334,7 @@ export const ProjectDetailsView = ({
       </Card>
 
       {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'pieces' | 'optimizations' | 'register')} className="space-y-6">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="pieces" className="flex items-center gap-2">
             <Package className="w-4 h-4" />

@@ -67,7 +67,6 @@ export const useLinearOptimization = () => {
 
     console.log('=== INICIANDO OTIMIZAÇÃO ===');
     console.log('Projeto:', project);
-    console.log('Material ID:', materialId);
     console.log('Sobras disponíveis:', sobras.length);
 
     // Preparar peças para otimização
