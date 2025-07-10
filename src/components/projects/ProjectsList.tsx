@@ -56,7 +56,7 @@ export const ProjectsList = ({
   const loadProjects = async () => {
     setLoading(true);
     try {
-      const response = await projetoService.getAll();
+      const response = await projetoService.getAllWithCounts();
       if (response.success && response.data) {
         setProjects(response.data as any);
       }

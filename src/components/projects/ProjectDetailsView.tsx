@@ -527,36 +527,52 @@ export const ProjectDetailsView = ({
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {optimizations.map((optimization) => (
-                    <Card key={optimization.id} className="border">
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <h4 className="font-medium">{optimization.nome_lista}</h4>
-                            <p className="text-sm text-gray-600">
-                              Barra: {optimization.tamanho_barra}mm
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {format(new Date(optimization.created_at), 'dd/MM/yyyy HH:mm')}
-                            </p>
+                  {optimizations.map((optimization) => {
+                    const totalPieces = optimization.resultados?.bars?.reduce(
+                      (sum: number, b: any) => sum + b.pieces.length,
+                      0
+                    ) || 0;
+                    const cutPieces = optimization.resultados?.bars?.reduce(
+                      (sum: number, b: any) =>
+                        sum + b.pieces.filter((p: any) => p.cortada).length,
+                      0
+                    ) || 0;
+                    const percent = totalPieces > 0 ? Math.round((cutPieces / totalPieces) * 100) : 0;
+
+                    return (
+                      <Card key={optimization.id} className="border">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <h4 className="font-medium">{optimization.nome_lista}</h4>
+                              <p className="text-sm text-gray-600">
+                                Barra: {optimization.tamanho_barra}mm
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {format(new Date(optimization.created_at), 'dd/MM/yyyy HH:mm')}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                {cutPieces}/{totalPieces} peças cortadas ({percent}%)
+                              </p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                setViewResults({
+                                  res: optimization.resultados,
+                                  bar: optimization.tamanho_barra,
+                                  id: optimization.id
+                                })
+                              }
+                            >
+                              Visualizar
+                            </Button>
                           </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              setViewResults({
-                                res: optimization.resultados,
-                                bar: optimization.tamanho_barra,
-                                id: optimization.id
-                              })
-                            }
-                          >
-                            Visualizar
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
