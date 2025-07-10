@@ -103,12 +103,17 @@ export const ProjectManagementTab = () => {
       const result = runLinearOptimization(piecesForAlgo, barLength);
 
       await projetoOtimizacaoService.create({
-        projeto_id: selectedProject.id,
-        nome_lista: name,
-        tamanho_barra: barLength,
-        pecas_selecionadas: selectedPieces.map(p => p.id) as any,
-        resultados: result as any
+        data: {
+          projeto_id: selectedProject.id,
+          nome_lista: name,
+          tamanho_barra: barLength,
+          pecas_selecionadas: selectedPieces.map(p => p.id) as any,
+          resultados: result as any
+        }
       });
+
+      // remove optimized pieces from project
+      await Promise.all(selectedPieces.map(p => projetoPecaService.delete(p.id)));
 
       toast.success('Otimização criada com sucesso');
     } catch (err) {
