@@ -59,7 +59,8 @@ export function runLinearOptimization(pieces: PieceInput[], barLength: number): 
           tag: piece.tag,
           conjunto: piece.conjunto,
           perfil: piece.perfil,
-          peso: piece.peso
+          peso: piece.peso,
+          cortada: false
         });
         bar.totalUsed += needed;
         bar.waste = barLength - bar.totalUsed;
@@ -78,7 +79,8 @@ export function runLinearOptimization(pieces: PieceInput[], barLength: number): 
           tag: piece.tag,
           conjunto: piece.conjunto,
           perfil: piece.perfil,
-          peso: piece.peso
+          peso: piece.peso,
+          cortada: false
         }],
         totalUsed: piece.length,
         waste: barLength - piece.length,

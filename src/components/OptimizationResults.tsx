@@ -15,6 +15,7 @@ interface OptimizationResultsProps {
   barLength: number;
   project: Project | null;
   pieces: CutPiece[];
+  onResultsChange?: (results: OptimizationResult) => void;
 }
 
 // Interface estendida para suportar informações de sustentabilidade
@@ -28,7 +29,7 @@ interface ExtendedOptimizationResult extends OptimizationResult {
   };
 }
 
-export const OptimizationResults = ({ results, barLength, project, pieces }: OptimizationResultsProps) => {
+export const OptimizationResults = ({ results, barLength, project, pieces, onResultsChange }: OptimizationResultsProps) => {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [printMode, setPrintMode] = useState<'complete' | 'simplified'>('complete');
@@ -462,6 +463,7 @@ export const OptimizationResults = ({ results, barLength, project, pieces }: Opt
         results={results}
         barLength={barLength}
         project={project}
+        onResultsChange={onResultsChange}
       />
     </>
   );

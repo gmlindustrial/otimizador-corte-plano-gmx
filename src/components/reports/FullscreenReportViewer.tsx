@@ -16,14 +16,16 @@ interface FullscreenReportViewerProps {
   results: OptimizationResult;
   barLength: number;
   project: Project | null;
+  onResultsChange?: (results: OptimizationResult) => void;
 }
 
-export const FullscreenReportViewer = ({ 
-  isOpen, 
-  onClose, 
-  results, 
-  barLength, 
-  project 
+export const FullscreenReportViewer = ({
+  isOpen,
+  onClose,
+  results,
+  barLength,
+  project,
+  onResultsChange
 }: FullscreenReportViewerProps) => {
   const [selectedBar, setSelectedBar] = useState<number>(0);
   const [svgZoomLevel, setSvgZoomLevel] = useState<number>(1);
@@ -33,6 +35,19 @@ export const FullscreenReportViewer = ({
   const [checkedPieces, setCheckedPieces] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'overview' | 'detailed'>('detailed');
   const [showLegend, setShowLegend] = useState<boolean>(true);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const initial = new Set<string>();
+    results.bars.forEach((bar, bIdx) => {
+      bar.pieces.forEach((piece: any) => {
+        if (piece.cortada) {
+          initial.add(`${bIdx}-${piece.tag || piece.length}`);
+        }
+      });
+    });
+    setCheckedPieces(initial);
+  }, [isOpen, results]);
 
   // Extrair conjuntos únicos
   const allConjuntos = new Set<string>();
@@ -91,14 +106,19 @@ export const FullscreenReportViewer = ({
   const togglePieceCheck = (barIndex: number, piece: any) => {
     const pieceId = `${barIndex}-${piece.tag || piece.length}`;
     const newChecked = new Set(checkedPieces);
-    
+
+    let checked: boolean;
     if (newChecked.has(pieceId)) {
       newChecked.delete(pieceId);
+      checked = false;
     } else {
       newChecked.add(pieceId);
+      checked = true;
     }
-    
+
+    piece.cortada = checked;
     setCheckedPieces(newChecked);
+    onResultsChange?.(results);
   };
 
   const currentBar = filteredBars[selectedBar];

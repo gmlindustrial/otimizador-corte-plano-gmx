@@ -78,7 +78,7 @@ export const ProjectDetailsView = ({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showOptimizationDialog, setShowOptimizationDialog] = useState(false);
-  const [viewResults, setViewResults] = useState<{ res: any; bar: number } | null>(null);
+  const [viewResults, setViewResults] = useState<{ res: any; bar: number; id: string } | null>(null);
 
   useEffect(() => {
     loadProjectData();
@@ -546,7 +546,8 @@ export const ProjectDetailsView = ({
                             onClick={() =>
                               setViewResults({
                                 res: optimization.resultados,
-                                bar: optimization.tamanho_barra
+                                bar: optimization.tamanho_barra,
+                                id: optimization.id
                               })
                             }
                           >
@@ -583,6 +584,7 @@ export const ProjectDetailsView = ({
         results={viewResults?.res || null}
         barLength={viewResults?.bar || 0}
         project={null}
+        optimizationId={viewResults?.id || null}
       />
       <DeleteConfirmDialog
         open={confirmDelete}

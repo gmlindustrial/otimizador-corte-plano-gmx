@@ -8,14 +8,21 @@ interface OptimizationResultsDialogProps {
   results: OptimizationResult | null;
   barLength: number;
   project: Project | null;
+  optimizationId: string | null;
 }
 
-export const OptimizationResultsDialog = ({ open, onOpenChange, results, barLength, project }: OptimizationResultsDialogProps) => {
+import { projetoOtimizacaoService } from '@/services/entities/ProjetoOtimizacaoService';
+
+export const OptimizationResultsDialog = ({ open, onOpenChange, results, barLength, project, optimizationId }: OptimizationResultsDialogProps) => {
   if (!results) return null;
+  const handleResultsChange = async (r: OptimizationResult) => {
+    if (!optimizationId) return;
+    await projetoOtimizacaoService.update({ id: optimizationId, data: { resultados: r } });
+  };
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl overflow-y-auto max-h-screen">
-        <OptimizationResults results={results} barLength={barLength} project={project} pieces={[]} />
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <OptimizationResults results={results} barLength={barLength} project={project} pieces={[]} onResultsChange={handleResultsChange} />
       </DialogContent>
     </Dialog>
   );
