@@ -77,8 +77,8 @@ export class FileParsingService {
 
       // Detectar conjunto apenas se estiver esperando após linha pontilhada
       if (esperandoConjunto && line.length > 0) {
-        const conjuntoMatch = line.match(/^([A-Z]+(?:-\d+|\d+))\s*(\d+)?\s*([A-Z].*)?$/);
-        if (conjuntoMatch) {
+        const conjuntoMatch = line.match(/^([A-Z]+(?:-\d+|\d+))\s*(\d+)?\s*([A-Z].*)?$/i);
+        if (conjuntoMatch && !conjuntoMatch[1].toUpperCase().startsWith('P')) {
           currentConjunto = conjuntoMatch[1];
           const descricao = conjuntoMatch[3] || '';
           console.log(`Conjunto identificado após linha pontilhada: ${currentConjunto}${descricao ? ` (${descricao})` : ''}`);
@@ -95,7 +95,7 @@ export class FileParsingService {
         console.log(`Analisando linha: "${line}" - Conjunto atual: ${currentConjunto}`);
         
         // Regex melhorada para capturar diferentes formatos
-        const pieceMatch = line.match(/^\s*(\d+)\s+(\d+)\s+([\w\d\-\s\.\+\*]+?)\s+([\w\d\-]+)\s+(\d+)\s+x?\s*(\d+)\s+([\d\.]+)$/i);
+        const pieceMatch = line.match(/^\s*([Pp]?\d+)\s+(\d+)\s+([\w\d\-\s\.\+\*]+?)\s+([\w\d\-]+)\s+(\d+)\s+x?\s*(\d+)\s+([\d\.]+)$/i);
         
         if (pieceMatch) {
           const [, posicao, quantidade, perfil, material, comprimento, largura, peso] = pieceMatch;
@@ -125,7 +125,7 @@ export class FileParsingService {
             quantity: parseInt(quantidade),
             obra,
             conjunto: currentConjunto,
-            posicao: parseInt(posicao),
+            posicao,
             perfil: perfil.trim(),
             material: material.trim(),
             peso: parseFloat(peso),
@@ -141,7 +141,7 @@ export class FileParsingService {
           console.log(`Peça adicionada: ${tag} - ${piece.length}mm - Qtd: ${piece.quantity} - Perfil: ${piece.perfil} - Conjunto: ${currentConjunto}`);
         } else {
           // Tentar regex mais simples para formato: pos qty descricao comprimento peso
-          const simpleMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(.+?)\s+(\d+)\s+([\d\.]+)$/);
+          const simpleMatch = line.match(/^\s*([Pp]?\d+)\s+(\d+)\s+(.+?)\s+(\d+)\s+([\d\.]+)$/);
           if (simpleMatch) {
             const [, posicao, quantidade, descricao, comprimento, peso] = simpleMatch;
             console.log(`Regex simples detectou: pos=${posicao}, qty=${quantidade}, desc=${descricao}, comp=${comprimento}, peso=${peso} - Conjunto: ${currentConjunto}`);
@@ -158,7 +158,7 @@ export class FileParsingService {
               quantity: parseInt(quantidade),
               obra,
               conjunto: currentConjunto,
-              posicao: parseInt(posicao),
+              posicao,
               perfil: descricao.trim(),
               peso: parseFloat(peso),
               tag,
