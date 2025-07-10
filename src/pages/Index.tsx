@@ -65,6 +65,14 @@ export interface Project {
   obra: string;
   enviarSobrasEstoque: boolean;
   date: string;
+  tipoMaterial: string;
+  lista: string;
+  revisao: string;
+  turno: string;
+  operador: string;
+  aprovadorQA: string;
+  validacaoQA: boolean;
+  qrCode: string;
 }
 
 const Index = () => {
@@ -280,10 +288,7 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="projects">
-            <ProjectManagementTab
-              selectedProject={selectedProject}
-              onProjectSelect={setSelectedProject}
-            />
+            <ProjectManagementTab />
           </TabsContent>
 
           <TabsContent value="sobras">
