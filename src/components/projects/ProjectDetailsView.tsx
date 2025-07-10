@@ -439,7 +439,7 @@ export const ProjectDetailsView = ({
                               className="mr-2"
                             />
                             <span className="font-medium">
-                              {group.perfil?.descricao_perfil || 'Perfil não definido'}
+                             Descricao Perfil: {group.perfil?.descricao_perfil || 'Perfil não definido'}
                             </span>
                             <div className="flex gap-2 ml-auto">
                               <Badge variant="secondary">{group.totalQuantity} peças</Badge>
