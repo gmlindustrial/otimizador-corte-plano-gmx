@@ -4,714 +4,662 @@ export type Json =
   | boolean
   | null
   | { [key: string]: Json | undefined }
-  | Json[];
+  | Json[]
 
 export type Database = {
   // Allows to automatically instanciate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)";
-  };
+    PostgrestVersion: "12.2.3 (519615d)"
+  }
   public: {
     Tables: {
       clientes: {
         Row: {
-          contato: string | null;
-          created_at: string;
-          email: string | null;
-          id: string;
-          nome: string;
-          telefone: string | null;
-        };
+          contato: string | null
+          created_at: string
+          email: string | null
+          id: string
+          nome: string
+          telefone: string | null
+        }
         Insert: {
-          contato?: string | null;
-          created_at?: string;
-          email?: string | null;
-          id?: string;
-          nome: string;
-          telefone?: string | null;
-        };
+          contato?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome: string
+          telefone?: string | null
+        }
         Update: {
-          contato?: string | null;
-          created_at?: string;
-          email?: string | null;
-          id?: string;
-          nome?: string;
-          telefone?: string | null;
-        };
-        Relationships: [];
-      };
+          contato?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          nome?: string
+          telefone?: string | null
+        }
+        Relationships: []
+      }
       estoque_sobras: {
         Row: {
-          comprimento: number;
-          created_at: string;
-          disponivel: boolean;
-          id: string;
-          localizacao: string;
-          material_id: string | null;
-          projeto_origem: string | null;
-          quantidade: number;
-        };
+          comprimento: number
+          created_at: string
+          disponivel: boolean
+          id: string
+          localizacao: string
+          material_id: string | null
+          projeto_origem: string | null
+          quantidade: number
+        }
         Insert: {
-          comprimento: number;
-          created_at?: string;
-          disponivel?: boolean;
-          id?: string;
-          localizacao: string;
-          material_id?: string | null;
-          projeto_origem?: string | null;
-          quantidade?: number;
-        };
+          comprimento: number
+          created_at?: string
+          disponivel?: boolean
+          id?: string
+          localizacao: string
+          material_id?: string | null
+          projeto_origem?: string | null
+          quantidade?: number
+        }
         Update: {
-          comprimento?: number;
-          created_at?: string;
-          disponivel?: boolean;
-          id?: string;
-          localizacao?: string;
-          material_id?: string | null;
-          projeto_origem?: string | null;
-          quantidade?: number;
-        };
+          comprimento?: number
+          created_at?: string
+          disponivel?: boolean
+          id?: string
+          localizacao?: string
+          material_id?: string | null
+          projeto_origem?: string | null
+          quantidade?: number
+        }
         Relationships: [
           {
-            foreignKeyName: "estoque_sobras_material_id_fkey";
-            columns: ["material_id"];
-            isOneToOne: false;
-            referencedRelation: "materiais";
-            referencedColumns: ["id"];
+            foreignKeyName: "estoque_sobras_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materiais"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "estoque_sobras_projeto_origem_fkey";
-            columns: ["projeto_origem"];
-            isOneToOne: false;
-            referencedRelation: "projetos";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
+            foreignKeyName: "estoque_sobras_projeto_origem_fkey"
+            columns: ["projeto_origem"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       historico_otimizacoes: {
         Row: {
-          bar_length: number;
-          created_at: string;
-          id: string;
-          pecas: Json;
-          projeto_id: string | null;
-          resultados: Json;
-        };
+          bar_length: number
+          created_at: string
+          id: string
+          pecas: Json
+          projeto_id: string | null
+          resultados: Json
+        }
         Insert: {
-          bar_length: number;
-          created_at?: string;
-          id?: string;
-          pecas: Json;
-          projeto_id?: string | null;
-          resultados: Json;
-        };
+          bar_length: number
+          created_at?: string
+          id?: string
+          pecas: Json
+          projeto_id?: string | null
+          resultados: Json
+        }
         Update: {
-          bar_length?: number;
-          created_at?: string;
-          id?: string;
-          pecas?: Json;
-          projeto_id?: string | null;
-          resultados?: Json;
-        };
+          bar_length?: number
+          created_at?: string
+          id?: string
+          pecas?: Json
+          projeto_id?: string | null
+          resultados?: Json
+        }
         Relationships: [
           {
-            foreignKeyName: "historico_otimizacoes_projeto_id_fkey";
-            columns: ["projeto_id"];
-            isOneToOne: false;
-            referencedRelation: "projetos";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
+            foreignKeyName: "historico_otimizacoes_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inspetores_qa: {
         Row: {
-          area: string | null;
-          certificacao: string | null;
-          created_at: string;
-          id: string;
-          nome: string;
-        };
+          area: string | null
+          certificacao: string | null
+          created_at: string
+          id: string
+          nome: string
+        }
         Insert: {
-          area?: string | null;
-          certificacao?: string | null;
-          created_at?: string;
-          id?: string;
-          nome: string;
-        };
+          area?: string | null
+          certificacao?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+        }
         Update: {
-          area?: string | null;
-          certificacao?: string | null;
-          created_at?: string;
-          id?: string;
-          nome?: string;
-        };
-        Relationships: [];
-      };
+          area?: string | null
+          certificacao?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
       materiais: {
         Row: {
-          comprimento_padrao: number;
-          created_at: string;
-          descricao: string | null;
-          id: string;
-          tipo: string;
-          tipo_corte: string;
-        };
+          comprimento_padrao: number
+          created_at: string
+          descricao: string | null
+          id: string
+          tipo: string
+          tipo_corte: string
+        }
         Insert: {
-          comprimento_padrao?: number;
-          created_at?: string;
-          descricao?: string | null;
-          id?: string;
-          tipo: string;
-          tipo_corte?: string;
-        };
+          comprimento_padrao?: number
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          tipo: string
+          tipo_corte?: string
+        }
         Update: {
-          comprimento_padrao?: number;
-          created_at?: string;
-          descricao?: string | null;
-          id?: string;
-          tipo?: string;
-          tipo_corte?: string;
-        };
-        Relationships: [];
-      };
+          comprimento_padrao?: number
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          tipo?: string
+          tipo_corte?: string
+        }
+        Relationships: []
+      }
       material_prices: {
         Row: {
-          created_at: string;
-          effective_date: string;
-          id: string;
-          material_id: string;
-          price_per_kg: number;
-          price_per_m2: number | null;
-        };
+          created_at: string
+          effective_date: string
+          id: string
+          material_id: string
+          price_per_kg: number
+          price_per_m2: number | null
+        }
         Insert: {
-          created_at?: string;
-          effective_date?: string;
-          id?: string;
-          material_id: string;
-          price_per_kg?: number;
-          price_per_m2?: number | null;
-        };
+          created_at?: string
+          effective_date?: string
+          id?: string
+          material_id: string
+          price_per_kg?: number
+          price_per_m2?: number | null
+        }
         Update: {
-          created_at?: string;
-          effective_date?: string;
-          id?: string;
-          material_id?: string;
-          price_per_kg?: number;
-          price_per_m2?: number | null;
-        };
+          created_at?: string
+          effective_date?: string
+          id?: string
+          material_id?: string
+          price_per_kg?: number
+          price_per_m2?: number | null
+        }
         Relationships: [
           {
-            foreignKeyName: "material_prices_material_id_fkey";
-            columns: ["material_id"];
-            isOneToOne: false;
-            referencedRelation: "materiais";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
+            foreignKeyName: "material_prices_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "materiais"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       obras: {
         Row: {
-          created_at: string;
-          endereco: string | null;
-          id: string;
-          nome: string;
-          responsavel: string | null;
-        };
+          created_at: string
+          endereco: string | null
+          id: string
+          nome: string
+          responsavel: string | null
+        }
         Insert: {
-          created_at?: string;
-          endereco?: string | null;
-          id?: string;
-          nome: string;
-          responsavel?: string | null;
-        };
+          created_at?: string
+          endereco?: string | null
+          id?: string
+          nome: string
+          responsavel?: string | null
+        }
         Update: {
-          created_at?: string;
-          endereco?: string | null;
-          id?: string;
-          nome?: string;
-          responsavel?: string | null;
-        };
-        Relationships: [];
-      };
+          created_at?: string
+          endereco?: string | null
+          id?: string
+          nome?: string
+          responsavel?: string | null
+        }
+        Relationships: []
+      }
       operadores: {
         Row: {
-          created_at: string;
-          especialidade: string | null;
-          id: string;
-          nome: string;
-          turno: string;
-        };
+          created_at: string
+          especialidade: string | null
+          id: string
+          nome: string
+          turno: string
+        }
         Insert: {
-          created_at?: string;
-          especialidade?: string | null;
-          id?: string;
-          nome: string;
-          turno: string;
-        };
+          created_at?: string
+          especialidade?: string | null
+          id?: string
+          nome: string
+          turno: string
+        }
         Update: {
-          created_at?: string;
-          especialidade?: string | null;
-          id?: string;
-          nome?: string;
-          turno?: string;
-        };
-        Relationships: [];
-      };
+          created_at?: string
+          especialidade?: string | null
+          id?: string
+          nome?: string
+          turno?: string
+        }
+        Relationships: []
+      }
       perfis_materiais: {
         Row: {
-          created_at: string;
-          descricao_perfil: string;
-          id: string;
-          kg_por_metro: number;
-          tipo_perfil: string;
-        };
+          created_at: string
+          descricao_perfil: string
+          id: string
+          kg_por_metro: number
+          tipo_perfil: string
+        }
         Insert: {
-          created_at?: string;
-          descricao_perfil: string;
-          id?: string;
-          kg_por_metro: number;
-          tipo_perfil: string;
-        };
+          created_at?: string
+          descricao_perfil: string
+          id?: string
+          kg_por_metro: number
+          tipo_perfil: string
+        }
         Update: {
-          created_at?: string;
-          descricao_perfil?: string;
-          id?: string;
-          kg_por_metro?: number;
-          tipo_perfil?: string;
-        };
-        Relationships: [];
-      };
+          created_at?: string
+          descricao_perfil?: string
+          id?: string
+          kg_por_metro?: number
+          tipo_perfil?: string
+        }
+        Relationships: []
+      }
       projeto_otimizacoes: {
         Row: {
-          created_at: string;
-          id: string;
-          nome_lista: string;
-          pecas_selecionadas: Json;
-          perfil_id: string | null;
-          projeto_id: string;
-          resultados: Json | null;
-          tamanho_barra: number;
-        };
+          created_at: string
+          id: string
+          nome_lista: string
+          pecas_selecionadas: Json
+          perfil_id: string | null
+          projeto_id: string
+          resultados: Json | null
+          tamanho_barra: number
+        }
         Insert: {
-          created_at?: string;
-          id?: string;
-          nome_lista: string;
-          pecas_selecionadas?: Json;
-          perfil_id?: string | null;
-          projeto_id: string;
-          resultados?: Json | null;
-          tamanho_barra: number;
-        };
+          created_at?: string
+          id?: string
+          nome_lista: string
+          pecas_selecionadas?: Json
+          perfil_id?: string | null
+          projeto_id: string
+          resultados?: Json | null
+          tamanho_barra: number
+        }
         Update: {
-          created_at?: string;
-          id?: string;
-          nome_lista?: string;
-          pecas_selecionadas?: Json;
-          perfil_id?: string | null;
-          projeto_id?: string;
-          resultados?: Json | null;
-          tamanho_barra?: number;
-        };
+          created_at?: string
+          id?: string
+          nome_lista?: string
+          pecas_selecionadas?: Json
+          perfil_id?: string | null
+          projeto_id?: string
+          resultados?: Json | null
+          tamanho_barra?: number
+        }
         Relationships: [
           {
-            foreignKeyName: "projeto_otimizacoes_perfil_id_fkey";
-            columns: ["perfil_id"];
-            isOneToOne: false;
-            referencedRelation: "perfis_materiais";
-            referencedColumns: ["id"];
+            foreignKeyName: "projeto_otimizacoes_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_materiais"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "projeto_otimizacoes_projeto_id_fkey";
-            columns: ["projeto_id"];
-            isOneToOne: false;
-            referencedRelation: "projetos";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
+            foreignKeyName: "projeto_otimizacoes_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projeto_pecas: {
         Row: {
-          comprimento_mm: number;
-          conjunto: string | null;
-          created_at: string;
-          descricao_perfil_raw: string | null;
-          id: string;
-          perfil_id: string | null;
-          perfil_nao_encontrado: boolean;
-          peso_por_metro: number | null;
-          projeto_id: string;
-          quantidade: number;
-          tag_peca: string;
-        };
+          comprimento_mm: number
+          conjunto: string | null
+          created_at: string
+          descricao_perfil_raw: string | null
+          id: string
+          perfil_id: string | null
+          perfil_nao_encontrado: boolean
+          peso_por_metro: number | null
+          projeto_id: string
+          quantidade: number
+          tag_peca: string
+        }
         Insert: {
-          comprimento_mm: number;
-          conjunto?: string | null;
-          created_at?: string;
-          descricao_perfil_raw?: string | null;
-          id?: string;
-          perfil_id?: string | null;
-          perfil_nao_encontrado?: boolean;
-          peso_por_metro?: number | null;
-          projeto_id: string;
-          quantidade?: number;
-          tag_peca: string;
-        };
+          comprimento_mm: number
+          conjunto?: string | null
+          created_at?: string
+          descricao_perfil_raw?: string | null
+          id?: string
+          perfil_id?: string | null
+          perfil_nao_encontrado?: boolean
+          peso_por_metro?: number | null
+          projeto_id: string
+          quantidade?: number
+          tag_peca: string
+        }
         Update: {
-          comprimento_mm?: number;
-          conjunto?: string | null;
-          created_at?: string;
-          descricao_perfil_raw?: string | null;
-          id?: string;
-          perfil_id?: string | null;
-          perfil_nao_encontrado?: boolean;
-          peso_por_metro?: number | null;
-          projeto_id?: string;
-          quantidade?: number;
-          tag_peca?: string;
-        };
+          comprimento_mm?: number
+          conjunto?: string | null
+          created_at?: string
+          descricao_perfil_raw?: string | null
+          id?: string
+          perfil_id?: string | null
+          perfil_nao_encontrado?: boolean
+          peso_por_metro?: number | null
+          projeto_id?: string
+          quantidade?: number
+          tag_peca?: string
+        }
         Relationships: [
           {
-            foreignKeyName: "projeto_pecas_perfil_id_fkey";
-            columns: ["perfil_id"];
-            isOneToOne: false;
-            referencedRelation: "perfis_materiais";
-            referencedColumns: ["id"];
+            foreignKeyName: "projeto_pecas_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfis_materiais"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "projeto_pecas_projeto_id_fkey";
-            columns: ["projeto_id"];
-            isOneToOne: false;
-            referencedRelation: "projetos";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
+            foreignKeyName: "projeto_pecas_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projetos: {
         Row: {
-          cliente_id: string | null;
-          created_at: string;
-          dados_projeto: Json | null;
-          enviar_sobras_estoque: boolean;
-          id: string;
-          inspetor_id: string | null;
-          lista: string;
-          material_id: string | null;
-          nome: string;
-          numero_projeto: string;
-          obra_id: string | null;
-          operador_id: string | null;
-          qr_code: string | null;
-          revisao: string;
-          validacao_qa: boolean;
-        };
+          cliente_id: string | null
+          created_at: string
+          id: string
+          nome: string
+          numero_projeto: string
+          obra_id: string | null
+        }
         Insert: {
-          cliente_id?: string | null;
-          created_at?: string;
-          dados_projeto?: Json | null;
-          enviar_sobras_estoque?: boolean;
-          id?: string;
-          inspetor_id?: string | null;
-          lista?: string;
-          material_id?: string | null;
-          nome: string;
-          numero_projeto: string;
-          obra_id?: string | null;
-          operador_id?: string | null;
-          qr_code?: string | null;
-          revisao?: string;
-          validacao_qa?: boolean;
-        };
+          cliente_id?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          numero_projeto: string
+          obra_id?: string | null
+        }
         Update: {
-          cliente_id?: string | null;
-          created_at?: string;
-          dados_projeto?: Json | null;
-          enviar_sobras_estoque?: boolean;
-          id?: string;
-          inspetor_id?: string | null;
-          lista?: string;
-          material_id?: string | null;
-          nome?: string;
-          numero_projeto?: string;
-          obra_id?: string | null;
-          operador_id?: string | null;
-          qr_code?: string | null;
-          revisao?: string;
-          turno?: string;
-          validacao_qa?: boolean;
-        };
+          cliente_id?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          numero_projeto?: string
+          obra_id?: string | null
+        }
         Relationships: [
           {
-            foreignKeyName: "projetos_cliente_id_fkey";
-            columns: ["cliente_id"];
-            isOneToOne: false;
-            referencedRelation: "clientes";
-            referencedColumns: ["id"];
+            foreignKeyName: "projetos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "projetos_inspetor_id_fkey";
-            columns: ["inspetor_id"];
-            isOneToOne: false;
-            referencedRelation: "inspetores_qa";
-            referencedColumns: ["id"];
+            foreignKeyName: "projetos_obra_id_fkey"
+            columns: ["obra_id"]
+            isOneToOne: false
+            referencedRelation: "obras"
+            referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "projetos_material_id_fkey";
-            columns: ["material_id"];
-            isOneToOne: false;
-            referencedRelation: "materiais";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "projetos_obra_id_fkey";
-            columns: ["obra_id"];
-            isOneToOne: false;
-            referencedRelation: "obras";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "projetos_operador_id_fkey";
-            columns: ["operador_id"];
-            isOneToOne: false;
-            referencedRelation: "operadores";
-            referencedColumns: ["id"];
-          }
-        ];
-      };
+        ]
+      }
       sheet_optimization_history: {
         Row: {
-          algorithm: string;
-          created_at: string;
-          efficiency: number;
-          id: string;
-          material_cost: number;
-          optimization_time: number;
-          pieces: Json;
-          project_id: string;
-          project_name: string;
-          results: Json;
-          total_sheets: number;
-          total_weight: number;
-        };
+          algorithm: string
+          created_at: string
+          efficiency: number
+          id: string
+          material_cost: number
+          optimization_time: number
+          pieces: Json
+          project_id: string
+          project_name: string
+          results: Json
+          total_sheets: number
+          total_weight: number
+        }
         Insert: {
-          algorithm?: string;
-          created_at?: string;
-          efficiency?: number;
-          id?: string;
-          material_cost?: number;
-          optimization_time?: number;
-          pieces: Json;
-          project_id: string;
-          project_name: string;
-          results: Json;
-          total_sheets?: number;
-          total_weight?: number;
-        };
+          algorithm?: string
+          created_at?: string
+          efficiency?: number
+          id?: string
+          material_cost?: number
+          optimization_time?: number
+          pieces: Json
+          project_id: string
+          project_name: string
+          results: Json
+          total_sheets?: number
+          total_weight?: number
+        }
         Update: {
-          algorithm?: string;
-          created_at?: string;
-          efficiency?: number;
-          id?: string;
-          material_cost?: number;
-          optimization_time?: number;
-          pieces?: Json;
-          project_id?: string;
-          project_name?: string;
-          results?: Json;
-          total_sheets?: number;
-          total_weight?: number;
-        };
-        Relationships: [];
-      };
+          algorithm?: string
+          created_at?: string
+          efficiency?: number
+          id?: string
+          material_cost?: number
+          optimization_time?: number
+          pieces?: Json
+          project_id?: string
+          project_name?: string
+          results?: Json
+          total_sheets?: number
+          total_weight?: number
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
-          created_at: string;
-          description: string | null;
-          id: string;
-          setting_key: string;
-          setting_value: Json;
-          updated_at: string;
-        };
+          created_at: string
+          description: string | null
+          id: string
+          setting_key: string
+          setting_value: Json
+          updated_at: string
+        }
         Insert: {
-          created_at?: string;
-          description?: string | null;
-          id?: string;
-          setting_key: string;
-          setting_value: Json;
-          updated_at?: string;
-        };
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key: string
+          setting_value: Json
+          updated_at?: string
+        }
         Update: {
-          created_at?: string;
-          description?: string | null;
-          id?: string;
-          setting_key?: string;
-          setting_value?: Json;
-          updated_at?: string;
-        };
-        Relationships: [];
-      };
+          created_at?: string
+          description?: string | null
+          id?: string
+          setting_key?: string
+          setting_value?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       usuarios: {
         Row: {
-          created_at: string | null;
-          email: string | null;
-          id: string;
-          nome: string;
-          role: string;
-        };
+          created_at: string | null
+          email: string | null
+          id: string
+          nome: string
+          role: string
+        }
         Insert: {
-          created_at?: string | null;
-          email?: string | null;
-          id: string;
-          nome: string;
-          role?: string;
-        };
+          created_at?: string | null
+          email?: string | null
+          id: string
+          nome: string
+          role?: string
+        }
         Update: {
-          created_at?: string | null;
-          email?: string | null;
-          id?: string;
-          nome?: string;
-          role?: string;
-        };
-        Relationships: [];
-      };
-    };
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          nome?: string
+          role?: string
+        }
+        Relationships: []
+      }
+    }
     Views: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     Functions: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     Enums: {
-      [_ in never]: never;
-    };
+      [_ in never]: never
+    }
     CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
-};
+      [_ in never]: never
+    }
+  }
+}
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<
-  keyof Database,
-  "public"
->];
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R;
+      Row: infer R
     }
     ? R
     : never
   : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-      DefaultSchema["Views"])
-  ? (DefaultSchema["Tables"] &
-      DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-      Row: infer R;
-    }
-    ? R
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
     : never
-  : never;
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I;
+      Insert: infer I
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-      Insert: infer I;
-    }
-    ? I
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
     : never
-  : never;
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U;
+      Update: infer U
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-      Update: infer U;
-    }
-    ? U
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
     : never
-  : never;
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never
+    : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-  : never;
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals;
+    schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never
+    : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals;
+  schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-  : never;
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
 
 export const Constants = {
   public: {
     Enums: {},
   },
-} as const;
+} as const

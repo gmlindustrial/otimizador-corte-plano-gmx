@@ -42,39 +42,35 @@ export const ProjectCreationWizard = ({
       return;
     }
 
-    const cliente = clientes.find((c) => c.id === formData.clienteId);
-    const obra = obras.find((o) => o.id === formData.obraId);
+    try {
+      const { data, error } = await supabase
+        .from("projetos")
+        .insert([{
+          nome: formData.name,
+          numero_projeto: formData.projectNumber,
+          cliente_id: formData.clienteId,
+          obra_id: formData.obraId,
+        }])
+        .select(`
+          *,
+          clientes(nome),
+          obras(nome)
+        `)
+        .single();
 
-    const project: Project = {
-      id: Date.now().toString(),
-      name: formData.name,
-      projectNumber: formData.projectNumber,
-      client: cliente?.nome || "",
-      obra: obra?.nome || "",
-      enviarSobrasEstoque: true,
-      date: new Date().toISOString(),
-    };
+      if (error) {
+        console.error("Erro ao inserir projeto:", error.message);
+        toast.error("Erro ao criar projeto");
+        return;
+      }
 
-    onProjectCreated(project);
-
-    const projeto = {
-      nome: formData.name,
-      numero_projeto: formData.projectNumber,
-      cliente_id: formData.clienteId,
-      obra_id: formData.obraId,
-    };
-
-    const { data, error } = await supabase
-      .from("projetos") // nome da sua tabela
-      .insert([projeto]);
-
-    if (error) {
-      console.error("Erro ao inserir projeto:", error.message);
-    } else {
       console.log("Projeto inserido com sucesso:", data);
+      onProjectCreated(data);
+      toast.success("Projeto criado com sucesso!");
+    } catch (error) {
+      console.error("Erro inesperado:", error);
+      toast.error("Erro ao criar projeto");
     }
-
-    toast.success("Projeto criado com sucesso!");
   };
 
   return (
