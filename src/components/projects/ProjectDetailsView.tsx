@@ -84,13 +84,15 @@ export const ProjectDetailsView = ({
   };
 
   const handleFileProcessed = async (imported: any[]) => {
-    const { validPieces, invalidPieces } = await projetoPecaService.validateAndProcessPieces(imported, project.id);
+    const { validPieces, invalidPieces } =
+      await projetoPecaService.validateAndProcessPieces(imported, project.id);
 
     if (validPieces.length > 0) {
       const resp = await projetoPecaService.createBatch(validPieces);
       if (resp.success && resp.data) {
-        setPieces(prev => [...prev, ...resp.data]);
         toast.success(`${resp.data.length} peça(s) cadastradas`);
+        // Recarregar peças para garantir atualização correta
+        await loadProjectData();
       } else {
         toast.error('Erro ao cadastrar peças');
       }
@@ -100,6 +102,9 @@ export const ProjectDetailsView = ({
       setValidations(invalidPieces);
       toast.warning('Algumas peças precisam ser revisadas');
     }
+
+    // Fechar diálogo após processamento
+    setShowUpload(false);
   };
 
   const handleResolveValidation = async (validation: ProjectPieceValidation, perfil: PerfilMaterial) => {
