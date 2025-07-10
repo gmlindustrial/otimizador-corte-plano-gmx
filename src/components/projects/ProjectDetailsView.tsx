@@ -24,6 +24,9 @@ import {
   Settings
 } from 'lucide-react';
 import { projetoPecaService } from '@/services/entities/ProjetoPecaService';
+import { projetoOtimizacaoService } from '@/services/entities/ProjetoOtimizacaoService';
+import { OptimizationCreateDialog } from './OptimizationCreateDialog';
+import { OptimizationResultsDialog } from './OptimizationResultsDialog';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import type { ProjetoPeca, ProjetoOtimizacao, ProjectPieceValidation, PerfilMaterial } from '@/types/project';
@@ -49,7 +52,11 @@ interface ProjectDetailsViewProps {
   onBack: () => void;
   onEdit: () => void;
   onDelete: () => void;
-  onCreateOptimization: (pieces: ProjetoPeca[]) => void;
+  onCreateOptimization: (
+    pieces: ProjetoPeca[],
+    name: string,
+    barLength: number
+  ) => Promise<void>;
 }
 
 export const ProjectDetailsView = ({ 
@@ -70,6 +77,8 @@ export const ProjectDetailsView = ({
   const [selectedPieces, setSelectedPieces] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [showOptimizationDialog, setShowOptimizationDialog] = useState(false);
+  const [viewResults, setViewResults] = useState<{ res: any; bar: number } | null>(null);
 
   useEffect(() => {
     loadProjectData();
@@ -84,8 +93,10 @@ export const ProjectDetailsView = ({
         setPieces(piecesResponse.data);
       }
 
-      // TODO: Carregar otimizações quando service estiver pronto
-      setOptimizations([]);
+      const optResponse = await projetoOtimizacaoService.getByProjectId(project.id);
+      if (optResponse.success && optResponse.data) {
+        setOptimizations(optResponse.data);
+      }
     } catch (error) {
       console.error('Erro ao carregar dados do projeto:', error);
       toast.error('Erro ao carregar dados do projeto');
@@ -401,8 +412,8 @@ export const ProjectDetailsView = ({
                     </Button>
                   )}
                   <Button
-                    onClick={() => onCreateOptimization(pieces.filter(p => selectedPieces.has(p.id)))}
-                    disabled={pieces.length === 0}
+                    onClick={() => setShowOptimizationDialog(true)}
+                    disabled={pieces.length === 0 || selectedPieces.size === 0}
                     className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
                   >
                     <Plus className="w-4 h-4 mr-1" />
@@ -529,7 +540,16 @@ export const ProjectDetailsView = ({
                               {format(new Date(optimization.created_at), 'dd/MM/yyyy HH:mm')}
                             </p>
                           </div>
-                          <Button variant="outline" size="sm">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              setViewResults({
+                                res: optimization.resultados,
+                                bar: optimization.tamanho_barra
+                              })
+                            }
+                          >
                             Visualizar
                           </Button>
                         </div>
@@ -542,6 +562,28 @@ export const ProjectDetailsView = ({
           </Card>
         </TabsContent>
       </Tabs>
+      <OptimizationCreateDialog
+        open={showOptimizationDialog}
+        onOpenChange={setShowOptimizationDialog}
+        onCreate={(name, bar) =>
+          onCreateOptimization(
+            pieces.filter(p => selectedPieces.has(p.id)),
+            name,
+            bar
+          ).then(() => {
+            setShowOptimizationDialog(false);
+            setActiveTab('optimizations');
+            void loadProjectData();
+          })
+        }
+      />
+      <OptimizationResultsDialog
+        open={!!viewResults}
+        onOpenChange={() => setViewResults(null)}
+        results={viewResults?.res || null}
+        barLength={viewResults?.bar || 0}
+        project={null}
+      />
       <DeleteConfirmDialog
         open={confirmDelete}
         onOpenChange={setConfirmDelete}

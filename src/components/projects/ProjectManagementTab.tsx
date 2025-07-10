@@ -13,7 +13,9 @@ import { FileUploadDialog } from './FileUploadDialog';
 import { ProfileGroupingView } from './ProfileGroupingView';
 import { ProjectValidationAlert } from './ProjectValidationAlert';
 import { projetoPecaService } from '@/services/entities/ProjetoPecaService';
+import { projetoOtimizacaoService } from '@/services/entities/ProjetoOtimizacaoService';
 import type { ProjetoPeca, ProjectPieceValidation } from '@/types/project';
+import { runLinearOptimization } from '@/lib/runLinearOptimization';
 import { toast } from 'sonner';
 
 interface Projeto {
@@ -81,9 +83,38 @@ export const ProjectManagementTab = () => {
     setView('list');
   };
 
-  const handleCreateOptimization = (selectedPieces: ProjetoPeca[]) => {
-    console.log('Criar nova otimização para projeto:', selectedProject?.id, selectedPieces);
-    toast.info('Funcionalidade de otimização em desenvolvimento');
+  const handleCreateOptimization = async (
+    selectedPieces: ProjetoPeca[],
+    name: string,
+    barLength: number
+  ) => {
+    if (!selectedProject || selectedPieces.length === 0) return;
+
+    try {
+      const piecesForAlgo = selectedPieces.map(p => ({
+        length: p.comprimento_mm,
+        quantity: p.quantidade,
+        tag: p.tag_peca,
+        conjunto: p.conjunto || undefined,
+        perfil: p.perfil?.descricao_perfil || p.descricao_perfil_raw || undefined,
+        peso: p.peso_por_metro || undefined
+      }));
+
+      const result = runLinearOptimization(piecesForAlgo, barLength);
+
+      await projetoOtimizacaoService.create({
+        projeto_id: selectedProject.id,
+        nome_lista: name,
+        tamanho_barra: barLength,
+        pecas_selecionadas: selectedPieces.map(p => p.id) as any,
+        resultados: result as any
+      });
+
+      toast.success('Otimização criada com sucesso');
+    } catch (err) {
+      console.error('Erro ao criar otimização:', err);
+      toast.error('Erro ao criar otimização');
+    }
   };
 
   if (view === 'create') {
