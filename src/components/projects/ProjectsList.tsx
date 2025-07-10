@@ -99,7 +99,7 @@ export const ProjectsList = ({
               onClick={onCreateNew}
               variant="outline"
               size="sm"
-              className="text-white border-white hover:bg-white hover:text-blue-600"
+              className="bg-transparent text-white border-white hover:bg-white hover:text-blue-600"
             >
               Novo Projeto
             </Button>
