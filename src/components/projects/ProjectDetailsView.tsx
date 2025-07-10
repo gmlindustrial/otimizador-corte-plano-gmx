@@ -55,6 +55,7 @@ export const ProjectDetailsView = ({
   const [loading, setLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
   const [validations, setValidations] = useState<ProjectPieceValidation[]>([]);
+  const [activeTab, setActiveTab] = useState<'pieces' | 'register' | 'optimizations'>('pieces');
 
   useEffect(() => {
     loadProjectData();
@@ -81,6 +82,7 @@ export const ProjectDetailsView = ({
 
   const handlePieceAdded = (piece: ProjetoPeca) => {
     setPieces(prev => [...prev, piece]);
+    setActiveTab('pieces');
   };
 
   const handleFileProcessed = async (imported: any[]) => {
@@ -101,6 +103,9 @@ export const ProjectDetailsView = ({
     if (invalidPieces.length > 0) {
       setValidations(invalidPieces);
       toast.warning('Algumas peças precisam ser revisadas');
+      setActiveTab('register');
+    } else {
+      setActiveTab('pieces');
     }
 
     // Fechar diálogo após processamento
@@ -232,7 +237,7 @@ export const ProjectDetailsView = ({
       </Card>
 
       {/* Tabs */}
-      <Tabs defaultValue="pieces" className="space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="pieces" className="flex items-center gap-2">
             <Package className="w-4 h-4" />
