@@ -7,9 +7,10 @@ import {
   ArrowLeft, 
   Edit, 
   Trash2, 
-  Plus, 
-  Calendar, 
-  Building, 
+  Plus,
+  Upload,
+  Calendar,
+  Building,
   User,
   Package,
   Calculator,
@@ -18,8 +19,10 @@ import {
 import { projetoPecaService } from '@/services/entities/ProjetoPecaService';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
-import type { ProjetoPeca, ProjetoOtimizacao } from '@/types/project';
+import type { ProjetoPeca, ProjetoOtimizacao, ProjectPieceValidation, PerfilMaterial } from '@/types/project';
 import { PieceRegistrationForm } from './PieceRegistrationForm';
+import { FileUploadDialog } from './FileUploadDialog';
+import { ProjectValidationAlert } from './ProjectValidationAlert';
 
 interface Projeto {
   id: string;
@@ -50,6 +53,8 @@ export const ProjectDetailsView = ({
   const [pieces, setPieces] = useState<ProjetoPeca[]>([]);
   const [optimizations, setOptimizations] = useState<ProjetoOtimizacao[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showUpload, setShowUpload] = useState(false);
+  const [validations, setValidations] = useState<ProjectPieceValidation[]>([]);
 
   useEffect(() => {
     loadProjectData();
@@ -76,6 +81,41 @@ export const ProjectDetailsView = ({
 
   const handlePieceAdded = (piece: ProjetoPeca) => {
     setPieces(prev => [...prev, piece]);
+  };
+
+  const handleFileProcessed = async (imported: any[]) => {
+    const { validPieces, invalidPieces } = await projetoPecaService.validateAndProcessPieces(imported, project.id);
+
+    if (validPieces.length > 0) {
+      const resp = await projetoPecaService.createBatch(validPieces);
+      if (resp.success && resp.data) {
+        setPieces(prev => [...prev, ...resp.data]);
+        toast.success(`${resp.data.length} peça(s) cadastradas`);
+      } else {
+        toast.error('Erro ao cadastrar peças');
+      }
+    }
+
+    if (invalidPieces.length > 0) {
+      setValidations(invalidPieces);
+      toast.warning('Algumas peças precisam ser revisadas');
+    }
+  };
+
+  const handleResolveValidation = async (validation: ProjectPieceValidation, perfil: PerfilMaterial) => {
+    const resp = await projetoPecaService.create({
+      ...validation.peca,
+      perfil_id: perfil.id,
+      peso_por_metro: perfil.kg_por_metro,
+      perfil_nao_encontrado: false
+    });
+    if (resp.success && resp.data) {
+      setPieces(prev => [...prev, resp.data]);
+      setValidations(prev => prev.filter(v => v !== validation));
+      toast.success('Peça validada e cadastrada');
+    } else {
+      toast.error('Erro ao cadastrar peça');
+    }
   };
 
   const groupedPieces = pieces.reduce((acc, piece) => {
@@ -212,6 +252,22 @@ export const ProjectDetailsView = ({
               <PieceRegistrationForm
                 projectId={project.id}
                 onPieceAdded={handlePieceAdded}
+              />
+              {validations.length > 0 && (
+                <div className="mt-4">
+                  <ProjectValidationAlert validations={validations} onResolve={handleResolveValidation} />
+                </div>
+              )}
+              <div className="mt-4 flex justify-end">
+                <Button variant="outline" onClick={() => setShowUpload(true)}>
+                  <Upload className="w-4 h-4 mr-2" />
+                  Anexar Arquivo
+                </Button>
+              </div>
+              <FileUploadDialog
+                open={showUpload}
+                onOpenChange={setShowUpload}
+                onFileProcessed={handleFileProcessed}
               />
             </CardContent>
           </Card>
