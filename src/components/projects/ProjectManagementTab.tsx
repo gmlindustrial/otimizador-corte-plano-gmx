@@ -14,6 +14,7 @@ import { ProfileGroupingView } from './ProfileGroupingView';
 import { ProjectValidationAlert } from './ProjectValidationAlert';
 import { projetoPecaService } from '@/services/entities/ProjetoPecaService';
 import type { ProjetoPeca, ProjectPieceValidation } from '@/types/project';
+import { toast } from 'sonner';
 
 interface Projeto {
   id: string;
@@ -83,6 +84,7 @@ export const ProjectManagementTab = () => {
   const handleCreateOptimization = () => {
     // TODO: Implementar criação de otimização
     console.log('Criar nova otimização para projeto:', selectedProject?.id);
+    toast.info('Funcionalidade de otimização em desenvolvimento');
   };
 
   if (view === 'create') {

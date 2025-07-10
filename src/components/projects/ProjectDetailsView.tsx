@@ -19,6 +19,7 @@ import { projetoPecaService } from '@/services/entities/ProjetoPecaService';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
 import type { ProjetoPeca, ProjetoOtimizacao } from '@/types/project';
+import { PieceRegistrationForm } from './PieceRegistrationForm';
 
 interface Projeto {
   id: string;
@@ -71,6 +72,10 @@ export const ProjectDetailsView = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePieceAdded = (piece: ProjetoPeca) => {
+    setPieces(prev => [...prev, piece]);
   };
 
   const groupedPieces = pieces.reduce((acc, piece) => {
@@ -183,16 +188,34 @@ export const ProjectDetailsView = ({
 
       {/* Tabs */}
       <Tabs defaultValue="pieces" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="pieces" className="flex items-center gap-2">
             <Package className="w-4 h-4" />
             Peças ({pieces.length})
+          </TabsTrigger>
+          <TabsTrigger value="register" className="flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            Cadastrar Peça
           </TabsTrigger>
           <TabsTrigger value="optimizations" className="flex items-center gap-2">
             <Calculator className="w-4 h-4" />
             Otimizações ({optimizations.length})
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="register">
+          <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
+            <CardHeader>
+              <CardTitle>Cadastrar Nova Peça</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PieceRegistrationForm
+                projectId={project.id}
+                onPieceAdded={handlePieceAdded}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="pieces">
           <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
