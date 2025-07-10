@@ -23,6 +23,7 @@ import type { ProjetoPeca, ProjetoOtimizacao, ProjectPieceValidation, PerfilMate
 import { PieceRegistrationForm } from './PieceRegistrationForm';
 import { FileUploadDialog } from './FileUploadDialog';
 import { ProjectValidationAlert } from './ProjectValidationAlert';
+import { ProjectDuplicateManager } from './ProjectDuplicateManager';
 
 interface Projeto {
   id: string;
@@ -56,6 +57,8 @@ export const ProjectDetailsView = ({
   const [showUpload, setShowUpload] = useState(false);
   const [validations, setValidations] = useState<ProjectPieceValidation[]>([]);
   const [activeTab, setActiveTab] = useState<'pieces' | 'register' | 'optimizations'>('pieces');
+  const [importing, setImporting] = useState(false);
+  const [duplicateItems, setDuplicateItems] = useState<{ existing: ProjetoPeca; imported: ProjetoPeca }[]>([]);
 
   useEffect(() => {
     loadProjectData();
@@ -85,19 +88,35 @@ export const ProjectDetailsView = ({
     setActiveTab('pieces');
   };
 
+  const handleImportStart = () => {
+    setImporting(true);
+  };
+
   const handleFileProcessed = async (imported: any[]) => {
     const { validPieces, invalidPieces } =
       await projetoPecaService.validateAndProcessPieces(imported, project.id);
 
-    if (validPieces.length > 0) {
-      const resp = await projetoPecaService.createBatch(validPieces);
+    const duplicates = validPieces.filter((vp) =>
+      pieces.some((p) => p.tag_peca === vp.tag_peca)
+    ).map((vp) => ({ existing: pieces.find(p => p.tag_peca === vp.tag_peca)!, imported: vp }));
+
+    const uniqueValid = validPieces.filter(
+      (vp) => !pieces.some((p) => p.tag_peca === vp.tag_peca)
+    );
+
+    if (uniqueValid.length > 0) {
+      const resp = await projetoPecaService.createBatch(uniqueValid);
       if (resp.success && resp.data) {
         toast.success(`${resp.data.length} peça(s) cadastradas`);
-        // Recarregar peças para garantir atualização correta
         await loadProjectData();
       } else {
         toast.error('Erro ao cadastrar peças');
       }
+    }
+
+    if (duplicates.length > 0) {
+      setDuplicateItems(duplicates);
+      setActiveTab('register');
     }
 
     if (invalidPieces.length > 0) {
@@ -110,6 +129,7 @@ export const ProjectDetailsView = ({
 
     // Fechar diálogo após processamento
     setShowUpload(false);
+    setImporting(false);
   };
 
   const handleResolveValidation = async (validation: ProjectPieceValidation, perfil: PerfilMaterial) => {
@@ -126,6 +146,20 @@ export const ProjectDetailsView = ({
     } else {
       toast.error('Erro ao cadastrar peça');
     }
+  };
+
+  const handleDuplicateResolved = async (selected: ProjetoPeca[]) => {
+    if (selected.length > 0) {
+      const resp = await projetoPecaService.createBatch(selected);
+      if (resp.success && resp.data) {
+        toast.success(`${resp.data.length} peça(s) adicionadas`);
+        await loadProjectData();
+      } else {
+        toast.error('Erro ao cadastrar peças');
+      }
+    }
+    setDuplicateItems([]);
+    setActiveTab('pieces');
   };
 
   const groupedPieces = pieces.reduce((acc, piece) => {
@@ -259,26 +293,42 @@ export const ProjectDetailsView = ({
               <CardTitle>Cadastrar Nova Peça</CardTitle>
             </CardHeader>
             <CardContent>
-              <PieceRegistrationForm
-                projectId={project.id}
-                onPieceAdded={handlePieceAdded}
-              />
-              {validations.length > 0 && (
-                <div className="mt-4">
-                  <ProjectValidationAlert validations={validations} onResolve={handleResolveValidation} />
+              {importing ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2" />
+                  Extraindo peças do arquivo...
                 </div>
+              ) : duplicateItems.length > 0 ? (
+                <ProjectDuplicateManager
+                  duplicates={duplicateItems}
+                  onResolved={handleDuplicateResolved}
+                  onCancel={() => setDuplicateItems([])}
+                />
+              ) : (
+                <>
+                  <PieceRegistrationForm
+                    projectId={project.id}
+                    onPieceAdded={handlePieceAdded}
+                  />
+                  {validations.length > 0 && (
+                    <div className="mt-4">
+                      <ProjectValidationAlert validations={validations} onResolve={handleResolveValidation} />
+                    </div>
+                  )}
+                  <div className="mt-4 flex justify-end">
+                    <Button variant="outline" onClick={() => setShowUpload(true)}>
+                      <Upload className="w-4 h-4 mr-2" />
+                      Anexar Arquivo
+                    </Button>
+                  </div>
+                  <FileUploadDialog
+                    open={showUpload}
+                    onOpenChange={setShowUpload}
+                    onProcessStart={handleImportStart}
+                    onFileProcessed={handleFileProcessed}
+                  />
+                </>
               )}
-              <div className="mt-4 flex justify-end">
-                <Button variant="outline" onClick={() => setShowUpload(true)}>
-                  <Upload className="w-4 h-4 mr-2" />
-                  Anexar Arquivo
-                </Button>
-              </div>
-              <FileUploadDialog
-                open={showUpload}
-                onOpenChange={setShowUpload}
-                onFileProcessed={handleFileProcessed}
-              />
             </CardContent>
           </Card>
         </TabsContent>
