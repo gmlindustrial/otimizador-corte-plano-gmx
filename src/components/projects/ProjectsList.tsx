@@ -30,6 +30,11 @@ interface Projeto {
     projeto_pecas: number;
     projeto_otimizacoes: number;
   };
+  _stats?: {
+    total_pecas_individuais: number;
+    total_quantidade_pecas: number;
+    total_otimizacoes: number;
+  };
 }
 
 interface ProjectsListProps {
@@ -167,14 +172,32 @@ export const ProjectsList = ({
                   </div>
                 </div>
 
-                {/* Stats */}
+                {/* Estatísticas de Produção */}
+                <div className="grid grid-cols-2 gap-2 mb-4">
+                  <div className="bg-blue-50 p-2 rounded-lg text-center">
+                    <div className="text-lg font-bold text-blue-600">
+                      {project._stats?.total_pecas_individuais || 0}
+                    </div>
+                    <div className="text-xs text-blue-600">Tipos de Peças</div>
+                  </div>
+                  <div className="bg-green-50 p-2 rounded-lg text-center">
+                    <div className="text-lg font-bold text-green-600">
+                      {project._stats?.total_quantidade_pecas || 0}
+                    </div>
+                    <div className="text-xs text-green-600">Peças p/ Cortar</div>
+                  </div>
+                </div>
+
+                {/* Badges de Status */}
                 <div className="flex gap-2 mb-4">
-                  <Badge variant="secondary" className="text-xs">
-                    {project._count?.projeto_pecas || 0} peças
+                  <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700">
+                    {project._stats?.total_otimizacoes || 0} otimizações
                   </Badge>
-                  <Badge variant="secondary" className="text-xs">
-                    {project._count?.projeto_otimizacoes || 0} otimizações
-                  </Badge>
+                  {(project._stats?.total_quantidade_pecas || 0) > 0 && (
+                    <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700">
+                      {Math.round((project._stats?.total_otimizacoes || 0) / Math.max(1, (project._stats?.total_pecas_individuais || 1)) * 100)}% otimizado
+                    </Badge>
+                  )}
                 </div>
 
                 {/* Actions */}

@@ -12,20 +12,35 @@ export class ProjetoService extends BaseService<Projeto> {
     try {
       const { data, error } = await supabase
         .from('projetos' as any)
-        .select(
-          `*, clientes (nome), obras (nome), projeto_pecas(count), projeto_otimizacoes(count)`
-        )
+        .select(`
+          *, 
+          clientes (nome), 
+          obras (nome),
+          projeto_pecas!left (id, quantidade),
+          projeto_otimizacoes!left (id)
+        `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
 
-      const mapped = (data || []).map((p: any) => ({
-        ...p,
-        _count: {
-          projeto_pecas: p.projeto_pecas?.count ?? 0,
-          projeto_otimizacoes: p.projeto_otimizacoes?.count ?? 0
-        }
-      }));
+      const mapped = (data || []).map((p: any) => {
+        const totalPecas = p.projeto_pecas?.length || 0;
+        const totalQuantidadePecas = p.projeto_pecas?.reduce((sum: number, peca: any) => sum + (peca.quantidade || 0), 0) || 0;
+        const totalOtimizacoes = p.projeto_otimizacoes?.length || 0;
+
+        return {
+          ...p,
+          _count: {
+            projeto_pecas: totalPecas,
+            projeto_otimizacoes: totalOtimizacoes
+          },
+          _stats: {
+            total_pecas_individuais: totalPecas,
+            total_quantidade_pecas: totalQuantidadePecas,
+            total_otimizacoes: totalOtimizacoes
+          }
+        };
+      });
 
       return {
         data: mapped,
