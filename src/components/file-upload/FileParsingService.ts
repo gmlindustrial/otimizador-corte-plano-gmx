@@ -95,27 +95,27 @@ export class FileParsingService {
         console.log(`Analisando linha: "${line}" - Conjunto atual: ${currentConjunto}`);
         
         // Regex melhorada para capturar diferentes formatos
-        const pieceMatch = line.match(/^\s*([Pp]?\d+)\s+(\d+)\s+([\w\d\-\s\.\+\*]+?)\s+([\w\d\-]+)\s+(\d+)\s+x?\s*(\d+)\s+([\d\.]+)$/i);
+        const pieceMatch = line.match(/^\s*([Pp]?\d+)\s+(\d+)\s+(\S+)\s+([\w\d\-]+)\s+(\d+)\s+x?\s*(\d+)\s+([\d\.]+)$/i);
         
         if (pieceMatch) {
           const [, posicao, quantidade, perfil, material, comprimento, largura, peso] = pieceMatch;
           console.log(`Regex principal detectou: pos=${posicao}, qty=${quantidade}, perfil=${perfil}, mat=${material}, comp=${comprimento}, larg=${largura}, peso=${peso} - Conjunto: ${currentConjunto}`);
           
-          // Se não temos conjunto, buscar nas proximidades
-          if (!currentConjunto) {
-            for (let j = Math.max(0, i - 10); j <= Math.min(lines.length - 1, i + 5); j++) {
-              const nearLine = lines[j].trim();
-              const conjuntoNearMatch = nearLine.match(/^([A-Z]+(?:-\d+|\d+))/);
-              if (conjuntoNearMatch) {
-                currentConjunto = conjuntoNearMatch[1];
-                console.log('Conjunto identificado próximo à peça:', currentConjunto);
-                break;
-              }
-            }
-            if (!currentConjunto) {
-              currentConjunto = 'CONJUNTO';
+        // Se não temos conjunto, buscar nas proximidades ignorando linhas que iniciem com "P"
+        if (!currentConjunto) {
+          for (let j = Math.max(0, i - 10); j <= Math.min(lines.length - 1, i + 5); j++) {
+            const nearLine = lines[j].trim();
+            const conjuntoNearMatch = nearLine.match(/^([A-Z]+(?:-\d+|\d+))/i);
+            if (conjuntoNearMatch && !conjuntoNearMatch[1].toUpperCase().startsWith('P')) {
+              currentConjunto = conjuntoNearMatch[1];
+              console.log('Conjunto identificado próximo à peça:', currentConjunto);
+              break;
             }
           }
+          if (!currentConjunto) {
+            currentConjunto = 'CONJUNTO';
+          }
+        }
           
           const tag = `${currentConjunto}-${posicao}`;
           
@@ -141,7 +141,7 @@ export class FileParsingService {
           console.log(`Peça adicionada: ${tag} - ${piece.length}mm - Qtd: ${piece.quantity} - Perfil: ${piece.perfil} - Conjunto: ${currentConjunto}`);
         } else {
           // Tentar regex mais simples para formato: pos qty descricao comprimento peso
-          const simpleMatch = line.match(/^\s*([Pp]?\d+)\s+(\d+)\s+(.+?)\s+(\d+)\s+([\d\.]+)$/);
+          const simpleMatch = line.match(/^\s*([Pp]?\d+)\s+(\d+)\s+(\S+)\s+(\d+)\s+([\d\.]+)$/);
           if (simpleMatch) {
             const [, posicao, quantidade, descricao, comprimento, peso] = simpleMatch;
             console.log(`Regex simples detectou: pos=${posicao}, qty=${quantidade}, desc=${descricao}, comp=${comprimento}, peso=${peso} - Conjunto: ${currentConjunto}`);
