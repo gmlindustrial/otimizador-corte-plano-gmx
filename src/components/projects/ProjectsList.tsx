@@ -58,7 +58,7 @@ export const ProjectsList = ({
     try {
       const response = await projetoService.getAll();
       if (response.success && response.data) {
-        setProjects(response.data);
+        setProjects(response.data as any);
       }
     } catch (error) {
       console.error('Erro ao carregar projetos:', error);

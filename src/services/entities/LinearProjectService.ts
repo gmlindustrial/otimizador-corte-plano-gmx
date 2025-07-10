@@ -196,7 +196,7 @@ export class LinearProjectService extends BaseService<Projeto> {
       const projects = data || [];
 
       return {
-        data: projects,
+        data: projects as any, // Temporary fix for type mismatch
         error: null,
         success: true,
         total: projects.length

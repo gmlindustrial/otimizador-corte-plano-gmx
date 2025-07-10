@@ -15,7 +15,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ProjectCreationWizardProps {
-  onProjectCreated: (project: Project) => void;
+  onProjectCreated: (project: any) => void;
 }
 
 export const ProjectCreationWizard = ({

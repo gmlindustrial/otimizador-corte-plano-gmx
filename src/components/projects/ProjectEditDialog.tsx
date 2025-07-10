@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSupabaseData } from '@/hooks/useSupabaseData';
-import { projetoService } from '@/services/entities/ProjetoService';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface Projeto {
@@ -53,22 +53,21 @@ export const ProjectEditDialog = ({
 
     setLoading(true);
     try {
-      const response = await projetoService.update(project.id, {
-        nome: formData.nome,
-        numero_projeto: formData.numero_projeto,
-        cliente_id: formData.cliente_id,
-        obra_id: formData.obra_id
-      });
+      const { data, error } = await supabase
+        .from('projetos')
+        .update({
+          nome: formData.nome,
+          numero_projeto: formData.numero_projeto,
+          cliente_id: formData.cliente_id,
+          obra_id: formData.obra_id
+        })
+        .eq('id', project.id)
+        .select('*')
+        .single();
 
-      if (response.success) {
+      if (!error && data) {
         toast.success('Projeto atualizado com sucesso!');
-        
-        // Buscar dados atualizados com relações
-        const updatedResponse = await projetoService.getWithRelations(project.id);
-        if (updatedResponse.success && updatedResponse.data) {
-          onProjectUpdated(updatedResponse.data);
-        }
-        
+        onProjectUpdated(data as any);
         onOpenChange(false);
       } else {
         toast.error('Erro ao atualizar projeto');

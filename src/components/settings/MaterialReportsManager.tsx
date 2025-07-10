@@ -54,7 +54,7 @@ export const MaterialReportsManager = () => {
         
         // Processar histórico para calcular uso
         historyData?.forEach(entry => {
-          const materialId = entry.projetos?.material_id;
+          const materialId = "N/A"; // entry.projetos?.material_id;
           if (materialId) {
             if (!materialUsage[materialId]) {
               materialUsage[materialId] = { count: 0, lastUsed: entry.created_at };

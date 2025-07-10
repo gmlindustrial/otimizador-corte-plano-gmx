@@ -36,7 +36,7 @@ export const ProjectDeleteDialog = ({
 
     setLoading(true);
     try {
-      const response = await projetoService.delete(project.id);
+      const response = await projetoService.delete({ id: project.id });
       
       if (response.success) {
         toast.success('Projeto excluído com sucesso!');
