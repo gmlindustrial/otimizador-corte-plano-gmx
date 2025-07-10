@@ -448,23 +448,33 @@ export const ProjectDetailsView = ({
                                 : null;
                               return (
                                 <div key={piece.id} className="flex items-center justify-between border rounded-md p-2 bg-gray-50">
-                                  <div className="flex items-center gap-3">
+                                  <div className="flex items-start gap-3">
                                     <Checkbox
                                       checked={selected}
                                       onCheckedChange={() => togglePieceSelection(piece.id)}
+                                      className="mt-0.5"
                                     />
-                                    <div>
-                                      <div className="font-medium text-sm">{piece.tag_peca}</div>
-                                      {piece.conjunto && (
-                                        <div className="text-xs text-blue-600">{piece.conjunto}</div>
-                                      )}
-                                      <div className="text-xs text-gray-600">
-                                        {piece.comprimento_mm}mm × {piece.quantidade}
-                                        {peso !== null && ` - ${peso.toFixed(2)}kg`}
-                                      </div>
+                                    <div className="text-xs space-y-1">
                                       {piece.perfil && (
-                                        <div className="text-xs text-gray-500">
+                                        <div>
+                                          <span className="font-semibold">Descrição Perfil:</span>{' '}
                                           {piece.perfil.descricao_perfil}
+                                        </div>
+                                      )}
+                                      <div>
+                                        <span className="font-semibold">Tag:</span> {piece.tag_peca}
+                                      </div>
+                                      {piece.conjunto && (
+                                        <div className="text-blue-600">
+                                          <span className="font-semibold">Conjunto:</span> {piece.conjunto}
+                                        </div>
+                                      )}
+                                      <div>
+                                        <span className="font-semibold">Comprimento:</span> {piece.comprimento_mm}mm × {piece.quantidade}
+                                      </div>
+                                      {peso !== null && (
+                                        <div>
+                                          <span className="font-semibold">Peso:</span> {peso.toFixed(2)}kg
                                         </div>
                                       )}
                                     </div>
