@@ -193,11 +193,6 @@ export const ProjectsList = ({
                   <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700">
                     {project._stats?.total_otimizacoes || 0} otimizações
                   </Badge>
-                  {(project._stats?.total_quantidade_pecas || 0) > 0 && (
-                    <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700">
-                      {Math.round((project._stats?.total_otimizacoes || 0) / Math.max(1, (project._stats?.total_pecas_individuais || 1)) * 100)}% otimizado
-                    </Badge>
-                  )}
                 </div>
 
                 {/* Actions */}
