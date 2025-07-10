@@ -59,9 +59,6 @@ export const LinearCuttingTab = ({
     <div className="space-y-6">
       <MaterialInput
         project={legacyProject}
-        setProject={setLegacyProject}
-        barLength={legacyBarLength}
-        setBarLength={setLegacyBarLength}
         pieces={legacyPieces}
         setPieces={setLegacyPieces}
         onOptimize={runAdvancedOptimization}

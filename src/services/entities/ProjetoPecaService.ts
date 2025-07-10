@@ -74,33 +74,43 @@ export class ProjetoPecaService {
   async validateAndProcessPieces(pieces: any[], projectId: string): Promise<{
     validPieces: ProjetoPeca[];
     invalidPieces: ProjectPieceValidation[];
+    stats: {
+      total: number;
+      withProfile: number;
+      withoutProfile: number;
+      pages: number[];
+      conjuntos: string[];
+    };
   }> {
     const validPieces: ProjetoPeca[] = [];
     const invalidPieces: ProjectPieceValidation[] = [];
 
     for (const piece of pieces) {
-      // Tentar encontrar perfil correspondente
-      const perfil = await perfilService.findBestMatch(piece.profile || piece.perfil || piece.descricao);
+      // Tentar encontrar perfil correspondente usando descrição normalizada
+      const perfilDescription = piece.profile || piece.perfil || piece.descricao;
+      const perfil = await perfilService.findBestMatch(perfilDescription);
       
       const peca: Omit<ProjetoPeca, 'id' | 'created_at'> = {
         projeto_id: projectId,
-        tag_peca: piece.tag || piece.tag_peca || `Peça ${pieces.indexOf(piece) + 1}`,
-        conjunto: piece.conjunto || piece.set,
+        tag_peca: piece.tag || piece.tag_peca || `${piece.conjunto || 'PEÇA'}-${piece.posicao || pieces.indexOf(piece) + 1}`,
+        conjunto: piece.conjunto || piece.set || 'SEM_CONJUNTO',
         perfil_id: perfil?.id,
-        descricao_perfil_raw: piece.profile || piece.perfil || piece.descricao,
+        descricao_perfil_raw: perfilDescription,
         comprimento_mm: piece.length || piece.comprimento || piece.comprimento_mm,
         quantidade: piece.quantity || piece.quantidade || 1,
-        peso_por_metro: perfil?.kg_por_metro,
+        // PRIORIZAR peso do perfil cadastrado no Supabase
+        peso_por_metro: perfil?.kg_por_metro || piece.peso || 1.0,
         perfil_nao_encontrado: !perfil
       };
 
       if (perfil) {
+        console.log(`✅ Perfil encontrado para ${peca.tag_peca}: ${perfil.descricao_perfil} (${perfil.kg_por_metro} kg/m)`);
         validPieces.push(peca as ProjetoPeca);
       } else {
+        console.log(`❌ Perfil não encontrado para ${peca.tag_peca}: ${perfilDescription}`);
+        
         // Buscar sugestões de perfis similares
-        const suggestions = await perfilService.searchByDescription(
-          piece.profile || piece.perfil || piece.descricao
-        );
+        const suggestions = await perfilService.searchByDescription(perfilDescription);
 
         invalidPieces.push({
           peca: peca as ProjetoPeca,
@@ -110,7 +120,18 @@ export class ProjetoPecaService {
       }
     }
 
-    return { validPieces, invalidPieces };
+    // Gerar estatísticas
+    const stats = {
+      total: pieces.length,
+      withProfile: validPieces.length,
+      withoutProfile: invalidPieces.length,
+      pages: [...new Set(pieces.map(p => p.page).filter(Boolean))],
+      conjuntos: [...new Set(pieces.map(p => p.conjunto).filter(Boolean))]
+    };
+
+    console.log('📊 Estatísticas do processamento:', stats);
+
+    return { validPieces, invalidPieces, stats };
   }
 
   async update(id: string, peca: Partial<ProjetoPeca>) {

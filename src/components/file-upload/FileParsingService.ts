@@ -39,9 +39,9 @@ export class FileParsingService {
       line.includes('LM por Conjunto') || 
       line.includes('METALMAX') ||
       line.includes('OBRA:') ||
-      line.includes('C34') ||
-      line.includes('C35') ||
-      line.match(/[A-Z]\d+/) // Qualquer padrão tipo C34, V172, etc.
+      line.includes('HANGAR') ||
+      line.includes('TERMINAL') ||
+      line.match(/[A-Z]+\.?-?\d+/) // Padrões: C34, V.172, CE-2, CE-3, etc.
     );
     
     console.log('Arquivo identificado como AutoCAD:', isAutoCADFile);
@@ -52,7 +52,8 @@ export class FileParsingService {
 
     let obra = '';
     let currentConjunto = '';
-    let esperandoConjunto = false; // Flag para indicar que esperamos um conjunto após linha pontilhada
+    let esperandoConjunto = false;
+    let currentPage = 1;
     
     // Extrair nome da obra
     for (const line of lines) {
@@ -75,17 +76,27 @@ export class FileParsingService {
         continue;
       }
 
+      // Detectar quebra de página
+      if (line.includes('Página') || line.match(/^\s*\d+\s*$/)) {
+        const pageMatch = line.match(/Página\s*(\d+)/);
+        if (pageMatch) {
+          currentPage = parseInt(pageMatch[1]);
+          console.log(`Nova página detectada: ${currentPage}`);
+        }
+        continue;
+      }
+
       // Detectar conjunto apenas se estiver esperando após linha pontilhada
       if (esperandoConjunto && line.length > 0) {
-        const conjuntoMatch = line.match(/^([A-Z]+(?:-\d+|\d+))\s*(\d+)?\s*([A-Z].*)?$/i);
+        // Regex melhorado para capturar diferentes formatos: C34, V.172, CE-2, CE-3
+        const conjuntoMatch = line.match(/^([A-Z]+\.?-?\d+)\s*(\d+)?\s*([A-Z].*)?$/i);
         if (conjuntoMatch && !conjuntoMatch[1].toUpperCase().startsWith('P')) {
           currentConjunto = conjuntoMatch[1];
           const descricao = conjuntoMatch[3] || '';
           console.log(`Conjunto identificado após linha pontilhada: ${currentConjunto}${descricao ? ` (${descricao})` : ''}`);
-          esperandoConjunto = false; // Conjunto encontrado, não precisa mais esperar
+          esperandoConjunto = false;
           continue;
         } else {
-          // Linha não é conjunto, pode ser início das peças
           esperandoConjunto = false;
         }
       }
@@ -101,21 +112,22 @@ export class FileParsingService {
           const [, posicao, quantidade, perfil, material, comprimento, largura, peso] = pieceMatch;
           console.log(`Regex principal detectou: pos=${posicao}, qty=${quantidade}, perfil=${perfil}, mat=${material}, comp=${comprimento}, larg=${largura}, peso=${peso} - Conjunto: ${currentConjunto}`);
           
-        // Se não temos conjunto, buscar nas proximidades ignorando linhas que iniciem com "P"
-        if (!currentConjunto) {
-          for (let j = Math.max(0, i - 10); j <= Math.min(lines.length - 1, i + 5); j++) {
-            const nearLine = lines[j].trim();
-            const conjuntoNearMatch = nearLine.match(/^([A-Z]+(?:-\d+|\d+))/i);
-            if (conjuntoNearMatch && !conjuntoNearMatch[1].toUpperCase().startsWith('P')) {
-              currentConjunto = conjuntoNearMatch[1];
-              console.log('Conjunto identificado próximo à peça:', currentConjunto);
-              break;
+          // Se não temos conjunto, buscar nas proximidades
+          if (!currentConjunto) {
+            for (let j = Math.max(0, i - 15); j <= Math.min(lines.length - 1, i + 5); j++) {
+              const nearLine = lines[j].trim();
+              // Regex melhorado para capturar C34, V.172, CE-2, etc.
+              const conjuntoNearMatch = nearLine.match(/^([A-Z]+\.?-?\d+)/i);
+              if (conjuntoNearMatch && !conjuntoNearMatch[1].toUpperCase().startsWith('P')) {
+                currentConjunto = conjuntoNearMatch[1];
+                console.log('Conjunto identificado próximo à peça:', currentConjunto);
+                break;
+              }
+            }
+            if (!currentConjunto) {
+              currentConjunto = `CONJUNTO_P${currentPage}`;
             }
           }
-          if (!currentConjunto) {
-            currentConjunto = 'CONJUNTO';
-          }
-        }
           
           const tag = `${currentConjunto}-${posicao}`;
           
@@ -126,10 +138,11 @@ export class FileParsingService {
             obra,
             conjunto: currentConjunto,
             posicao,
-            perfil: perfil.trim(),
+            perfil: this.normalizePerfil(perfil.trim()),
             material: material.trim(),
             peso: parseFloat(peso),
             tag,
+            page: currentPage,
             dimensoes: {
               comprimento: parseInt(comprimento),
               largura: parseInt(largura)
@@ -159,9 +172,10 @@ export class FileParsingService {
               obra,
               conjunto: currentConjunto,
               posicao,
-              perfil: descricao.trim(),
+              perfil: this.normalizePerfil(descricao.trim()),
               peso: parseFloat(peso),
               tag,
+              page: currentPage,
               dimensoes: {
                 comprimento: parseInt(comprimento),
                 largura: 0
@@ -184,8 +198,18 @@ export class FileParsingService {
     console.log(`Total de peças extraídas: ${pieces.length}`);
     console.log(`Obra: ${obra}`);
     console.log('Conjuntos encontrados:', [...new Set(pieces.map(p => (p as any).conjunto))]);
+    console.log('Páginas processadas:', [...new Set(pieces.map(p => (p as any).page))]);
     
     return pieces;
+  }
+
+  // Método para normalizar descrições de perfis
+  static normalizePerfil(perfil: string): string {
+    return perfil
+      .replace(/\s+/g, '') // Remove todos os espaços
+      .replace(/X/gi, 'X') // Padroniza o X
+      .replace(/x/g, 'X')
+      .toUpperCase();
   }
 
   static async parseExcel(file: File): Promise<CutPiece[]> {

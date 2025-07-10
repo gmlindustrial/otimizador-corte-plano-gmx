@@ -45,27 +45,85 @@ export class PerfilService {
 
   async findBestMatch(description: string): Promise<PerfilMaterial | null> {
     try {
+      // Normalizar a descrição de entrada
+      const normalizedDescription = this.normalizeDescription(description);
+      
       const response = await this.searchByDescription(description);
       if (!response.success || !response.data || response.data.length === 0) {
-        return null;
+        // Tentar busca com descrição normalizada
+        const normalizedResponse = await this.searchByDescription(normalizedDescription);
+        if (!normalizedResponse.success || !normalizedResponse.data || normalizedResponse.data.length === 0) {
+          return null;
+        }
+        return this.findClosestMatch(normalizedDescription, normalizedResponse.data);
       }
 
       // Busca correspondência exata primeiro
       const exactMatch = response.data.find(
         (perfil: PerfilMaterial) => 
-          perfil.descricao_perfil.toLowerCase() === description.toLowerCase()
+          this.normalizeDescription(perfil.descricao_perfil) === normalizedDescription
       );
 
       if (exactMatch) {
         return exactMatch;
       }
 
-      // Se não houver correspondência exata, retorna o primeiro resultado
-      return response.data[0];
+      // Buscar correspondência mais próxima
+      return this.findClosestMatch(normalizedDescription, response.data);
     } catch (error) {
       console.error('Erro ao buscar melhor correspondência:', error);
       return null;
     }
+  }
+
+  private normalizeDescription(description: string): string {
+    return description
+      .replace(/\s+/g, '') // Remove espaços
+      .replace(/X/gi, 'X') // Padroniza X
+      .replace(/x/g, 'X')
+      .toUpperCase();
+  }
+
+  private findClosestMatch(target: string, profiles: PerfilMaterial[]): PerfilMaterial | null {
+    let bestMatch: PerfilMaterial | null = null;
+    let bestScore = 0;
+
+    for (const profile of profiles) {
+      const normalized = this.normalizeDescription(profile.descricao_perfil);
+      const score = this.calculateSimilarity(target, normalized);
+      
+      if (score > bestScore) {
+        bestScore = score;
+        bestMatch = profile;
+      }
+    }
+
+    // Retorna apenas se a similaridade for razoável (>60%)
+    return bestScore > 0.6 ? bestMatch : profiles[0];
+  }
+
+  private calculateSimilarity(str1: string, str2: string): number {
+    const len1 = str1.length;
+    const len2 = str2.length;
+    const matrix = Array(len2 + 1).fill(null).map(() => Array(len1 + 1).fill(null));
+
+    for (let i = 0; i <= len1; i++) matrix[0][i] = i;
+    for (let j = 0; j <= len2; j++) matrix[j][0] = j;
+
+    for (let j = 1; j <= len2; j++) {
+      for (let i = 1; i <= len1; i++) {
+        const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+        matrix[j][i] = Math.min(
+          matrix[j][i - 1] + 1,
+          matrix[j - 1][i] + 1,
+          matrix[j - 1][i - 1] + cost
+        );
+      }
+    }
+
+    const distance = matrix[len2][len1];
+    const maxLen = Math.max(len1, len2);
+    return maxLen === 0 ? 1 : (maxLen - distance) / maxLen;
   }
 
   async create(perfil: Omit<PerfilMaterial, 'id' | 'created_at'>) {

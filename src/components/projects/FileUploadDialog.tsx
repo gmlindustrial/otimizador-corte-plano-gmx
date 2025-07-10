@@ -38,15 +38,26 @@ export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed, onProces
       const pieces = FileParsingService.parseAutoCADReport(text);
       
       if (pieces.length > 0) {
+        // Mostrar estatísticas detalhadas
+        const conjuntos = [...new Set(pieces.map((p: any) => p.conjunto).filter(Boolean))];
+        const pages = [...new Set(pieces.map((p: any) => p.page).filter(Boolean))];
+        const obra = (pieces[0] as any)?.obra || 'Não identificada';
+        
+        console.log(`📋 Arquivo processado com sucesso:
+          - Obra: ${obra}
+          - Peças: ${pieces.length}
+          - Conjuntos: ${conjuntos.join(', ')}
+          - Páginas: ${pages.join(', ')}`);
+        
         onFileProcessed(pieces);
-        toast.success(`${pieces.length} peças encontradas no arquivo`);
+        toast.success(`${pieces.length} peças encontradas no arquivo AutoCAD`);
         setFile(null);
       } else {
         toast.warning('Nenhuma peça foi encontrada no arquivo');
       }
     } catch (error) {
       console.error('Erro ao processar arquivo:', error);
-      toast.error('Erro ao processar arquivo');
+      toast.error(`Erro ao processar arquivo: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     } finally {
       setProcessing(false);
     }
