@@ -181,10 +181,18 @@ export class FileParsingService {
       const line = lines[i].trim();
       
       // Detectar conjunto (linha isolada com padrão V.172, V.173, etc.)
-      const conjuntoMatch = line.match(/^([A-Z]+\.?\d+)\s*$/i);
+      const conjuntoMatch = line.match(/^([A-Z]+\.\d+)\s*$/i);
       if (conjuntoMatch && !conjuntoMatch[1].toUpperCase().startsWith('P')) {
         currentConjunto = conjuntoMatch[1];
         console.log(`📦 Conjunto tabular identificado: ${currentConjunto}`);
+        continue;
+      }
+      
+      // Também verificar se a linha contém um conjunto no início (mesmo com texto adicional)
+      const conjuntoInLineMatch = line.match(/^([A-Z]+\.\d+)/i);
+      if (conjuntoInLineMatch && !conjuntoInLineMatch[1].toUpperCase().startsWith('P') && line.length < 50) {
+        currentConjunto = conjuntoInLineMatch[1];
+        console.log(`📦 Conjunto em linha identificado: ${currentConjunto}`);
         continue;
       }
 
@@ -226,18 +234,21 @@ export class FileParsingService {
           [, posicao, quantidade, descricao, comprimento, peso] = tabularMatch;
         }
         
-        // Se não temos conjunto, tentar buscar nas proximidades
+        // Se não temos conjunto, tentar buscar nas proximidades com foco em V.XXX
         if (!currentConjunto) {
+          console.log(`🔍 Buscando conjunto próximo à linha ${i}: "${line}"`);
           for (let j = Math.max(0, i - 10); j <= Math.min(lines.length - 1, i + 3); j++) {
             const nearLine = lines[j].trim();
-            const nearConjunto = nearLine.match(/^([A-Z]+\.?\d+)\s*$/i);
+            // Buscar especificamente por padrão V.XXX
+            const nearConjunto = nearLine.match(/^([A-Z]+\.\d+)\s*$/i);
             if (nearConjunto && !nearConjunto[1].toUpperCase().startsWith('P')) {
               currentConjunto = nearConjunto[1];
-              console.log(`📦 Conjunto encontrado próximo: ${currentConjunto}`);
+              console.log(`✅ Conjunto V.XXX encontrado próximo: ${currentConjunto} na linha ${j}: "${nearLine}"`);
               break;
             }
           }
           if (!currentConjunto) {
+            console.log(`⚠️ Nenhum conjunto V.XXX encontrado, usando fallback: CONJUNTO_P${currentPage}`);
             currentConjunto = `CONJUNTO_P${currentPage}`;
           }
         }
