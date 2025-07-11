@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Package, Plus, Edit, Trash2, Search } from "lucide-react";
+import { Package, Plus, Edit, Trash2, Search, ChevronLeft, ChevronRight } from "lucide-react";
 import { usePerfilService } from "@/hooks/services/usePerfilService";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import type { PerfilMaterial } from "@/types/project";
@@ -29,6 +29,11 @@ export const PerfilMaterialManagement = () => {
   const [editingPerfil, setEditingPerfil] = useState<PerfilMaterial | null>(null);
   const [deletingPerfil, setDeletingPerfil] = useState<PerfilMaterial | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  
+  // Paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  
   const [formData, setFormData] = useState({
     tipo_perfil: "",
     descricao_perfil: "",
@@ -44,17 +49,28 @@ export const PerfilMaterialManagement = () => {
     perfil.descricao_perfil.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Cálculos de paginação
+  const totalPages = Math.ceil(filteredPerfis.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPerfis = filteredPerfis.slice(startIndex, endIndex);
+
+  // Reset página quando filtro muda
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (editingPerfil) {
-      await updatePerfil(editingPerfil.id, formData);
-    } else {
-      await createPerfil(formData);
+    const success = editingPerfil 
+      ? await updatePerfil(editingPerfil.id, formData)
+      : await createPerfil(formData);
+      
+    if (success) {
+      resetForm();
+      setDialogOpen(false);
     }
-    
-    resetForm();
-    setDialogOpen(false);
   };
 
   const handleEdit = (perfil: PerfilMaterial) => {
@@ -69,8 +85,14 @@ export const PerfilMaterialManagement = () => {
 
   const handleDelete = async () => {
     if (deletingPerfil) {
-      await deletePerfil(deletingPerfil.id);
-      setDeletingPerfil(null);
+      const success = await deletePerfil(deletingPerfil.id);
+      if (success) {
+        setDeletingPerfil(null);
+        // Ajustar página se necessário
+        if (currentPerfis.length === 1 && currentPage > 1) {
+          setCurrentPage(currentPage - 1);
+        }
+      }
     }
   };
 
@@ -83,6 +105,9 @@ export const PerfilMaterialManagement = () => {
     });
   };
 
+  const goToNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
+  const goToPrevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+  
   const handleDialogClose = () => {
     setDialogOpen(false);
     resetForm();
@@ -186,14 +211,14 @@ export const PerfilMaterialManagement = () => {
                       Carregando perfis...
                     </TableCell>
                   </TableRow>
-                ) : filteredPerfis.length === 0 ? (
+                ) : currentPerfis.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8 text-gray-500">
                       {searchTerm ? "Nenhum perfil encontrado" : "Nenhum perfil cadastrado"}
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredPerfis.map((perfil) => (
+                  currentPerfis.map((perfil) => (
                     <TableRow key={perfil.id}>
                       <TableCell className="font-medium">{perfil.tipo_perfil}</TableCell>
                       <TableCell>{perfil.descricao_perfil}</TableCell>
@@ -226,6 +251,51 @@ export const PerfilMaterialManagement = () => {
               </TableBody>
             </Table>
           </div>
+          
+          {/* Paginação */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4">
+              <div className="text-sm text-gray-500">
+                Mostrando {startIndex + 1} a {Math.min(endIndex, filteredPerfis.length)} de {filteredPerfis.length} perfis
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToPrevPage}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  Anterior
+                </Button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      className="min-w-[40px]"
+                      onClick={() => setCurrentPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                </div>
+                
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                >
+                  Próxima
+                  <ChevronRight className="w-4 h-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
