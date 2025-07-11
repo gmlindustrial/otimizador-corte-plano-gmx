@@ -13,7 +13,6 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 interface BarCuttingConfig {
-  defaultBarLength: number;
   cutLoss: number;
   algorithm: 'FFD' | 'BFD' | 'NextFit';
   allowWaste: boolean;
@@ -31,7 +30,6 @@ interface TamanhoBarra {
 export const BarCuttingSettings = () => {
   const { toast } = useToast();
   const [config, setConfig] = useState<BarCuttingConfig>({
-    defaultBarLength: 6000,
     cutLoss: 3,
     algorithm: 'FFD',
     allowWaste: true,
@@ -96,6 +94,14 @@ export const BarCuttingSettings = () => {
     setLoading(true);
     
     try {
+      // Se estiver marcando como padrão, primeiro desmarcar outros padrões
+      if (formData.is_default) {
+        await supabase
+          .from('tamanhos_barras')
+          .update({ is_default: false })
+          .neq('id', editingTamanho?.id || '');
+      }
+
       if (editingTamanho) {
         const { error } = await supabase
           .from('tamanhos_barras')
@@ -210,17 +216,6 @@ export const BarCuttingSettings = () => {
             <h3 className="text-lg font-semibold text-gray-900">Configurações de Corte</h3>
             
             <div className="space-y-2">
-              <Label htmlFor="barLength">Comprimento Padrão de Barras (mm)</Label>
-              <Input
-                id="barLength"
-                type="number"
-                value={config.defaultBarLength}
-                onChange={(e) => setConfig(prev => ({ ...prev, defaultBarLength: parseInt(e.target.value) }))}
-                min={0}
-              />
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="cutLoss">Perda por Corte (mm)</Label>
               <Input
                 id="cutLoss"
@@ -281,28 +276,8 @@ export const BarCuttingSettings = () => {
         <Separator />
 
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900">Informações do Sistema</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
-            <div>
-              <p className="font-medium">Algoritmo Atual:</p>
-              <p>{config.algorithm === 'FFD' ? 'First Fit Decreasing' : config.algorithm === 'BFD' ? 'Best Fit Decreasing' : 'Next Fit'}</p>
-            </div>
-            <div>
-              <p className="font-medium">Perda por Corte:</p>
-              <p>{config.cutLoss}mm</p>
-            </div>
-            <div>
-              <p className="font-medium">Comprimento Padrão:</p>
-              <p>{config.defaultBarLength}mm</p>
-            </div>
-          </div>
-        </div>
-
-        <Separator />
-
-        <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">Tamanhos de Barras Padrão</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Tamanhos de Barras Disponíveis</h3>
             
             <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
               <DialogTrigger asChild>
@@ -337,6 +312,16 @@ export const BarCuttingSettings = () => {
                       placeholder="Ex: Barra padrão 6m"
                     />
                   </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="is_default"
+                      checked={formData.is_default}
+                      onChange={(e) => setFormData(prev => ({ ...prev, is_default: e.target.checked }))}
+                      className="rounded"
+                    />
+                    <Label htmlFor="is_default">Marcar como tamanho padrão</Label>
+                  </div>
                   <div className="flex gap-2 pt-4">
                     <Button type="button" variant="outline" onClick={() => { setDialogOpen(false); resetForm(); }} className="flex-1">
                       Cancelar
@@ -350,13 +335,20 @@ export const BarCuttingSettings = () => {
             </Dialog>
           </div>
 
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <p className="text-sm text-blue-700">
+              <strong>Nota:</strong> Os tamanhos cadastrados aqui aparecerão como opções na interface de otimização. 
+              O tamanho marcado como "padrão" será selecionado automaticamente.
+            </p>
+          </div>
+
           <div className="border rounded-lg">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Comprimento (mm)</TableHead>
                   <TableHead>Descrição</TableHead>
-                  <TableHead>Padrão</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
@@ -376,12 +368,16 @@ export const BarCuttingSettings = () => {
                 ) : (
                   tamanhos.map((tamanho) => (
                     <TableRow key={tamanho.id}>
-                      <TableCell className="font-medium">{tamanho.comprimento}mm</TableCell>
+                      <TableCell className="font-medium">{tamanho.comprimento.toLocaleString()}mm</TableCell>
                       <TableCell>{tamanho.descricao || "-"}</TableCell>
                       <TableCell>
-                        {tamanho.is_default && (
+                        {tamanho.is_default ? (
                           <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
                             Padrão
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                            Disponível
                           </span>
                         )}
                       </TableCell>
@@ -414,6 +410,26 @@ export const BarCuttingSettings = () => {
 
         <Separator />
 
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold text-gray-900">Configurações Atuais</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div className="bg-gray-50 p-3 rounded-lg">
+              <p className="font-medium text-gray-700">Algoritmo:</p>
+              <p className="text-gray-900">{config.algorithm === 'FFD' ? 'First Fit Decreasing' : config.algorithm === 'BFD' ? 'Best Fit Decreasing' : 'Next Fit'}</p>
+            </div>
+            <div className="bg-gray-50 p-3 rounded-lg">
+              <p className="font-medium text-gray-700">Perda por Corte:</p>
+              <p className="text-gray-900">{config.cutLoss}mm</p>
+            </div>
+            <div className="bg-gray-50 p-3 rounded-lg">
+              <p className="font-medium text-gray-700">Desperdício Máximo:</p>
+              <p className="text-gray-900">{config.maxWastePercentage}%</p>
+            </div>
+          </div>
+        </div>
+
+        <Separator />
+
         <div className="flex justify-between items-center">
           <Button 
             onClick={generateReport}
@@ -421,7 +437,7 @@ export const BarCuttingSettings = () => {
             className="flex items-center gap-2"
           >
             <FileText className="w-4 h-4" />
-            Relatório de Barras
+            Relatório de Configurações
           </Button>
           
           <Button 
