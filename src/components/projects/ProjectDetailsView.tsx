@@ -57,6 +57,7 @@ interface ProjectDetailsViewProps {
     name: string,
     barLength: number
   ) => Promise<void>;
+  onNavigateToProfileManagement?: () => void;
 }
 
 export const ProjectDetailsView = ({ 
@@ -64,7 +65,8 @@ export const ProjectDetailsView = ({
   onBack, 
   onEdit, 
   onDelete,
-  onCreateOptimization 
+  onCreateOptimization,
+  onNavigateToProfileManagement
 }: ProjectDetailsViewProps) => {
   const [pieces, setPieces] = useState<ProjetoPeca[]>([]);
   const [optimizations, setOptimizations] = useState<ProjetoOtimizacao[]>([]);
@@ -403,7 +405,11 @@ export const ProjectDetailsView = ({
                     />
                     {validations.length > 0 && (
                       <div className="mt-6">
-                        <ProjectValidationAlert validations={validations} onResolve={handleResolveValidation} />
+                        <ProjectValidationAlert 
+                          validations={validations} 
+                          onResolve={handleResolveValidation}
+                          onNavigateToProfileManagement={onNavigateToProfileManagement}
+                        />
                       </div>
                     )}
                     <div className="flex justify-end pt-4">

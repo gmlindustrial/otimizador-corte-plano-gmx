@@ -32,10 +32,10 @@ interface Projeto {
 }
 
 interface ProjectManagementTabProps {
-  // Props vazias - gerenciamento interno
+  onNavigateToProfileManagement?: () => void;
 }
 
-export const ProjectManagementTab = () => {
+export const ProjectManagementTab = ({ onNavigateToProfileManagement }: ProjectManagementTabProps = {}) => {
   const [view, setView] = useState<'list' | 'details' | 'create'>('list');
   const [selectedProject, setSelectedProject] = useState<Projeto | null>(null);
   const [editingProject, setEditingProject] = useState<Projeto | null>(null);
@@ -162,6 +162,7 @@ export const ProjectManagementTab = () => {
           onEdit={() => handleProjectEdit(selectedProject)}
           onDelete={() => handleProjectDelete(selectedProject)}
           onCreateOptimization={handleCreateOptimization}
+          onNavigateToProfileManagement={onNavigateToProfileManagement}
         />
         
         <ProjectEditDialog

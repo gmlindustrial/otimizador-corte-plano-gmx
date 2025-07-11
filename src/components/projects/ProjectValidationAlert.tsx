@@ -8,9 +8,10 @@ import type { ProjectPieceValidation, PerfilMaterial } from '@/types/project';
 interface ProjectValidationAlertProps {
   validations: ProjectPieceValidation[];
   onResolve: (validation: ProjectPieceValidation, selectedPerfil: PerfilMaterial) => void;
+  onNavigateToProfileManagement?: () => void;
 }
 
-export const ProjectValidationAlert = ({ validations, onResolve }: ProjectValidationAlertProps) => {
+export const ProjectValidationAlert = ({ validations, onResolve, onNavigateToProfileManagement }: ProjectValidationAlertProps) => {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   if (validations.length === 0) return null;
@@ -90,7 +91,12 @@ export const ProjectValidationAlert = ({ validations, onResolve }: ProjectValida
                             Nenhum perfil similar encontrado. 
                             Considere cadastrar um novo perfil no sistema.
                           </p>
-                          <Button variant="outline" size="sm" className="mt-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="mt-2"
+                            onClick={onNavigateToProfileManagement}
+                          >
                             Cadastrar Novo Perfil
                           </Button>
                         </div>

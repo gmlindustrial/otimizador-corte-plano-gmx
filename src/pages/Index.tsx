@@ -305,7 +305,9 @@ const Index = () => {
           </TabsContent>
 
           <TabsContent value="projects">
-            <ProjectManagementTab />
+            <ProjectManagementTab 
+              onNavigateToProfileManagement={() => setActiveTab("settings")}
+            />
           </TabsContent>
 
           <TabsContent value="sobras">
