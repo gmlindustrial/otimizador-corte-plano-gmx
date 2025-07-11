@@ -34,6 +34,8 @@ export class FileParsingService {
     const lines = content.split('\n');
     let pieces: CutPiece[] = [];
     
+    console.log(`📊 Total de linhas no arquivo: ${lines.length}`);
+    
     // Verificar se é arquivo AutoCAD válido
     const isAutoCADFile = lines.some(line => 
       line.includes('LM por Conjunto') || 
@@ -41,8 +43,11 @@ export class FileParsingService {
       line.includes('OBRA:') ||
       line.includes('HANGAR') ||
       line.includes('TERMINAL') ||
+      line.includes('V.') || // Específico para V.172, V.173
       line.match(/[A-Z]+\.?\d+/) // Padrões: V.172, V.173, C34, etc.
     );
+    
+    console.log('✅ Arquivo identificado como AutoCAD:', isAutoCADFile);
     
     if (!isAutoCADFile) {
       throw new Error('Arquivo não parece ser um relatório AutoCAD válido');
@@ -103,6 +108,8 @@ export class FileParsingService {
 
   // Detectar formato tabular (colunas organizadas)
   private static detectTabularFormat(lines: string[]): boolean {
+    console.log('🔍 Detectando formato tabular...');
+    
     // Procurar por cabeçalhos típicos do formato tabular
     const tableHeaders = lines.some(line => {
       const upperLine = line.toUpperCase();
@@ -113,26 +120,43 @@ export class FileParsingService {
              upperLine.includes('COMPRIMENTO') ||
              (upperLine.includes('POS') && upperLine.includes('QTD'));
     });
+    console.log('📋 Headers encontrados:', tableHeaders);
 
-    // Verificar se há linhas com estrutura tabular consistente
+    // Verificar se há linhas com estrutura tabular consistente (formato da imagem)
     const tabularLines = lines.filter(line => {
       const trimmed = line.trim();
-      // Formato típico: Pos Qty Perfil Material Comp Peso
-      return trimmed.match(/^\s*\d+\s+\d+\s+\S+\s+\S+\s+\d+\s+[\d,\.]+\s*$/);
-    }).length;
+      // Formato típico: Pos Qty Perfil Material Comp Peso (formato mais flexível)
+      return trimmed.match(/^\s*\d+\s+\d+\s+\S+.*\d+\s+[\d,\.]+\s*$/);
+    });
+    console.log(`📊 Linhas tabulares encontradas: ${tabularLines.length}`);
+    
+    // Verificar se há conjuntos isolados (V.172, V.173)
+    const conjuntoLines = lines.filter(line => {
+      const trimmed = line.trim();
+      return trimmed.match(/^[A-Z]+\.\d+\s*$/i);
+    });
+    console.log(`📦 Linhas de conjunto encontradas: ${conjuntoLines.length}`);
 
-    return tableHeaders || tabularLines >= 3;
+    const isTabular = tableHeaders || tabularLines.length >= 3 || conjuntoLines.length >= 2;
+    console.log(`✅ Formato tabular detectado: ${isTabular}`);
+    return isTabular;
   }
 
   // Detectar formato pontilhado (separado por linhas)
   private static detectDottedFormat(lines: string[]): boolean {
+    console.log('🔍 Detectando formato pontilhado...');
+    
     const dottedLines = lines.filter(line => line.match(/^-{5,}$/)).length;
     const conjuntoLines = lines.filter(line => {
       const trimmed = line.trim();
-      return trimmed.match(/^[A-Z]+\.?\d+$/i) && !trimmed.startsWith('P');
+      return trimmed.match(/^[A-Z]+\.?-?\d+$/i) && !trimmed.startsWith('P');
     }).length;
     
-    return dottedLines >= 2 || conjuntoLines >= 2;
+    console.log(`🔸 Linhas pontilhadas: ${dottedLines}, Conjuntos: ${conjuntoLines}`);
+    
+    const isDotted = dottedLines >= 2 || conjuntoLines >= 2;
+    console.log(`✅ Formato pontilhado detectado: ${isDotted}`);
+    return isDotted;
   }
 
   // Parser para formato tabular
@@ -174,10 +198,33 @@ export class FileParsingService {
         continue;
       }
 
-      // Parse de peças formato tabular: Pos Qty Perfil Material Comp Peso
-      const tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(\S+)\s+(\S+)\s+(\d+)\s+([\d,\.]+)\s*$/);
+      // Parse de peças formato tabular - múltiplas tentativas
+      let tabularMatch = null;
+      
+      // Formato 1: Pos Qty Perfil Material Comp Peso (6 colunas)
+      tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(\S+)\s+(\S+)\s+(\d+)\s+([\d,\.]+)\s*$/);
+      
+      // Formato 2: Pos Qty Descrição longa Comp Peso (pode ter espaços na descrição)
+      if (!tabularMatch) {
+        tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(.*?)\s+(\d+)\s+([\d,\.]+)\s*$/);
+      }
+      
+      // Formato 3: Mais flexível - qualquer linha com números no padrão correto
+      if (!tabularMatch) {
+        tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(.*?)\s+(\d{3,})\s+([\d,\.]+)\s*$/);
+      }
+      
       if (tabularMatch) {
-        const [, posicao, quantidade, perfil, material, comprimento, peso] = tabularMatch;
+        console.log(`🎯 Match tabular encontrado: ${line}`);
+        let posicao, quantidade, descricao, comprimento, peso;
+        
+        if (tabularMatch.length === 7) {
+          // Formato com 6 grupos: pos, qty, perfil, material, comp, peso
+          [, posicao, quantidade, , descricao, comprimento, peso] = tabularMatch;
+        } else {
+          // Formato com 5 grupos: pos, qty, descrição, comp, peso
+          [, posicao, quantidade, descricao, comprimento, peso] = tabularMatch;
+        }
         
         // Se não temos conjunto, tentar buscar nas proximidades
         if (!currentConjunto) {
@@ -203,8 +250,8 @@ export class FileParsingService {
           obra,
           conjunto: currentConjunto,
           posicao,
-          perfil: this.normalizePerfil(perfil.trim()),
-          material: material.trim(),
+          perfil: this.normalizePerfil(descricao?.trim() || 'PERFIL'),
+          material: 'MATERIAL',
           peso: parseFloat(peso.replace(',', '.')),
           tag,
           page: currentPage,
@@ -215,7 +262,12 @@ export class FileParsingService {
         };
 
         pieces.push(piece);
-        console.log(`✅ Peça tabular: ${tag} - ${piece.length}mm - Qtd: ${piece.quantity}`);
+        console.log(`✅ Peça tabular: ${tag} - ${piece.length}mm - Qtd: ${piece.quantity} - Perfil: ${piece.perfil}`);
+      } else {
+        // Log para debug de linhas não reconhecidas
+        if (line.length > 5 && line.match(/\d/) && !line.includes('Página') && !currentConjunto) {
+          console.log(`❓ Linha não reconhecida: "${line}"`);
+        }
       }
     }
 
