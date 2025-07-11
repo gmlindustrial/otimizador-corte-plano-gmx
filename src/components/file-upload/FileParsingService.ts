@@ -121,7 +121,17 @@ export class FileParsingService {
   private static detectTabularFormat(lines: string[]): boolean {
     console.log('🔍 Detectando formato tabular...');
     
-    // Procurar por cabeçalhos típicos do formato tabular
+    // Procurar por cabeçalhos específicos do formato simplificado
+    const simplifiedHeaders = lines.some(line => {
+      const upperLine = line.toUpperCase();
+      return upperLine.includes('MARCA') &&
+             upperLine.includes('ITEM') &&
+             upperLine.includes('QT.') &&
+             upperLine.includes('DESCRIÇÃO');
+    });
+    console.log('📋 Headers formato simplificado encontrados:', simplifiedHeaders);
+    
+    // Procurar por cabeçalhos típicos do formato tabular original
     const tableHeaders = lines.some(line => {
       const upperLine = line.toUpperCase();
       return upperLine.includes('POSIÇÃO') ||
@@ -131,7 +141,7 @@ export class FileParsingService {
              upperLine.includes('COMPRIMENTO') ||
              (upperLine.includes('POS') && upperLine.includes('QTD'));
     });
-    console.log('📋 Headers encontrados:', tableHeaders);
+    console.log('📋 Headers formato original encontrados:', tableHeaders);
 
     // Verificar se há linhas com estrutura tabular consistente 
     const tabularLines = lines.filter(line => {
@@ -156,8 +166,8 @@ export class FileParsingService {
     });
     console.log(`🆕 Formato seção+tipo (C44 COLUNA): ${secaoTipoLines.length}`);
 
-    const isTabular = tableHeaders || tabularLines.length >= 3 || secaoLines.length >= 2 || secaoTipoLines.length >= 1;
-    console.log(`✅ Formato tabular detectado: ${isTabular}`);
+    const isTabular = simplifiedHeaders || tableHeaders || tabularLines.length >= 3 || secaoLines.length >= 2 || secaoTipoLines.length >= 1;
+    console.log(`✅ Formato tabular detectado: ${isTabular} (Simplificado: ${simplifiedHeaders})`);
     return isTabular;
   }
 
@@ -181,6 +191,22 @@ export class FileParsingService {
   // Parser para formato tabular
   private static parseTabularFormat(lines: string[]): CutPiece[] {
     console.log('📊 Iniciando parse formato tabular...');
+    
+    // Verificar se é formato simplificado (MARCA, ITEM, QT., DESCRIÇÃO...)
+    const hasSimplifiedHeaders = lines.some(line => {
+      const upperLine = line.toUpperCase();
+      return upperLine.includes('MARCA') &&
+             upperLine.includes('ITEM') &&
+             upperLine.includes('QT.') &&
+             upperLine.includes('DESCRIÇÃO');
+    });
+    
+    if (hasSimplifiedHeaders) {
+      console.log('🎯 Detectado formato tabular simplificado, usando parser específico...');
+      return this.parseSimplifiedTabularFormat(lines);
+    }
+    
+    console.log('📊 Usando parser tabular original...');
     const pieces: CutPiece[] = [];
     let obra = '';
     let currentConjunto = '';
@@ -433,6 +459,160 @@ export class FileParsingService {
     }
 
     return pieces;
+  }
+
+  // Parser específico para formato tabular simplificado (MARCA, ITEM, QT., DESCRIÇÃO...)
+  private static parseSimplifiedTabularFormat(lines: string[]): CutPiece[] {
+    console.log('🎯 Iniciando parse formato tabular simplificado...');
+    const pieces: CutPiece[] = [];
+    let obra = '';
+    let headerIndex = -1;
+    
+    // Extrair obra
+    for (const line of lines) {
+      const obraMatch = line.match(/OBRA:\s*(.+?)(?:\s+Data:|$)/i);
+      if (obraMatch) {
+        obra = obraMatch[1].trim();
+        console.log('🏗️ Obra identificada:', obra);
+        break;
+      }
+    }
+    
+    // Encontrar linha de cabeçalho
+    for (let i = 0; i < lines.length; i++) {
+      const upperLine = lines[i].toUpperCase();
+      if (upperLine.includes('MARCA') && upperLine.includes('ITEM') && 
+          upperLine.includes('QT.') && upperLine.includes('DESCRIÇÃO')) {
+        headerIndex = i;
+        console.log(`📋 Cabeçalho encontrado na linha ${i}: "${lines[i]}"`);
+        break;
+      }
+    }
+    
+    if (headerIndex === -1) {
+      throw new Error('Cabeçalho do formato simplificado não encontrado');
+    }
+    
+    // Processar dados a partir da linha após o cabeçalho
+    for (let i = headerIndex + 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // Pular linhas vazias ou separadores
+      if (!line || line.match(/^[\-\=\s]+$/)) {
+        continue;
+      }
+      
+      // Regex para capturar: MARCA | ITEM | QT. | DESCRIÇÃO | MATERIAL | PESO
+      // Exemplo: "V172    P166    1    W150X18X604    A572-50    10.9"
+      const simplifiedMatch = line.match(/^\s*([A-Z]+\d*\.?\d*)\s+([A-Z]*\d+)\s+(\d+)\s+([A-Z0-9X\.]+)\s+([A-Z0-9\-]*)\s*([\d,\.]*)\s*$/i);
+      
+      if (simplifiedMatch) {
+        const [, marca, item, quantidade, descricao, material, peso] = simplifiedMatch;
+        
+        // Extrair perfil da descrição (somente até o segundo X)
+        const perfil = this.extractPerfilFromDescription(descricao);
+        
+        // Extrair comprimento da descrição (após o segundo X)
+        const comprimento = this.extractLengthFromDescription(descricao);
+        
+        const tag = `${marca}-${item}`;
+        const piece: any = {
+          id: `autocad-simp-${marca}-${item}-${Date.now()}`,
+          length: comprimento,
+          quantity: parseInt(quantidade),
+          obra,
+          conjunto: marca, // MARCA vira conjunto
+          posicao: item,   // ITEM vira tag da peça
+          perfil,
+          material: material || 'MATERIAL',
+          peso: peso ? parseFloat(peso.replace(',', '.')) : 0,
+          tag,
+          dimensoes: {
+            comprimento,
+            largura: 0
+          }
+        };
+        
+        pieces.push(piece);
+        console.log(`✅ Peça simplificada: ${tag} - ${piece.length}mm - Qtd: ${piece.quantity}`);
+        console.log(`   MARCA: "${marca}" -> conjunto: "${piece.conjunto}"`);
+        console.log(`   ITEM: "${item}" -> posição: "${piece.posicao}"`);
+        console.log(`   DESCRIÇÃO: "${descricao}" -> perfil: "${piece.perfil}" (${comprimento}mm)`);
+        console.log(`   ---`);
+      } else {
+        // Log para debug
+        if (line.length > 5 && line.match(/\d/)) {
+          console.log(`❓ Linha não reconhecida no formato simplificado: "${line}"`);
+        }
+      }
+    }
+    
+    return pieces;
+  }
+  
+  // Extrair perfil da descrição (somente até o segundo X)
+  private static extractPerfilFromDescription(descricao: string): string {
+    console.log(`🔧 Extraindo perfil de: "${descricao}"`);
+    
+    if (!descricao) return 'PERFIL';
+    
+    // Encontrar posições dos X's
+    const xPositions: number[] = [];
+    for (let i = 0; i < descricao.length; i++) {
+      if (descricao[i].toUpperCase() === 'X') {
+        xPositions.push(i);
+      }
+    }
+    
+    let perfil: string;
+    if (xPositions.length >= 2) {
+      // Extrair até o segundo X (incluindo o segundo X)
+      perfil = descricao.substring(0, xPositions[1] + 1);
+    } else if (xPositions.length === 1) {
+      // Se só há um X, extrair até ele
+      perfil = descricao.substring(0, xPositions[0] + 1);
+    } else {
+      // Se não há X, usar a descrição toda
+      perfil = descricao;
+    }
+    
+    perfil = perfil.trim().toUpperCase();
+    console.log(`🔧 Perfil extraído: "${perfil}"`);
+    return perfil;
+  }
+  
+  // Extrair comprimento da descrição (após o segundo X)
+  private static extractLengthFromDescription(descricao: string): number {
+    console.log(`🔧 Extraindo comprimento de: "${descricao}"`);
+    
+    if (!descricao) return 0;
+    
+    // Encontrar posições dos X's
+    const xPositions: number[] = [];
+    for (let i = 0; i < descricao.length; i++) {
+      if (descricao[i].toUpperCase() === 'X') {
+        xPositions.push(i);
+      }
+    }
+    
+    let comprimento = 0;
+    if (xPositions.length >= 2) {
+      // Extrair tudo após o segundo X
+      const afterSecondX = descricao.substring(xPositions[1] + 1);
+      const lengthMatch = afterSecondX.match(/(\d+)/);
+      if (lengthMatch) {
+        comprimento = parseInt(lengthMatch[1]);
+      }
+    } else {
+      // Fallback: buscar qualquer número grande na string
+      const lengthMatch = descricao.match(/(\d{3,})/);
+      if (lengthMatch) {
+        comprimento = parseInt(lengthMatch[1]);
+      }
+    }
+    
+    console.log(`🔧 Comprimento extraído: ${comprimento}mm`);
+    return comprimento;
   }
 
   // Método para normalizar descrições de perfis
