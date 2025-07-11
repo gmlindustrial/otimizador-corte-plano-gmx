@@ -211,6 +211,7 @@ export class FileParsingService {
       }
       
       // Detectar conjunto formato antigo (linha isolada com padrão V.172, V.173, etc.)
+      // IMPORTANTE: P não é conjunto, é posição! Só aceitar se não começar com P
       const conjuntoMatch = line.match(/^([A-Z]+\.\d+)\s*$/i);
       if (conjuntoMatch && !conjuntoMatch[1].toUpperCase().startsWith('P')) {
         currentConjunto = conjuntoMatch[1];
@@ -219,6 +220,7 @@ export class FileParsingService {
       }
       
       // Também verificar se a linha contém um conjunto no início (mesmo com texto adicional)
+      // IMPORTANTE: P não é conjunto, é posição! Só aceitar se não começar com P
       const conjuntoInLineMatch = line.match(/^([A-Z]+\.\d+)/i);
       if (conjuntoInLineMatch && !conjuntoInLineMatch[1].toUpperCase().startsWith('P') && line.length < 50) {
         currentConjunto = conjuntoInLineMatch[1];
