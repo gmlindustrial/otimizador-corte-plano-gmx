@@ -252,365 +252,445 @@ export const ProjectDetailsView = ({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
-        <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button
-                onClick={onBack}
-                variant="outline"
-                size="sm"
-                className="bg-transparent text-white border-white hover:bg-white hover:text-green-600"
-              >
-                <ArrowLeft className="w-4 h-4 mr-1" />
-                Voltar
-              </Button>
-              <div>
-                <CardTitle className="text-xl mb-1">{project.nome}</CardTitle>
-                <p className="text-sm opacity-90">
-                  {project.numero_projeto} | {project.clientes?.nome} - {project.obras?.nome}
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                onClick={onEdit}
-                variant="outline"
-                size="sm"
-                className="bg-transparent text-white border-white hover:bg-white hover:text-green-600"
-              >
-                <Edit className="w-4 h-4 mr-1" />
-                Editar
-              </Button>
-              <Button
-                onClick={onDelete}
-                variant="outline"
-                size="sm"
-                className="bg-transparent text-white border-white hover:bg-white hover:text-red-600"
-              >
-                <Trash2 className="w-4 h-4 mr-1" />
-                Excluir
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-
-      {/* Project Info */}
-      <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="w-5 h-5" />
-            Informações do Projeto
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="flex items-center gap-3">
-              <User className="w-5 h-5 text-gray-400" />
-              <div>
-                <p className="text-sm text-gray-600">Cliente</p>
-                <p className="font-medium">{project.clientes?.nome || 'Não definido'}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Building className="w-5 h-5 text-gray-400" />
-              <div>
-                <p className="text-sm text-gray-600">Obra</p>
-                <p className="font-medium">{project.obras?.nome || 'Não definida'}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <Calendar className="w-5 h-5 text-gray-400" />
-              <div>
-                <p className="text-sm text-gray-600">Data de Criação</p>
-                <p className="font-medium">{format(new Date(project.created_at), 'dd/MM/yyyy HH:mm')}</p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'pieces' | 'optimizations' | 'register')} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="pieces" className="flex items-center gap-2">
-            <Package className="w-4 h-4" />
-            Peças ({pieces.length})
-          </TabsTrigger>
-          <TabsTrigger value="register" className="flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Cadastrar Peça
-          </TabsTrigger>
-          <TabsTrigger value="optimizations" className="flex items-center gap-2">
-            <Calculator className="w-4 h-4" />
-            Otimizações ({optimizations.length})
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="register">
-          <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
-            <CardHeader>
-              <CardTitle>Cadastrar Nova Peça</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {importing ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2" />
-                  Extraindo peças do arquivo...
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      <div className="container mx-auto px-4 py-8 max-w-7xl space-y-8">
+        {/* Header */}
+        <Card className="bg-white/95 backdrop-blur-lg shadow-xl border-0 rounded-2xl overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 text-white p-8">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+                <Button
+                  onClick={onBack}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/10 text-white border-white/30 hover:bg-white hover:text-indigo-600 transition-all duration-300 w-fit backdrop-blur-sm"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
+                </Button>
+                <div className="space-y-2">
+                  <CardTitle className="text-2xl font-bold tracking-tight">{project.nome}</CardTitle>
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-white/90">
+                    <span className="px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm">
+                      {project.numero_projeto}
+                    </span>
+                    <span>•</span>
+                    <span>{project.clientes?.nome}</span>
+                    <span>•</span>
+                    <span>{project.obras?.nome}</span>
+                  </div>
                 </div>
-              ) : duplicateItems.length > 0 ? (
-                <ProjectDuplicateManager
-                  duplicates={duplicateItems}
-                  onResolved={handleDuplicateResolved}
-                  onCancel={() => setDuplicateItems([])}
-                />
-              ) : (
-                <>
-                  <PieceRegistrationForm
-                    projectId={project.id}
-                    onPieceAdded={handlePieceAdded}
-                  />
-                  {validations.length > 0 && (
-                    <div className="mt-4">
-                      <ProjectValidationAlert validations={validations} onResolve={handleResolveValidation} />
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  onClick={onEdit}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/10 text-white border-white/30 hover:bg-white hover:text-indigo-600 transition-all duration-300 backdrop-blur-sm"
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Editar
+                </Button>
+                <Button
+                  onClick={onDelete}
+                  variant="outline"
+                  size="sm"
+                  className="bg-white/10 text-white border-white/30 hover:bg-white hover:text-red-600 transition-all duration-300 backdrop-blur-sm"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Excluir
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+
+        {/* Project Info */}
+        <Card className="bg-white/95 backdrop-blur-lg shadow-xl border-0 rounded-2xl">
+          <CardHeader className="pb-6">
+            <CardTitle className="flex items-center gap-3 text-xl font-semibold text-gray-800">
+              <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg">
+                <Settings className="w-5 h-5 text-white" />
+              </div>
+              Informações do Projeto
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="group p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100 hover:shadow-lg transition-all duration-300">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-blue-100 rounded-xl group-hover:bg-blue-200 transition-colors">
+                    <User className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-blue-600 uppercase tracking-wide">Cliente</p>
+                    <p className="text-lg font-semibold text-gray-800">{project.clientes?.nome || 'Não definido'}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="group p-6 bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl border border-emerald-100 hover:shadow-lg transition-all duration-300">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-emerald-100 rounded-xl group-hover:bg-emerald-200 transition-colors">
+                    <Building className="w-6 h-6 text-emerald-600" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-emerald-600 uppercase tracking-wide">Obra</p>
+                    <p className="text-lg font-semibold text-gray-800">{project.obras?.nome || 'Não definida'}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="group p-6 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-100 hover:shadow-lg transition-all duration-300">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-amber-100 rounded-xl group-hover:bg-amber-200 transition-colors">
+                    <Calendar className="w-6 h-6 text-amber-600" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-amber-600 uppercase tracking-wide">Criado em</p>
+                    <p className="text-lg font-semibold text-gray-800">{format(new Date(project.created_at), 'dd/MM/yyyy')}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'pieces' | 'optimizations' | 'register')} className="space-y-8">
+          <TabsList className="grid w-full grid-cols-3 bg-white/80 backdrop-blur-sm p-2 rounded-xl shadow-lg border-0">
+            <TabsTrigger value="pieces" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg transition-all duration-300">
+              <Package className="w-4 h-4" />
+              Peças ({pieces.length})
+            </TabsTrigger>
+            <TabsTrigger value="register" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg transition-all duration-300">
+              <Plus className="w-4 h-4" />
+              Cadastrar Peça
+            </TabsTrigger>
+            <TabsTrigger value="optimizations" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg transition-all duration-300">
+              <Calculator className="w-4 h-4" />
+              Otimizações ({optimizations.length})
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="register">
+            <Card className="bg-white/95 backdrop-blur-lg shadow-xl border-0 rounded-2xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-xl font-semibold text-gray-800">
+                  <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg">
+                    <Plus className="w-5 h-5 text-white" />
+                  </div>
+                  Cadastrar Nova Peça
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {importing ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+                      <p className="text-gray-600 font-medium">Extraindo peças do arquivo...</p>
                     </div>
-                  )}
-                  <div className="mt-4 flex justify-end">
-                    <Button variant="outline" onClick={() => setShowUpload(true)}>
-                      <Upload className="w-4 h-4 mr-2" />
-                      Anexar Arquivo
+                  </div>
+                ) : duplicateItems.length > 0 ? (
+                  <ProjectDuplicateManager
+                    duplicates={duplicateItems}
+                    onResolved={handleDuplicateResolved}
+                    onCancel={() => setDuplicateItems([])}
+                  />
+                ) : (
+                  <>
+                    <PieceRegistrationForm
+                      projectId={project.id}
+                      onPieceAdded={handlePieceAdded}
+                    />
+                    {validations.length > 0 && (
+                      <div className="mt-6">
+                        <ProjectValidationAlert validations={validations} onResolve={handleResolveValidation} />
+                      </div>
+                    )}
+                    <div className="flex justify-end pt-4">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setShowUpload(true)}
+                        className="hover:bg-indigo-50 hover:border-indigo-300 transition-all duration-300"
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        Anexar Arquivo
+                      </Button>
+                    </div>
+                    <FileUploadDialog
+                      open={showUpload}
+                      onOpenChange={setShowUpload}
+                      onProcessStart={handleImportStart}
+                      onFileProcessed={handleFileProcessed}
+                    />
+                  </>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="pieces">
+            <Card className="bg-white/95 backdrop-blur-lg shadow-xl border-0 rounded-2xl">
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 text-xl font-semibold text-gray-800">
+                    <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
+                      <Package className="w-5 h-5 text-white" />
+                    </div>
+                    Peças por Perfil
+                  </div>
+                  <div className="flex gap-3">
+                    {selectedPieces.size > 0 && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setConfirmDelete(true)}
+                        className="hover:bg-red-600 transition-all duration-300"
+                      >
+                        Excluir Selecionadas ({selectedPieces.size})
+                      </Button>
+                    )}
+                    <Button
+                      onClick={() => setShowOptimizationDialog(true)}
+                      disabled={pieces.length === 0 || selectedPieces.size === 0}
+                      className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all duration-300"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Nova Otimização
                     </Button>
                   </div>
-                  <FileUploadDialog
-                    open={showUpload}
-                    onOpenChange={setShowUpload}
-                    onProcessStart={handleImportStart}
-                    onFileProcessed={handleFileProcessed}
-                  />
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="pieces">
-          <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Peças por Perfil</span>
-                <div className="flex gap-2">
-                  {selectedPieces.size > 0 && (
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => setConfirmDelete(true)}
-                    >
-                      Excluir Selecionadas
-                    </Button>
-                  )}
-                  <Button
-                    onClick={() => setShowOptimizationDialog(true)}
-                    disabled={pieces.length === 0 || selectedPieces.size === 0}
-                    className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                  >
-                    <Plus className="w-4 h-4 mr-1" />
-                    Nova Otimização
-                  </Button>
-                </div>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {pieces.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhuma peça cadastrada neste projeto.</div>
-              ) : (
-                <Accordion type="multiple" className="space-y-4" defaultValue={Object.keys(groupedPieces)}>
-                  {Object.entries(groupedPieces).map(([key, group]) => {
-                    const allSelected = group.pieces.every((p: ProjetoPeca) => selectedPieces.has(p.id));
-                    return (
-                      <AccordionItem key={key} value={key} className="border rounded-lg">
-                        <AccordionTrigger className="hover:no-underline">
-                          <div className="flex items-center gap-3 flex-1">
-                            <Checkbox
-                              checked={allSelected}
-                              onCheckedChange={() => toggleProfileSelection(key, group.pieces)}
-                              onClick={(e) => e.stopPropagation()}
-                              className="mr-2"
-                            />
-                            <span className="font-medium">
-                             Descrição Perfil {group.perfil?.descricao_perfil || 'Perfil não definido'}
-                            </span>
-                            <div className="flex gap-2 ml-auto">
-                              <Badge variant="secondary">{group.totalQuantity} peças</Badge>
-                              <Badge variant="outline">{(group.totalLength / 1000).toFixed(2)}m</Badge>
-                              {group.totalWeight > 0 && (
-                                <Badge variant="outline">{group.totalWeight.toFixed(2)}kg</Badge>
-                              )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {pieces.length === 0 ? (
+                  <div className="text-center py-16">
+                    <div className="p-4 bg-gray-100 rounded-full w-fit mx-auto mb-4">
+                      <Package className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <p className="text-gray-500 text-lg">Nenhuma peça cadastrada neste projeto.</p>
+                  </div>
+                ) : (
+                  <Accordion type="multiple" className="space-y-4">
+                    {Object.entries(groupedPieces).map(([key, group]) => {
+                      const allSelected = group.pieces.every((p: ProjetoPeca) => selectedPieces.has(p.id));
+                      return (
+                        <AccordionItem key={key} value={key} className="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+                          <AccordionTrigger className="hover:no-underline px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-indigo-50 hover:to-purple-50 transition-all duration-300">
+                            <div className="flex items-center gap-4 flex-1">
+                              <Checkbox
+                                checked={allSelected}
+                                onCheckedChange={() => toggleProfileSelection(key, group.pieces)}
+                                onClick={(e) => e.stopPropagation()}
+                                className="scale-110"
+                              />
+                              <div className="flex-1">
+                                <span className="font-semibold text-gray-800 text-lg">
+                                  {group.perfil?.descricao_perfil || 'Perfil não definido'}
+                                </span>
+                              </div>
+                              <div className="flex gap-3">
+                                <Badge variant="secondary" className="bg-indigo-100 text-indigo-800 px-3 py-1">
+                                  {group.totalQuantity} peças
+                                </Badge>
+                                <Badge variant="outline" className="border-purple-200 text-purple-700 px-3 py-1">
+                                  {(group.totalLength / 1000).toFixed(2)}m
+                                </Badge>
+                                {group.totalWeight > 0 && (
+                                  <Badge variant="outline" className="border-emerald-200 text-emerald-700 px-3 py-1">
+                                    {group.totalWeight.toFixed(2)}kg
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent>
-                          <div className="space-y-2 py-2">
-                            {group.pieces.map((piece: ProjetoPeca) => {
-                              const selected = selectedPieces.has(piece.id);
-                              const peso = piece.peso_por_metro
-                                ? (piece.peso_por_metro * piece.comprimento_mm) / 1000
-                                : null;
-                              return (
-                                <div key={piece.id} className="flex items-center justify-between border rounded-md p-2 bg-gray-50">
-                                  <div className="flex items-start gap-3">
-                                    <Checkbox
-                                      checked={selected}
-                                      onCheckedChange={() => togglePieceSelection(piece.id)}
-                                      className="mt-0.5"
-                                    />
-                                    <div className="text-xs space-y-1">
-                                      {piece.perfil && (
-                                        <div>
-                                          <span className="font-semibold">Descrição Perfil:</span>{' '}
-                                          {piece.perfil.descricao_perfil}
+                          </AccordionTrigger>
+                          <AccordionContent className="px-6 py-4 bg-white">
+                            <div className="space-y-3">
+                              {group.pieces.map((piece: ProjetoPeca) => {
+                                const selected = selectedPieces.has(piece.id);
+                                const peso = piece.peso_por_metro
+                                  ? (piece.peso_por_metro * piece.comprimento_mm) / 1000
+                                  : null;
+                                return (
+                                  <div key={piece.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 hover:shadow-sm transition-all duration-300">
+                                    <div className="flex items-start gap-4">
+                                      <Checkbox
+                                        checked={selected}
+                                        onCheckedChange={() => togglePieceSelection(piece.id)}
+                                        className="mt-1 scale-110"
+                                      />
+                                      <div className="space-y-2">
+                                        {piece.perfil && (
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-sm font-semibold text-gray-600">Perfil:</span>
+                                            <span className="text-sm text-gray-800 bg-blue-50 px-2 py-1 rounded">
+                                              {piece.perfil.descricao_perfil}
+                                            </span>
+                                          </div>
+                                        )}
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-sm font-semibold text-gray-600">Tag:</span>
+                                          <span className="text-sm text-gray-800 font-mono bg-gray-100 px-2 py-1 rounded">
+                                            {piece.tag_peca}
+                                          </span>
                                         </div>
-                                      )}
-                                      <div>
-                                        <span className="font-semibold">Tag:</span> {piece.tag_peca}
+                                        {piece.conjunto && (
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-sm font-semibold text-gray-600">Conjunto:</span>
+                                            <span className="text-sm bg-indigo-100 text-indigo-800 px-2 py-1 rounded font-medium">
+                                              {piece.conjunto}
+                                            </span>
+                                          </div>
+                                        )}
+                                        <div className="flex items-center gap-4">
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-sm font-semibold text-gray-600">Comprimento:</span>
+                                            <span className="text-sm text-gray-800 bg-emerald-50 px-2 py-1 rounded">
+                                              {piece.comprimento_mm}mm × {piece.quantidade}
+                                            </span>
+                                          </div>
+                                          {peso !== null && (
+                                            <div className="flex items-center gap-2">
+                                              <span className="text-sm font-semibold text-gray-600">Peso:</span>
+                                              <span className="text-sm text-gray-800 bg-amber-50 px-2 py-1 rounded">
+                                                {peso.toFixed(2)}kg
+                                              </span>
+                                            </div>
+                                          )}
+                                        </div>
                                       </div>
-                                      {piece.conjunto && (
-                                        <div className="text-blue-600">
-                                          <span className="font-semibold">Conjunto:</span> {piece.conjunto}
-                                        </div>
-                                      )}
-                                      <div>
-                                        <span className="font-semibold">Comprimento:</span> {piece.comprimento_mm}mm × {piece.quantidade}
-                                      </div>
-                                      {peso !== null && (
-                                        <div>
-                                          <span className="font-semibold">Peso:</span> {peso.toFixed(2)}kg
-                                        </div>
-                                      )}
                                     </div>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedPieces(new Set([piece.id]));
+                                        setConfirmDelete(true);
+                                      }}
+                                      className="text-red-600 hover:bg-red-50 hover:border-red-300 transition-all duration-300"
+                                    >
+                                      <Trash2 className="w-4 h-4 mr-1" />
+                                      Excluir
+                                    </Button>
                                   </div>
-                                  <Button
-                                    variant="outline"
-                                    size="icon"
-                                    onClick={() => {
-                                      setSelectedPieces(new Set([piece.id]));
-                                      setConfirmDelete(true);
-                                    }}
-                                    className="text-red-600 hover:bg-red-50"
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </AccordionContent>
-                      </AccordionItem>
-                    );
-                  })}
-                </Accordion>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="optimizations">
-          <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
-            <CardHeader>
-              <CardTitle>Histórico de Otimizações</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {optimizations.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  Nenhuma otimização realizada para este projeto.
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {optimizations.map((optimization) => {
-                    const totalPieces = optimization.resultados?.bars?.reduce(
-                      (sum: number, b: any) => sum + b.pieces.length,
-                      0
-                    ) || 0;
-                    const cutPieces = optimization.resultados?.bars?.reduce(
-                      (sum: number, b: any) =>
-                        sum + b.pieces.filter((p: any) => p.cortada).length,
-                      0
-                    ) || 0;
-                    const percent = totalPieces > 0 ? Math.round((cutPieces / totalPieces) * 100) : 0;
-
-                    return (
-                      <Card key={optimization.id} className="border">
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <h4 className="font-medium">{optimization.nome_lista}</h4>
-                              <p className="text-sm text-gray-600">
-                                Barra: {optimization.tamanho_barra}mm
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                {format(new Date(optimization.created_at), 'dd/MM/yyyy HH:mm')}
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                {cutPieces}/{totalPieces} peças cortadas ({percent}%)
-                              </p>
+                                );
+                              })}
                             </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() =>
-                                setViewResults({
-                                  res: optimization.resultados,
-                                  bar: optimization.tamanho_barra,
-                                  id: optimization.id
-                                })
-                              }
-                            >
-                              Visualizar
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-      <OptimizationCreateDialog
-        open={showOptimizationDialog}
-        onOpenChange={setShowOptimizationDialog}
-        onCreate={(name, bar) =>
-          onCreateOptimization(
-            pieces.filter(p => selectedPieces.has(p.id)),
-            name,
-            bar
-          ).then(() => {
-            setShowOptimizationDialog(false);
-            setActiveTab('optimizations');
-            void loadProjectData();
-          })
-        }
-      />
-      <OptimizationResultsDialog
-        open={!!viewResults}
-        onOpenChange={() => setViewResults(null)}
-        results={viewResults?.res || null}
-        barLength={viewResults?.bar || 0}
-        project={null}
-        optimizationId={viewResults?.id || null}
-      />
-      <DeleteConfirmDialog
-        open={confirmDelete}
-        onOpenChange={setConfirmDelete}
-        onConfirm={handleDeleteSelected}
-        title="Excluir Peças"
-        description={`Tem certeza que deseja excluir ${selectedPieces.size} peça(s)? Esta ação não pode ser desfeita.`}
-        loading={deleting}
-      />
+                          </AccordionContent>
+                        </AccordionItem>
+                      );
+                    })}
+                  </Accordion>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="optimizations">
+            <Card className="bg-white/95 backdrop-blur-lg shadow-xl border-0 rounded-2xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3 text-xl font-semibold text-gray-800">
+                  <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg">
+                    <Calculator className="w-5 h-5 text-white" />
+                  </div>
+                  Histórico de Otimizações
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {optimizations.length === 0 ? (
+                  <div className="text-center py-16">
+                    <div className="p-4 bg-gray-100 rounded-full w-fit mx-auto mb-4">
+                      <Calculator className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <p className="text-gray-500 text-lg">Nenhuma otimização realizada para este projeto.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {optimizations.map((optimization) => {
+                      const totalPieces = optimization.resultados?.bars?.reduce(
+                        (sum: number, b: any) => sum + b.pieces.length,
+                        0
+                      ) || 0;
+                      const cutPieces = optimization.resultados?.bars?.reduce(
+                        (sum: number, b: any) =>
+                          sum + b.pieces.filter((p: any) => p.cortada).length,
+                        0
+                      ) || 0;
+                      const percent = totalPieces > 0 ? Math.round((cutPieces / totalPieces) * 100) : 0;
+
+                      return (
+                        <Card key={optimization.id} className="border border-gray-200 hover:shadow-lg transition-all duration-300 rounded-xl overflow-hidden">
+                          <CardContent className="p-6">
+                            <div className="flex items-center justify-between">
+                              <div className="space-y-3">
+                                <h4 className="text-lg font-semibold text-gray-800">{optimization.nome_lista}</h4>
+                                <div className="flex gap-4">
+                                  <span className="text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">
+                                    Barra: {optimization.tamanho_barra}mm
+                                  </span>
+                                  <span className="text-sm bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium">
+                                    {cutPieces}/{totalPieces} peças ({percent}%)
+                                  </span>
+                                </div>
+                                <p className="text-sm text-gray-500">
+                                  {format(new Date(optimization.created_at), 'dd/MM/yyyy HH:mm')}
+                                </p>
+                              </div>
+                              <Button
+                                variant="outline"
+                                onClick={() =>
+                                  setViewResults({
+                                    res: optimization.resultados,
+                                    bar: optimization.tamanho_barra,
+                                    id: optimization.id
+                                  })
+                                }
+                                className="hover:bg-indigo-50 hover:border-indigo-300 transition-all duration-300"
+                              >
+                                Visualizar Resultados
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        <OptimizationCreateDialog
+          open={showOptimizationDialog}
+          onOpenChange={setShowOptimizationDialog}
+          onCreate={(name, bar) =>
+            onCreateOptimization(
+              pieces.filter(p => selectedPieces.has(p.id)),
+              name,
+              bar
+            ).then(() => {
+              setShowOptimizationDialog(false);
+              setActiveTab('optimizations');
+              void loadProjectData();
+            })
+          }
+        />
+        <OptimizationResultsDialog
+          open={!!viewResults}
+          onOpenChange={() => setViewResults(null)}
+          results={viewResults?.res || null}
+          barLength={viewResults?.bar || 0}
+          project={null}
+          optimizationId={viewResults?.id || null}
+        />
+        <DeleteConfirmDialog
+          open={confirmDelete}
+          onOpenChange={setConfirmDelete}
+          onConfirm={handleDeleteSelected}
+          title="Excluir Peças"
+          description={`Tem certeza que deseja excluir ${selectedPieces.size} peça(s)? Esta ação não pode ser desfeita.`}
+          loading={deleting}
+        />
+      </div>
     </div>
   );
 };
