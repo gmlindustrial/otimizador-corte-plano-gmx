@@ -248,10 +248,6 @@ const Index = () => {
               <Package className="w-4 h-4" />
               Estoque
             </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center gap-2">
-              <History className="w-4 h-4" />
-              Histórico
-            </TabsTrigger>
             <TabsTrigger value="reports" className="flex items-center gap-2">
               <FileText className="w-4 h-4" />
               Relatórios
@@ -304,18 +300,6 @@ const Index = () => {
             <EstoqueSobrasIntegrated />
           </TabsContent>
 
-          <TabsContent value="history">
-            <HistoryPanel
-              history={optimizationHistory}
-              onLoadHistory={(entry) => {
-                setProject(entry.project);
-                setPieces(entry.pieces);
-                setResults(entry.results);
-                setBarLength(entry.barLength);
-                setActiveTab("optimize");
-              }}
-            />
-          </TabsContent>
 
           <TabsContent value="reports">
             <ReportsManager optimizationHistory={optimizationHistory} />
