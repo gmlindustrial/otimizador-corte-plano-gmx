@@ -206,33 +206,31 @@ export class FileParsingService {
         continue;
       }
 
-      // Parse de peças formato tabular - múltiplas tentativas
+      // Parse de peças formato tabular - específico para AutoCAD com perfis L
       let tabularMatch = null;
+      let posicao, quantidade, perfil, material, comprimento, peso;
       
-      // Formato 1: Pos Qty Perfil Material Comp Peso (6 colunas)
-      tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(\S+)\s+(\S+)\s+(\d+)\s+([\d,\.]+)\s*$/);
+      // Formato específico: Pos Qty Perfil(com espaços) Material Dimensões Peso
+      // Exemplo: "4228    1   L 51 X 4.7     A36    250 x 51   1.37"
+      tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(L\s+\d+\s+X\s+[\d\.]+)\s+([A-Z]\d+)\s+([\d\s+x]+)\s+([\d,\.]+)\s*$/i);
       
-      // Formato 2: Pos Qty Descrição longa Comp Peso (pode ter espaços na descrição)
-      if (!tabularMatch) {
-        tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(.*?)\s+(\d+)\s+([\d,\.]+)\s*$/);
-      }
-      
-      // Formato 3: Mais flexível - qualquer linha com números no padrão correto
-      if (!tabularMatch) {
+      if (tabularMatch) {
+        [, posicao, quantidade, perfil, material, comprimento, peso] = tabularMatch;
+        // Extrair comprimento das dimensões (primeiro número)
+        const dimensaoMatch = comprimento.match(/(\d+)/);
+        comprimento = dimensaoMatch ? dimensaoMatch[1] : '0';
+        console.log(`🎯 Match AutoCAD específico: Pos=${posicao}, Perfil="${perfil}", Material="${material}", Comp=${comprimento}`);
+      } else {
+        // Fallback para outros formatos
         tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(.*?)\s+(\d{3,})\s+([\d,\.]+)\s*$/);
+        if (tabularMatch) {
+          [, posicao, quantidade, perfil, comprimento, peso] = tabularMatch;
+          material = 'MATERIAL';
+          console.log(`🎯 Match tabular genérico: ${line}`);
+        }
       }
       
       if (tabularMatch) {
-        console.log(`🎯 Match tabular encontrado: ${line}`);
-        let posicao, quantidade, descricao, comprimento, peso;
-        
-        if (tabularMatch.length === 7) {
-          // Formato com 6 grupos: pos, qty, perfil, material, comp, peso
-          [, posicao, quantidade, , descricao, comprimento, peso] = tabularMatch;
-        } else {
-          // Formato com 5 grupos: pos, qty, descrição, comp, peso
-          [, posicao, quantidade, descricao, comprimento, peso] = tabularMatch;
-        }
         
         // Se não temos conjunto, tentar buscar nas proximidades com foco em V.XXX
         if (!currentConjunto) {
@@ -261,8 +259,8 @@ export class FileParsingService {
           obra,
           conjunto: currentConjunto,
           posicao,
-          perfil: this.normalizePerfil(descricao?.trim() || 'PERFIL'),
-          material: 'MATERIAL',
+          perfil: this.normalizePerfil(perfil?.trim() || 'PERFIL'),
+          material: material || 'MATERIAL',
           peso: parseFloat(peso.replace(',', '.')),
           tag,
           page: currentPage,
