@@ -266,9 +266,9 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
 
   if (showPrintPreview) {
     return (
-      <div className="fixed inset-0 bg-white z-50 overflow-auto print:overflow-visible">
+      <div className="fixed inset-0 bg-white z-50 flex flex-col print:overflow-visible">
         {/* Cabeçalho da visualização - oculto na impressão */}
-        <div className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200 flex justify-between items-center print:hidden">
+        <div className="flex-shrink-0 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200 flex justify-between items-center print:hidden">
           <h2 className="text-2xl font-bold text-gray-900">
             {printMode === 'complete' ? 'Relatório Completo' : 'Plano Simplificado'}
           </h2>
@@ -293,8 +293,8 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
           </div>
         </div>
         
-        {/* Conteúdo do relatório - otimizado para impressão */}
-        <div className="p-8 space-y-8 max-w-none print:p-4 print:space-y-4">
+        {/* Conteúdo do relatório - com scroll */}
+        <div className="flex-1 overflow-y-auto p-8 space-y-8 max-w-none print:p-4 print:space-y-4 print:overflow-visible">
           <style>{`
             @media print {
               @page {
@@ -316,20 +316,16 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
                 display: block !important;
               }
               
-              .print\\:text-sm {
-                font-size: 0.875rem !important;
+              .print\\:overflow-visible {
+                overflow: visible !important;
               }
               
-              .print\\:p-2 {
-                padding: 0.5rem !important;
+              .print\\:p-4 {
+                padding: 1rem !important;
               }
               
-              .print\\:space-y-2 > * + * {
-                margin-top: 0.5rem !important;
-              }
-              
-              .print\\:break-inside-avoid {
-                break-inside: avoid !important;
+              .print\\:space-y-4 > * + * {
+                margin-top: 1rem !important;
               }
               
               table {
@@ -344,6 +340,14 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
               svg {
                 max-width: 100% !important;
                 height: auto !important;
+              }
+              
+              .fixed {
+                position: static !important;
+              }
+              
+              .flex-1 {
+                flex: none !important;
               }
             }
           `}</style>
