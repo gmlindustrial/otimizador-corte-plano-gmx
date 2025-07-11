@@ -26,7 +26,7 @@ export class FileParsingService {
     return pieces;
   }
 
-  static parseAutoCADReport(content: string, forceFormat?: 'tabular' | 'dotted'): CutPiece[] {
+  static parseAutoCADReport(content: string): CutPiece[] {
     console.log('🔄 Iniciando parsing de arquivo AutoCAD...');
     console.log('📄 Primeiras 10 linhas:', content.split('\n').slice(0, 10));
     
@@ -286,10 +286,10 @@ export class FileParsingService {
     });
   }
 
-  static parseTXT(content: string, forceFormat?: 'tabular' | 'dotted'): CutPiece[] {
+  static parseTXT(content: string): CutPiece[] {
     // Verificar se é arquivo AutoCAD primeiro
     if (content.includes('LM por Conjunto') || content.includes('OBRA:') || content.includes('MARCA') || content.includes('ITEM') || content.includes('DESCRIÇÃO') || content.includes('METALMAX')) {
-      return this.parseAutoCADReport(content, forceFormat);
+      return this.parseAutoCADReport(content);
     }
     
     const lines = content.split('\n').filter(line => line.trim());

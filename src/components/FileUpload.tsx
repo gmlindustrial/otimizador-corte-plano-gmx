@@ -1,8 +1,6 @@
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import { Upload, Info } from 'lucide-react';
 import { CutPiece } from '@/pages/Index';
 import { FileUploadArea } from './file-upload/FileUploadArea';
@@ -24,7 +22,7 @@ export const FileUpload = ({ onDataImported, currentPieces }: FileUploadProps) =
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [parseFormat, setParseFormat] = useState<'auto' | 'tabular' | 'dotted'>('auto');
+  
   const [previewData, setPreviewData] = useState<{
     obra?: string;
     totalPieces: number;
@@ -94,8 +92,7 @@ export const FileUpload = ({ onDataImported, currentPieces }: FileUploadProps) =
         
         case 'txt':
           const txtContent = await file.text();
-          const forceFormat = parseFormat === 'auto' ? undefined : parseFormat as 'tabular' | 'dotted';
-          pieces = FileParsingService.parseTXT(txtContent, forceFormat);
+          pieces = FileParsingService.parseTXT(txtContent);
           break;
         
         case 'pdf':
@@ -145,27 +142,6 @@ export const FileUpload = ({ onDataImported, currentPieces }: FileUploadProps) =
       <CardContent className="space-y-4">
         <FileUploadArea onFileSelect={handleFileSelect} uploading={uploading} />
         
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <Label className="text-sm font-medium">Formato de Parsing (para arquivos .txt):</Label>
-          <RadioGroup 
-            value={parseFormat} 
-            onValueChange={(value) => setParseFormat(value as 'auto' | 'tabular' | 'dotted')}
-            className="mt-2"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="auto" id="auto-main" />
-              <Label htmlFor="auto-main">Detecção Automática</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="tabular" id="tabular-main" />
-              <Label htmlFor="tabular-main">Formato Tabular</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="dotted" id="dotted-main" />
-              <Label htmlFor="dotted-main">Formato Pontilhado</Label>
-            </div>
-          </RadioGroup>
-        </div>
         
         <FileProcessingStatus uploading={uploading} progress={progress} error={error} />
         
@@ -179,7 +155,7 @@ export const FileUpload = ({ onDataImported, currentPieces }: FileUploadProps) =
               <div>
                 <p><strong>Obra:</strong> {previewData.obra}</p>
                 <p><strong>Total de Peças:</strong> {previewData.totalPieces}</p>
-                <p><strong>Formato Usado:</strong> {parseFormat === 'auto' ? 'Automático' : parseFormat === 'tabular' ? 'Tabular' : 'Pontilhado'}</p>
+                <p><strong>Formato Usado:</strong> Tabular Simplificado</p>
               </div>
               <div>
                 <p><strong>Conjuntos:</strong> {previewData.conjuntos.join(', ')}</p>

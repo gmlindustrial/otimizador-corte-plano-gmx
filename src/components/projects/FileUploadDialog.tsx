@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Upload, FileText, AlertCircle, Info } from 'lucide-react';
+import { Upload, FileText } from 'lucide-react';
 import { FileParsingService } from '@/components/file-upload/FileParsingService';
 import { toast } from 'sonner';
 
@@ -17,7 +15,7 @@ interface FileUploadDialogProps {
 export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed, onProcessStart }: FileUploadDialogProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [processing, setProcessing] = useState(false);
-  const [parseFormat, setParseFormat] = useState<'auto' | 'tabular' | 'dotted'>('auto');
+  
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -38,8 +36,7 @@ export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed, onProces
     onProcessStart();
     try {
       const text = await file.text();
-      const forceFormat = parseFormat === 'auto' ? undefined : parseFormat as 'tabular' | 'dotted';
-      const pieces = FileParsingService.parseAutoCADReport(text, forceFormat);
+      const pieces = FileParsingService.parseAutoCADReport(text);
       
       if (pieces.length > 0) {
         // Mostrar estatísticas detalhadas
@@ -64,10 +61,6 @@ export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed, onProces
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       toast.error(`Erro ao processar arquivo: ${errorMessage}`);
       
-      // Sugerir tentar outro formato se foi automático
-      if (parseFormat === 'auto') {
-        toast.info('Tente selecionar manualmente o formato do arquivo (Tabular ou Pontilhado)');
-      }
     } finally {
       setProcessing(false);
     }
@@ -98,42 +91,7 @@ export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed, onProces
             </label>
           </div>
 
-          {file && (
-            <div className="space-y-4">
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <Label className="text-sm font-medium">Formato do Arquivo:</Label>
-                <RadioGroup 
-                  value={parseFormat} 
-                  onValueChange={(value) => setParseFormat(value as 'auto' | 'tabular' | 'dotted')}
-                  className="mt-2"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="auto" id="auto" />
-                    <Label htmlFor="auto">Detecção Automática (Recomendado)</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="tabular" id="tabular" />
-                    <Label htmlFor="tabular">Formato Tabular (Colunas organizadas)</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="dotted" id="dotted" />
-                    <Label htmlFor="dotted">Formato Pontilhado (Separado por linhas)</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-            </div>
-          )}
 
-          <div className="bg-blue-50 p-3 rounded-lg">
-            <div className="flex items-start gap-2">
-              <Info className="w-5 h-5 text-blue-600 mt-0.5" />
-              <div className="text-sm text-blue-800">
-                <p className="font-medium">Formatos Suportados:</p>
-                <p><strong>Tabular:</strong> C34 COLUNA, linhas como "106 1 W150X13 A572-50 419 x 100 5.4"</p>
-                <p><strong>Pontilhado:</strong> V.172, V.173 com separadores "-------"</p>
-              </div>
-            </div>
-          </div>
 
           <div className="flex gap-2 justify-end">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
