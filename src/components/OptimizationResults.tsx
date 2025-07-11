@@ -266,92 +266,22 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
 
   if (showPrintPreview) {
     return (
-      <div className="fixed inset-0 bg-white z-50 flex flex-col print:overflow-visible">
-        {/* Cabeçalho da visualização - oculto na impressão */}
-        <div className="flex-shrink-0 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-200 flex justify-between items-center print:hidden">
-          <h2 className="text-2xl font-bold text-gray-900">
+      <div className="fixed inset-0 bg-white z-50 overflow-auto">
+        <div className="p-4 bg-gray-100 border-b flex justify-between items-center">
+          <h2 className="text-lg font-semibold">
             {printMode === 'complete' ? 'Relatório Completo' : 'Plano Simplificado'}
           </h2>
-          <div className="flex items-center gap-3">
-            <Button 
-              onClick={() => window.print()} 
-              variant="default" 
-              size="lg"
-              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700"
-            >
-              <Printer className="w-5 h-5" />
+          <div className="flex items-center gap-2">
+            <Button onClick={() => window.print()} variant="outline" className="flex items-center gap-1">
+              <Printer className="w-4 h-4" />
               Imprimir
             </Button>
-            <Button 
-              onClick={() => setShowPrintPreview(false)} 
-              variant="outline" 
-              size="lg"
-              className="border-gray-300"
-            >
+            <Button onClick={() => setShowPrintPreview(false)} variant="outline">
               Fechar Visualização
             </Button>
           </div>
         </div>
-        
-        {/* Conteúdo do relatório - com scroll */}
-        <div className="flex-1 overflow-y-auto p-8 space-y-8 max-w-none print:p-4 print:space-y-4 print:overflow-visible">
-          <style>{`
-            @media print {
-              @page {
-                size: A4;
-                margin: 15mm;
-              }
-              
-              * {
-                -webkit-print-color-adjust: exact !important;
-                color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
-              
-              .print\\:hidden {
-                display: none !important;
-              }
-              
-              .print\\:block {
-                display: block !important;
-              }
-              
-              .print\\:overflow-visible {
-                overflow: visible !important;
-              }
-              
-              .print\\:p-4 {
-                padding: 1rem !important;
-              }
-              
-              .print\\:space-y-4 > * + * {
-                margin-top: 1rem !important;
-              }
-              
-              table {
-                page-break-inside: auto !important;
-              }
-              
-              tr {
-                page-break-inside: avoid !important;
-                page-break-after: auto !important;
-              }
-              
-              svg {
-                max-width: 100% !important;
-                height: auto !important;
-              }
-              
-              .fixed {
-                position: static !important;
-              }
-              
-              .flex-1 {
-                flex: none !important;
-              }
-            }
-          `}</style>
-          
+        <div className="p-4 space-y-6">
           <ReportVisualization
             results={results}
             barLength={barLength}
@@ -386,23 +316,23 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
               )}
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-8">
-            <div className="grid grid-cols-2 gap-6 mb-6">
-              <div className="text-center p-6 bg-blue-50 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                <div className="text-4xl font-bold text-blue-600 mb-2">{results.totalBars}</div>
-                <div className="text-base text-gray-700 font-medium">Barras Utilizadas</div>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="text-center p-3 bg-blue-50 rounded-lg">
+                <div className="text-2xl font-bold text-blue-600">{results.totalBars}</div>
+                <div className="text-sm text-gray-600">Barras Utilizadas</div>
               </div>
-              <div className="text-center p-6 bg-green-50 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                <div className="text-4xl font-bold text-green-600 mb-2">{results.efficiency.toFixed(1)}%</div>
-                <div className="text-base text-gray-700 font-medium">Eficiência</div>
+              <div className="text-center p-3 bg-green-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">{results.efficiency.toFixed(1)}%</div>
+                <div className="text-sm text-gray-600">Eficiência</div>
               </div>
-              <div className="text-center p-6 bg-red-50 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                <div className="text-4xl font-bold text-red-600 mb-2">{(results.totalWaste / 1000).toFixed(2)}m</div>
-                <div className="text-base text-gray-700 font-medium">Desperdício</div>
+              <div className="text-center p-3 bg-red-50 rounded-lg">
+                <div className="text-2xl font-bold text-red-600">{(results.totalWaste / 1000).toFixed(2)}m</div>
+                <div className="text-sm text-gray-600">Desperdício</div>
               </div>
-              <div className="text-center p-6 bg-yellow-50 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                <div className="text-4xl font-bold text-yellow-600 mb-2">{results.wastePercentage.toFixed(1)}%</div>
-                <div className="text-base text-gray-700 font-medium">% Desperdício</div>
+              <div className="text-center p-3 bg-yellow-50 rounded-lg">
+                <div className="text-2xl font-bold text-yellow-600">{results.wastePercentage.toFixed(1)}%</div>
+                <div className="text-sm text-gray-600">% Desperdício</div>
               </div>
             </div>
 
@@ -413,25 +343,25 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
                   <Leaf className="w-4 h-4 text-green-600" />
                   Impacto Sustentável
                 </h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
-                    <div className="text-2xl font-bold text-green-600 mb-1">{hasSustainabilityData.leftoverBarsUsed}</div>
-                    <div className="text-sm text-gray-700">Sobras Usadas</div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                  <div className="text-center p-2 bg-green-50 rounded">
+                    <div className="text-lg font-bold text-green-600">{hasSustainabilityData.leftoverBarsUsed}</div>
+                    <div className="text-xs text-gray-600">Sobras Usadas</div>
                   </div>
-                  <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
-                    <div className="text-2xl font-bold text-blue-600 mb-1">{(hasSustainabilityData.materialReused / 1000).toFixed(1)}m</div>
-                    <div className="text-sm text-gray-700">Material Reutilizado</div>
+                  <div className="text-center p-2 bg-blue-50 rounded">
+                    <div className="text-lg font-bold text-blue-600">{(hasSustainabilityData.materialReused / 1000).toFixed(1)}m</div>
+                    <div className="text-xs text-gray-600">Material Reutilizado</div>
                   </div>
-                  <div className="text-center p-4 bg-emerald-50 rounded-lg border border-emerald-200">
-                    <div className="text-2xl font-bold text-emerald-600 flex items-center justify-center gap-1 mb-1">
-                      <DollarSign className="w-4 h-4" />
+                  <div className="text-center p-2 bg-emerald-50 rounded">
+                    <div className="text-lg font-bold text-emerald-600 flex items-center justify-center gap-1">
+                      <DollarSign className="w-3 h-3" />
                       {hasSustainabilityData.totalEconomy.toFixed(0)}
                     </div>
-                    <div className="text-sm text-gray-700">Economia (R$)</div>
+                    <div className="text-xs text-gray-600">Economia (R$)</div>
                   </div>
-                  <div className="text-center p-4 bg-teal-50 rounded-lg border border-teal-200">
-                    <div className="text-2xl font-bold text-teal-600 mb-1">{hasSustainabilityData.wasteReduction.toFixed(1)}%</div>
-                    <div className="text-sm text-gray-700">Redução Desperdício</div>
+                  <div className="text-center p-2 bg-teal-50 rounded">
+                    <div className="text-lg font-bold text-teal-600">{hasSustainabilityData.wasteReduction.toFixed(1)}%</div>
+                    <div className="text-xs text-gray-600">Redução Desperdício</div>
                   </div>
                 </div>
               </div>
@@ -462,14 +392,12 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
               </div>
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-8">
-            <div className="scale-110 origin-top-left transform">
-              <ReportVisualization 
-                results={results}
-                barLength={barLength}
-                showLegend={true}
-              />
-            </div>
+          <CardContent className="p-6">
+            <ReportVisualization 
+              results={results}
+              barLength={barLength}
+              showLegend={true}
+            />
           </CardContent>
         </Card>
 
