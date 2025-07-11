@@ -27,7 +27,7 @@ export class FileParsingService {
     return pieces;
   }
 
-  static parseAutoCADReport(content: string): CutPiece[] {
+  static parseAutoCADReport(content: string, forceFormat?: 'tabular' | 'dotted'): CutPiece[] {
     console.log('🔄 Iniciando parsing de arquivo AutoCAD...');
     console.log('📄 Primeiras 10 linhas:', content.split('\n').slice(0, 10));
     
@@ -53,13 +53,20 @@ export class FileParsingService {
       throw new Error('Arquivo não parece ser um relatório AutoCAD válido');
     }
 
-    // Detectar formato do arquivo
-    const hasTabularFormat = this.detectTabularFormat(lines);
-    const hasDottedFormat = this.detectDottedFormat(lines);
+    // Detectar ou forçar formato do arquivo
+    let hasTabularFormat, hasDottedFormat;
     
-    console.log(`📊 Formato detectado - Tabular: ${hasTabularFormat}, Pontilhado: ${hasDottedFormat}`);
+    if (forceFormat) {
+      console.log(`🎯 Formato forçado: ${forceFormat}`);
+      hasTabularFormat = forceFormat === 'tabular';
+      hasDottedFormat = forceFormat === 'dotted';
+    } else {
+      hasTabularFormat = this.detectTabularFormat(lines);
+      hasDottedFormat = this.detectDottedFormat(lines);
+      console.log(`📊 Formato detectado - Tabular: ${hasTabularFormat}, Pontilhado: ${hasDottedFormat}`);
+    }
     
-    // Tentar parse com formato mais provável primeiro
+    // Tentar parse com formato especificado ou mais provável
     try {
       if (hasTabularFormat) {
         console.log('🎯 Tentando parser formato tabular...');
@@ -68,7 +75,7 @@ export class FileParsingService {
         console.log('🎯 Tentando parser formato pontilhado...');
         pieces = this.parseDottedFormat(lines);
       } else {
-        // Fallback: tentar ambos os formatos
+        // Fallback: tentar ambos os formatos se não forçado
         console.log('⚠️ Formato não identificado claramente, tentando fallback...');
         try {
           pieces = this.parseTabularFormat(lines);
@@ -79,18 +86,22 @@ export class FileParsingService {
       }
     } catch (error) {
       console.error('❌ Erro no parser principal:', error);
-      // Última tentativa com o outro formato
-      try {
-        if (hasTabularFormat) {
-          console.log('🔄 Fallback para formato pontilhado...');
-          pieces = this.parseDottedFormat(lines);
-        } else {
-          console.log('🔄 Fallback para formato tabular...');
-          pieces = this.parseTabularFormat(lines);
+      // Última tentativa com o outro formato (se não foi forçado)
+      if (!forceFormat) {
+        try {
+          if (hasTabularFormat) {
+            console.log('🔄 Fallback para formato pontilhado...');
+            pieces = this.parseDottedFormat(lines);
+          } else {
+            console.log('🔄 Fallback para formato tabular...');
+            pieces = this.parseTabularFormat(lines);
+          }
+        } catch (fallbackError) {
+          console.error('❌ Todos os parsers falharam:', fallbackError);
+          throw new Error(`Não foi possível processar o arquivo. Formatos detectados: Tabular=${hasTabularFormat}, Pontilhado=${hasDottedFormat}`);
         }
-      } catch (fallbackError) {
-        console.error('❌ Todos os parsers falharam:', fallbackError);
-        throw new Error(`Não foi possível processar o arquivo. Formatos detectados: Tabular=${hasTabularFormat}, Pontilhado=${hasDottedFormat}`);
+      } else {
+        throw error;
       }
     }
 
@@ -122,22 +133,29 @@ export class FileParsingService {
     });
     console.log('📋 Headers encontrados:', tableHeaders);
 
-    // Verificar se há linhas com estrutura tabular consistente (formato da imagem)
+    // Verificar se há linhas com estrutura tabular consistente 
     const tabularLines = lines.filter(line => {
       const trimmed = line.trim();
-      // Formato típico: Pos Qty Perfil Material Comp Peso (formato mais flexível)
-      return trimmed.match(/^\s*\d+\s+\d+\s+\S+.*\d+\s+[\d,\.]+\s*$/);
+      // Formato novo: "106    1    W150X13    A572-50    419 x 100    5.4"
+      // Formato antigo: "4228    1   L 51 X 4.7     A36    250 x 51   1.37"
+      return trimmed.match(/^\s*\d+\s+\d+\s+[A-Z0-9\sXx\.]+\s+[A-Z0-9\-]+\s+[\d\s+x×]+\s+[\d,\.]+\s*$/i);
     });
     console.log(`📊 Linhas tabulares encontradas: ${tabularLines.length}`);
     
-    // Verificar se há conjuntos isolados (V.172, V.173)
+    // Verificar se há conjuntos isolados (V.172, V.173) ou com COLUNA (C34 COLUNA)
     const conjuntoLines = lines.filter(line => {
       const trimmed = line.trim();
-      return trimmed.match(/^[A-Z]+\.\d+\s*$/i);
+      return trimmed.match(/^[A-Z]+\d+(\s+(COLUNA|VIGA|PILAR))?\s*$/i);
     });
     console.log(`📦 Linhas de conjunto encontradas: ${conjuntoLines.length}`);
 
-    const isTabular = tableHeaders || tabularLines.length >= 3 || conjuntoLines.length >= 2;
+    // Verificar novo formato com conjuntos tipo "C34 COLUNA"
+    const newFormatConjuntos = lines.filter(line => {
+      return line.trim().match(/^C\d+\s+COLUNA\s*$/i);
+    });
+    console.log(`🆕 Formato novo (C34 COLUNA): ${newFormatConjuntos.length}`);
+
+    const isTabular = tableHeaders || tabularLines.length >= 3 || conjuntoLines.length >= 2 || newFormatConjuntos.length >= 1;
     console.log(`✅ Formato tabular detectado: ${isTabular}`);
     return isTabular;
   }
@@ -180,11 +198,19 @@ export class FileParsingService {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
       
-      // Detectar conjunto (linha isolada com padrão V.172, V.173, etc.)
+      // Detectar conjunto formato antigo (linha isolada com padrão V.172, V.173, etc.)
       const conjuntoMatch = line.match(/^([A-Z]+\.\d+)\s*$/i);
       if (conjuntoMatch && !conjuntoMatch[1].toUpperCase().startsWith('P')) {
         currentConjunto = conjuntoMatch[1];
         console.log(`📦 Conjunto tabular identificado: ${currentConjunto}`);
+        continue;
+      }
+      
+      // Detectar conjunto formato novo (C34 COLUNA, C35 COLUNA, etc.)
+      const newConjuntoMatch = line.match(/^([A-Z]+\d+)\s+(COLUNA|VIGA|PILAR)\s*$/i);
+      if (newConjuntoMatch) {
+        currentConjunto = newConjuntoMatch[1];
+        console.log(`📦 Conjunto novo formato identificado: ${currentConjunto} (${newConjuntoMatch[2]})`);
         continue;
       }
       
@@ -206,62 +232,76 @@ export class FileParsingService {
         continue;
       }
 
-      // Parse de peças formato tabular - específico para AutoCAD com perfis L
+      // Parse de peças formato tabular com múltiplos padrões
       let tabularMatch = null;
       let posicao, quantidade, perfil, material, comprimento, peso;
       
-      // Formato específico: Pos Qty Perfil(com espaços) Material Dimensões Peso
-      // Exemplo: "4228    1   L 51 X 4.7     A36    250 x 51   1.37"
-      tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(L\s+\d+\s+[Xx]\s+[\d\.]+)\s+([A-Z]\d+)\s+([\d\s+x×]+)\s+([\d,\.]+)\s*$/i);
+      // FORMATO NOVO: "106    1    W150X13    A572-50    419 x 100    5.4"
+      tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+([W|CH|L]\d+[X]\d+(?:\.\d+)?)\s+([A-Z0-9\-]+)\s+([\d\s+x×]+)\s+([\d,\.]+)\s*$/i);
       
       if (tabularMatch) {
         [, posicao, quantidade, perfil, material, comprimento, peso] = tabularMatch;
         // Extrair comprimento das dimensões (primeiro número)
         const dimensaoMatch = comprimento.match(/(\d+)/);
         comprimento = dimensaoMatch ? dimensaoMatch[1] : '0';
-        console.log(`🎯 Match AutoCAD específico encontrado!`);
-        console.log(`   Linha original: "${line}"`);
-        console.log(`   Pos=${posicao}, Qty=${quantidade}`);
-        console.log(`   Perfil bruto: "${perfil}"`);
-        console.log(`   Material: "${material}"`);
-        console.log(`   Dimensões: "${tabularMatch[5]}" -> Comprimento: ${comprimento}`);
-        console.log(`   Peso: ${peso}`);
+        console.log(`🎯 Match NOVO formato (W/CH/L compacto): "${line}"`);
+        console.log(`   Pos=${posicao}, Qty=${quantidade}, Perfil="${perfil}", Material="${material}", Comp=${comprimento}, Peso=${peso}`);
       } else {
-        // Segundo formato: mais flexível para variações
-        tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(L[\s\d\.Xx]+)\s+([A-Z]\d+)\s+([\d\s+x×]+)\s+([\d,\.]+)\s*$/i);
+        // FORMATO ANTIGO: "4228    1   L 51 X 4.7     A36    250 x 51   1.37"
+        tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(L\s+\d+\s+[Xx]\s+[\d\.]+)\s+([A-Z]\d+)\s+([\d\s+x×]+)\s+([\d,\.]+)\s*$/i);
+        
         if (tabularMatch) {
           [, posicao, quantidade, perfil, material, comprimento, peso] = tabularMatch;
           const dimensaoMatch = comprimento.match(/(\d+)/);
           comprimento = dimensaoMatch ? dimensaoMatch[1] : '0';
-          console.log(`🎯 Match AutoCAD flexível: Perfil="${perfil}", Material="${material}"`);
+          console.log(`🎯 Match ANTIGO formato (L com espaços): "${line}"`);
+          console.log(`   Perfil bruto: "${perfil}" -> normalizado`);
         } else {
-          // Fallback para outros formatos
-          tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(.*?)\s+(\d{3,})\s+([\d,\.]+)\s*$/);
+          // Formato flexível para outras variações (CH, W, etc.)
+          tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+([A-Z]+[\s\d\.Xx]+)\s+([A-Z0-9\-]+)\s+([\d\s+x×]+)\s+([\d,\.]+)\s*$/i);
           if (tabularMatch) {
-            [, posicao, quantidade, perfil, comprimento, peso] = tabularMatch;
-            material = 'MATERIAL';
-            console.log(`🎯 Match tabular genérico: ${line}`);
+            [, posicao, quantidade, perfil, material, comprimento, peso] = tabularMatch;
+            const dimensaoMatch = comprimento.match(/(\d+)/);
+            comprimento = dimensaoMatch ? dimensaoMatch[1] : '0';
+            console.log(`🎯 Match FLEXÍVEL: Perfil="${perfil}", Material="${material}"`);
+          } else {
+            // Fallback para formato genérico sem material explícito
+            tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(.*?)\s+(\d{3,})\s+([\d,\.]+)\s*$/);
+            if (tabularMatch) {
+              [, posicao, quantidade, perfil, comprimento, peso] = tabularMatch;
+              material = 'MATERIAL';
+              console.log(`🎯 Match GENÉRICO: ${line}`);
+            }
           }
         }
       }
       
       if (tabularMatch) {
         
-        // Se não temos conjunto, tentar buscar nas proximidades com foco em V.XXX
+        // Se não temos conjunto, tentar buscar nas proximidades (V.XXX ou CXX)
         if (!currentConjunto) {
           console.log(`🔍 Buscando conjunto próximo à linha ${i}: "${line}"`);
           for (let j = Math.max(0, i - 10); j <= Math.min(lines.length - 1, i + 3); j++) {
             const nearLine = lines[j].trim();
-            // Buscar especificamente por padrão V.XXX
-            const nearConjunto = nearLine.match(/^([A-Z]+\.\d+)\s*$/i);
-            if (nearConjunto && !nearConjunto[1].toUpperCase().startsWith('P')) {
-              currentConjunto = nearConjunto[1];
+            
+            // Buscar padrão V.XXX (formato antigo)
+            const nearConjuntoAntigo = nearLine.match(/^([A-Z]+\.\d+)\s*$/i);
+            if (nearConjuntoAntigo && !nearConjuntoAntigo[1].toUpperCase().startsWith('P')) {
+              currentConjunto = nearConjuntoAntigo[1];
               console.log(`✅ Conjunto V.XXX encontrado próximo: ${currentConjunto} na linha ${j}: "${nearLine}"`);
+              break;
+            }
+            
+            // Buscar padrão CXX COLUNA (formato novo)
+            const nearConjuntoNovo = nearLine.match(/^([A-Z]+\d+)\s+(COLUNA|VIGA|PILAR)\s*$/i);
+            if (nearConjuntoNovo) {
+              currentConjunto = nearConjuntoNovo[1];
+              console.log(`✅ Conjunto CXX encontrado próximo: ${currentConjunto} na linha ${j}: "${nearLine}"`);
               break;
             }
           }
           if (!currentConjunto) {
-            console.log(`⚠️ Nenhum conjunto V.XXX encontrado, usando fallback: CONJUNTO_P${currentPage}`);
+            console.log(`⚠️ Nenhum conjunto encontrado, usando fallback: CONJUNTO_P${currentPage}`);
             currentConjunto = `CONJUNTO_P${currentPage}`;
           }
         }
@@ -413,10 +453,10 @@ export class FileParsingService {
     });
   }
 
-  static parseTXT(content: string): CutPiece[] {
+  static parseTXT(content: string, forceFormat?: 'tabular' | 'dotted'): CutPiece[] {
     // Verificar se é arquivo AutoCAD primeiro
-    if (content.includes('LM por Conjunto') || content.includes('OBRA:')) {
-      return this.parseAutoCADReport(content);
+    if (content.includes('LM por Conjunto') || content.includes('OBRA:') || content.includes('COLUNA') || content.includes('METALMAX')) {
+      return this.parseAutoCADReport(content, forceFormat);
     }
     
     const lines = content.split('\n').filter(line => line.trim());
