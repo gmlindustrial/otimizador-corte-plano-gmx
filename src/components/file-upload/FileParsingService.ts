@@ -116,11 +116,12 @@ export class FileParsingService {
       }
     }
     
-    // Encontrar linha de cabeçalho
+  // Encontrar linha de cabeçalho (mais flexível)
     for (let i = 0; i < lines.length; i++) {
       const upperLine = lines[i].toUpperCase();
+      // Procurar por MARCA, ITEM, QT e pelo menos parte de DESCRIÇÃO (sem exigir encoding perfeito)
       if (upperLine.includes('MARCA') && upperLine.includes('ITEM') && 
-          upperLine.includes('QT.') && upperLine.includes('DESCRIÇÃO')) {
+          upperLine.includes('QT') && (upperLine.includes('DESCRI') || upperLine.includes('DESCRIÇÃO'))) {
         headerIndex = i;
         console.log(`📋 Cabeçalho encontrado na linha ${i}: "${lines[i]}"`);
         break;
@@ -140,12 +141,12 @@ export class FileParsingService {
         continue;
       }
       
-      // Regex para capturar: MARCA | ITEM | QT. | DESCRIÇÃO | MATERIAL | PESO
-      // Exemplo: "V172    P166    1    W150X18X604    A572-50    10.9"
-      const simplifiedMatch = line.match(/^\s*([A-Z]+\d*\.?\d*)\s+([A-Z]*\d+)\s+(\d+)\s+([A-Z0-9X\.]+)\s+([A-Z0-9\-]*)\s*([\d,\.]*)\s*$/i);
+      // Regex para capturar dados separados por ponto e vírgula (;)
+      // Exemplo: "CE-17;189;1;W200X35.9X10186;A572-50;365.7"
+      const simplifiedMatch = line.split(';').map(item => item.trim());
       
-      if (simplifiedMatch) {
-        const [, marca, item, quantidade, descricao, material, peso] = simplifiedMatch;
+      if (simplifiedMatch && simplifiedMatch.length >= 4) {
+        const [marca, item, quantidade, descricao, material, peso] = simplifiedMatch;
         
         // Extrair perfil da descrição (somente até o segundo X)
         const perfil = this.extractPerfilFromDescription(descricao);
