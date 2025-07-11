@@ -281,19 +281,23 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
             </Button>
           </div>
         </div>
-        <div className="p-4 space-y-6">
-          <ReportVisualization
-            results={results}
-            barLength={barLength}
-            showLegend={true}
-          />
-          <PrintableReport
-            results={results}
-            barLength={barLength}
-            project={project}
-            pieces={pieces}
-            mode={printMode}
-          />
+        <div className="p-4 space-y-6 max-w-full">
+          <div className="w-full">
+            <ReportVisualization
+              results={results}
+              barLength={barLength}
+              showLegend={true}
+            />
+          </div>
+          <div className="w-full">
+            <PrintableReport
+              results={results}
+              barLength={barLength}
+              project={project}
+              pieces={pieces}
+              mode={printMode}
+            />
+          </div>
         </div>
       </div>
     );
