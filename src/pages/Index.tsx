@@ -142,19 +142,31 @@ const Index = () => {
     void fetchRole();
   }, []);
 
-  const handleLinearOptimize = async () => {
+  const handleLinearOptimize = async (customBarSize?: number) => {
+    // Se um tamanho personalizado foi fornecido, usar ele temporariamente
+    const originalBarLength = barLength;
+    if (customBarSize) {
+      setBarLength(customBarSize);
+    }
+
     const result = handleOptimize();
 
     // Save project and add to history if project exists
     if (project && pieces.length > 0 && result) {
       try {
-        // Only save to history - OptimizationHistoryService will handle project creation
-        await addToHistory(project, pieces, result, barLength);
+        // Use the custom bar size or the current bar length
+        const usedBarLength = customBarSize || barLength;
+        await addToHistory(project, pieces, result, usedBarLength);
 
         console.log("Projeto salvo com sucesso no Supabase");
       } catch (error) {
         console.error("Erro ao salvar projeto/histórico:", error);
       }
+    }
+
+    // Restaurar o tamanho original se foi alterado
+    if (customBarSize && customBarSize !== originalBarLength) {
+      setBarLength(originalBarLength);
     }
   };
 

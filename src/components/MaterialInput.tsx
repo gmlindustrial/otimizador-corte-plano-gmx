@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calculator } from 'lucide-react';
 import { FileUpload } from './FileUpload';
@@ -7,12 +7,14 @@ import { DuplicateManager } from './DuplicateManager';
 import { ManualEntryForm } from './material-input/ManualEntryForm';
 import { PieceList } from './material-input/PieceList';
 import { OptimizeSection } from './material-input/OptimizeSection';
+import { BarSizeSelector } from './material-input/BarSizeSelector';
 import type { CutPiece, Project } from '@/pages/Index';
+import { supabase } from '@/integrations/supabase/client';
 
 interface MaterialInputProps {
   pieces: CutPiece[];
   setPieces: (pieces: CutPiece[]) => void;
-  onOptimize: () => void;
+  onOptimize: (barSize?: number) => void;
   disabled?: boolean;
   project?: Project | null;
 }
@@ -32,6 +34,34 @@ export const MaterialInput = ({ pieces, setPieces, onOptimize, disabled, project
   const [showDuplicateManager, setShowDuplicateManager] = useState(false);
   const [pendingDuplicates, setPendingDuplicates] = useState<DuplicateItem[]>([]);
   const [pendingImportedPieces, setPendingImportedPieces] = useState<CutPiece[]>([]);
+  const [availableBarSizes, setAvailableBarSizes] = useState<{id: string, comprimento: number, descricao?: string}[]>([]);
+  const [selectedBarSize, setSelectedBarSize] = useState<number>(6000);
+
+  useEffect(() => {
+    fetchBarSizes();
+  }, []);
+
+  const fetchBarSizes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('tamanhos_barras')
+        .select('id, comprimento, descricao')
+        .order('comprimento', { ascending: true });
+
+      if (error) {
+        console.error('Erro ao buscar tamanhos de barras:', error);
+      } else {
+        setAvailableBarSizes(data || []);
+        // Definir o tamanho padrão se houver
+        const defaultSize = data?.find(size => size.comprimento === 6000);
+        if (defaultSize) {
+          setSelectedBarSize(defaultSize.comprimento);
+        }
+      }
+    } catch (error) {
+      console.error('Erro inesperado:', error);
+    }
+  };
 
   // Se não há projeto carregado, não mostra o componente
   if (!project) {
@@ -115,6 +145,12 @@ export const MaterialInput = ({ pieces, setPieces, onOptimize, disabled, project
           currentPieces={pieces}
         />
         
+        <BarSizeSelector
+          availableSizes={availableBarSizes}
+          selectedSize={selectedBarSize}
+          onSizeChange={setSelectedBarSize}
+        />
+
         <ManualEntryForm
           length={length}
           quantity={quantity}
@@ -130,7 +166,7 @@ export const MaterialInput = ({ pieces, setPieces, onOptimize, disabled, project
         />
 
         <OptimizeSection
-          onOptimize={onOptimize}
+          onOptimize={() => onOptimize(selectedBarSize)}
           disabled={disabled || false}
           hasNoPieces={pieces.length === 0}
         />

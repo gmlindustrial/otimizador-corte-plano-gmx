@@ -477,6 +477,30 @@ export type Database = {
         }
         Relationships: []
       }
+      tamanhos_barras: {
+        Row: {
+          comprimento: number
+          created_at: string
+          descricao: string | null
+          id: string
+          is_default: boolean
+        }
+        Insert: {
+          comprimento: number
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          is_default?: boolean
+        }
+        Update: {
+          comprimento?: number
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          is_default?: boolean
+        }
+        Relationships: []
+      }
       usuarios: {
         Row: {
           created_at: string | null

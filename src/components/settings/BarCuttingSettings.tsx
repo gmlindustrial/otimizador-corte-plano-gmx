@@ -1,13 +1,16 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Calculator, Save, FileText } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Calculator, Save, FileText, Plus, Edit, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface BarCuttingConfig {
   defaultBarLength: number;
@@ -16,6 +19,13 @@ interface BarCuttingConfig {
   allowWaste: boolean;
   maxWastePercentage: number;
   minPieceLength: number;
+}
+
+interface TamanhoBarra {
+  id: string;
+  comprimento: number;
+  descricao?: string;
+  is_default: boolean;
 }
 
 export const BarCuttingSettings = () => {
@@ -28,12 +38,154 @@ export const BarCuttingSettings = () => {
     maxWastePercentage: 15,
     minPieceLength: 50
   });
+  
+  const [tamanhos, setTamanhos] = useState<TamanhoBarra[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingTamanho, setEditingTamanho] = useState<TamanhoBarra | null>(null);
+  const [formData, setFormData] = useState({
+    comprimento: 6000,
+    descricao: '',
+    is_default: false
+  });
+
+  useEffect(() => {
+    fetchTamanhos();
+    // Carregar configurações do localStorage
+    const savedConfig = localStorage.getItem('barCuttingConfig');
+    if (savedConfig) {
+      setConfig(JSON.parse(savedConfig));
+    }
+  }, []);
+
+  const fetchTamanhos = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('tamanhos_barras')
+        .select('*')
+        .order('comprimento', { ascending: true });
+
+      if (error) {
+        console.error('Erro ao buscar tamanhos:', error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar os tamanhos de barras.",
+          variant: "destructive",
+        });
+      } else {
+        setTamanhos(data || []);
+      }
+    } catch (error) {
+      console.error('Erro inesperado:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSave = () => {
     localStorage.setItem('barCuttingConfig', JSON.stringify(config));
     toast({
       title: "Configurações Salvas",
       description: "Configurações de corte linear foram atualizadas com sucesso.",
+    });
+  };
+
+  const handleSubmitTamanho = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      if (editingTamanho) {
+        const { error } = await supabase
+          .from('tamanhos_barras')
+          .update({
+            comprimento: formData.comprimento,
+            descricao: formData.descricao || null,
+            is_default: formData.is_default
+          })
+          .eq('id', editingTamanho.id);
+
+        if (error) throw error;
+        
+        toast({
+          title: "Sucesso",
+          description: "Tamanho atualizado com sucesso!",
+        });
+      } else {
+        const { error } = await supabase
+          .from('tamanhos_barras')
+          .insert([formData]);
+
+        if (error) throw error;
+        
+        toast({
+          title: "Sucesso",
+          description: "Tamanho adicionado com sucesso!",
+        });
+      }
+
+      await fetchTamanhos();
+      resetForm();
+      setDialogOpen(false);
+    } catch (error: any) {
+      console.error('Erro ao salvar tamanho:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao salvar tamanho.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Tem certeza que deseja excluir este tamanho?')) return;
+    
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('tamanhos_barras')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Sucesso",
+        description: "Tamanho excluído com sucesso!",
+      });
+      
+      await fetchTamanhos();
+    } catch (error: any) {
+      console.error('Erro ao excluir tamanho:', error);
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao excluir tamanho.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = (tamanho: TamanhoBarra) => {
+    setEditingTamanho(tamanho);
+    setFormData({
+      comprimento: tamanho.comprimento,
+      descricao: tamanho.descricao || '',
+      is_default: tamanho.is_default
+    });
+    setDialogOpen(true);
+  };
+
+  const resetForm = () => {
+    setEditingTamanho(null);
+    setFormData({
+      comprimento: 6000,
+      descricao: '',
+      is_default: false
     });
   };
 
@@ -143,6 +295,120 @@ export const BarCuttingSettings = () => {
               <p className="font-medium">Comprimento Padrão:</p>
               <p>{config.defaultBarLength}mm</p>
             </div>
+          </div>
+        </div>
+
+        <Separator />
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">Tamanhos de Barras Padrão</h3>
+            
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => setDialogOpen(true)} className="bg-green-600 hover:bg-green-700">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo Tamanho
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingTamanho ? "Editar Tamanho" : "Novo Tamanho"}
+                  </DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmitTamanho} className="space-y-4">
+                  <div>
+                    <Label htmlFor="comprimento">Comprimento (mm) *</Label>
+                    <Input
+                      id="comprimento"
+                      type="number"
+                      value={formData.comprimento}
+                      onChange={(e) => setFormData(prev => ({ ...prev, comprimento: Number(e.target.value) }))}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="descricao">Descrição</Label>
+                    <Input
+                      id="descricao"
+                      value={formData.descricao}
+                      onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
+                      placeholder="Ex: Barra padrão 6m"
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-4">
+                    <Button type="button" variant="outline" onClick={() => { setDialogOpen(false); resetForm(); }} className="flex-1">
+                      Cancelar
+                    </Button>
+                    <Button type="submit" disabled={loading} className="flex-1">
+                      {loading ? "Salvando..." : (editingTamanho ? "Atualizar" : "Criar")}
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div className="border rounded-lg">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Comprimento (mm)</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Padrão</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-8">
+                      Carregando tamanhos...
+                    </TableCell>
+                  </TableRow>
+                ) : tamanhos.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                      Nenhum tamanho cadastrado
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  tamanhos.map((tamanho) => (
+                    <TableRow key={tamanho.id}>
+                      <TableCell className="font-medium">{tamanho.comprimento}mm</TableCell>
+                      <TableCell>{tamanho.descricao || "-"}</TableCell>
+                      <TableCell>
+                        {tamanho.is_default && (
+                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Padrão
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(tamanho)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDelete(tamanho.id)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </div>
         </div>
 

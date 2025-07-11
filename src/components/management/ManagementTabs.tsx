@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Building, Users, ArrowLeft, Package, UserCheck, Shield } from "lucide-react";
 import { ObraManagement } from "./ObraManagement";
 import { ClienteManagement } from "./ClienteManagement";
-import { MaterialManagement } from "./MaterialManagement";
+import { PerfilMaterialManagement } from "./PerfilMaterialManagement";
 import { OperadorManagement } from "./OperadorManagement";
 import { InspetorManagement } from "./InspetorManagement";
 
-type ManagementTab = "obras" | "clientes" | "materiais" | "operadores" | "inspetores" | null;
+type ManagementTab = "obras" | "clientes" | "perfis" | "operadores" | "inspetores" | null;
 
 interface ManagementTabsProps {
   onBack?: () => void;
@@ -58,7 +58,7 @@ export const ManagementTabs = ({ onBack }: ManagementTabsProps) => {
     );
   }
 
-  if (activeTab === "materiais") {
+  if (activeTab === "perfis") {
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-4">
@@ -73,7 +73,7 @@ export const ManagementTabs = ({ onBack }: ManagementTabsProps) => {
             </Button>
           )}
         </div>
-        <MaterialManagement />
+        <PerfilMaterialManagement />
       </div>
     );
   }
@@ -164,13 +164,13 @@ export const ManagementTabs = ({ onBack }: ManagementTabsProps) => {
             </Button>
 
             <Button
-              onClick={() => setActiveTab("materiais")}
+              onClick={() => setActiveTab("perfis")}
               className="h-32 flex flex-col items-center gap-4 bg-orange-600 hover:bg-orange-700 text-white"
             >
               <Package className="w-12 h-12" />
               <div className="text-center">
-                <div className="text-lg font-semibold">Gerenciar Materiais</div>
-                <div className="text-sm opacity-90">Visualizar, criar, editar e excluir materiais</div>
+                <div className="text-lg font-semibold">Gerenciar Perfis de Materiais</div>
+                <div className="text-sm opacity-90">Visualizar, criar, editar e excluir perfis</div>
               </div>
             </Button>
 
