@@ -212,21 +212,36 @@ export class FileParsingService {
       
       // Formato específico: Pos Qty Perfil(com espaços) Material Dimensões Peso
       // Exemplo: "4228    1   L 51 X 4.7     A36    250 x 51   1.37"
-      tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(L\s+\d+\s+X\s+[\d\.]+)\s+([A-Z]\d+)\s+([\d\s+x]+)\s+([\d,\.]+)\s*$/i);
+      tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(L\s+\d+\s+[Xx]\s+[\d\.]+)\s+([A-Z]\d+)\s+([\d\s+x×]+)\s+([\d,\.]+)\s*$/i);
       
       if (tabularMatch) {
         [, posicao, quantidade, perfil, material, comprimento, peso] = tabularMatch;
         // Extrair comprimento das dimensões (primeiro número)
         const dimensaoMatch = comprimento.match(/(\d+)/);
         comprimento = dimensaoMatch ? dimensaoMatch[1] : '0';
-        console.log(`🎯 Match AutoCAD específico: Pos=${posicao}, Perfil="${perfil}", Material="${material}", Comp=${comprimento}`);
+        console.log(`🎯 Match AutoCAD específico encontrado!`);
+        console.log(`   Linha original: "${line}"`);
+        console.log(`   Pos=${posicao}, Qty=${quantidade}`);
+        console.log(`   Perfil bruto: "${perfil}"`);
+        console.log(`   Material: "${material}"`);
+        console.log(`   Dimensões: "${tabularMatch[5]}" -> Comprimento: ${comprimento}`);
+        console.log(`   Peso: ${peso}`);
       } else {
-        // Fallback para outros formatos
-        tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(.*?)\s+(\d{3,})\s+([\d,\.]+)\s*$/);
+        // Segundo formato: mais flexível para variações
+        tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(L[\s\d\.Xx]+)\s+([A-Z]\d+)\s+([\d\s+x×]+)\s+([\d,\.]+)\s*$/i);
         if (tabularMatch) {
-          [, posicao, quantidade, perfil, comprimento, peso] = tabularMatch;
-          material = 'MATERIAL';
-          console.log(`🎯 Match tabular genérico: ${line}`);
+          [, posicao, quantidade, perfil, material, comprimento, peso] = tabularMatch;
+          const dimensaoMatch = comprimento.match(/(\d+)/);
+          comprimento = dimensaoMatch ? dimensaoMatch[1] : '0';
+          console.log(`🎯 Match AutoCAD flexível: Perfil="${perfil}", Material="${material}"`);
+        } else {
+          // Fallback para outros formatos
+          tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(.*?)\s+(\d{3,})\s+([\d,\.]+)\s*$/);
+          if (tabularMatch) {
+            [, posicao, quantidade, perfil, comprimento, peso] = tabularMatch;
+            material = 'MATERIAL';
+            console.log(`🎯 Match tabular genérico: ${line}`);
+          }
         }
       }
       
@@ -271,7 +286,9 @@ export class FileParsingService {
         };
 
         pieces.push(piece);
-        console.log(`✅ Peça tabular: ${tag} - ${piece.length}mm - Qtd: ${piece.quantity} - Perfil: ${piece.perfil}`);
+        console.log(`✅ Peça tabular: ${tag} - ${piece.length}mm - Qtd: ${piece.quantity}`);
+        console.log(`   Perfil normalizado: "${piece.perfil}" - Material: "${piece.material}"`);
+        console.log(`   ---`);
       } else {
         // Log para debug de linhas não reconhecidas
         if (line.length > 5 && line.match(/\d/) && !line.includes('Página') && !currentConjunto) {
@@ -379,7 +396,8 @@ export class FileParsingService {
       .replace(/\s+/g, '') // Remove todos os espaços
       .replace(/X/gi, 'X') // Padroniza o X
       .replace(/x/g, 'X')
-      .toUpperCase();
+      .toUpperCase()
+      .replace(/([A-Z])(\d)/g, '$1$2'); // Garante formato correto L51X4.7
   }
 
   static async parseExcel(file: File): Promise<CutPiece[]> {
