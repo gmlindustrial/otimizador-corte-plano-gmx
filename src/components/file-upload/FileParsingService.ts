@@ -136,26 +136,27 @@ export class FileParsingService {
     // Verificar se há linhas com estrutura tabular consistente 
     const tabularLines = lines.filter(line => {
       const trimmed = line.trim();
-      // Formato novo: "106    1    W150X13    A572-50    419 x 100    5.4"
-      // Formato antigo: "4228    1   L 51 X 4.7     A36    250 x 51   1.37"
-      return trimmed.match(/^\s*\d+\s+\d+\s+[A-Z0-9\sXx\.]+\s+[A-Z0-9\-]+\s+[\d\s+x×]+\s+[\d,\.]+\s*$/i);
+      // Formato novo: "157    1    CH6X178    A36    75 x 6    0.6"
+      // Incluindo posições com P: "P166    1    W150X18    A572-50    604 x 102    10.9"
+      return trimmed.match(/^\s*[P]?\d+\s+\d+\s+[A-Z0-9\sXx\.]+\s+[A-Z0-9\-]+\s+[\d\s+x×]+\s+[\d,\.]+\s*$/i);
     });
     console.log(`📊 Linhas tabulares encontradas: ${tabularLines.length}`);
     
-    // Verificar se há conjuntos isolados (V.172, V.173) ou com COLUNA (C34 COLUNA)
-    const conjuntoLines = lines.filter(line => {
+    // Verificar se há seções isoladas (C44 COLUNA, C45 COLUNA) ou conjuntos (V.172, V.173)
+    const secaoLines = lines.filter(line => {
       const trimmed = line.trim();
-      return trimmed.match(/^[A-Z]+\d+(\s+(COLUNA|VIGA|PILAR))?\s*$/i);
+      return trimmed.match(/^[A-Z]+\d+(\s+(COLUNA|VIGA|PILAR))?\s*$/i) || 
+             trimmed.match(/^[A-Z]+\.\d+\s*$/i);
     });
-    console.log(`📦 Linhas de conjunto encontradas: ${conjuntoLines.length}`);
+    console.log(`📦 Linhas de seção/conjunto encontradas: ${secaoLines.length}`);
 
-    // Verificar novo formato com conjuntos tipo "C34 COLUNA"
-    const newFormatConjuntos = lines.filter(line => {
-      return line.trim().match(/^C\d+\s+COLUNA\s*$/i);
+    // Verificar formato específico com seção + tipo "C44 COLUNA"
+    const secaoTipoLines = lines.filter(line => {
+      return line.trim().match(/^C\d+\s+(COLUNA|VIGA|PILAR)\s*$/i);
     });
-    console.log(`🆕 Formato novo (C34 COLUNA): ${newFormatConjuntos.length}`);
+    console.log(`🆕 Formato seção+tipo (C44 COLUNA): ${secaoTipoLines.length}`);
 
-    const isTabular = tableHeaders || tabularLines.length >= 3 || conjuntoLines.length >= 2 || newFormatConjuntos.length >= 1;
+    const isTabular = tableHeaders || tabularLines.length >= 3 || secaoLines.length >= 2 || secaoTipoLines.length >= 1;
     console.log(`✅ Formato tabular detectado: ${isTabular}`);
     return isTabular;
   }
@@ -198,19 +199,22 @@ export class FileParsingService {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
       
+      // Detectar seção e tipo (formato novo: C44 COLUNA, C45 COLUNA, etc.)
+      const secaoTipoMatch = line.match(/^([A-Z]+\d+)\s+(COLUNA|VIGA|PILAR)\s*$/i);
+      if (secaoTipoMatch) {
+        const secao = secaoTipoMatch[1];
+        const tipo = secaoTipoMatch[2];
+        // Usar seção + tipo como identificador do conjunto
+        currentConjunto = `${secao}_${tipo}`;
+        console.log(`📦 Seção/Tipo identificado: ${secao} ${tipo} -> Conjunto: ${currentConjunto}`);
+        continue;
+      }
+      
       // Detectar conjunto formato antigo (linha isolada com padrão V.172, V.173, etc.)
       const conjuntoMatch = line.match(/^([A-Z]+\.\d+)\s*$/i);
       if (conjuntoMatch && !conjuntoMatch[1].toUpperCase().startsWith('P')) {
         currentConjunto = conjuntoMatch[1];
-        console.log(`📦 Conjunto tabular identificado: ${currentConjunto}`);
-        continue;
-      }
-      
-      // Detectar conjunto formato novo (C34 COLUNA, C35 COLUNA, etc.)
-      const newConjuntoMatch = line.match(/^([A-Z]+\d+)\s+(COLUNA|VIGA|PILAR)\s*$/i);
-      if (newConjuntoMatch) {
-        currentConjunto = newConjuntoMatch[1];
-        console.log(`📦 Conjunto novo formato identificado: ${currentConjunto} (${newConjuntoMatch[2]})`);
+        console.log(`📦 Conjunto formato antigo identificado: ${currentConjunto}`);
         continue;
       }
       
@@ -236,16 +240,16 @@ export class FileParsingService {
       let tabularMatch = null;
       let posicao, quantidade, perfil, material, comprimento, peso;
       
-      // FORMATO NOVO: "106    1    W150X13    A572-50    419 x 100    5.4"
-      tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+([W|CH|L]\d+[X]\d+(?:\.\d+)?)\s+([A-Z0-9\-]+)\s+([\d\s+x×]+)\s+([\d,\.]+)\s*$/i);
+      // FORMATO NOVO: "157    1    CH6X178    A36    75 x 6    0.6"
+      // Posições podem ser números simples (157, 158) ou com letra (P166)
+      tabularMatch = line.match(/^\s*([P]?\d+)\s+(\d+)\s+([A-Z0-9X\.]+)\s+([A-Z0-9\-]+)\s+([\d\s+x×]+)\s+([\d,\.]+)\s*$/i);
       
       if (tabularMatch) {
         [, posicao, quantidade, perfil, material, comprimento, peso] = tabularMatch;
         // Extrair comprimento das dimensões (primeiro número)
         const dimensaoMatch = comprimento.match(/(\d+)/);
         comprimento = dimensaoMatch ? dimensaoMatch[1] : '0';
-        console.log(`🎯 Match NOVO formato (W/CH/L compacto): "${line}"`);
-        console.log(`   Pos=${posicao}, Qty=${quantidade}, Perfil="${perfil}", Material="${material}", Comp=${comprimento}, Peso=${peso}`);
+        console.log(`🎯 Match NOVO formato: Pos="${posicao}", Qty=${quantidade}, Perfil="${perfil}", Material="${material}", Comp=${comprimento}`);
       } else {
         // FORMATO ANTIGO: "4228    1   L 51 X 4.7     A36    250 x 51   1.37"
         tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(L\s+\d+\s+[Xx]\s+[\d\.]+)\s+([A-Z]\d+)\s+([\d\s+x×]+)\s+([\d,\.]+)\s*$/i);
@@ -254,23 +258,22 @@ export class FileParsingService {
           [, posicao, quantidade, perfil, material, comprimento, peso] = tabularMatch;
           const dimensaoMatch = comprimento.match(/(\d+)/);
           comprimento = dimensaoMatch ? dimensaoMatch[1] : '0';
-          console.log(`🎯 Match ANTIGO formato (L com espaços): "${line}"`);
-          console.log(`   Perfil bruto: "${perfil}" -> normalizado`);
+          console.log(`🎯 Match ANTIGO formato (L com espaços): Pos="${posicao}"`);
         } else {
-          // Formato flexível para outras variações (CH, W, etc.)
-          tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+([A-Z]+[\s\d\.Xx]+)\s+([A-Z0-9\-]+)\s+([\d\s+x×]+)\s+([\d,\.]+)\s*$/i);
+          // Formato flexível para outras variações
+          tabularMatch = line.match(/^\s*([P]?\d+)\s+(\d+)\s+([A-Z]+[\s\d\.Xx]+)\s+([A-Z0-9\-]+)\s+([\d\s+x×]+)\s+([\d,\.]+)\s*$/i);
           if (tabularMatch) {
             [, posicao, quantidade, perfil, material, comprimento, peso] = tabularMatch;
             const dimensaoMatch = comprimento.match(/(\d+)/);
             comprimento = dimensaoMatch ? dimensaoMatch[1] : '0';
-            console.log(`🎯 Match FLEXÍVEL: Perfil="${perfil}", Material="${material}"`);
+            console.log(`🎯 Match FLEXÍVEL: Pos="${posicao}", Perfil="${perfil}"`);
           } else {
             // Fallback para formato genérico sem material explícito
-            tabularMatch = line.match(/^\s*(\d+)\s+(\d+)\s+(.*?)\s+(\d{3,})\s+([\d,\.]+)\s*$/);
+            tabularMatch = line.match(/^\s*([P]?\d+)\s+(\d+)\s+(.*?)\s+(\d{3,})\s+([\d,\.]+)\s*$/);
             if (tabularMatch) {
               [, posicao, quantidade, perfil, comprimento, peso] = tabularMatch;
               material = 'MATERIAL';
-              console.log(`🎯 Match GENÉRICO: ${line}`);
+              console.log(`🎯 Match GENÉRICO: Pos="${posicao}"`);
             }
           }
         }
@@ -278,11 +281,19 @@ export class FileParsingService {
       
       if (tabularMatch) {
         
-        // Se não temos conjunto, tentar buscar nas proximidades (V.XXX ou CXX)
+        // Se não temos conjunto, tentar buscar seção/tipo nas proximidades
         if (!currentConjunto) {
-          console.log(`🔍 Buscando conjunto próximo à linha ${i}: "${line}"`);
+          console.log(`🔍 Buscando seção próxima à linha ${i}: "${line}"`);
           for (let j = Math.max(0, i - 10); j <= Math.min(lines.length - 1, i + 3); j++) {
             const nearLine = lines[j].trim();
+            
+            // Buscar padrão CXX COLUNA (formato novo)
+            const nearSecaoTipo = nearLine.match(/^([A-Z]+\d+)\s+(COLUNA|VIGA|PILAR)\s*$/i);
+            if (nearSecaoTipo) {
+              currentConjunto = `${nearSecaoTipo[1]}_${nearSecaoTipo[2]}`;
+              console.log(`✅ Seção/Tipo encontrada próxima: ${currentConjunto} na linha ${j}: "${nearLine}"`);
+              break;
+            }
             
             // Buscar padrão V.XXX (formato antigo)
             const nearConjuntoAntigo = nearLine.match(/^([A-Z]+\.\d+)\s*$/i);
@@ -291,17 +302,9 @@ export class FileParsingService {
               console.log(`✅ Conjunto V.XXX encontrado próximo: ${currentConjunto} na linha ${j}: "${nearLine}"`);
               break;
             }
-            
-            // Buscar padrão CXX COLUNA (formato novo)
-            const nearConjuntoNovo = nearLine.match(/^([A-Z]+\d+)\s+(COLUNA|VIGA|PILAR)\s*$/i);
-            if (nearConjuntoNovo) {
-              currentConjunto = nearConjuntoNovo[1];
-              console.log(`✅ Conjunto CXX encontrado próximo: ${currentConjunto} na linha ${j}: "${nearLine}"`);
-              break;
-            }
           }
           if (!currentConjunto) {
-            console.log(`⚠️ Nenhum conjunto encontrado, usando fallback: CONJUNTO_P${currentPage}`);
+            console.log(`⚠️ Nenhuma seção encontrada, usando fallback: CONJUNTO_P${currentPage}`);
             currentConjunto = `CONJUNTO_P${currentPage}`;
           }
         }
