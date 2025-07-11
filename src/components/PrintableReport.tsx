@@ -105,7 +105,7 @@ export const PrintableReport = ({ results, barLength, project, pieces, mode = 'c
   const conjuntoSummary = getConjuntoSummary();
 
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-white ">
       <style dangerouslySetInnerHTML={{ __html: headerFooterStyles }} />
       
       {/* Print Header */}
