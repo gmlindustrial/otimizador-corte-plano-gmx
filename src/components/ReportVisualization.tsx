@@ -72,8 +72,8 @@ export const ReportVisualization = ({ results, barLength, project }: ReportVisua
                 })()}
                 
                 {/* SVG Bar Visualization com cores diferenciadas */}
-                <div className="bg-white border rounded-lg p-4 mb-4">
-                  <svg width="100%" height="80" viewBox={`0 0 ${(bar.originalLength || barLength) / 10} 80`} className="border rounded">
+                <div className="bg-white border-2 border-gray-200 rounded-xl p-6 mb-6 shadow-sm hover:shadow-md transition-shadow">
+                  <svg width="100%" height="100" viewBox={`0 0 ${(bar.originalLength || barLength) / 10} 100`} className="border border-gray-300 rounded-lg bg-gray-50">
                     {/* Bar segments */}
                     {(() => {
                       let currentX = 0;
@@ -86,31 +86,32 @@ export const ReportVisualization = ({ results, barLength, project }: ReportVisua
                           <g key={pieceIndex}>
                             <rect
                               x={currentX}
-                              y={20}
+                              y={25}
                               width={segmentWidth}
-                              height={40}
+                              height={50}
                               fill={segmentColor}
                               stroke="#fff"
-                              strokeWidth="1"
-                              opacity={isLeftover ? 0.8 : 1}
+                              strokeWidth="2"
+                              opacity={isLeftover ? 0.85 : 1}
+                              rx="2"
                             />
                             <text
                               x={currentX + segmentWidth / 2}
-                              y={45}
+                              y={55}
                               textAnchor="middle"
-                              fontSize="10"
+                              fontSize="12"
                               fill="white"
                               fontWeight="bold"
                             >
-                              {piece.tag || (piece.length > 500 ? `${piece.length}` : '')}
+                              {piece.tag || (piece.length > 300 ? `${piece.length}` : '')}
                             </text>
                             {/* Indicador de sobra reutilizada */}
                             {isLeftover && (
                               <text
                                 x={currentX + segmentWidth / 2}
-                                y={35}
+                                y={42}
                                 textAnchor="middle"
-                                fontSize="8"
+                                fontSize="12"
                                 fill="white"
                               >
                                 ♻
@@ -128,22 +129,24 @@ export const ReportVisualization = ({ results, barLength, project }: ReportVisua
                       <g>
                         <rect
                           x={bar.totalUsed / 10}
-                          y={20}
+                          y={25}
                           width={bar.waste / 10}
-                          height={40}
-                          fill="#9CA3AF"
+                          height={50}
+                          fill="#DC2626"
                           stroke="#fff"
-                          strokeWidth="1"
+                          strokeWidth="2"
+                          opacity="0.7"
+                          rx="2"
                         />
                         <text
                           x={(bar.totalUsed + bar.waste / 2) / 10}
-                          y={45}
+                          y={55}
                           textAnchor="middle"
-                          fontSize="10"
+                          fontSize="12"
                           fill="white"
                           fontWeight="bold"
                         >
-                          {bar.waste > 200 ? `${bar.waste}` : ''}
+                          {bar.waste > 150 ? `${bar.waste}mm` : ''}
                         </text>
                       </g>
                     )}
@@ -175,24 +178,24 @@ export const ReportVisualization = ({ results, barLength, project }: ReportVisua
                 </div>
 
                 {/* Tabela Detalhada */}
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse border border-gray-300 text-sm">
-                    <thead className={`${isLeftover ? 'bg-green-50' : 'bg-gray-100'}`}>
+                <div className="overflow-x-auto bg-white rounded-lg shadow-sm">
+                  <table className="w-full border-collapse border-2 border-gray-300 text-base">
+                    <thead className={`${isLeftover ? 'bg-green-100' : 'bg-blue-50'}`}>
                       <tr>
-                        <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Peça</th>
-                        <th className="border border-gray-300 px-3 py-2 text-left font-semibold">TAG</th>
-                        <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Comprimento (mm)</th>
-                        <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Conjunto</th>
-                        <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Perfil</th>
-                        <th className="border border-gray-300 px-3 py-2 text-left font-semibold">
+                        <th className="border border-gray-300 px-4 py-3 text-left font-bold text-gray-800">Peça</th>
+                        <th className="border border-gray-300 px-4 py-3 text-left font-bold text-gray-800">TAG</th>
+                        <th className="border border-gray-300 px-4 py-3 text-left font-bold text-gray-800">Comprimento (mm)</th>
+                        <th className="border border-gray-300 px-4 py-3 text-left font-bold text-gray-800">Conjunto</th>
+                        <th className="border border-gray-300 px-4 py-3 text-left font-bold text-gray-800">Perfil</th>
+                        <th className="border border-gray-300 px-4 py-3 text-left font-bold text-gray-800">
                           {isLeftover ? 'Economia' : 'Posição'}
                         </th>
                       </tr>
                     </thead>
                     <tbody>
                       {bar.pieces.map((piece: any, pieceIndex) => (
-                        <tr key={pieceIndex} className={`hover:bg-gray-50 ${isLeftover ? 'bg-green-25' : ''}`}>
-                          <td className="border border-gray-300 px-3 py-2">
+                        <tr key={pieceIndex} className={`hover:bg-gray-50 ${isLeftover ? 'bg-green-50/30' : 'bg-blue-50/20'} transition-colors`}>
+                          <td className="border border-gray-300 px-4 py-3">
                             <div className="flex items-center gap-2">
                               <div 
                                 className="w-3 h-3 rounded border" 
@@ -202,45 +205,45 @@ export const ReportVisualization = ({ results, barLength, project }: ReportVisua
                               {isLeftover && <Recycle className="w-3 h-3 text-green-600" />}
                             </div>
                           </td>
-                          <td className="border border-gray-300 px-3 py-2">
+                          <td className="border border-gray-300 px-4 py-3">
                             {piece.tag ? (
-                              <Badge variant="default" className="text-xs bg-green-100 text-green-800">
-                                <Tag className="w-3 h-3 mr-1" />
+                              <Badge variant="default" className="text-sm bg-green-100 text-green-800">
+                                <Tag className="w-4 h-4 mr-1" />
                                 {piece.tag}
                               </Badge>
                             ) : (
-                              <span className="text-gray-400 text-xs">-</span>
+                              <span className="text-gray-400 text-sm">-</span>
                             )}
                           </td>
-                          <td className="border border-gray-300 px-3 py-2 font-mono">{piece.length}</td>
-                          <td className="border border-gray-300 px-3 py-2">
+                          <td className="border border-gray-300 px-4 py-3 font-mono text-lg font-semibold">{piece.length}</td>
+                          <td className="border border-gray-300 px-4 py-3">
                             {piece.conjunto ? (
-                              <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
-                                <Package className="w-3 h-3 mr-1" />
+                              <Badge variant="outline" className="text-sm bg-blue-50 text-blue-700">
+                                <Package className="w-4 h-4 mr-1" />
                                 {piece.conjunto}
                               </Badge>
                             ) : (
-                              <span className="text-gray-400 text-xs">Manual</span>
+                              <span className="text-gray-400 text-sm">Manual</span>
                             )}
                           </td>
-                          <td className="border border-gray-300 px-3 py-2">
+                          <td className="border border-gray-300 px-4 py-3">
                             {piece.perfil ? (
-                              <Badge variant="secondary" className="text-xs">
-                                <Wrench className="w-3 h-3 mr-1" />
+                              <Badge variant="secondary" className="text-sm">
+                                <Wrench className="w-4 h-4 mr-1" />
                                 {piece.perfil}
                               </Badge>
                             ) : (
-                              <span className="text-gray-400 text-xs">-</span>
+                              <span className="text-gray-400 text-sm">-</span>
                             )}
                           </td>
-                          <td className="border border-gray-300 px-3 py-2 text-center">
+                          <td className="border border-gray-300 px-4 py-3 text-center">
                             {isLeftover ? (
-                              <Badge variant="outline" className="text-green-700 bg-green-50">
-                                <DollarSign className="w-3 h-3 mr-1" />
+                              <Badge variant="outline" className="text-green-700 bg-green-50 text-sm">
+                                <DollarSign className="w-4 h-4 mr-1" />
                                 R$ {((piece.length / 1000) * 8).toFixed(2)}
                               </Badge>
                             ) : (
-                              piece.posicao || pieceIndex + 1
+                              <span className="text-lg font-semibold">{piece.posicao || pieceIndex + 1}</span>
                             )}
                           </td>
                         </tr>
@@ -248,20 +251,20 @@ export const ReportVisualization = ({ results, barLength, project }: ReportVisua
                       
                       {/* Linha de sobra */}
                       {bar.waste > 0 && (
-                        <tr className={`${isLeftover ? 'bg-yellow-50' : 'bg-red-50'}`}>
-                          <td className="border border-gray-300 px-3 py-2">
+                        <tr className={`${isLeftover ? 'bg-yellow-100' : 'bg-red-100'}`}>
+                          <td className="border border-gray-300 px-4 py-3">
                             <div className="flex items-center gap-2">
-                              <div className="w-3 h-3 rounded border bg-gray-300" />
-                              Sobra
+                              <div className="w-4 h-4 rounded border-2 bg-red-400 border-red-600" />
+                              <span className="font-semibold text-red-700">Sobra</span>
                             </div>
                           </td>
-                          <td className="border border-gray-300 px-3 py-2 text-gray-400">-</td>
-                          <td className="border border-gray-300 px-3 py-2 font-mono text-red-600">{bar.waste}</td>
-                          <td className="border border-gray-300 px-3 py-2 text-gray-400">-</td>
-                          <td className="border border-gray-300 px-3 py-2 text-gray-400">
+                          <td className="border border-gray-300 px-4 py-3 text-gray-500 text-sm">-</td>
+                          <td className="border border-gray-300 px-4 py-3 font-mono text-xl font-bold text-red-700">{bar.waste}mm</td>
+                          <td className="border border-gray-300 px-4 py-3 text-gray-500 text-sm">-</td>
+                          <td className="border border-gray-300 px-4 py-3 text-gray-600 font-medium">
                             {isLeftover ? 'Sobra da Sobra' : 'Desperdício'}
                           </td>
-                          <td className="border border-gray-300 px-3 py-2 text-gray-400">
+                          <td className="border border-gray-300 px-4 py-3 text-gray-600 font-medium">
                             {isLeftover ? 'Retornar Estoque' : 'Final'}
                           </td>
                         </tr>
