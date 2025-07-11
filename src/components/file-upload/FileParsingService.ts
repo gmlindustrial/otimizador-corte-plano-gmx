@@ -205,8 +205,8 @@ export class FileParsingService {
     
     let perfil: string;
     if (xPositions.length >= 2) {
-      // Extrair até o segundo X (incluindo o segundo X)
-      perfil = descricao.substring(0, xPositions[1] + 1);
+      // Extrair até o segundo X (SEM incluir o segundo X)
+      perfil = descricao.substring(0, xPositions[1]);
     } else if (xPositions.length === 1) {
       // Se só há um X, extrair até ele
       perfil = descricao.substring(0, xPositions[0] + 1);
