@@ -67,11 +67,12 @@ export class PDFReportService {
   }
 
   static async generateCompleteLinearReport(results: OptimizationResult, barLength: number, project: Project): Promise<void> {
-    const doc = new jsPDF();
-    let currentY = 55;
-    let pageNumber = 1;
+    try {
+      const doc = new jsPDF();
+      let currentY = 55;
+      let pageNumber = 1;
 
-    this.addHeader(doc, project, 'Relatório Completo de Otimização Linear', pageNumber);
+      this.addHeader(doc, project, 'Relatório Completo de Otimização Linear', pageNumber);
 
     // Resumo Executivo
     doc.setFontSize(12);
@@ -196,7 +197,7 @@ export class PDFReportService {
 
         doc.text(`${pieceIndex + 1}`, 20, currentY);
         doc.text(piece.tag || `P${pieceIndex + 1}`, 35, currentY);
-        doc.text(`${piece.length}mm`, 60, currentY);
+        doc.text(`${piece.length || 0}mm`, 60, currentY);
         doc.text(piece.conjunto || 'Manual', 95, currentY);
         doc.text(piece.perfil || '-', 130, currentY);
         doc.text('☐', 165, currentY);
@@ -221,17 +222,23 @@ export class PDFReportService {
       currentY += 10;
     });
 
-    this.addFooter(doc, project);
-    doc.save(`relatorio-completo-${project.projectNumber}-${new Date().toISOString().split('T')[0]}.pdf`);
+      this.addFooter(doc, project);
+      doc.save(`relatorio-completo-${project.projectNumber}-${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (error) {
+      console.error('Erro ao gerar PDF completo:', error);
+      alert('Erro ao gerar PDF. Verifique os dados e tente novamente.');
+      throw error;
+    }
   }
 
   static async generateSimplifiedLinearReport(results: OptimizationResult, barLength: number, project: Project): Promise<void> {
-    const doc = new jsPDF();
-    let currentY = 55;
-    let pageNumber = 1;
-    const maxBarsPerPage = 4;
+    try {
+      const doc = new jsPDF();
+      let currentY = 55;
+      let pageNumber = 1;
+      const maxBarsPerPage = 4;
 
-    this.addHeader(doc, project, 'Plano de Corte Simplificado - Produção', pageNumber);
+      this.addHeader(doc, project, 'Plano de Corte Simplificado - Produção', pageNumber);
 
     // Resumo Geral
     doc.setFontSize(12);
@@ -357,7 +364,7 @@ export class PDFReportService {
         bar.pieces.forEach((piece: any, pieceIndex) => {
           doc.text(`${pieceIndex + 1}`, 20, currentY);
           doc.text(piece.tag || `P${pieceIndex + 1}`, 35, currentY);
-          doc.text(`${piece.length}mm`, 60, currentY);
+          doc.text(`${piece.length || 0}mm`, 60, currentY);
           doc.text(piece.conjunto || 'Manual', 90, currentY);
           doc.text(piece.perfil || '-', 120, currentY);
           doc.text('☐', 150, currentY);
@@ -467,8 +474,13 @@ export class PDFReportService {
       if (index < 4) currentY += 5;
     });
 
-    this.addFooter(doc, project);
-    doc.save(`plano-corte-${project.projectNumber}-${new Date().toISOString().split('T')[0]}.pdf`);
+      this.addFooter(doc, project);
+      doc.save(`plano-corte-${project.projectNumber}-${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (error) {
+      console.error('Erro ao gerar PDF simplificado:', error);
+      alert('Erro ao gerar PDF simplificado. Verifique os dados e tente novamente.');
+      throw error;
+    }
   }
 
   static async generateLinearReport(results: OptimizationResult, barLength: number, project: Project): Promise<void> {

@@ -144,7 +144,7 @@ export const FullscreenReportViewer = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[100vw] max-h-[100vh] w-full h-full p-0 bg-white">
+      <DialogContent className="max-w-screen max-h-screen w-screen h-screen p-0 bg-white m-0 rounded-none border-0">
         <DialogHeader className="sr-only">
           <DialogTitle>Visualização Completa - {project?.projectNumber || 'Projeto'}</DialogTitle>
         </DialogHeader>

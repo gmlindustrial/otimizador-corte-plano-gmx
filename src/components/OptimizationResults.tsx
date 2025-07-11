@@ -266,8 +266,8 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
 
   if (showPrintPreview) {
     return (
-      <div className="fixed inset-0 bg-white z-50 overflow-auto">
-        <div className="p-4 bg-gray-100 border-b flex justify-between items-center">
+      <div className="fixed inset-0 bg-white z-50 flex flex-col h-screen w-screen">
+        <div className="p-4 bg-gray-100 border-b flex justify-between items-center flex-shrink-0">
           <h2 className="text-lg font-semibold">
             {printMode === 'complete' ? 'Relatório Completo' : 'Plano Simplificado'}
           </h2>
@@ -281,8 +281,8 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
             </Button>
           </div>
         </div>
-        <div className="p-4 space-y-6 max-w-full">
-          <div className="w-full">
+        <div className="flex-1 overflow-auto p-4">
+          <div className="w-full h-full">
             <ReportVisualization
               results={results}
               barLength={barLength}
