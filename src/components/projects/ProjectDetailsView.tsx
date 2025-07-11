@@ -436,6 +436,7 @@ export const ProjectDetailsView = ({
                             <Checkbox
                               checked={allSelected}
                               onCheckedChange={() => toggleProfileSelection(key, group.pieces)}
+                              onClick={(e) => e.stopPropagation()}
                               className="mr-2"
                             />
                             <span className="font-medium">
