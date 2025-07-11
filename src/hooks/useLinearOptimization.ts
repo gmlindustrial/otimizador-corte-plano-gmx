@@ -247,8 +247,11 @@ export const useLinearOptimization = () => {
     const wastePercentage = (totalWaste / totalMaterial) * 100;
     const wasteReduction = materialReused > 0 ? (materialReused / (materialReused + (newBarsUsedCount * barLength))) * 100 : 0;
 
+    // Filtrar apenas barras que têm peças
+    const filteredBars = bars.filter(bar => bar.pieces.length > 0);
+    
     const optimizationResult: ExtendedOptimizationResult = {
-      bars: bars.map(bar => ({
+      bars: filteredBars.map(bar => ({
         id: bar.id,
         pieces: bar.pieces,
         waste: bar.waste,
@@ -265,7 +268,7 @@ export const useLinearOptimization = () => {
           originalLength: bar.originalLength
         })
       })),
-      totalBars: bars.length,
+      totalBars: filteredBars.length,
       totalWaste,
       wastePercentage,
       efficiency: 100 - wastePercentage,

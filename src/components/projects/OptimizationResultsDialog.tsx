@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { OptimizationResults } from '@/components/OptimizationResults';
 import type { OptimizationResult, Project } from '@/pages/Index';
 
@@ -22,6 +22,12 @@ export const OptimizationResultsDialog = ({ open, onOpenChange, results, barLeng
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Resultados da Otimização</DialogTitle>
+          <DialogDescription>
+            Visualize o plano de corte otimizado e as estatísticas detalhadas do projeto.
+          </DialogDescription>
+        </DialogHeader>
         <OptimizationResults results={results} barLength={barLength} project={project} pieces={[]} onResultsChange={handleResultsChange} />
       </DialogContent>
     </Dialog>

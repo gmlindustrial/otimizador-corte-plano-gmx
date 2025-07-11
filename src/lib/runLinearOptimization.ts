@@ -88,13 +88,16 @@ export function runLinearOptimization(pieces: PieceInput[], barLength: number): 
     }
   });
 
-  const totalWaste = bars.reduce((sum, b) => sum + b.waste, 0);
-  const totalMaterial = bars.reduce((sum, b) => sum + b.originalLength, 0);
+  // Filtrar barras vazias
+  const filteredBars = bars.filter(bar => bar.pieces.length > 0);
+  
+  const totalWaste = filteredBars.reduce((sum, b) => sum + b.waste, 0);
+  const totalMaterial = filteredBars.reduce((sum, b) => sum + b.originalLength, 0);
   const wastePercentage = totalMaterial > 0 ? (totalWaste / totalMaterial) * 100 : 0;
 
   return {
-    bars,
-    totalBars: bars.length,
+    bars: filteredBars,
+    totalBars: filteredBars.length,
     totalWaste,
     wastePercentage,
     efficiency: 100 - wastePercentage
@@ -215,13 +218,16 @@ export function runLinearOptimizationWithLeftovers(
     }
   }
 
-  const totalWaste = bars.reduce((s,b)=>s+b.waste,0);
-  const totalMaterial = bars.reduce((s,b)=>s+b.originalLength,0);
+  // Filtrar barras vazias
+  const filteredBars = bars.filter(bar => bar.pieces.length > 0);
+  
+  const totalWaste = filteredBars.reduce((s,b)=>s+b.waste,0);
+  const totalMaterial = filteredBars.reduce((s,b)=>s+b.originalLength,0);
   const wastePercentage = totalMaterial>0? (totalWaste/totalMaterial)*100:0;
 
   return {
-    bars,
-    totalBars: bars.length,
+    bars: filteredBars,
+    totalBars: filteredBars.length,
     totalWaste,
     wastePercentage,
     efficiency: 100 - wastePercentage,

@@ -16,7 +16,7 @@ export const ReportVisualization = ({ results, barLength, project }: ReportVisua
   return (
     <div className="space-y-6">
       <div className="space-y-8">
-        {results.bars.map((bar: any, barIndex) => {
+        {results.bars.filter((bar: any) => bar.pieces.length > 0).map((bar: any, barIndex) => {
           const isLeftover = bar.type === 'leftover';
           const isNew = bar.type === 'new';
           

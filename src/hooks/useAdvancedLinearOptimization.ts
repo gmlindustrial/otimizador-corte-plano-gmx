@@ -146,8 +146,9 @@ export const useAdvancedLinearOptimization = () => {
       console.log('Estratégia utilizada:', optimizationResult.strategy);
       console.log('Barras geradas:', optimizationResult.bars.length);
 
-      // Filtrar apenas barras que precisam ser cortadas
-      const cuttableBars = optimizationResult.bars.filter(bar => 
+      // Filtrar barras vazias e que precisam ser cortadas
+      const validBars = optimizationResult.bars.filter(bar => bar.pieces.length > 0);
+      const cuttableBars = validBars.filter(bar => 
         bar.pieces.length > 1 || bar.pieces[0]?.length < bar.originalLength - 100
       );
 
@@ -192,8 +193,8 @@ export const useAdvancedLinearOptimization = () => {
 
       console.log('Sobras cadastradas automaticamente:', autoRegisteredWastes);
 
-      // Converter para formato de resultado compatível
-      const standardBars = optimizationResult.bars.map(bar => ({
+      // Converter para formato de resultado compatível (apenas barras válidas)
+      const standardBars = validBars.map(bar => ({
         id: bar.id,
         pieces: bar.pieces.map(piece => ({
           length: piece.length,
@@ -211,7 +212,7 @@ export const useAdvancedLinearOptimization = () => {
       const result: AdvancedOptimizationResult = {
         // Resultado padrão para compatibilidade
         bars: standardBars,
-        totalBars: optimizationResult.bars.length,
+        totalBars: validBars.length,
         totalWaste: optimizationResult.totalWaste,
         wastePercentage: 100 - optimizationResult.efficiency,
         efficiency: optimizationResult.efficiency,

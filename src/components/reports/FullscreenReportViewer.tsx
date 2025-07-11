@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -145,6 +145,9 @@ export const FullscreenReportViewer = ({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[100vw] max-h-[100vh] w-full h-full p-0 bg-white">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Visualização Completa - {project?.projectNumber || 'Projeto'}</DialogTitle>
+        </DialogHeader>
         <div className="flex flex-col h-screen">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b bg-gray-50 flex-shrink-0">
