@@ -6,7 +6,8 @@ import type { LinearOptimizationWithLeftoversResult } from '@/lib/runLinearOptim
 export class WasteStockService {
   static async addWasteToStock(
     optimizationId: string,
-    results: LinearOptimizationWithLeftoversResult
+    results: LinearOptimizationWithLeftoversResult,
+    perfilId?: string
   ): Promise<void> {
     try {
       console.log('=== ADICIONANDO SOBRAS AO ESTOQUE ===');
@@ -18,7 +19,8 @@ export class WasteStockService {
         .map(bar => ({
           comprimento: Math.floor(bar.waste),
           quantidade: 1,
-          id_projeto_otimizacao: optimizationId
+          id_projeto_otimizacao: optimizationId,
+          id_perfis_materiais: perfilId
         }));
 
       console.log('Sobras para adicionar:', wasteEntries);

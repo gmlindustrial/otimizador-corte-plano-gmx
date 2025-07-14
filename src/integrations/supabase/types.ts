@@ -46,6 +46,7 @@ export type Database = {
           comprimento: number
           created_at: string
           id: string
+          id_perfis_materiais: string | null
           id_projeto_otimizacao: string | null
           quantidade: number
         }
@@ -53,6 +54,7 @@ export type Database = {
           comprimento: number
           created_at?: string
           id?: string
+          id_perfis_materiais?: string | null
           id_projeto_otimizacao?: string | null
           quantidade?: number
         }
@@ -60,6 +62,7 @@ export type Database = {
           comprimento?: number
           created_at?: string
           id?: string
+          id_perfis_materiais?: string | null
           id_projeto_otimizacao?: string | null
           quantidade?: number
         }

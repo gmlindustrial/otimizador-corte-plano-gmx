@@ -7,22 +7,49 @@ export interface SobraItem {
   comprimento: number;
   quantidade: number;
   id_projeto_otimizacao?: string;
+  id_perfis_materiais?: string;
   created_at: string;
+  // Informações do perfil (via JOIN)
+  descricao_perfil?: string;
+  tipo_perfil?: string;
+  kg_por_metro?: number;
 }
 
 export const useEstoqueSobras = () => {
   const [sobras, setSobras] = useState<SobraItem[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchSobras = async () => {
+  const fetchSobras = async (perfilId?: string) => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      let query = supabase
         .from('estoque_sobras')
-        .select('*')
+        .select(`
+          *,
+          perfis_materiais:id_perfis_materiais (
+            descricao_perfil,
+            tipo_perfil,
+            kg_por_metro
+          )
+        `)
         .order('created_at', { ascending: false });
+
+      if (perfilId) {
+        query = query.eq('id_perfis_materiais', perfilId);
+      }
+
+      const { data, error } = await query;
       if (error) throw error;
-      setSobras(data || []);
+      
+      // Mapear dados para incluir informações do perfil
+      const mappedData = (data || []).map(item => ({
+        ...item,
+        descricao_perfil: item.perfis_materiais?.descricao_perfil,
+        tipo_perfil: item.perfis_materiais?.tipo_perfil,
+        kg_por_metro: item.perfis_materiais?.kg_por_metro
+      }));
+      
+      setSobras(mappedData);
     } catch (error) {
       console.error('Erro ao carregar sobras:', error);
       toast.error('Erro ao carregar estoque de sobras');
@@ -35,16 +62,37 @@ export const useEstoqueSobras = () => {
   const adicionarSobra = async (
     comprimento: number,
     quantidade: number,
-    otimId?: string
+    otimId?: string,
+    perfilId?: string
   ) => {
     try {
       const { data, error } = await supabase
         .from('estoque_sobras')
-        .insert([{ comprimento, quantidade, id_projeto_otimizacao: otimId }])
-        .select()
+        .insert([{ 
+          comprimento, 
+          quantidade, 
+          id_projeto_otimizacao: otimId,
+          id_perfis_materiais: perfilId 
+        }])
+        .select(`
+          *,
+          perfis_materiais:id_perfis_materiais (
+            descricao_perfil,
+            tipo_perfil,
+            kg_por_metro
+          )
+        `)
         .single();
       if (error) throw error;
-      setSobras(prev => [data, ...prev]);
+      
+      const mappedData = {
+        ...data,
+        descricao_perfil: data.perfis_materiais?.descricao_perfil,
+        tipo_perfil: data.perfis_materiais?.tipo_perfil,
+        kg_por_metro: data.perfis_materiais?.kg_por_metro
+      };
+      
+      setSobras(prev => [mappedData, ...prev]);
       toast.success('Sobra adicionada');
     } catch (error) {
       console.error('Erro ao adicionar sobra:', error);
@@ -99,5 +147,5 @@ export const useEstoqueSobras = () => {
     void fetchSobras();
   }, []);
 
-  return { sobras, loading, adicionarSobra, usarSobra, removerSobra, refetch: fetchSobras };
+  return { sobras, loading, adicionarSobra, usarSobra, removerSobra, refetch: fetchSobras, fetchSobrasByPerfil: fetchSobras };
 };
