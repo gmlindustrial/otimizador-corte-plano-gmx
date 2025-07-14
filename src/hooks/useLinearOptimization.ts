@@ -126,7 +126,7 @@ export const useLinearOptimization = () => {
 
     // FASE 1: Tentar usar sobras disponíveis primeiro
     const usedLeftovers = new Set<string>();
-    const usageCount: Record<string, number> = {};
+    const usageCount: Record<string, string> = {};
     
     for (const piece of [...sortedPieces]) {
       let placed = false;
@@ -186,7 +186,8 @@ export const useLinearOptimization = () => {
           
           placed = true;
           usedLeftovers.add(leftover.uniqueId);
-          usageCount[leftover.id] = (usageCount[leftover.id] || 0) + 1;
+          // Mapear uniqueId para o ID original para consumo correto
+          usageCount[leftover.uniqueId] = leftover.id;
           
           // Remover peça da lista
           const pieceIndex = sortedPieces.indexOf(piece);
@@ -301,7 +302,17 @@ export const useLinearOptimization = () => {
     console.log('Novas barras:', newBarsUsedCount);
 
     // Atualizar estoque de sobras consumidas
-    Object.entries(usageCount).forEach(([id, qty]) => {
+    // Contar uso por ID original (não por uniqueId)
+    const originalIdUsage: Record<string, number> = {};
+    Object.entries(usageCount).forEach(([uniqueId, originalId]) => {
+      originalIdUsage[originalId] = (originalIdUsage[originalId] || 0) + 1;
+    });
+    
+    console.log('=== ATUALIZANDO ESTOQUE DE SOBRAS ===');
+    console.log('Usage por originalId:', originalIdUsage);
+    
+    Object.entries(originalIdUsage).forEach(([id, qty]) => {
+      console.log(`Consumindo sobra ${id}: ${qty} unidades`);
       usarSobra(id, qty);
     });
 

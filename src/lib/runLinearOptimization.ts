@@ -111,7 +111,7 @@ export interface LeftoverStockItem {
 }
 
 export interface LinearOptimizationWithLeftoversResult extends LinearOptimizationResult {
-  leftoverUsage: Record<string, number>;
+  leftoverUsage: Record<string, string>;
 }
 
 export function runLinearOptimizationWithLeftovers(
@@ -139,7 +139,7 @@ export function runLinearOptimizationWithLeftovers(
   const cutLoss = 3;
   const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316'];
   const usedLeftovers = new Set<string>();
-  const usage: Record<string, number> = {};
+  const usage: Record<string, string> = {};
   let leftoverCount = 0;
 
   for (const piece of [...expandedPieces]) {
@@ -151,7 +151,7 @@ export function runLinearOptimizationWithLeftovers(
         bar = { id: `left-${sob.uid}`, type: 'leftover', originalLength: sob.comprimento, pieces: [], waste: 0, totalUsed: 0, estoque_id: sob.id };
         bars.push(bar);
         leftoverCount++;
-        usage[sob.id] = (usage[sob.id] || 0) + 1;
+        usage[sob.id] = String((parseInt(usage[sob.id] || '0', 10)) + 1);
       }
       const available = sob.comprimento - bar.totalUsed;
       const need = piece.length + (bar.pieces.length > 0 ? cutLoss : 0);

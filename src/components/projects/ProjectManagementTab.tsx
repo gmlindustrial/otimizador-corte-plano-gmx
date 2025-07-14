@@ -121,8 +121,20 @@ export const ProjectManagementTab = ({ onNavigateToProfileManagement }: ProjectM
       });
 
       if (created.success && created.data) {
-        for (const [id, qty] of Object.entries(resultWithLeftovers.leftoverUsage)) {
-          await estoqueSobrasService.useQuantity(id, qty as number);
+        console.log('=== APLICANDO USO DE SOBRAS ===');
+        console.log('Sobras disponíveis:', sobras.map(s => ({ id: s.id, comprimento: s.comprimento, quantidade: s.quantidade })));
+        console.log('leftoverUsage:', resultWithLeftovers.leftoverUsage);
+        
+        for (const [id, qtyStr] of Object.entries(resultWithLeftovers.leftoverUsage)) {
+          // Validar se a sobra ainda existe e se a quantidade é válida
+          const qty = parseInt(qtyStr, 10);
+          const sobra = sobras.find(s => s.id === id);
+          if (sobra && qty > 0 && qty <= sobra.quantidade) {
+            console.log(`Usando sobra: ${id}, quantidade: ${qty}/${sobra.quantidade}`);
+            await estoqueSobrasService.useQuantity(id, qty);
+          } else {
+            console.warn(`Tentativa de usar sobra inválida: ${id}, qty: ${qty}, sobra existente:`, sobra);
+          }
         }
         
         // Detectar perfil mais comum nas peças selecionadas
