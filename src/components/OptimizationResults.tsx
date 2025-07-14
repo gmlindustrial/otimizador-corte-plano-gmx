@@ -9,7 +9,6 @@ import { FullscreenReportViewer } from './reports/FullscreenReportViewer';
 import { PDFReportService } from '@/services/PDFReportService';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import * as XLSX from 'xlsx';
 
 interface OptimizationResultsProps {
   results: OptimizationResult;
@@ -27,12 +26,7 @@ interface ExtendedOptimizationResult extends OptimizationResult {
     materialReused: number;
     totalEconomy: number;
     wasteReduction: number;
-    materialEfficiency: number;
-    co2Savings: number;
-    materialSavings: number;
   };
-  totalLength?: number;
-  wasteLength?: number;
 }
 
 export const OptimizationResults = ({ results, barLength, project, pieces, onResultsChange }: OptimizationResultsProps) => {
@@ -104,164 +98,158 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
     }
   };
 
-  const handleExportExcelComplete = () => {
-    if (!results || !project) {
-      toast({
-        title: "Erro",
-        description: "Dados insuficientes para gerar o relatório",
-        variant: "destructive",
-      });
-      return;
-    }
-
+  const handleExportExcel = () => {
     try {
-      console.log('Iniciando geração Excel completo...');
+      // Estrutura melhorada conforme especificação do operador
+      const headers = [
+        'Numero da Barra',
+        'Tipo (Nova ou Sobra)',
+        'TAG',
+        'Conjunto',
+        'Comprimento',
+        'Perfil/Material',
+        'Obra',
+        'Status',
+        'Eficiência',
+        'Sobra Barra',
+        'Observações'
+      ];
       
-      // Preparar dados completos
-      const data = [];
-      
-      // Cabeçalho
-      data.push(['RELATÓRIO DE OTIMIZAÇÃO COMPLETO']);
-      data.push(['Projeto:', project.name || project.projectNumber || 'N/A']);
-      data.push(['Cliente:', project.client || 'N/A']);
-      data.push(['Data:', new Date().toLocaleDateString('pt-BR')]);
-      data.push([]);
-      
-      // Resumo executivo
-      data.push(['RESUMO EXECUTIVO']);
-      data.push(['Total de Barras:', results.bars.length]);
-      data.push(['Comprimento Total (mm):', results.totalBars * barLength]);
-      data.push(['Desperdício Total (mm):', results.totalWaste]);
-      data.push(['Eficiência:', `${results.efficiency.toFixed(2)}%`]);
-      data.push([]);
+      const rows: string[][] = [headers];
 
-      // Calcular total de peças 
-      const totalPecas = results.bars.reduce((total, bar) => total + bar.pieces.length, 0);
-
-      // Plano de corte detalhado
-      data.push(['PLANO DE CORTE DETALHADO']);
-      data.push(['Número da Barra', 'Tipo', 'TAG da Peça', 'Conjunto', 'Comprimento (mm)', 'Quantidade', 'Perfil/Material', 'Posição', 'Sobra (mm)', 'Observações']);
-      
-      results.bars.forEach((bar, index) => {
-        bar.pieces.forEach((piece, pieceIndex) => {
-          data.push([
-            `Barra ${index + 1}`,
-            'Linear',
-            piece.tag || piece.label,
-            'N/A',
-            piece.length,
-            1,
-            'Material Padrão',
-            `${pieceIndex + 1}°`,
-            pieceIndex === bar.pieces.length - 1 ? bar.waste : 0,
-            bar.waste > 0 && pieceIndex === bar.pieces.length - 1 ? `Sobra: ${bar.waste}mm` : ''
+      // Adicionar cada peça com informações de sobras
+      results.bars.forEach((bar: any, barIndex) => {
+        const barType = bar.type || 'new';
+        const isLeftover = barType === 'leftover';
+        
+        bar.pieces.forEach((piece: any, pieceIndex) => {
+          rows.push([
+            `Barra ${barIndex + 1}`, // Numero da Barra
+            isLeftover ? 'SOBRA' : 'NOVA', // Tipo (Nova ou Sobra)
+            piece.tag || `P${pieceIndex + 1}`, // TAG
+            piece.conjunto || 'Entrada Manual', // Conjunto
+            piece.length.toString(), // Comprimento
+            piece.perfil || piece.material || project?.tipoMaterial || 'Material', // Perfil/Material
+            piece.obra || project?.obra || 'N/A', // Obra
+            '', // Status (em branco)
+            ((bar.totalUsed / (bar.originalLength || barLength)) * 100).toFixed(1), // Eficiência
+            pieceIndex === bar.pieces.length - 1 ? bar.waste.toString() : '0', // Sobra Barra
+            '' // Observações (em branco)
           ]);
+        });
+        
+        // Adicionar linha de sobra se existir
+        if (bar.waste > 0) {
+          rows.push([
+            `Barra ${barIndex + 1}`, // Numero da Barra
+            barType.toUpperCase(), // Tipo (Nova ou Sobra)
+            'DESCARTE', // TAG
+            '-', // Conjunto
+            bar.waste.toString(), // Comprimento
+            'Desperdício', // Perfil/Material
+            project?.obra || 'N/A', // Obra
+            '', // Status (em branco)
+            '0', // Eficiência
+            bar.waste.toString(), // Sobra Barra
+            '' // Observações (em branco)
+          ]);
+        }
+      });
+
+      // Adicionar seção de resumo por conjunto
+      rows.push([]);
+      rows.push(['=== RESUMO POR CONJUNTO ===']);
+      
+      // Agrupar por conjunto para resumo
+      const conjuntoSummary = new Map<string, { count: number; totalLength: number; barras: Set<number> }>();
+      
+      results.bars.forEach((bar, barIndex) => {
+        bar.pieces.forEach((piece: any) => {
+          const conjunto = piece.conjunto || 'Entrada Manual';
+          if (!conjuntoSummary.has(conjunto)) {
+            conjuntoSummary.set(conjunto, { count: 0, totalLength: 0, barras: new Set() });
+          }
+          const summary = conjuntoSummary.get(conjunto)!;
+          summary.count++;
+          summary.totalLength += piece.length;
+          summary.barras.add(barIndex + 1);
         });
       });
 
-      data.push([]);
-      
-      // Seção de sustentabilidade
-      data.push(['MÉTRICAS DE SUSTENTABILIDADE']);
-      data.push(['Eficiência do Material:', `${results.efficiency.toFixed(2)}%`]);
-      data.push(['Redução de Desperdício:', `${results.wastePercentage.toFixed(2)}%`]);
-      data.push(['Economia de CO2 (estimada):', `${(results.totalBars * barLength * 0.001).toFixed(2)} kg`]);
-      data.push(['Economia Material (estimada):', `R$ ${(results.totalWaste * 0.05).toFixed(2)}`]);
-      data.push([]);
+      rows.push(['Conjunto', 'Qtd Peças', 'Comprimento Total (mm)', 'Barras Utilizadas', 'Numero da Barra']);
+      conjuntoSummary.forEach((summary, conjunto) => {
+        rows.push([
+          conjunto,
+          summary.count.toString(),
+          summary.totalLength.toString(),
+          summary.barras.size.toString(),
+          Array.from(summary.barras).sort((a, b) => a - b).join(', ')
+        ]);
+      });
 
-      // Controle de qualidade
-      data.push(['CONTROLE DE QUALIDADE']);
-      data.push(['Total de Peças:', totalPecas]);
-      data.push(['Barras Utilizadas:', results.bars.length]);
-      data.push(['Status:', results.bars.length > 0 ? 'APROVADO' : 'PENDENTE']);
+      // Adicionar seção de sustentabilidade se houver dados
+      if (hasSustainabilityData) {
+        rows.push([]);
+        rows.push(['=== RELATÓRIO DE SUSTENTABILIDADE ===']);
+        rows.push(['Sobras Utilizadas:', hasSustainabilityData.leftoverBarsUsed.toString()]);
+        rows.push(['Barras Novas:', hasSustainabilityData.newBarsUsed.toString()]);
+        rows.push(['Material Reutilizado:', `${(hasSustainabilityData.materialReused / 1000).toFixed(2)}m`]);
+        rows.push(['Economia Total:', `R$ ${hasSustainabilityData.totalEconomy.toFixed(2)}`]);
+        rows.push(['Redução de Desperdício:', `${hasSustainabilityData.wasteReduction.toFixed(1)}%`]);
+        rows.push(['Taxa de Reaproveitamento:', `${((hasSustainabilityData.leftoverBarsUsed / results.totalBars) * 100).toFixed(1)}%`]);
+      }
 
-      // Gerar e baixar Excel
-      const ws = XLSX.utils.aoa_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Relatório Completo');
-      XLSX.writeFile(wb, `relatorio_completo_${(project.name || project.projectNumber || 'projeto').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`);
+      // Adicionar seção de controle de qualidade
+      rows.push([]);
+      rows.push(['=== CONTROLE DE QUALIDADE ===']);
+      rows.push(['Projeto:', project?.projectNumber || 'N/A']);
+      rows.push(['Cliente:', project?.client || 'N/A']);
+      rows.push(['Obra:', project?.obra || 'N/A']);
+      rows.push(['Operador:', project?.operador || 'N/A']);
+      rows.push(['Turno:', project?.turno || 'N/A']);
+      rows.push(['Aprovador QA:', project?.aprovadorQA || 'Pendente']);
+      rows.push(['Material:', project?.tipoMaterial || 'N/A']);
+      rows.push(['Total de Barras:', results.totalBars.toString()]);
+      rows.push(['Eficiência Geral:', `${results.efficiency.toFixed(1)}%`]);
+      rows.push(['Desperdício Total:', `${(results.totalWaste / 1000).toFixed(2)}m`]);
+      rows.push(['Data da Otimização:', new Date().toLocaleDateString('pt-BR')]);
+      rows.push([]);
+      rows.push(['=== VALIDAÇÕES ===']);
+      rows.push(['☐ Dimensões das barras conferidas']);
+      rows.push(['☐ Material correto selecionado']);
+      rows.push(['☐ TAGs das peças verificadas']);
+      rows.push(['☐ Conjuntos organizados corretamente']);
+      rows.push(['☐ Primeira peça cortada e validada']);
+      rows.push(['☐ Relatório aprovado pelo operador']);
+      rows.push(['☐ Assinatura do inspetor QA']);
+
+      // Converter para CSV com encoding UTF-8 e separador adequado para Excel brasileiro
+      const BOM = '\uFEFF'; // Byte Order Mark para UTF-8
+      const csvContent = BOM + rows.map(row => 
+        row.map(cell => `"${cell}"`).join(';') // Usar ponto e vírgula para Excel brasileiro
+      ).join('\n');
+
+      // Download com nome mais descritivo
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `plano-corte-operador-${project?.projectNumber || 'projeto'}-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
 
       toast({
-        title: "Sucesso",
-        description: "Relatório Excel completo exportado com sucesso!",
+        title: "Excel Exportado",
+        description: "Plano de corte com informações de sustentabilidade foi baixado",
       });
     } catch (error) {
-      console.error('Erro ao gerar Excel completo:', error);
+      console.error('Erro ao exportar Excel:', error);
       toast({
-        title: "Erro",
-        description: "Erro ao gerar o relatório Excel completo",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleExportExcelSimplified = () => {
-    if (!results || !project) {
-      toast({
-        title: "Erro",
-        description: "Dados insuficientes para gerar o relatório",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      console.log('Iniciando geração Excel simplificado...');
-      
-      // Preparar dados simplificados
-      const data = [];
-      
-      // Cabeçalho básico
-      data.push(['PLANO DE CORTE - OPERADOR']);
-      data.push(['Projeto:', project.name || project.projectNumber || 'N/A']);
-      data.push(['Data:', new Date().toLocaleDateString('pt-BR')]);
-      data.push([]);
-      
-      // Resumo básico
-      data.push(['Total de Barras:', results.bars.length]);
-      data.push(['Eficiência:', `${results.efficiency.toFixed(1)}%`]);
-      data.push([]);
-
-      // Plano de corte simplificado
-      data.push(['PLANO DE CORTE']);
-      data.push(['Barra', 'TAG', 'Comprimento (mm)', 'Quantidade', 'Material']);
-      
-      results.bars.forEach((bar, index) => {
-        bar.pieces.forEach((piece) => {
-          data.push([
-            `Barra ${index + 1}`,
-            piece.tag || piece.label,
-            piece.length,
-            1,
-            'Material Padrão'
-          ]);
-        });
-      });
-
-      data.push([]);
-      
-      // Check-list básico
-      data.push(['CHECK-LIST DO OPERADOR']);
-      data.push(['☐ Verificar material disponível']);
-      data.push(['☐ Conferir medidas antes do corte']);
-      data.push(['☐ Identificar peças após corte']);
-      data.push(['☐ Separar sobras aproveitáveis']);
-
-      // Gerar e baixar Excel
-      const ws = XLSX.utils.aoa_to_sheet(data);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Plano Operador');
-      XLSX.writeFile(wb, `plano_operador_${(project.name || project.projectNumber || 'projeto').replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`);
-
-      toast({
-        title: "Sucesso",
-        description: "Plano do operador exportado com sucesso!",
-      });
-    } catch (error) {
-      console.error('Erro ao gerar Excel simplificado:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao gerar o plano do operador",
+        title: "Erro ao exportar Excel",
+        description: "Não foi possível gerar o arquivo Excel",
         variant: "destructive",
       });
     }
@@ -449,13 +437,9 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
                     <Download className="w-4 h-4 mr-2" />
                     Exportar PDF Simplificado (Produção)
                   </Button>
-                  <Button onClick={handleExportExcelComplete} variant="outline" className="justify-start">
+                  <Button onClick={handleExportExcel} variant="outline" className="justify-start">
                     <FileSpreadsheet className="w-4 h-4 mr-2" />
-                    Exportar Excel Completo
-                  </Button>
-                  <Button onClick={handleExportExcelSimplified} variant="outline" className="justify-start">
-                    <FileSpreadsheet className="w-4 h-4 mr-2" />
-                    Exportar Excel Simplificado (Operador)
+                    Exportar Plano do Operador (Excel)
                     {hasSustainabilityData && hasSustainabilityData.leftoverBarsUsed > 0 && (
                       <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700">+Sustentabilidade</Badge>
                     )}
