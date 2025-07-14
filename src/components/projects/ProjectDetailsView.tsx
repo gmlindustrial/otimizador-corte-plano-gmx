@@ -679,6 +679,7 @@ export const ProjectDetailsView = ({
               void loadProjectData();
             })
           }
+          selectedPieces={pieces.filter(p => selectedPieces.has(p.id))}
         />
         <OptimizationResultsDialog
           open={!!viewResults}
