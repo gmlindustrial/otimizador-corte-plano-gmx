@@ -320,42 +320,42 @@ export type Database = {
       projeto_pecas: {
         Row: {
           comprimento_mm: number
-          conjunto: string | null
           created_at: string
           descricao_perfil_raw: string | null
           id: string
           perfil_id: string | null
           perfil_nao_encontrado: boolean
           peso_por_metro: number | null
+          posicao: string
           projeto_id: string
           quantidade: number
-          tag_peca: string
+          tag: string | null
         }
         Insert: {
           comprimento_mm: number
-          conjunto?: string | null
           created_at?: string
           descricao_perfil_raw?: string | null
           id?: string
           perfil_id?: string | null
           perfil_nao_encontrado?: boolean
           peso_por_metro?: number | null
+          posicao: string
           projeto_id: string
           quantidade?: number
-          tag_peca: string
+          tag?: string | null
         }
         Update: {
           comprimento_mm?: number
-          conjunto?: string | null
           created_at?: string
           descricao_perfil_raw?: string | null
           id?: string
           perfil_id?: string | null
           perfil_nao_encontrado?: boolean
           peso_por_metro?: number | null
+          posicao?: string
           projeto_id?: string
           quantidade?: number
-          tag_peca?: string
+          tag?: string | null
         }
         Relationships: [
           {

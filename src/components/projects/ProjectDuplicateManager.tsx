@@ -45,12 +45,12 @@ export const ProjectDuplicateManager = ({ duplicates, onResolved, onCancel }: Pr
           {duplicates.map((dup, index) => (
             <div key={index} className="flex items-center justify-between bg-white border rounded-lg p-3">
               <div>
-                <div className="font-medium text-sm">{dup.imported.tag_peca}</div>
+                <div className="font-medium text-sm">{dup.imported.posicao}</div>
                 <div className="text-xs text-gray-600">
                   {dup.imported.comprimento_mm}mm × {dup.imported.quantidade}
                 </div>
                 <div className="text-xs text-gray-500">
-                  Já existe: {dup.existing.tag_peca}
+                  Já existe: {dup.existing.posicao}
                 </div>
               </div>
               <Button size="sm" variant={selected[index] ? 'default' : 'outline'} onClick={() => toggle(index)}>

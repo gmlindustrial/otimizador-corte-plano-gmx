@@ -17,17 +17,17 @@ export const PieceList = ({ pieces, onUpdatePiece, onRemovePiece }: PieceListPro
 
   const totalQuantity = pieces.reduce((sum, piece) => sum + piece.quantity, 0);
 
-  // Agrupar peças por conjunto
+  // Agrupar peças por tag
   const groupedPieces = pieces.reduce((groups, piece) => {
-    const conjunto = (piece as any).conjunto || 'Entrada Manual';
-    if (!groups[conjunto]) {
-      groups[conjunto] = [];
+    const tag = (piece as any).tag || 'Entrada Manual';
+    if (!groups[tag]) {
+      groups[tag] = [];
     }
-    groups[conjunto].push(piece);
+    groups[tag].push(piece);
     return groups;
   }, {} as Record<string, CutPiece[]>);
 
-  const conjuntos = Object.keys(groupedPieces);
+  const tags = Object.keys(groupedPieces);
 
   const renderPieceItem = (piece: CutPiece) => (
     <div key={piece.id} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
@@ -54,12 +54,12 @@ export const PieceList = ({ pieces, onUpdatePiece, onRemovePiece }: PieceListPro
           />
         </div>
         <div className="space-y-1">
-          <label className="text-xs text-gray-600">Conjunto</label>
+          <label className="text-xs text-gray-600">TAG</label>
           <div className="flex items-center h-9">
-            {(piece as any).conjunto ? (
+            {(piece as any).tag ? (
               <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
                 <Package className="w-3 h-3 mr-1" />
-                {(piece as any).conjunto}
+                {(piece as any).tag}
               </Badge>
             ) : (
               <span className="text-xs text-gray-400">Manual</span>
@@ -67,15 +67,15 @@ export const PieceList = ({ pieces, onUpdatePiece, onRemovePiece }: PieceListPro
           </div>
         </div>
         <div className="space-y-1">
-          <label className="text-xs text-gray-600">TAG</label>
+          <label className="text-xs text-gray-600">Posição</label>
           <div className="flex items-center h-9">
-            {(piece as any).tag ? (
+            {(piece as any).posicao ? (
               <Badge variant="default" className="text-xs bg-green-100 text-green-800 border-green-200">
                 <Tag className="w-3 h-3 mr-1" />
-                {(piece as any).tag}
+                {(piece as any).posicao}
               </Badge>
             ) : (
-              <span className="text-xs text-gray-400">Sem TAG</span>
+              <span className="text-xs text-gray-400">Sem Posição</span>
             )}
           </div>
         </div>
@@ -115,32 +115,32 @@ export const PieceList = ({ pieces, onUpdatePiece, onRemovePiece }: PieceListPro
       </div>
       
       <div className="space-y-2 max-h-80 overflow-y-auto">
-        {conjuntos.length > 1 ? (
-          <Accordion type="multiple" className="w-full" defaultValue={conjuntos}>
-            {conjuntos.map((conjunto) => {
-              const conjuntoPieces = groupedPieces[conjunto];
-              const conjuntoQuantity = conjuntoPieces.reduce((sum, piece) => sum + piece.quantity, 0);
-              const temTags = conjuntoPieces.some(piece => (piece as any).tag);
+        {tags.length > 1 ? (
+          <Accordion type="multiple" className="w-full" defaultValue={tags}>
+            {tags.map((tag) => {
+              const tagPieces = groupedPieces[tag];
+              const tagQuantity = tagPieces.reduce((sum, piece) => sum + piece.quantity, 0);
+              const temPosicoes = tagPieces.some(piece => (piece as any).posicao);
               
               return (
-                <AccordionItem key={conjunto} value={conjunto}>
+                <AccordionItem key={tag} value={tag}>
                   <AccordionTrigger className="text-sm hover:no-underline">
                     <div className="flex items-center gap-3 w-full">
                       <div className="flex items-center gap-2">
                         <Package className="w-4 h-4 text-blue-600" />
-                        <span className="font-medium">{conjunto}</span>
+                        <span className="font-medium">{tag}</span>
                       </div>
                       <div className="flex items-center gap-2 ml-auto mr-4">
                         <Badge variant="secondary" className="text-xs">
-                          {conjuntoPieces.length} tipos
+                          {tagPieces.length} tipos
                         </Badge>
                         <Badge variant="outline" className="text-xs">
-                          {conjuntoQuantity} unidades
+                          {tagQuantity} unidades
                         </Badge>
-                        {temTags && (
+                        {temPosicoes && (
                           <Badge variant="default" className="text-xs bg-green-100 text-green-800">
                             <Tag className="w-3 h-3 mr-1" />
-                            TAGs
+                            Posições
                           </Badge>
                         )}
                       </div>
@@ -148,7 +148,7 @@ export const PieceList = ({ pieces, onUpdatePiece, onRemovePiece }: PieceListPro
                   </AccordionTrigger>
                   <AccordionContent>
                     <div className="space-y-3 pt-2">
-                      {conjuntoPieces.map(renderPieceItem)}
+                      {tagPieces.map(renderPieceItem)}
                     </div>
                   </AccordionContent>
                 </AccordionItem>

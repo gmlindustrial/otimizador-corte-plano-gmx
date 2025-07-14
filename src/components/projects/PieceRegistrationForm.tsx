@@ -15,8 +15,8 @@ interface PieceRegistrationFormProps {
 
 export const PieceRegistrationForm = ({ projectId, onPieceAdded }: PieceRegistrationFormProps) => {
   const [formData, setFormData] = useState({
-    tag_peca: '',
-    conjunto: '',
+    posicao: '',
+    tag: '',
     descricao_perfil: '',
     comprimento_mm: '',
     quantidade: '1'
@@ -26,7 +26,7 @@ export const PieceRegistrationForm = ({ projectId, onPieceAdded }: PieceRegistra
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.tag_peca || !formData.descricao_perfil || !formData.comprimento_mm) {
+    if (!formData.posicao || !formData.descricao_perfil || !formData.comprimento_mm) {
       toast.error('Preencha todos os campos obrigatórios');
       return;
     }
@@ -38,8 +38,8 @@ export const PieceRegistrationForm = ({ projectId, onPieceAdded }: PieceRegistra
       
       const newPiece = {
         projeto_id: projectId,
-        tag_peca: formData.tag_peca,
-        conjunto: formData.conjunto || undefined,
+        posicao: formData.posicao,
+        tag: formData.tag || undefined,
         perfil_id: perfil?.id,
         descricao_perfil_raw: formData.descricao_perfil,
         comprimento_mm: parseInt(formData.comprimento_mm),
@@ -53,8 +53,8 @@ export const PieceRegistrationForm = ({ projectId, onPieceAdded }: PieceRegistra
       if (response.success && response.data) {
         onPieceAdded(response.data);
         setFormData({
-          tag_peca: '',
-          conjunto: '',
+          posicao: '',
+          tag: '',
           descricao_perfil: '',
           comprimento_mm: '',
           quantidade: '1'
@@ -77,21 +77,21 @@ export const PieceRegistrationForm = ({ projectId, onPieceAdded }: PieceRegistra
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <Label htmlFor="tag_peca">Tag da Peça *</Label>
+        <Label htmlFor="posicao">Posição *</Label>
         <Input
-          id="tag_peca"
-          value={formData.tag_peca}
-          onChange={(e) => setFormData(prev => ({ ...prev, tag_peca: e.target.value }))}
+          id="posicao"
+          value={formData.posicao}
+          onChange={(e) => setFormData(prev => ({ ...prev, posicao: e.target.value }))}
           placeholder="Ex: P01, V1, C123"
         />
       </div>
 
       <div>
-        <Label htmlFor="conjunto">Conjunto</Label>
+        <Label htmlFor="tag">Tag</Label>
         <Input
-          id="conjunto"
-          value={formData.conjunto}
-          onChange={(e) => setFormData(prev => ({ ...prev, conjunto: e.target.value }))}
+          id="tag"
+          value={formData.tag}
+          onChange={(e) => setFormData(prev => ({ ...prev, tag: e.target.value }))}
           placeholder="Ex: V01, C02"
         />
       </div>

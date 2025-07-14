@@ -103,8 +103,8 @@ export const ProjectManagementTab = ({ onNavigateToProfileManagement }: ProjectM
       const piecesForAlgo = selectedPieces.map(p => ({
         length: p.comprimento_mm,
         quantity: p.quantidade,
-        tag: p.tag_peca,
-        conjunto: p.conjunto || undefined,
+        tag: p.tag || undefined,
+        posicao: p.posicao,
         perfil: p.perfil?.descricao_perfil || p.descricao_perfil_raw || undefined,
         peso: p.peso_por_metro || undefined
       }));

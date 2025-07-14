@@ -121,11 +121,11 @@ export const ProjectDetailsView = ({
       await projetoPecaService.validateAndProcessPieces(imported, project.id);
 
     const duplicates = validPieces.filter((vp) =>
-      pieces.some((p) => p.tag_peca === vp.tag_peca)
-    ).map((vp) => ({ existing: pieces.find(p => p.tag_peca === vp.tag_peca)!, imported: vp }));
+      pieces.some((p) => p.posicao === vp.posicao)
+    ).map((vp) => ({ existing: pieces.find(p => p.posicao === vp.posicao)!, imported: vp }));
 
     const uniqueValid = validPieces.filter(
-      (vp) => !pieces.some((p) => p.tag_peca === vp.tag_peca)
+      (vp) => !pieces.some((p) => p.posicao === vp.posicao)
     );
 
     if (uniqueValid.length > 0) {
@@ -535,17 +535,17 @@ export const ProjectDetailsView = ({
                                         <div className="flex items-center gap-2">
                                           <span className="text-sm font-semibold text-gray-600">Tag:</span>
                                           <span className="text-sm text-gray-800 font-mono bg-gray-100 px-2 py-1 rounded">
-                                            {piece.tag_peca}
+                                            {piece.posicao}
                                           </span>
                                         </div>
-                                        {piece.conjunto && (
-                                          <div className="flex items-center gap-2">
-                                            <span className="text-sm font-semibold text-gray-600">Conjunto:</span>
-                                            <span className="text-sm bg-indigo-100 text-indigo-800 px-2 py-1 rounded font-medium">
-                                              {piece.conjunto}
-                                            </span>
-                                          </div>
-                                        )}
+                                         {piece.tag && (
+                                           <div className="flex items-center gap-2">
+                                             <span className="text-sm font-semibold text-gray-600">TAG:</span>
+                                             <span className="text-sm bg-indigo-100 text-indigo-800 px-2 py-1 rounded font-medium">
+                                               {piece.tag}
+                                             </span>
+                                           </div>
+                                         )}
                                         <div className="flex items-center gap-4">
                                           <div className="flex items-center gap-2">
                                             <span className="text-sm font-semibold text-gray-600">Comprimento:</span>

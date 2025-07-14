@@ -5,12 +5,11 @@ export interface AutoCADCutPiece {
   quantity: number;
   // Campos específicos do AutoCAD
   obra?: string;
-  conjunto?: string;
+  tag?: string;
   posicao?: string;
   perfil?: string;
   material?: string;
   peso?: number;
-  tag?: string;
   dimensoes?: {
     comprimento: number;
     largura: number;

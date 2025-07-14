@@ -39,7 +39,7 @@ export const ProjectValidationAlert = ({ validations, onResolve, onNavigateToPro
                 >
                   <CardTitle className="text-sm flex items-center justify-between">
                     <div>
-                      <span className="font-medium">{validation.peca.tag_peca}</span>
+                      <span className="font-medium">{validation.peca.posicao}</span>
                       <span className="ml-2 text-gray-600">
                         {validation.peca.descricao_perfil_raw}
                       </span>
@@ -56,8 +56,8 @@ export const ProjectValidationAlert = ({ validations, onResolve, onNavigateToPro
                       <div className="text-sm">
                         <p><strong>Comprimento:</strong> {validation.peca.comprimento_mm}mm</p>
                         <p><strong>Quantidade:</strong> {validation.peca.quantidade}</p>
-                        {validation.peca.conjunto && (
-                          <p><strong>Conjunto:</strong> {validation.peca.conjunto}</p>
+                        {validation.peca.tag && (
+                          <p><strong>TAG:</strong> {validation.peca.tag}</p>
                         )}
                       </div>
 

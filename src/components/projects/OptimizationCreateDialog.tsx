@@ -121,8 +121,8 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selecte
                   <div className="text-sm space-y-1">
                     {piecesWithoutProfile.map((piece, index) => (
                       <div key={index} className="bg-destructive/10 p-2 rounded">
-                        • TAG: {piece.tag_peca} ({piece.comprimento_mm}mm)
-                        {piece.conjunto && ` - Conjunto: ${piece.conjunto}`}
+                        • POSIÇÃO: {piece.posicao} ({piece.comprimento_mm}mm)
+                        {piece.tag && ` - TAG: ${piece.tag}`}
                       </div>
                     ))}
                   </div>

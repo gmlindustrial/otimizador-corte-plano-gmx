@@ -105,7 +105,7 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
         'Numero da Barra',
         'Tipo (Nova ou Sobra)',
         'TAG',
-        'Conjunto',
+        'TAG',
         'Comprimento',
         'Perfil/Material',
         'Obra',
@@ -127,7 +127,7 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
             `Barra ${barIndex + 1}`, // Numero da Barra
             isLeftover ? 'SOBRA' : 'NOVA', // Tipo (Nova ou Sobra)
             piece.tag || `P${pieceIndex + 1}`, // TAG
-            piece.conjunto || 'Entrada Manual', // Conjunto
+            piece.tag || 'Entrada Manual', // TAG
             piece.length.toString(), // Comprimento
             piece.perfil || piece.material || project?.tipoMaterial || 'Material', // Perfil/Material
             piece.obra || project?.obra || 'N/A', // Obra
@@ -144,7 +144,7 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
             `Barra ${barIndex + 1}`, // Numero da Barra
             barType.toUpperCase(), // Tipo (Nova ou Sobra)
             'DESCARTE', // TAG
-            '-', // Conjunto
+            '-', // TAG
             bar.waste.toString(), // Comprimento
             'Desperdício', // Perfil/Material
             project?.obra || 'N/A', // Obra
@@ -158,32 +158,32 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
 
       // Adicionar seção de resumo por conjunto
       rows.push([]);
-      rows.push(['=== RESUMO POR CONJUNTO ===']);
+      rows.push(['=== RESUMO POR TAG ===']);
       
-      // Agrupar por conjunto para resumo
-      const conjuntoSummary = new Map<string, { count: number; totalLength: number; barras: Set<number> }>();
+      // Agrupar por TAG para resumo
+      const tagSummary = new Map<string, { count: number; totalLength: number; barras: Set<number> }>();
       
       results.bars.forEach((bar, barIndex) => {
         bar.pieces.forEach((piece: any) => {
-          const conjunto = piece.conjunto || 'Entrada Manual';
-          if (!conjuntoSummary.has(conjunto)) {
-            conjuntoSummary.set(conjunto, { count: 0, totalLength: 0, barras: new Set() });
+          const tag = piece.tag || 'Entrada Manual';
+          if (!tagSummary.has(tag)) {
+            tagSummary.set(tag, { count: 0, totalLength: 0, barras: new Set() });
           }
-          const summary = conjuntoSummary.get(conjunto)!;
+          const summary = tagSummary.get(tag)!;
           summary.count++;
           summary.totalLength += piece.length;
           summary.barras.add(barIndex + 1);
         });
       });
 
-      rows.push(['Conjunto', 'Qtd Peças', 'Comprimento Total (mm)', 'Barras Utilizadas', 'Numero da Barra']);
-      conjuntoSummary.forEach((summary, conjunto) => {
+      rows.push(['TAG', 'Qtd Peças', 'Comprimento Total (mm)', 'Barras Utilizadas', 'Numero da Barra']);
+      tagSummary.forEach((summary, tag) => {
         rows.push([
-          conjunto,
+          tag,
           summary.count.toString(),
           summary.totalLength.toString(),
           summary.barras.size.toString(),
-          Array.from(summary.barras).sort((a, b) => a - b).join(', ')
+          Array.from(summary.barras).sort((a: number, b: number) => a - b).join(', ')
         ]);
       });
 
@@ -218,7 +218,7 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
       rows.push(['☐ Dimensões das barras conferidas']);
       rows.push(['☐ Material correto selecionado']);
       rows.push(['☐ TAGs das peças verificadas']);
-      rows.push(['☐ Conjuntos organizados corretamente']);
+      rows.push(['☐ TAGs organizados corretamente']);
       rows.push(['☐ Primeira peça cortada e validada']);
       rows.push(['☐ Relatório aprovado pelo operador']);
       rows.push(['☐ Assinatura do inspetor QA']);
@@ -368,7 +368,7 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
         <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span className="text-lg">Plano de Corte Detalhado por Conjunto</span>
+              <span className="text-lg">Plano de Corte Detalhado por TAG</span>
               <div className="flex items-center gap-2">
                 {hasSustainabilityData && hasSustainabilityData.leftoverBarsUsed > 0 && (
                   <Badge variant="outline" className="text-green-700 border-green-300">

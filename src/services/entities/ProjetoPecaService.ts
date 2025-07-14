@@ -12,7 +12,7 @@ export class ProjetoPecaService {
           perfil:perfis_materiais(*)
         `)
         .eq('projeto_id', projectId)
-        .order('tag_peca', { ascending: true });
+        .order('posicao', { ascending: true });
 
       if (error) {
         console.error('Erro ao buscar peças do projeto:', error);
@@ -92,8 +92,8 @@ export class ProjetoPecaService {
       
       const peca: Omit<ProjetoPeca, 'id' | 'created_at'> = {
         projeto_id: projectId,
-        tag_peca: piece.tag || piece.tag_peca || `${piece.conjunto || 'PEÇA'}-${piece.posicao || pieces.indexOf(piece) + 1}`,
-        conjunto: piece.conjunto || piece.set || 'SEM_CONJUNTO',
+        posicao: piece.posicao || piece.tag || `PEÇA-${pieces.indexOf(piece) + 1}`,
+        tag: piece.tag || piece.conjunto || piece.set,
         perfil_id: perfil?.id,
         descricao_perfil_raw: perfilDescription,
         comprimento_mm: piece.length || piece.comprimento || piece.comprimento_mm,
@@ -104,10 +104,10 @@ export class ProjetoPecaService {
       };
 
       if (perfil) {
-        console.log(`✅ Perfil encontrado para ${peca.tag_peca}: ${perfil.descricao_perfil} (${perfil.kg_por_metro} kg/m)`);
+        console.log(`✅ Perfil encontrado para ${peca.posicao}: ${perfil.descricao_perfil} (${perfil.kg_por_metro} kg/m)`);
         validPieces.push(peca as ProjetoPeca);
       } else {
-        console.log(`❌ Perfil não encontrado para ${peca.tag_peca}: ${perfilDescription}`);
+        console.log(`❌ Perfil não encontrado para ${peca.posicao}: ${perfilDescription}`);
         
         // Buscar sugestões de perfis similares
         const suggestions = await perfilService.searchByDescription(perfilDescription);
@@ -126,7 +126,7 @@ export class ProjetoPecaService {
       withProfile: validPieces.length,
       withoutProfile: invalidPieces.length,
       pages: [...new Set(pieces.map(p => p.page).filter(Boolean))],
-      conjuntos: [...new Set(pieces.map(p => p.conjunto).filter(Boolean))]
+      conjuntos: [...new Set(pieces.map(p => p.tag).filter(Boolean))]
     };
 
     console.log('📊 Estatísticas do processamento:', stats);

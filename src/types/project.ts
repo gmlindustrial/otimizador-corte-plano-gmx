@@ -9,8 +9,8 @@ export interface PerfilMaterial {
 export interface ProjetoPeca {
   id: string;
   projeto_id: string;
-  tag_peca: string;
-  conjunto?: string;
+  posicao: string;
+  tag?: string;
   perfil_id?: string;
   descricao_perfil_raw?: string;
   comprimento_mm: number;

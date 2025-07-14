@@ -65,7 +65,7 @@ export class FileParsingService {
     console.log(`✅ Total de peças extraídas: ${pieces.length}`);
     const obra = (pieces[0] as any)?.obra || 'Não identificada';
     console.log(`🏗️ Obra: ${obra}`);
-    console.log('📦 Conjuntos encontrados:', [...new Set(pieces.map(p => (p as any).conjunto))]);
+    console.log('📦 Tags encontrados:', [...new Set(pieces.map(p => (p as any).tag))]);
     
     return pieces;
   }
@@ -154,18 +154,18 @@ export class FileParsingService {
         // Extrair comprimento da descrição (após o segundo X)
         const comprimento = this.extractLengthFromDescription(descricao);
         
-        const tag = `${marca}-${item}`;
+        const tagCompleta = `${marca}-${item}`;
         const piece: any = {
           id: `autocad-simp-${marca}-${item}-${Date.now()}`,
           length: comprimento,
           quantity: parseInt(quantidade),
           obra,
-          conjunto: marca, // MARCA vira conjunto
-          posicao: item,   // ITEM vira tag da peça
+          tag: marca,    // MARCA vira tag
+          posicao: item, // ITEM vira posição da peça
           perfil,
           material: material || 'MATERIAL',
           peso: peso ? parseFloat(peso.replace(',', '.')) : 0,
-          tag,
+          tagCompleta,
           dimensoes: {
             comprimento,
             largura: 0
@@ -173,8 +173,8 @@ export class FileParsingService {
         };
         
         pieces.push(piece);
-        console.log(`✅ Peça simplificada: ${tag} - ${piece.length}mm - Qtd: ${piece.quantity}`);
-        console.log(`   MARCA: "${marca}" -> conjunto: "${piece.conjunto}"`);
+        console.log(`✅ Peça simplificada: ${tagCompleta} - ${piece.length}mm - Qtd: ${piece.quantity}`);
+        console.log(`   MARCA: "${marca}" -> tag: "${piece.tag}"`);
         console.log(`   ITEM: "${item}" -> posição: "${piece.posicao}"`);
         console.log(`   DESCRIÇÃO: "${descricao}" -> perfil: "${piece.perfil}" (${comprimento}mm)`);
         console.log(`   ---`);
