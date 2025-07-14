@@ -6,7 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, CheckCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertTriangle, CheckCircle, Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ProjetoPeca } from '@/types/project';
 
@@ -15,9 +16,10 @@ interface OptimizationCreateDialogProps {
   onOpenChange: (open: boolean) => void;
   onCreate: (name: string, barLength: number) => void;
   selectedPieces?: ProjetoPeca[];
+  onNavigateToProfileManagement?: () => void;
 }
 
-export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selectedPieces = [] }: OptimizationCreateDialogProps) => {
+export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selectedPieces = [], onNavigateToProfileManagement }: OptimizationCreateDialogProps) => {
   const [name, setName] = useState('');
   const [barLength, setBarLength] = useState('6000');
   const [loading, setLoading] = useState(false);
@@ -39,6 +41,10 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selecte
     
     fetchBarSizes();
   }, []);
+
+  // Validar peças sem perfil
+  const piecesWithoutProfile = selectedPieces.filter(piece => !piece.perfil_id);
+  const hasInvalidPieces = piecesWithoutProfile.length > 0;
 
   // Calcular tamanho sugerido baseado nas peças selecionadas
   useEffect(() => {
@@ -63,6 +69,12 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selecte
 
   const handleSubmit = () => {
     if (!name) return;
+    
+    // Validar se todas as peças têm perfil
+    if (hasInvalidPieces) {
+      alert('Não é possível criar otimização com peças sem perfil definido.');
+      return;
+    }
     
     const selectedBarLength = parseInt(barLength, 10);
     const maxPieceLength = selectedPieces.length > 0 ? Math.max(...selectedPieces.map(p => p.comprimento_mm)) : 0;
@@ -99,8 +111,45 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selecte
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
           </div>
 
+          {/* Validação de Perfis */}
+          {hasInvalidPieces && (
+            <Alert variant="destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                <div className="space-y-2">
+                  <p className="font-medium">Peças sem perfil definido encontradas:</p>
+                  <div className="text-sm space-y-1">
+                    {piecesWithoutProfile.map((piece, index) => (
+                      <div key={index} className="bg-destructive/10 p-2 rounded">
+                        • TAG: {piece.tag_peca} ({piece.comprimento_mm}mm)
+                        {piece.conjunto && ` - Conjunto: ${piece.conjunto}`}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-sm mt-2">
+                    É necessário definir o perfil para todas as peças antes de criar uma otimização.
+                  </p>
+                  {onNavigateToProfileManagement && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => {
+                        onNavigateToProfileManagement();
+                        onOpenChange(false);
+                      }}
+                      className="mt-2"
+                    >
+                      <Users className="h-4 w-4 mr-2" />
+                      Gerenciar Perfis
+                    </Button>
+                  )}
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Análise das Peças Selecionadas */}
-          {selectedPieces.length > 0 && (
+          {selectedPieces.length > 0 && !hasInvalidPieces && (
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm">Análise das Peças</CardTitle>
@@ -157,7 +206,7 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selecte
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1" disabled={loading}>
             Cancelar
           </Button>
-          <Button onClick={handleSubmit} className="flex-1" disabled={loading || !name || !isValidSelection}>
+          <Button onClick={handleSubmit} className="flex-1" disabled={loading || !name || !isValidSelection || hasInvalidPieces}>
             {loading ? 'Criando...' : 'Criar'}
           </Button>
         </div>

@@ -92,6 +92,13 @@ export const ProjectManagementTab = ({ onNavigateToProfileManagement }: ProjectM
   ) => {
     if (!selectedProject || selectedPieces.length === 0) return;
 
+    // Validação adicional: verificar se todas as peças têm perfil
+    const piecesWithoutProfile = selectedPieces.filter(piece => !piece.perfil_id);
+    if (piecesWithoutProfile.length > 0) {
+      toast.error(`Erro: ${piecesWithoutProfile.length} peça(s) sem perfil definido. Defina os perfis antes de criar a otimização.`);
+      return;
+    }
+
     try {
       const piecesForAlgo = selectedPieces.map(p => ({
         length: p.comprimento_mm,

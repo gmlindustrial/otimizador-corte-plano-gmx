@@ -680,6 +680,7 @@ export const ProjectDetailsView = ({
             })
           }
           selectedPieces={pieces.filter(p => selectedPieces.has(p.id))}
+          onNavigateToProfileManagement={onNavigateToProfileManagement}
         />
         <OptimizationResultsDialog
           open={!!viewResults}
