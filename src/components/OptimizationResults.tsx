@@ -100,21 +100,18 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
 
   const handleExportExcel = () => {
     try {
-      // Estrutura melhorada com informações de sobras
+      // Estrutura melhorada conforme especificação do operador
       const headers = [
-        'Barra',
-        'Tipo',
-        'Posição na Barra', 
+        'Numero da Barra',
+        'Tipo (Nova ou Sobra)',
         'TAG',
         'Conjunto',
-        'Comprimento (mm)',
+        'Comprimento',
         'Perfil/Material',
-        'Localização',
-        'Economia',
         'Obra',
         'Status',
-        'Eficiência Barra (%)',
-        'Sobra Barra (mm)',
+        'Eficiência',
+        'Sobra Barra',
         'Observações'
       ];
       
@@ -127,40 +124,34 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
         
         bar.pieces.forEach((piece: any, pieceIndex) => {
           rows.push([
-            `Barra ${barIndex + 1}`, // Barra
-            isLeftover ? 'SOBRA' : 'NOVA', // Tipo
-            `${pieceIndex + 1}`, // Posição na Barra
+            `Barra ${barIndex + 1}`, // Numero da Barra
+            isLeftover ? 'SOBRA' : 'NOVA', // Tipo (Nova ou Sobra)
             piece.tag || `P${pieceIndex + 1}`, // TAG
             piece.conjunto || 'Entrada Manual', // Conjunto
             piece.length.toString(), // Comprimento
             piece.perfil || piece.material || project?.tipoMaterial || 'Material', // Perfil/Material
-            isLeftover ? (bar.location || 'Estoque') : 'Compra Nova', // Localização
-            isLeftover ? `R$ ${((piece.length / 1000) * 8).toFixed(2)}` : 'R$ 0,00', // Economia
             piece.obra || project?.obra || 'N/A', // Obra
-            isLeftover ? 'Reaproveitado' : 'Novo Material', // Status
-            ((bar.totalUsed / (bar.originalLength || barLength)) * 100).toFixed(1), // Eficiência da Barra
-            pieceIndex === bar.pieces.length - 1 ? bar.waste.toString() : '0', // Sobra apenas na última peça
-            isLeftover ? `Sobra reutilizada - ${bar.location || 'Estoque'}` : 'Material novo' // Observações
+            '', // Status (em branco)
+            ((bar.totalUsed / (bar.originalLength || barLength)) * 100).toFixed(1), // Eficiência
+            pieceIndex === bar.pieces.length - 1 ? bar.waste.toString() : '0', // Sobra Barra
+            '' // Observações (em branco)
           ]);
         });
         
         // Adicionar linha de sobra se existir
         if (bar.waste > 0) {
           rows.push([
-            `Barra ${barIndex + 1}`,
-            barType.toUpperCase(),
-            'Sobra',
-            'DESCARTE',
-            '-',
-            bar.waste.toString(),
-            'Desperdício',
-            isLeftover ? (bar.location || 'Estoque') : 'Descarte',
-            'R$ 0,00',
-            project?.obra || 'N/A',
-            'Descarte',
-            '0',
-            bar.waste.toString(),
-            isLeftover ? 'Sobra da sobra reutilizada' : 'Material a ser descartado'
+            `Barra ${barIndex + 1}`, // Numero da Barra
+            barType.toUpperCase(), // Tipo (Nova ou Sobra)
+            'DESCARTE', // TAG
+            '-', // Conjunto
+            bar.waste.toString(), // Comprimento
+            'Desperdício', // Perfil/Material
+            project?.obra || 'N/A', // Obra
+            '', // Status (em branco)
+            '0', // Eficiência
+            bar.waste.toString(), // Sobra Barra
+            '' // Observações (em branco)
           ]);
         }
       });
@@ -185,7 +176,7 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
         });
       });
 
-      rows.push(['Conjunto', 'Qtd Peças', 'Comprimento Total (mm)', 'Barras Utilizadas', 'Distribuição']);
+      rows.push(['Conjunto', 'Qtd Peças', 'Comprimento Total (mm)', 'Barras Utilizadas', 'Numero da Barra']);
       conjuntoSummary.forEach((summary, conjunto) => {
         rows.push([
           conjunto,
