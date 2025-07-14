@@ -66,7 +66,15 @@ export type Database = {
           id_projeto_otimizacao?: string | null
           quantidade?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "estoque_sobras_perfil_fkey"
+            columns: ["id_perfis_materiais"]
+            isOneToOne: false
+            referencedRelation: "perfis_materiais"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       historico_otimizacoes: {
         Row: {

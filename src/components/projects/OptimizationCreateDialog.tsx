@@ -4,25 +4,29 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { usePerfilService } from '@/hooks/services/usePerfilService';
 
 interface OptimizationCreateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreate: (name: string, barLength: number) => void;
+  onCreate: (name: string, barLength: number, perfilId?: string) => void;
 }
 
 export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate }: OptimizationCreateDialogProps) => {
   const [name, setName] = useState('');
   const [barLength, setBarLength] = useState('6000');
+  const [perfilId, setPerfilId] = useState('');
   const [loading, setLoading] = useState(false);
+  const { perfis } = usePerfilService();
 
   const handleSubmit = () => {
     if (!name) return;
     setLoading(true);
     try {
-      onCreate(name, parseInt(barLength, 10));
+      onCreate(name, parseInt(barLength, 10), perfilId || undefined);
       onOpenChange(false);
       setName('');
+      setPerfilId('');
     } finally {
       setLoading(false);
     }
@@ -39,6 +43,22 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate }: Optim
           <div>
             <Label htmlFor="name">Nome da Lista</Label>
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+          </div>
+          <div>
+            <Label htmlFor="perfil">Perfil do Material (Opcional)</Label>
+            <Select value={perfilId} onValueChange={setPerfilId}>
+              <SelectTrigger id="perfil">
+                <SelectValue placeholder="Selecione o perfil" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Nenhum perfil específico</SelectItem>
+                {perfis.map((perfil) => (
+                  <SelectItem key={perfil.id} value={perfil.id}>
+                    {perfil.descricao_perfil} ({perfil.tipo_perfil})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label htmlFor="bar">Tamanho da Barra</Label>

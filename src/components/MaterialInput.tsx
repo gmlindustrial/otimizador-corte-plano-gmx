@@ -8,6 +8,7 @@ import { ManualEntryForm } from './material-input/ManualEntryForm';
 import { PieceList } from './material-input/PieceList';
 import { OptimizeSection } from './material-input/OptimizeSection';
 import { BarSizeSelector } from './material-input/BarSizeSelector';
+import { ProfileSelector } from './material-input/ProfileSelector';
 import type { CutPiece, Project } from '@/pages/Index';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -17,6 +18,8 @@ interface MaterialInputProps {
   onOptimize: (barSize?: number) => void;
   disabled?: boolean;
   project?: Project | null;
+  selectedPerfilId?: string;
+  setSelectedPerfilId?: (perfilId: string) => void;
 }
 
 interface DuplicateItem {
@@ -28,7 +31,7 @@ interface DuplicateItem {
   project?: string;
 }
 
-export const MaterialInput = ({ pieces, setPieces, onOptimize, disabled, project }: MaterialInputProps) => {
+export const MaterialInput = ({ pieces, setPieces, onOptimize, disabled, project, selectedPerfilId, setSelectedPerfilId }: MaterialInputProps) => {
   const [length, setLength] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [showDuplicateManager, setShowDuplicateManager] = useState(false);
@@ -143,6 +146,11 @@ export const MaterialInput = ({ pieces, setPieces, onOptimize, disabled, project
         <FileUpload 
           onDataImported={handleImportedData}
           currentPieces={pieces}
+        />
+        
+        <ProfileSelector
+          selectedPerfilId={selectedPerfilId}
+          onPerfilChange={setSelectedPerfilId}
         />
         
         <BarSizeSelector

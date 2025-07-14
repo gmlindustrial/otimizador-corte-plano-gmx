@@ -59,14 +59,22 @@ export const useLinearOptimization = () => {
   const [barLength, setBarLength] = useState(6000);
   const [pieces, setPieces] = useState<CutPiece[]>([]);
   const [results, setResults] = useState<ExtendedOptimizationResult | null>(null);
+  const [selectedPerfilId, setSelectedPerfilId] = useState<string>('');
   
-  const { sobras, usarSobra } = useEstoqueSobras();
+  const { sobras, usarSobra, fetchSobrasByPerfil } = useEstoqueSobras();
 
-  const handleOptimize = () => {
+  const handleOptimize = async (perfilId?: string): Promise<ExtendedOptimizationResult | null> => {
     if (pieces.length === 0) return null;
 
     console.log('=== INICIANDO OTIMIZAÇÃO ===');
     console.log('Projeto:', project);
+    console.log('Perfil selecionado:', perfilId);
+
+    // Buscar sobras específicas do perfil se fornecido
+    if (perfilId) {
+      await fetchSobrasByPerfil(perfilId);
+    }
+
     console.log('Sobras disponíveis:', sobras.length);
 
     // Preparar peças para otimização
@@ -92,8 +100,13 @@ export const useLinearOptimization = () => {
     // Ordenar por tamanho decrescente
     sortedPieces.sort((a, b) => b.length - a.length);
 
+    // Filtrar sobras por perfil se especificado
+    const sobrasCompatibles = perfilId 
+      ? sobras.filter(s => s.id_perfis_materiais === perfilId)
+      : sobras;
+
     // Filtrar e ordenar sobras disponíveis
-    const expandedLeftovers = sobras.flatMap(s =>
+    const expandedLeftovers = sobrasCompatibles.flatMap(s =>
       Array.from({ length: s.quantidade }).map((_, i) => ({
         ...s,
         uniqueId: `${s.id}-${i}`
@@ -305,6 +318,8 @@ export const useLinearOptimization = () => {
     setPieces,
     results,
     setResults,
+    selectedPerfilId,
+    setSelectedPerfilId,
     handleOptimize
   };
 };

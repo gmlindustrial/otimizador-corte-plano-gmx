@@ -26,7 +26,7 @@ export const useEstoqueSobras = () => {
         .from('estoque_sobras')
         .select(`
           *,
-          perfis_materiais:id_perfis_materiais (
+          perfis_materiais (
             descricao_perfil,
             tipo_perfil,
             kg_por_metro
@@ -42,7 +42,7 @@ export const useEstoqueSobras = () => {
       if (error) throw error;
       
       // Mapear dados para incluir informações do perfil
-      const mappedData = (data || []).map(item => ({
+      const mappedData = (data || []).map((item: any) => ({
         ...item,
         descricao_perfil: item.perfis_materiais?.descricao_perfil,
         tipo_perfil: item.perfis_materiais?.tipo_perfil,
@@ -76,7 +76,7 @@ export const useEstoqueSobras = () => {
         }])
         .select(`
           *,
-          perfis_materiais:id_perfis_materiais (
+          perfis_materiais (
             descricao_perfil,
             tipo_perfil,
             kg_por_metro
@@ -87,9 +87,9 @@ export const useEstoqueSobras = () => {
       
       const mappedData = {
         ...data,
-        descricao_perfil: data.perfis_materiais?.descricao_perfil,
-        tipo_perfil: data.perfis_materiais?.tipo_perfil,
-        kg_por_metro: data.perfis_materiais?.kg_por_metro
+        descricao_perfil: (data as any).perfis_materiais?.descricao_perfil,
+        tipo_perfil: (data as any).perfis_materiais?.tipo_perfil,
+        kg_por_metro: (data as any).perfis_materiais?.kg_por_metro
       };
       
       setSobras(prev => [mappedData, ...prev]);

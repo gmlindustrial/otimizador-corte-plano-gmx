@@ -28,7 +28,8 @@ export const useOptimizationHistoryPersistent = () => {
     project: Project,
     pieces: CutPiece[],
     results: OptimizationResult,
-    barLength: number
+    barLength: number,
+    perfilId?: string
   ) => {
     try {
       // Salvar entrada no histórico (que agora também gerencia o projeto)
@@ -43,7 +44,7 @@ export const useOptimizationHistoryPersistent = () => {
 
       // Auto-enviar sobras para estoque se habilitado
       if (project.enviarSobrasEstoque && results.totalWaste > 0) {
-        await WasteStockService.addWasteToStock(newEntry.id, results as any);
+        await WasteStockService.addWasteToStock(newEntry.id, results as any, perfilId);
       }
 
       console.log('Otimização salva no histórico:', newEntry);

@@ -105,6 +105,8 @@ const Index = () => {
     setPieces,
     results,
     setResults,
+    selectedPerfilId,
+    setSelectedPerfilId,
     handleOptimize,
   } = useLinearOptimization();
 
@@ -149,14 +151,14 @@ const Index = () => {
       setBarLength(customBarSize);
     }
 
-    const result = handleOptimize();
+    const result = await handleOptimize(selectedPerfilId);
 
     // Save project and add to history if project exists
     if (project && pieces.length > 0 && result) {
       try {
         // Use the custom bar size or the current bar length
         const usedBarLength = customBarSize || barLength;
-        await addToHistory(project, pieces, result, usedBarLength);
+        await addToHistory(project, pieces, result, usedBarLength, selectedPerfilId);
 
         console.log("Projeto salvo com sucesso no Supabase");
       } catch (error) {

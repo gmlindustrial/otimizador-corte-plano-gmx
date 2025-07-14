@@ -124,7 +124,18 @@ export const ProjectManagementTab = ({ onNavigateToProfileManagement }: ProjectM
         for (const [id, qty] of Object.entries(resultWithLeftovers.leftoverUsage)) {
           await estoqueSobrasService.useQuantity(id, qty as number);
         }
-        await WasteStockService.addWasteToStock(created.data.id, resultWithLeftovers);
+        
+        // Detectar perfil mais comum nas peças selecionadas
+        const perfilIds = selectedPieces
+          .map(p => p.perfil_id)
+          .filter(Boolean);
+        const mostCommonPerfilId = perfilIds.length > 0 
+          ? perfilIds.reduce((a, b, i, arr) => 
+              arr.filter(v => v === a).length >= arr.filter(v => v === b).length ? a : b
+            )
+          : undefined;
+          
+        await WasteStockService.addWasteToStock(created.data.id, resultWithLeftovers, mostCommonPerfilId);
       }
 
       // remove optimized pieces from project
