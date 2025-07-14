@@ -579,7 +579,7 @@ export const FullscreenReportViewer = ({
                                 </td>
                                 <td className="border border-gray-300 px-4 py-3">
                                   <div className="text-xs text-gray-500">
-                                    Pos: {piece.posicao || pieceIndex + 1}
+                                    Pos: {piece.posicao || 'Manual'}
                                   </div>
                                 </td>
                               </tr>

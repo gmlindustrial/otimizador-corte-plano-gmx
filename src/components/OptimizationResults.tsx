@@ -101,14 +101,14 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
   const handleExportExcel = () => {
     try {
       // Estrutura melhorada conforme especificação do operador
-      const headers = [
-        'Numero da Barra',
-        'Tipo (Nova ou Sobra)',
-        'TAG',
-        'TAG',
-        'Comprimento',
-        'Perfil/Material',
-        'Obra',
+        const headers = [
+          'Numero da Barra',
+          'Tipo (Nova ou Sobra)',
+          'Posição',
+          'TAG',
+          'Comprimento',
+          'Perfil/Material',
+          'Obra',
         'Status',
         'Eficiência',
         'Sobra Barra',
@@ -126,7 +126,7 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
           rows.push([
             `Barra ${barIndex + 1}`, // Numero da Barra
             isLeftover ? 'SOBRA' : 'NOVA', // Tipo (Nova ou Sobra)
-            piece.tag || `P${pieceIndex + 1}`, // TAG
+            piece.posicao || 'Manual', // Posição
             piece.tag || 'Entrada Manual', // TAG
             piece.length.toString(), // Comprimento
             piece.perfil || piece.material || project?.tipoMaterial || 'Material', // Perfil/Material
@@ -139,13 +139,13 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
         });
         
         // Adicionar linha de sobra se existir
-        if (bar.waste > 0) {
-          rows.push([
-            `Barra ${barIndex + 1}`, // Numero da Barra
-            barType.toUpperCase(), // Tipo (Nova ou Sobra)
-            'DESCARTE', // TAG
-            '-', // TAG
-            bar.waste.toString(), // Comprimento
+          if (bar.waste > 0) {
+            rows.push([
+              `Barra ${barIndex + 1}`, // Numero da Barra
+              barType.toUpperCase(), // Tipo (Nova ou Sobra)
+              '-', // Posição
+              'DESCARTE', // TAG
+              bar.waste.toString(), // Comprimento
             'Desperdício', // Perfil/Material
             project?.obra || 'N/A', // Obra
             '', // Status (em branco)

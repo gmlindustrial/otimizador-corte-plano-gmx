@@ -7,6 +7,7 @@ interface PieceInput {
   conjunto?: string;
   perfil?: string;
   peso?: number;
+  posicao?: string;
 }
 
 interface BarPiece {
@@ -17,6 +18,7 @@ interface BarPiece {
   conjunto?: string;
   perfil?: string;
   peso?: number;
+  posicao?: string;
 }
 
 interface BarResult {
@@ -59,7 +61,8 @@ export function runLinearOptimization(pieces: PieceInput[], barLength: number): 
           tag: piece.tag,
           conjunto: piece.conjunto,
           perfil: piece.perfil,
-          peso: piece.peso
+          peso: piece.peso,
+          posicao: piece.posicao
         });
         bar.totalUsed += needed;
         bar.waste = barLength - bar.totalUsed;
@@ -78,7 +81,8 @@ export function runLinearOptimization(pieces: PieceInput[], barLength: number): 
           tag: piece.tag,
           conjunto: piece.conjunto,
           perfil: piece.perfil,
-          peso: piece.peso
+          peso: piece.peso,
+          posicao: piece.posicao
         }],
         totalUsed: piece.length,
         waste: barLength - piece.length,
@@ -163,7 +167,8 @@ export function runLinearOptimizationWithLeftovers(
           tag: piece.tag,
           conjunto: piece.conjunto,
           perfil: piece.perfil,
-          peso: piece.peso
+          peso: piece.peso,
+          posicao: piece.posicao
         });
         bar.totalUsed += need;
         bar.waste = sob.comprimento - bar.totalUsed;
@@ -189,7 +194,8 @@ export function runLinearOptimizationWithLeftovers(
           tag: piece.tag,
           conjunto: piece.conjunto,
           perfil: piece.perfil,
-          peso: piece.peso
+          peso: piece.peso,
+          posicao: piece.posicao
         });
         bar.totalUsed += need;
         bar.waste = barLength - bar.totalUsed;
@@ -209,7 +215,8 @@ export function runLinearOptimizationWithLeftovers(
           tag: piece.tag,
           conjunto: piece.conjunto,
           perfil: piece.perfil,
-          peso: piece.peso
+          peso: piece.peso,
+          posicao: piece.posicao
         }],
         waste: barLength - piece.length,
         totalUsed: piece.length
