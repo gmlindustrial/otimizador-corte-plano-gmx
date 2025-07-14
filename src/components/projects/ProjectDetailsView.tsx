@@ -533,7 +533,7 @@ export const ProjectDetailsView = ({
                                           </div>
                                         )}
                                         <div className="flex items-center gap-2">
-                                          <span className="text-sm font-semibold text-gray-600">Tag:</span>
+                                          <span className="text-sm font-semibold text-gray-600">Posição:</span>
                                           <span className="text-sm text-gray-800 font-mono bg-gray-100 px-2 py-1 rounded">
                                             {piece.posicao}
                                           </span>
