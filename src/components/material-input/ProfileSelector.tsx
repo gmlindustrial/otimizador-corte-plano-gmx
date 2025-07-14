@@ -15,12 +15,12 @@ export const ProfileSelector = ({ selectedPerfilId, onPerfilChange }: ProfileSel
   return (
     <div className="space-y-2">
       <Label>Perfil do Material (Opcional)</Label>
-      <Select value={selectedPerfilId || ''} onValueChange={onPerfilChange}>
+      <Select value={selectedPerfilId || 'all'} onValueChange={(value) => onPerfilChange(value === 'all' ? '' : value)}>
         <SelectTrigger>
           <SelectValue placeholder="Selecione o perfil para filtrar sobras" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">Todos os perfis</SelectItem>
+          <SelectItem value="all">Todos os perfis</SelectItem>
           {perfis.map((perfil) => (
             <SelectItem key={perfil.id} value={perfil.id}>
               {perfil.descricao_perfil} ({perfil.tipo_perfil})

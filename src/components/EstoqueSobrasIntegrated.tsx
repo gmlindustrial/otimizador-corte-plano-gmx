@@ -55,12 +55,12 @@ export const EstoqueSobrasIntegrated = () => {
           {/* Filtro por Perfil */}
           <div className="space-y-2">
             <Label>Filtrar por Perfil</Label>
-            <Select value={filtroPerfilId} onValueChange={setFiltroPerfilId}>
+            <Select value={filtroPerfilId || 'all'} onValueChange={(value) => setFiltroPerfilId(value === 'all' ? '' : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Todos os perfis" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os perfis</SelectItem>
+                <SelectItem value="all">Todos os perfis</SelectItem>
                 {perfis.map((perfil) => (
                   <SelectItem key={perfil.id} value={perfil.id}>
                     {perfil.descricao_perfil} ({perfil.tipo_perfil})

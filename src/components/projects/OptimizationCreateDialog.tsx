@@ -46,12 +46,12 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate }: Optim
           </div>
           <div>
             <Label htmlFor="perfil">Perfil do Material (Opcional)</Label>
-            <Select value={perfilId} onValueChange={setPerfilId}>
+            <Select value={perfilId || 'none'} onValueChange={(value) => setPerfilId(value === 'none' ? '' : value)}>
               <SelectTrigger id="perfil">
                 <SelectValue placeholder="Selecione o perfil" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Nenhum perfil específico</SelectItem>
+                <SelectItem value="none">Nenhum perfil específico</SelectItem>
                 {perfis.map((perfil) => (
                   <SelectItem key={perfil.id} value={perfil.id}>
                     {perfil.descricao_perfil} ({perfil.tipo_perfil})
