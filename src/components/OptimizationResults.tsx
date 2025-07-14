@@ -126,7 +126,7 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
           rows.push([
             `Barra ${barIndex + 1}`, // Numero da Barra
             isLeftover ? 'SOBRA' : 'NOVA', // Tipo (Nova ou Sobra)
-            piece.posicao || `${pieceIndex + 1}`, // Posição
+            piece.posicao || 'Manual', // Posição
             piece.tag || 'Entrada Manual', // TAG
             piece.length.toString(), // Comprimento
             piece.perfil || piece.material || project?.tipoMaterial || 'Material', // Perfil/Material

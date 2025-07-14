@@ -240,7 +240,7 @@ export const ReportVisualization = ({ results, barLength, project }: ReportVisua
                                 R$ {((piece.length / 1000) * 8).toFixed(2)}
                               </Badge>
                             ) : (
-                              piece.posicao || pieceIndex + 1
+                              piece.posicao || 'Manual'
                             )}
                           </td>
                         </tr>
