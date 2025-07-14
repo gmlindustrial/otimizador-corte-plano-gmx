@@ -214,10 +214,10 @@ export const ReportVisualization = ({ results, barLength, project }: ReportVisua
                           </td>
                           <td className="border border-gray-300 px-3 py-2 font-mono">{piece.length}</td>
                           <td className="border border-gray-300 px-3 py-2">
-                            {piece.conjunto ? (
+                            {piece.posicao ? (
                               <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
                                 <Package className="w-3 h-3 mr-1" />
-                                {piece.conjunto}
+                                {piece.posicao }
                               </Badge>
                             ) : (
                               <span className="text-gray-400 text-xs">Manual</span>
