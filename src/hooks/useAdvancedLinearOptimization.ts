@@ -34,6 +34,7 @@ interface AdvancedOptimizationResult extends OptimizationResult {
       conjunto?: string;
       perfil?: string;
       peso?: number;
+      posicao?: string;
     }>;
     waste: number;
     totalUsed: number;
@@ -134,6 +135,7 @@ export const useAdvancedLinearOptimization = () => {
             conjunto: (piece as any).conjunto,
             perfil: (piece as any).perfil,
             peso: (piece as any).peso,
+            posicao: (piece as any).posicao,
             originalIndex: index
           });
         }
@@ -203,7 +205,8 @@ export const useAdvancedLinearOptimization = () => {
           tag: piece.tag,
           conjunto: piece.conjunto,
           perfil: piece.perfil,
-          peso: piece.peso
+          peso: piece.peso,
+          posicao: piece.posicao
         })),
         waste: bar.waste,
         totalUsed: bar.totalUsed
@@ -228,7 +231,8 @@ export const useAdvancedLinearOptimization = () => {
             tag: piece.tag,
             conjunto: piece.conjunto,
             perfil: piece.perfil,
-            peso: piece.peso
+            peso: piece.peso,
+            posicao: piece.posicao
           })),
           waste: bar.waste,
           totalUsed: bar.totalUsed,

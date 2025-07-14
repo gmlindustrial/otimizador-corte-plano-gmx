@@ -42,6 +42,8 @@ export interface CutPiece {
   length: number;
   quantity: number;
   id: string;
+  tag?: string;
+  posicao?: string;
 }
 
 export interface OptimizationResult {
@@ -55,6 +57,7 @@ export interface OptimizationResult {
       conjunto?: string;
       perfil?: string;
       peso?: number;
+      posicao?: string;
       cortada?: boolean;
     }>;
     waste: number;

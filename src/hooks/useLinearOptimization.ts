@@ -14,7 +14,7 @@ interface ExpandedPiece {
   material?: string;
   peso?: number;
   obra?: string;
-  posicao?: number;
+  posicao?: string;
 }
 
 interface EnhancedBarPiece {
@@ -28,7 +28,7 @@ interface EnhancedBarPiece {
   material?: string;
   peso?: number;
   obra?: string;
-  posicao?: number;
+  posicao?: string;
 }
 
 // Nova interface para barras otimizadas com informação de sobras

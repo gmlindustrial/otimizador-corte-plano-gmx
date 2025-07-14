@@ -4,6 +4,7 @@ interface Piece {
   conjunto?: string;
   perfil?: string;
   peso?: number;
+  posicao?: string;
   originalIndex: number;
 }
 
