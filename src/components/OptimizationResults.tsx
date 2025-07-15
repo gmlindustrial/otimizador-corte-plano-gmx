@@ -218,13 +218,13 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
       rows.push(['Data da Otimização:', new Date().toLocaleDateString('pt-BR')]);
       rows.push([]);
       rows.push(['=== VALIDAÇÕES ===']);
-      rows.push(['□ Dimensões das barras conferidas']);
-      rows.push(['□ Material correto selecionado']);
-      rows.push(['□ TAGs das peças verificadas']);
-      rows.push(['□ TAGs organizados corretamente']);
-      rows.push(['□ Primeira peça cortada e validada']);
-      rows.push(['□ Relatório aprovado pelo operador']);
-      rows.push(['□ Assinatura do inspetor QA']);
+      rows.push(['☐ Dimensões das barras conferidas']);
+      rows.push(['☐ Material correto selecionado']);
+      rows.push(['☐ TAGs das peças verificadas']);
+      rows.push(['☐ TAGs organizados corretamente']);
+      rows.push(['☐ Primeira peça cortada e validada']);
+      rows.push(['☐ Relatório aprovado pelo operador']);
+      rows.push(['☐ Assinatura do inspetor QA']);
 
       // Converter para CSV com encoding UTF-8 e separador adequado para Excel brasileiro
       const BOM = '\uFEFF'; // Byte Order Mark para UTF-8
@@ -315,6 +315,26 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
+            <div className="space-y-2">
+                <h5 className="text-sm font-medium text-gray-700">Outros Formatos:</h5>
+                <div className="grid grid-cols-1 gap-2">
+                  <Button onClick={handleExportPDF} variant="outline" className="justify-start">
+                    <Download className="w-4 h-4 mr-2" />
+                    Exportar PDF Completo
+                  </Button>
+                  <Button onClick={handleExportSimplifiedPDF} variant="outline" className="justify-start">
+                    <Download className="w-4 h-4 mr-2" />
+                    Exportar PDF Simplificado (Produção)
+                  </Button>
+                  <Button onClick={handleExportExcel} variant="outline" className="justify-start">
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />
+                    Exportar Plano do Operador (Excel)
+                    {hasSustainabilityData && hasSustainabilityData.leftoverBarsUsed > 0 && (
+                      <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700">+Sustentabilidade</Badge>
+                    )}
+                  </Button>
+                </div>
+              </div>
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="text-center p-3 bg-blue-50 rounded-lg">
                 <div className="text-2xl font-bold text-blue-600">{results.totalBars}</div>
@@ -428,27 +448,6 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
                 </div>
               </div>
 
-              {/* Outros Formatos */}
-              <div className="space-y-2">
-                <h5 className="text-sm font-medium text-gray-700">Outros Formatos:</h5>
-                <div className="grid grid-cols-1 gap-2">
-                  <Button onClick={handleExportPDF} variant="outline" className="justify-start">
-                    <Download className="w-4 h-4 mr-2" />
-                    Exportar PDF Completo
-                  </Button>
-                  <Button onClick={handleExportSimplifiedPDF} variant="outline" className="justify-start">
-                    <Download className="w-4 h-4 mr-2" />
-                    Exportar PDF Simplificado (Produção)
-                  </Button>
-                  <Button onClick={handleExportExcel} variant="outline" className="justify-start">
-                    <FileSpreadsheet className="w-4 h-4 mr-2" />
-                    Exportar Plano do Operador (Excel)
-                    {hasSustainabilityData && hasSustainabilityData.leftoverBarsUsed > 0 && (
-                      <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700">+Sustentabilidade</Badge>
-                    )}
-                  </Button>
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>
