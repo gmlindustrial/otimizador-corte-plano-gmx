@@ -177,15 +177,17 @@ export class PDFReportService {
 
       // Tabela de peças
       doc.text('Seq.', 20, currentY);
-      doc.text('TAG', 35, currentY);
-      doc.text('Comprimento', 60, currentY);
-      doc.text('Conjunto', 95, currentY);
-      doc.text('Perfil', 130, currentY);
-      doc.text('✓', 165, currentY);
+      doc.text('TAG', 30, currentY);
+      doc.text('Comprimento', 55, currentY);
+      doc.text('Conjunto', 85, currentY);
+      doc.text('Perfil', 110, currentY);
+      doc.text('Posição', 135, currentY);
+      doc.text('Status', 155, currentY);
+      doc.text('Obs.', 175, currentY);
       currentY += 5;
 
       // Linha da tabela
-      doc.line(20, currentY - 2, 170, currentY - 2);
+      doc.line(20, currentY - 2, 195, currentY - 2);
 
       bar.pieces.forEach((piece: any, pieceIndex) => {
         if (currentY > 275) {
@@ -196,15 +198,17 @@ export class PDFReportService {
         }
 
         doc.text(`${pieceIndex + 1}`, 20, currentY);
-        doc.text(piece.tag || `P${pieceIndex + 1}`, 35, currentY);
-        doc.text(`${piece.length || 0}mm`, 60, currentY);
-        doc.text(piece.conjunto || 'Manual', 95, currentY);
-        doc.text(piece.perfil || '-', 130, currentY);
-        doc.text('☐', 165, currentY);
+        doc.text(piece.tag || `P${pieceIndex + 1}`, 30, currentY);
+        doc.text(`${piece.length || 0}mm`, 55, currentY);
+        doc.text(piece.conjunto || 'Manual', 85, currentY);
+        doc.text(piece.perfil || '-', 110, currentY);
+        doc.text(piece.posicao || '-', 135, currentY);
+        doc.text('', 155, currentY); // Status vazio
+        doc.text('', 175, currentY); // Observação vazia
         
         // Indicador de reutilização para sobras
         if (bar.type === 'leftover') {
-          doc.text('♻', 175, currentY);
+          doc.text('♻', 185, currentY);
         }
         
         currentY += 5;
@@ -213,8 +217,12 @@ export class PDFReportService {
       if (bar.waste > 0) {
         doc.setFont('helvetica', 'bold');
         doc.text('Sobra', 20, currentY);
-        doc.text(`${bar.waste}mm`, 60, currentY);
-        doc.text(bar.type === 'leftover' ? 'Sobra da Sobra' : 'Descarte', 95, currentY);
+        doc.text(`${bar.waste}mm`, 55, currentY);
+        doc.text(bar.type === 'leftover' ? 'Sobra da Sobra' : 'Descarte', 85, currentY);
+        doc.text('-', 110, currentY);
+        doc.text('-', 135, currentY);
+        doc.text('', 155, currentY);
+        doc.text('', 175, currentY);
         doc.setFont('helvetica', 'normal');
         currentY += 5;
       }
@@ -345,31 +353,35 @@ export class PDFReportService {
         doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
         doc.text('Seq.', 20, currentY);
-        doc.text('TAG', 35, currentY);
-        doc.text('Comprimento', 60, currentY);
-        doc.text('Conjunto', 90, currentY);
-        doc.text('Perfil', 120, currentY);
-        doc.text('✓', 150, currentY);
+        doc.text('TAG', 30, currentY);
+        doc.text('Comp.', 55, currentY);
+        doc.text('Conj.', 80, currentY);
+        doc.text('Perfil', 105, currentY);
+        doc.text('Pos.', 130, currentY);
+        doc.text('Status', 150, currentY);
+        doc.text('Obs.', 170, currentY);
         if (bar.type === 'leftover') {
-          doc.text('♻', 160, currentY);
+          doc.text('♻', 188, currentY);
         }
         currentY += 3;
 
         // Linha da tabela
-        doc.line(20, currentY, 165, currentY);
+        doc.line(20, currentY, 190, currentY);
         currentY += 3;
 
         // Peças da barra
         doc.setFont('helvetica', 'normal');
         bar.pieces.forEach((piece: any, pieceIndex) => {
           doc.text(`${pieceIndex + 1}`, 20, currentY);
-          doc.text(piece.tag || `P${pieceIndex + 1}`, 35, currentY);
-          doc.text(`${piece.length || 0}mm`, 60, currentY);
-          doc.text(piece.conjunto || 'Manual', 90, currentY);
-          doc.text(piece.perfil || '-', 120, currentY);
-          doc.text('☐', 150, currentY);
+          doc.text(piece.tag || `P${pieceIndex + 1}`, 30, currentY);
+          doc.text(`${piece.length || 0}mm`, 55, currentY);
+          doc.text(piece.conjunto || 'Manual', 80, currentY);
+          doc.text(piece.perfil || '-', 105, currentY);
+          doc.text(piece.posicao || '-', 130, currentY);
+          doc.text('', 150, currentY);
+          doc.text('', 170, currentY);
           if (bar.type === 'leftover') {
-            doc.text('♻', 160, currentY);
+            doc.text('♻', 188, currentY);
           }
           currentY += 4;
         });
@@ -378,9 +390,12 @@ export class PDFReportService {
         if (bar.waste > 0) {
           doc.setFont('helvetica', 'bold');
           doc.text('Sobra', 20, currentY);
-          doc.text(`${bar.waste}mm`, 60, currentY);
-          doc.text(bar.type === 'leftover' ? 'Sobra da Sobra' : 'Descarte', 90, currentY);
-          doc.text('☐', 150, currentY);
+          doc.text(`${bar.waste}mm`, 55, currentY);
+          doc.text(bar.type === 'leftover' ? 'Sobra da Sobra' : 'Descarte', 80, currentY);
+          doc.text('-', 105, currentY);
+          doc.text('-', 130, currentY);
+          doc.text('', 150, currentY);
+          doc.text('', 170, currentY);
           doc.setFont('helvetica', 'normal');
           currentY += 4;
         }

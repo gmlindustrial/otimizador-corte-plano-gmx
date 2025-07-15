@@ -278,7 +278,9 @@ export const PrintableReport = ({ results, barLength, project, pieces, mode = 'c
                             <th className="border border-gray-300 px-1 py-1">Comprimento</th>
                             <th className="border border-gray-300 px-1 py-1">Conjunto</th>
                             <th className="border border-gray-300 px-1 py-1">Perfil</th>
-                            <th className="border border-gray-300 px-1 py-1">✓</th>
+                            <th className="border border-gray-300 px-1 py-1">Posição</th>
+                            <th className="border border-gray-300 px-1 py-1">Status</th>
+                            <th className="border border-gray-300 px-1 py-1">Obs.</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -295,7 +297,11 @@ export const PrintableReport = ({ results, barLength, project, pieces, mode = 'c
                               <td className="border border-gray-300 px-1 py-1 text-center text-xs">
                                 {piece.perfil || '-'}
                               </td>
-                              <td className="border border-gray-300 px-1 py-1 text-center">☐</td>
+                              <td className="border border-gray-300 px-1 py-1 text-center text-xs">
+                                {piece.posicao || '-'}
+                              </td>
+                              <td className="border border-gray-300 px-1 py-1 text-center"></td>
+                              <td className="border border-gray-300 px-1 py-1 text-center"></td>
                             </tr>
                           ))}
                           {bar.waste > 0 && (
@@ -305,7 +311,9 @@ export const PrintableReport = ({ results, barLength, project, pieces, mode = 'c
                               <td className="border border-gray-300 px-1 py-1 font-mono text-center text-red-600">{bar.waste}mm</td>
                               <td className="border border-gray-300 px-1 py-1 text-center">Descarte</td>
                               <td className="border border-gray-300 px-1 py-1 text-center">-</td>
-                              <td className="border border-gray-300 px-1 py-1 text-center">☐</td>
+                              <td className="border border-gray-300 px-1 py-1 text-center">-</td>
+                              <td className="border border-gray-300 px-1 py-1 text-center"></td>
+                              <td className="border border-gray-300 px-1 py-1 text-center"></td>
                             </tr>
                           )}
                         </tbody>
