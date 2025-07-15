@@ -69,26 +69,26 @@ export const PrintableReport = ({ results, barLength, project, pieces, mode = 'c
     return groups;
   };
 
-  const getConjuntoSummary = () => {
-    const conjuntoMap = new Map<string, { 
-      pieces: number; 
-      totalLength: number; 
+  const getTagSummary = () => {
+    const tagMap = new Map<string, {
+      pieces: number;
+      totalLength: number;
       bars: Set<number>;
       tags: string[];
     }>();
-    
+
     results.bars.forEach((bar, barIndex) => {
       bar.pieces.forEach((piece: any) => {
-        const conjunto = piece.conjunto || 'Entrada Manual';
-        if (!conjuntoMap.has(conjunto)) {
-          conjuntoMap.set(conjunto, { 
-            pieces: 0, 
-            totalLength: 0, 
+        const tag = piece.tag || 'Entrada Manual';
+        if (!tagMap.has(tag)) {
+          tagMap.set(tag, {
+            pieces: 0,
+            totalLength: 0,
             bars: new Set(),
             tags: []
           });
         }
-        const summary = conjuntoMap.get(conjunto)!;
+        const summary = tagMap.get(tag)!;
         summary.pieces++;
         summary.totalLength += piece.length;
         summary.bars.add(barIndex + 1);
@@ -97,12 +97,12 @@ export const PrintableReport = ({ results, barLength, project, pieces, mode = 'c
         }
       });
     });
-    
-    return conjuntoMap;
+
+    return tagMap;
   };
 
   const barGroups = getBarGroups();
-  const conjuntoSummary = getConjuntoSummary();
+  const tagSummary = getTagSummary();
 
   return (
     <div className="bg-white ">
@@ -140,12 +140,12 @@ export const PrintableReport = ({ results, barLength, project, pieces, mode = 'c
           <>
             {/* Executive Summary */}
             <div className="mb-6 pb-4 border-b">
-              <h2 className="text-lg font-semibold mb-3">Resumo por Conjunto</h2>
+              <h2 className="text-lg font-semibold mb-3">Resumo por TAG</h2>
               <div className="overflow-x-auto">
                 <table className="w-full border border-gray-300 text-xs">
                   <thead className="bg-gray-100">
                     <tr>
-                      <th className="border border-gray-300 p-2">Conjunto</th>
+                      <th className="border border-gray-300 p-2">TAG</th>
                       <th className="border border-gray-300 p-2">Peças</th>
                       <th className="border border-gray-300 p-2">Comprimento Total</th>
                       <th className="border border-gray-300 p-2">Barras</th>
@@ -153,9 +153,9 @@ export const PrintableReport = ({ results, barLength, project, pieces, mode = 'c
                     </tr>
                   </thead>
                   <tbody>
-                    {Array.from(conjuntoSummary.entries()).map(([conjunto, data]) => (
-                      <tr key={conjunto}>
-                        <td className="border border-gray-300 p-2 font-medium">{conjunto}</td>
+                    {Array.from(tagSummary.entries()).map(([tag, data]) => (
+                      <tr key={tag}>
+                        <td className="border border-gray-300 p-2 font-medium">{tag}</td>
                         <td className="border border-gray-300 p-2 text-center">{data.pieces}</td>
                         <td className="border border-gray-300 p-2 text-center">{(data.totalLength / 1000).toFixed(2)}m</td>
                         <td className="border border-gray-300 p-2 text-center">
@@ -202,17 +202,17 @@ export const PrintableReport = ({ results, barLength, project, pieces, mode = 'c
               <div className="mb-4">
                 {barGroup.map((bar, barIndex) => {
                   const globalBarIndex = groupIndex * (mode === 'simplified' ? 6 : 4) + barIndex;
-                  const conjuntosNaBarra = new Set((bar.pieces as any[])
-                    .filter(p => p.conjunto)
-                    .map(p => p.conjunto));
+                  const tagsNaBarra = new Set((bar.pieces as any[])
+                    .filter(p => p.tag)
+                    .map(p => p.tag));
                   
                   return (
                     <div key={bar.id} className="mb-4 border rounded p-2">
                       <h4 className="text-sm font-medium mb-2">
                         Barra {globalBarIndex + 1}
-                        {conjuntosNaBarra.size > 0 && (
+                        {tagsNaBarra.size > 0 && (
                           <span className="ml-2 text-xs text-blue-600 font-normal">
-                            Conjuntos: {Array.from(conjuntosNaBarra).join(', ')}
+                            TAGs: {Array.from(tagsNaBarra).join(', ')}
                           </span>
                         )}
                       </h4>
@@ -274,9 +274,9 @@ export const PrintableReport = ({ results, barLength, project, pieces, mode = 'c
                         <thead className="bg-gray-100">
                           <tr>
                             <th className="border border-gray-300 px-1 py-1">Seq.</th>
-                            <th className="border border-gray-300 px-1 py-1">TAG/Pos.</th>
+                            <th className="border border-gray-300 px-1 py-1">TAG</th>
+                            <th className="border border-gray-300 px-1 py-1">Pos.</th>
                             <th className="border border-gray-300 px-1 py-1">Comprimento</th>
-                            <th className="border border-gray-300 px-1 py-1">Conjunto</th>
                             <th className="border border-gray-300 px-1 py-1">Perfil</th>
                             <th className="border border-gray-300 px-1 py-1">Status</th>
                             <th className="border border-gray-300 px-1 py-1">Obs.</th>
@@ -287,12 +287,10 @@ export const PrintableReport = ({ results, barLength, project, pieces, mode = 'c
                             <tr key={pieceIndex}>
                               <td className="border border-gray-300 px-1 py-1 text-center">{pieceIndex + 1}</td>
                               <td className="border border-gray-300 px-1 py-1 font-mono text-center">
-                                {piece.tag || `P${pieceIndex + 1}`} ({piece.posicao || '-'})
+                                {piece.tag || `P${pieceIndex + 1}`}
                               </td>
+                              <td className="border border-gray-300 px-1 py-1 text-center">{piece.posicao || '-'}</td>
                               <td className="border border-gray-300 px-1 py-1 font-mono text-center">{piece.length}mm</td>
-                              <td className="border border-gray-300 px-1 py-1 text-center text-xs">
-                                {piece.conjunto || 'Manual'}
-                              </td>
                               <td className="border border-gray-300 px-1 py-1 text-center text-xs">
                                 {piece.perfil || '-'}
                               </td>
@@ -304,8 +302,8 @@ export const PrintableReport = ({ results, barLength, project, pieces, mode = 'c
                             <tr className="bg-red-50">
                               <td className="border border-gray-300 px-1 py-1 text-center">Sobra</td>
                               <td className="border border-gray-300 px-1 py-1 text-center">-</td>
+                              <td className="border border-gray-300 px-1 py-1 text-center">-</td>
                               <td className="border border-gray-300 px-1 py-1 font-mono text-center text-red-600">{bar.waste}mm</td>
-                              <td className="border border-gray-300 px-1 py-1 text-center">Descarte</td>
                               <td className="border border-gray-300 px-1 py-1 text-center">-</td>
                               <td className="border border-gray-300 px-1 py-1 text-center"></td>
                               <td className="border border-gray-300 px-1 py-1 text-center"></td>
@@ -338,7 +336,6 @@ export const PrintableReport = ({ results, barLength, project, pieces, mode = 'c
               <tr className="bg-gray-100">
                 <th className="border border-gray-300 p-2">Barra</th>
                 <th className="border border-gray-300 p-2">Peças</th>
-                <th className="border border-gray-300 p-2">Conjuntos</th>
                 <th className="border border-gray-300 p-2">Utilizado</th>
                 <th className="border border-gray-300 p-2">Sobra</th>
                 <th className="border border-gray-300 p-2">Eficiência</th>
@@ -347,16 +344,10 @@ export const PrintableReport = ({ results, barLength, project, pieces, mode = 'c
             </thead>
             <tbody>
               {results.bars.map((bar, index) => {
-                const conjuntos = new Set((bar.pieces as any[])
-                  .filter(p => p.conjunto)
-                  .map(p => p.conjunto));
                 return (
                   <tr key={bar.id}>
                     <td className="border border-gray-300 p-2 text-center">{index + 1}</td>
                     <td className="border border-gray-300 p-2 text-center">{bar.pieces.length}</td>
-                    <td className="border border-gray-300 p-2 text-center text-xs">
-                      {conjuntos.size > 0 ? Array.from(conjuntos).join(', ') : 'Manual'}
-                    </td>
                     <td className="border border-gray-300 p-2 text-center">{(bar.totalUsed / 1000).toFixed(2)}m</td>
                     <td className="border border-gray-300 p-2 text-center">{(bar.waste / 1000).toFixed(3)}m</td>
                     <td className="border border-gray-300 p-2 text-center">{((bar.totalUsed / barLength) * 100).toFixed(1)}%</td>
@@ -367,7 +358,6 @@ export const PrintableReport = ({ results, barLength, project, pieces, mode = 'c
               <tr className="bg-blue-50 font-bold">
                 <td className="border border-gray-300 p-2 text-center">TOTAL</td>
                 <td className="border border-gray-300 p-2 text-center">{results.bars.reduce((sum, bar) => sum + bar.pieces.length, 0)}</td>
-                <td className="border border-gray-300 p-2 text-center">{conjuntoSummary.size}</td>
                 <td className="border border-gray-300 p-2 text-center">{((results.bars.reduce((sum, bar) => sum + bar.totalUsed, 0)) / 1000).toFixed(2)}m</td>
                 <td className="border border-gray-300 p-2 text-center">{(results.totalWaste / 1000).toFixed(2)}m</td>
                 <td className="border border-gray-300 p-2 text-center">{results.efficiency.toFixed(1)}%</td>

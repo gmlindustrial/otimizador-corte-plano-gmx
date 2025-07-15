@@ -67,15 +67,15 @@ export class PDFReportService {
     
     currentY += 25;
 
-    // Resumo por Conjunto
-    const conjuntoSummary = new Map<string, { count: number; totalLength: number; barras: Set<number> }>();
+    // Resumo por TAG
+    const tagSummary = new Map<string, { count: number; totalLength: number; barras: Set<number> }>();
     results.bars.forEach((bar, barIndex) => {
       bar.pieces.forEach((piece: any) => {
-        const conjunto = piece.conjunto || 'Entrada Manual';
-        if (!conjuntoSummary.has(conjunto)) {
-          conjuntoSummary.set(conjunto, { count: 0, totalLength: 0, barras: new Set() });
+        const tag = piece.tag || 'Entrada Manual';
+        if (!tagSummary.has(tag)) {
+          tagSummary.set(tag, { count: 0, totalLength: 0, barras: new Set() });
         }
-        const summary = conjuntoSummary.get(conjunto)!;
+        const summary = tagSummary.get(tag)!;
         summary.count++;
         summary.totalLength += piece.length;
         summary.barras.add(barIndex + 1);
@@ -84,19 +84,19 @@ export class PDFReportService {
 
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    doc.text('Resumo por Conjunto', 20, currentY);
+    doc.text('Resumo por TAG', 20, currentY);
     currentY += 10;
 
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
-    conjuntoSummary.forEach((data, conjunto) => {
+    tagSummary.forEach((data, tag) => {
       if (currentY > 270) {
         doc.addPage();
         pageNumber++;
         this.addHeader(doc, project, 'Relatório Completo de Otimização Linear', pageNumber);
         currentY = 55;
       }
-      doc.text(`${conjunto}: ${data.count} peças, ${(data.totalLength / 1000).toFixed(2)}m`, 20, currentY);
+      doc.text(`${tag}: ${data.count} peças, ${(data.totalLength / 1000).toFixed(2)}m`, 20, currentY);
       currentY += 5;
     });
 
@@ -146,9 +146,9 @@ export class PDFReportService {
 
       // Tabela de peças
       doc.text('Seq.', 20, currentY);
-      doc.text('TAG/Pos.', 30, currentY);
-      doc.text('Comprimento', 55, currentY);
-      doc.text('Conjunto', 85, currentY);
+      doc.text('TAG', 30, currentY);
+      doc.text('Pos.', 55, currentY);
+      doc.text('Comprimento', 70, currentY);
       doc.text('Perfil', 110, currentY);
       doc.text('Status', 155, currentY);
       doc.text('Obs.', 175, currentY);
@@ -166,9 +166,9 @@ export class PDFReportService {
         }
 
         doc.text(`${pieceIndex + 1}`, 20, currentY);
-        doc.text(`${piece.tag || `P${pieceIndex + 1}`} (${piece.posicao || '-'})`, 30, currentY);
-        doc.text(`${piece.length || 0}mm`, 55, currentY);
-        doc.text(piece.conjunto || 'Manual', 85, currentY);
+        doc.text(piece.tag || `P${pieceIndex + 1}`, 30, currentY);
+        doc.text(`${piece.posicao || '-'}`, 55, currentY);
+        doc.text(`${piece.length || 0}mm`, 70, currentY);
         doc.text(piece.perfil || '-', 110, currentY);
         doc.text('', 155, currentY); // Status vazio
         doc.text('', 175, currentY); // Observação vazia
@@ -184,9 +184,10 @@ export class PDFReportService {
       if (bar.waste > 0) {
         doc.setFont('helvetica', 'bold');
         doc.text('Sobra', 20, currentY);
-        doc.text(`${bar.waste}mm`, 55, currentY);
-        doc.text(bar.type === 'leftover' ? 'Sobra da Sobra' : 'Descarte', 85, currentY);
-        doc.text('-', 110, currentY);
+        doc.text('-', 30, currentY);
+        doc.text('-', 55, currentY);
+        doc.text(`${bar.waste}mm`, 70, currentY);
+        doc.text(bar.type === 'leftover' ? 'Sobra da Sobra' : 'Descarte', 110, currentY);
         doc.text('', 155, currentY);
         doc.text('', 175, currentY);
         doc.setFont('helvetica', 'normal');
@@ -277,16 +278,16 @@ export class PDFReportService {
         doc.setFontSize(10);
         doc.setFont('helvetica', 'bold');
         
-        // Identificar conjuntos na barra
-        const conjuntosNaBarra = new Set((bar.pieces as any[])
-          .filter(p => p.conjunto)
-          .map(p => p.conjunto));
+        // Identificar TAGs na barra
+        const tagsNaBarra = new Set((bar.pieces as any[])
+          .filter(p => p.tag)
+          .map(p => p.tag));
         
         const barType = bar.type === 'leftover' ? 'SOBRA' : 'NOVA';
         let barTitle = `Barra ${globalBarIndex + 1} - ${barType}`;
         
-        if (conjuntosNaBarra.size > 0) {
-          barTitle += ` - Conjuntos: ${Array.from(conjuntosNaBarra).join(', ')}`;
+        if (tagsNaBarra.size > 0) {
+          barTitle += ` - TAGs: ${Array.from(tagsNaBarra).join(', ')}`;
         }
         
         doc.text(barTitle, 20, currentY);
@@ -316,11 +317,11 @@ export class PDFReportService {
         doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
         doc.text('Seq.', 20, currentY);
-        doc.text('TAG/Pos.', 30, currentY);
-        doc.text('Comp.', 55, currentY);
-        doc.text('Conj.', 80, currentY);
-        doc.text('Perfil', 105, currentY);
-        doc.text('Status', 150, currentY);
+        doc.text('TAG', 30, currentY);
+        doc.text('Pos.', 50, currentY);
+        doc.text('Comp.', 65, currentY);
+        doc.text('Perfil', 100, currentY);
+        doc.text('Status', 140, currentY);
         doc.text('Obs.', 170, currentY);
         if (bar.type === 'leftover') {
           doc.text('♻', 188, currentY);
@@ -335,11 +336,11 @@ export class PDFReportService {
         doc.setFont('helvetica', 'normal');
         bar.pieces.forEach((piece: any, pieceIndex) => {
           doc.text(`${pieceIndex + 1}`, 20, currentY);
-          doc.text(`${piece.tag || `P${pieceIndex + 1}`} (${piece.posicao || '-'})`, 30, currentY);
-          doc.text(`${piece.length || 0}mm`, 55, currentY);
-          doc.text(piece.conjunto || 'Manual', 80, currentY);
-          doc.text(piece.perfil || '-', 105, currentY);
-          doc.text('', 150, currentY);
+          doc.text(piece.tag || `P${pieceIndex + 1}`, 30, currentY);
+          doc.text(`${piece.posicao || '-'}`, 50, currentY);
+          doc.text(`${piece.length || 0}mm`, 65, currentY);
+          doc.text(piece.perfil || '-', 100, currentY);
+          doc.text('', 140, currentY);
           doc.text('', 170, currentY);
           if (bar.type === 'leftover') {
             doc.text('♻', 188, currentY);
@@ -351,10 +352,11 @@ export class PDFReportService {
         if (bar.waste > 0) {
           doc.setFont('helvetica', 'bold');
           doc.text('Sobra', 20, currentY);
-          doc.text(`${bar.waste}mm`, 55, currentY);
-          doc.text(bar.type === 'leftover' ? 'Sobra da Sobra' : 'Descarte', 80, currentY);
-          doc.text('-', 105, currentY);
-          doc.text('', 150, currentY);
+          doc.text('-', 30, currentY);
+          doc.text('-', 50, currentY);
+          doc.text(`${bar.waste}mm`, 65, currentY);
+          doc.text(bar.type === 'leftover' ? 'Sobra da Sobra' : 'Descarte', 100, currentY);
+          doc.text('', 140, currentY);
           doc.text('', 170, currentY);
           doc.setFont('helvetica', 'normal');
           currentY += 4;
@@ -384,30 +386,24 @@ export class PDFReportService {
     doc.text('Barra', 20, currentY);
     doc.text('Tipo', 35, currentY);
     doc.text('Peças', 50, currentY);
-    doc.text('Conjuntos', 70, currentY);
-    doc.text('Eficiência', 100, currentY);
-    doc.text('Sobra', 130, currentY);
-    doc.text('Status', 150, currentY);
+    doc.text('Eficiência', 85, currentY);
+    doc.text('Sobra', 115, currentY);
+    doc.text('Status', 140, currentY);
     currentY += 5;
 
-    doc.line(20, currentY, 165, currentY);
+    doc.line(20, currentY, 160, currentY);
     currentY += 3;
 
     doc.setFont('helvetica', 'normal');
     results.bars.forEach((bar: any, index) => {
-      const conjuntos = new Set((bar.pieces as any[])
-        .filter(p => p.conjunto)
-        .map(p => p.conjunto));
-      
       const barType = bar.type === 'leftover' ? 'SOBRA' : 'NOVA';
-      
+
       doc.text(`${index + 1}`, 20, currentY);
       doc.text(barType, 35, currentY);
       doc.text(`${bar.pieces.length}`, 50, currentY);
-      doc.text(conjuntos.size > 0 ? Array.from(conjuntos).join(',').substring(0, 8) : 'Manual', 70, currentY);
-      doc.text(`${((bar.totalUsed / barLength) * 100).toFixed(1)}%`, 100, currentY);
-      doc.text(`${(bar.waste / 1000).toFixed(3)}m`, 130, currentY);
-      doc.text('□', 150, currentY);
+      doc.text(`${((bar.totalUsed / barLength) * 100).toFixed(1)}%`, 85, currentY);
+      doc.text(`${(bar.waste / 1000).toFixed(3)}m`, 115, currentY);
+      doc.text('□', 140, currentY);
       currentY += 4;
     });
 
@@ -415,10 +411,10 @@ export class PDFReportService {
     currentY += 5;
     doc.setFont('helvetica', 'bold');
     doc.text('TOTAL', 20, currentY);
+    doc.text(`${results.totalBars}`, 35, currentY);
     doc.text(`${results.bars.reduce((sum, bar) => sum + bar.pieces.length, 0)}`, 50, currentY);
-    doc.text(`${results.totalBars}`, 70, currentY);
-    doc.text(`${results.efficiency.toFixed(1)}%`, 100, currentY);
-    doc.text(`${(results.totalWaste / 1000).toFixed(2)}m`, 130, currentY);
+    doc.text(`${results.efficiency.toFixed(1)}%`, 85, currentY);
+    doc.text(`${(results.totalWaste / 1000).toFixed(2)}m`, 115, currentY);
     currentY += 15;
 
     // Check-list do operador
