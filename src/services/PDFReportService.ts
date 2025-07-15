@@ -38,6 +38,18 @@ export class PDFReportService {
     return currentY;
   }
 
+  private static extractProfiles(results: OptimizationResult): string {
+    const set = new Set<string>();
+    results.bars.forEach(bar => {
+      bar.pieces.forEach((piece: any) => {
+        if (piece.perfil) {
+          set.add(piece.perfil);
+        }
+      });
+    });
+    return Array.from(set).join(', ');
+  }
+
   static async generateCompleteLinearReport(results: OptimizationResult, barLength: number, project: Project): Promise<void> {
     try {
       const doc = new jsPDF();
@@ -55,16 +67,15 @@ export class PDFReportService {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text(`Total de Barras: ${results.totalBars}`, 20, currentY);
+    doc.text(`Barras NOVAS: ${results.bars.filter((bar: any) => bar.type !== 'leftover').length}`, 100, currentY);
     doc.text(`Eficiência: ${results.efficiency.toFixed(1)}%`, 20, currentY + 5);
+    doc.text(`Barras SOBRA: ${results.bars.filter((bar: any) => bar.type === 'leftover').length}`, 100, currentY + 5);
     doc.text(`Desperdício: ${(results.totalWaste / 1000).toFixed(2)}m`, 20, currentY + 10);
+    doc.text(`Material: ${(project as any).tipoMaterial || 'N/A'}`, 100, currentY + 10);
     doc.text(`Comprimento da Barra: ${barLength}mm`, 20, currentY + 15);
-    
-    // Contagem de barras novas vs sobras
-    const sobraCount = results.bars.filter((bar: any) => bar.type === 'leftover').length;
-    const novaCount = results.bars.filter((bar: any) => bar.type !== 'leftover').length;
-    doc.text(`Barras NOVAS: ${novaCount}`, 100, currentY);
-    doc.text(`Barras SOBRA: ${sobraCount}`, 100, currentY + 5);
-    
+    doc.text(`Perfil: ${PDFReportService.extractProfiles(results) || 'N/A'}`, 100, currentY + 15);
+
+    // Espaço após resumo
     currentY += 25;
 
     // Resumo por TAG
@@ -225,17 +236,15 @@ export class PDFReportService {
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.text(`Total de Barras: ${results.totalBars}`, 20, currentY);
-    doc.text(`Eficiência: ${results.efficiency.toFixed(1)}%`, 100, currentY);
+    doc.text(`Barras NOVAS: ${results.bars.filter((bar: any) => bar.type !== 'leftover').length}`, 100, currentY);
+    currentY += 5;
+    doc.text(`Eficiência: ${results.efficiency.toFixed(1)}%`, 20, currentY);
+    doc.text(`Barras SOBRA: ${results.bars.filter((bar: any) => bar.type === 'leftover').length}`, 100, currentY);
     currentY += 5;
     doc.text(`Desperdício: ${(results.totalWaste / 1000).toFixed(2)}m`, 20, currentY);
     doc.text(`Material: ${(project as any).tipoMaterial || 'N/A'}`, 100, currentY);
     currentY += 5;
-    
-    // Contagem de barras por tipo
-    const sobraCount = results.bars.filter((bar: any) => bar.type === 'leftover').length;
-    const novaCount = results.bars.filter((bar: any) => bar.type !== 'leftover').length;
-    doc.text(`Barras NOVAS: ${novaCount}`, 20, currentY);
-    doc.text(`Barras SOBRA: ${sobraCount}`, 100, currentY);
+    doc.text(`Perfil: ${PDFReportService.extractProfiles(results) || 'N/A'}`, 20, currentY);
     currentY += 15;
 
     // Espaço antes da lista de barras
