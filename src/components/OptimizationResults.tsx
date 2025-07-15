@@ -367,6 +367,35 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
           </CardContent>
         </Card>
 
+        <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              <h4 className="font-medium text-gray-900">Exportar Resultados</h4>
+              
+        
+              <div className="space-y-2">
+                <div className="grid grid-cols-1 gap-2">
+                  <Button onClick={handleExportPDF} variant="outline" className="justify-start">
+                    <Download className="w-4 h-4 mr-2" />
+                    Exportar PDF Completo
+                  </Button>
+                  <Button onClick={handleExportSimplifiedPDF} variant="outline" className="justify-start">
+                    <Download className="w-4 h-4 mr-2" />
+                    Exportar PDF Simplificado (Produção)
+                  </Button>
+                  <Button onClick={handleExportExcel} variant="outline" className="justify-start">
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />
+                    Exportar Plano do Operador (Excel)
+                    {hasSustainabilityData && hasSustainabilityData.leftoverBarsUsed > 0 && (
+                      <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700">+Sustentabilidade</Badge>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Visualização Detalhada com Indicadores de Sobras */}
         <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
           <CardHeader>
@@ -388,27 +417,6 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
                   Visualizar em Tela Cheia
                 </Button>
               </div>
-
-              <div className="space-y-2">
-                <h5 className="text-sm font-medium text-gray-700">Exportar pdf</h5>
-                <div className="grid grid-cols-1 gap-2">
-                  <Button onClick={handleExportPDF} variant="outline" className="justify-start">
-                    <Download className="w-4 h-4 mr-2" />
-                    Exportar PDF Completo
-                  </Button>
-                  <Button onClick={handleExportSimplifiedPDF} variant="outline" className="justify-start">
-                    <Download className="w-4 h-4 mr-2" />
-                    Exportar PDF Simplificado (Produção)
-                  </Button>
-                  <Button onClick={handleExportExcel} variant="outline" className="justify-start">
-                    <FileSpreadsheet className="w-4 h-4 mr-2" />
-                    Exportar Plano do Operador (Excel)
-                    {hasSustainabilityData && hasSustainabilityData.leftoverBarsUsed > 0 && (
-                      <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700">+Sustentabilidade</Badge>
-                    )}
-                  </Button>
-                </div>
-              </div>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
@@ -419,39 +427,7 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
             />
           </CardContent>
         </Card>
-
-        {/* Botões de Exportação */}
-        <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
-          <CardContent className="p-6">
-            <div className="space-y-4">
-              <h4 className="font-medium text-gray-900">Exportar Resultados</h4>
-              
-              {/* Modo de Impressão */}
-              <div className="space-y-2">
-                <h5 className="text-sm font-medium text-gray-700">Modos de Impressão:</h5>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  <Button 
-                    onClick={() => handlePrint('complete')} 
-                    variant="outline" 
-                    className="justify-start"
-                  >
-                    <FileText className="w-4 h-4 mr-2" />
-                    Relatório Completo
-                  </Button>
-                  <Button 
-                    onClick={() => handlePrint('simplified')} 
-                    variant="outline" 
-                    className="justify-start"
-                  >
-                    <Wrench className="w-4 h-4 mr-2" />
-                    Plano Simplificado (Produção)
-                  </Button>
-                </div>
-              </div>
-
-            </div>
-          </CardContent>
-        </Card>
+        
       </div>
 
       {/* Fullscreen Viewer */}
