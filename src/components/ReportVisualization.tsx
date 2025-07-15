@@ -181,11 +181,12 @@ export const ReportVisualization = ({ results, barLength, project }: ReportVisua
                       <tr>
                         <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Peça</th>
                         <th className="border border-gray-300 px-3 py-2 text-left font-semibold">TAG</th>
+                        <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Quantidade</th>
                         <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Comprimento (mm)</th>
                         <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Posição</th>
                         <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Perfil</th>
                         <th className="border border-gray-300 px-3 py-2 text-left font-semibold">
-                          {isLeftover ? 'Economia' : 'Posição'}
+                          {isLeftover ? 'Economia' : 'Status'}
                         </th>
                       </tr>
                     </thead>
@@ -211,6 +212,11 @@ export const ReportVisualization = ({ results, barLength, project }: ReportVisua
                             ) : (
                               <span className="text-gray-400 text-xs">-</span>
                             )}
+                          </td>
+                          <td className="border border-gray-300 px-3 py-2 font-mono text-center">
+                            <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
+                              {piece.quantidade || 1}
+                            </Badge>
                           </td>
                           <td className="border border-gray-300 px-3 py-2 font-mono">{piece.length}</td>
                           <td className="border border-gray-300 px-3 py-2">
@@ -240,7 +246,9 @@ export const ReportVisualization = ({ results, barLength, project }: ReportVisua
                                 R$ {((piece.length / 1000) * 8).toFixed(2)}
                               </Badge>
                             ) : (
-                              piece.posicao || 'Manual'
+                              <Badge variant="outline" className="text-gray-600">
+                                OK
+                              </Badge>
                             )}
                           </td>
                         </tr>
@@ -256,13 +264,14 @@ export const ReportVisualization = ({ results, barLength, project }: ReportVisua
                             </div>
                           </td>
                           <td className="border border-gray-300 px-3 py-2 text-gray-400">-</td>
+                          <td className="border border-gray-300 px-3 py-2 text-center text-gray-400">0</td>
                           <td className="border border-gray-300 px-3 py-2 font-mono text-red-600">{bar.waste}</td>
                           <td className="border border-gray-300 px-3 py-2 text-gray-400">-</td>
                           <td className="border border-gray-300 px-3 py-2 text-gray-400">
                             {isLeftover ? 'Sobra da Sobra' : 'Desperdício'}
                           </td>
                           <td className="border border-gray-300 px-3 py-2 text-gray-400">
-                            {isLeftover ? 'Retornar Estoque' : 'Final'}
+                            {isLeftover ? 'Retornar Estoque' : 'Descartar'}
                           </td>
                         </tr>
                       )}

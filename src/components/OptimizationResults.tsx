@@ -106,6 +106,7 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
           'Tipo (Nova ou Sobra)',
           'Posição',
           'TAG',
+          'Quantidade',
           'Comprimento',
           'Perfil/Material',
           'Obra',
@@ -128,6 +129,7 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
             isLeftover ? 'SOBRA' : 'NOVA', // Tipo (Nova ou Sobra)
             piece.posicao || 'Manual', // Posição
             piece.tag || 'Entrada Manual', // TAG
+            piece.quantidade || '1', // Quantidade
             piece.length.toString(), // Comprimento
             piece.perfil || piece.material || project?.tipoMaterial || 'Material', // Perfil/Material
             piece.obra || project?.obra || 'N/A', // Obra
@@ -145,6 +147,7 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
               barType.toUpperCase(), // Tipo (Nova ou Sobra)
               '-', // Posição
               'DESCARTE', // TAG
+              '0', // Quantidade
               bar.waste.toString(), // Comprimento
             'Desperdício', // Perfil/Material
             project?.obra || 'N/A', // Obra
