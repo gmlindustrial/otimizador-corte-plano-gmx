@@ -156,6 +156,7 @@ export class PDFReportService {
 
       // Linha da tabela
       doc.line(20, currentY - 2, 195, currentY - 2);
+      currentY += 2; // Espaço após a linha
 
       bar.pieces.forEach((piece: any, pieceIndex) => {
         if (currentY > 275) {
