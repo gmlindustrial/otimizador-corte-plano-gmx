@@ -315,26 +315,6 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <div className="space-y-2">
-                <h5 className="text-sm font-medium text-gray-700">Outros Formatos:</h5>
-                <div className="grid grid-cols-1 gap-2">
-                  <Button onClick={handleExportPDF} variant="outline" className="justify-start">
-                    <Download className="w-4 h-4 mr-2" />
-                    Exportar PDF Completo
-                  </Button>
-                  <Button onClick={handleExportSimplifiedPDF} variant="outline" className="justify-start">
-                    <Download className="w-4 h-4 mr-2" />
-                    Exportar PDF Simplificado (Produção)
-                  </Button>
-                  <Button onClick={handleExportExcel} variant="outline" className="justify-start">
-                    <FileSpreadsheet className="w-4 h-4 mr-2" />
-                    Exportar Plano do Operador (Excel)
-                    {hasSustainabilityData && hasSustainabilityData.leftoverBarsUsed > 0 && (
-                      <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700">+Sustentabilidade</Badge>
-                    )}
-                  </Button>
-                </div>
-              </div>
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="text-center p-3 bg-blue-50 rounded-lg">
                 <div className="text-2xl font-bold text-blue-600">{results.totalBars}</div>
@@ -407,6 +387,27 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
                   <Fullscreen className="w-4 h-4" />
                   Visualizar em Tela Cheia
                 </Button>
+              </div>
+
+              <div className="space-y-2">
+                <h5 className="text-sm font-medium text-gray-700">Exportar pdf</h5>
+                <div className="grid grid-cols-1 gap-2">
+                  <Button onClick={handleExportPDF} variant="outline" className="justify-start">
+                    <Download className="w-4 h-4 mr-2" />
+                    Exportar PDF Completo
+                  </Button>
+                  <Button onClick={handleExportSimplifiedPDF} variant="outline" className="justify-start">
+                    <Download className="w-4 h-4 mr-2" />
+                    Exportar PDF Simplificado (Produção)
+                  </Button>
+                  <Button onClick={handleExportExcel} variant="outline" className="justify-start">
+                    <FileSpreadsheet className="w-4 h-4 mr-2" />
+                    Exportar Plano do Operador (Excel)
+                    {hasSustainabilityData && hasSustainabilityData.leftoverBarsUsed > 0 && (
+                      <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700">+Sustentabilidade</Badge>
+                    )}
+                  </Button>
+                </div>
               </div>
             </CardTitle>
           </CardHeader>
