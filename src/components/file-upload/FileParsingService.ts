@@ -35,7 +35,7 @@ export class FileParsingService {
     
     console.log(`📊 Total de linhas no arquivo: ${lines.length}`);
     
-    // Verificar se é arquivo AutoCAD válido
+    // Verificar se é arquivo AutoCAD válido (incluindo novo formato)
     const isAutoCADFile = lines.some(line => 
       line.includes('LM por Conjunto') || 
       line.includes('METALMAX') ||
@@ -44,6 +44,8 @@ export class FileParsingService {
       line.includes('TERMINAL') ||
       line.includes('MARCA') ||
       line.includes('ITEM') ||
+      line.includes('CONJUNTO') ||  // Novo formato
+      line.includes('TAG') ||       // Novo formato
       line.includes('DESCRIÇÃO') ||
       line.match(/[A-Z]+\.?\d+/) // Padrões: V.172, V.173, C34, etc.
     );
@@ -116,14 +118,25 @@ export class FileParsingService {
       }
     }
     
-  // Encontrar linha de cabeçalho (mais flexível)
+   // Encontrar linha de cabeçalho (detectar ambos os formatos)
+    let isNewFormat = false;
     for (let i = 0; i < lines.length; i++) {
       const upperLine = lines[i].toUpperCase();
-      // Procurar por MARCA, ITEM, QT e pelo menos parte de DESCRIÇÃO (sem exigir encoding perfeito)
-      if (upperLine.includes('MARCA') && upperLine.includes('ITEM') && 
-          upperLine.includes('QT') && (upperLine.includes('DESCRI') || upperLine.includes('DESCRIÇÃO'))) {
+      
+      // Novo formato: CONJUNTO;TAG;QT.;DESCRIÇÃO PERFIL;MATERIAL;PESO
+      if (upperLine.includes('CONJUNTO') && upperLine.includes('TAG') && upperLine.includes('QT') && 
+          (upperLine.includes('DESCRI') || upperLine.includes('DESCRIÇÃO'))) {
         headerIndex = i;
-        console.log(`📋 Cabeçalho encontrado na linha ${i}: "${lines[i]}"`);
+        isNewFormat = true;
+        console.log(`📋 NOVO FORMATO detectado na linha ${i}: "${lines[i]}"`);
+        break;
+      }
+      // Formato antigo: MARCA, ITEM, QT e pelo menos parte de DESCRIÇÃO
+      else if (upperLine.includes('MARCA') && upperLine.includes('ITEM') && 
+               upperLine.includes('QT') && (upperLine.includes('DESCRI') || upperLine.includes('DESCRIÇÃO'))) {
+        headerIndex = i;
+        isNewFormat = false;
+        console.log(`📋 FORMATO ANTIGO detectado na linha ${i}: "${lines[i]}"`);
         break;
       }
     }
@@ -146,7 +159,28 @@ export class FileParsingService {
       const simplifiedMatch = line.split(';').map(item => item.trim());
       
       if (simplifiedMatch && simplifiedMatch.length >= 4) {
-        const [marca, item, quantidade, descricao, material, peso] = simplifiedMatch;
+        let tag = '';
+        let posicao = '';
+        const quantidade = simplifiedMatch[2];
+        const descricao = simplifiedMatch[3];
+        const material = simplifiedMatch[4] || 'MATERIAL';
+        const peso = simplifiedMatch[5] || '0';
+        
+        if (isNewFormat) {
+          // Novo formato: CONJUNTO;TAG;QT.;DESCRIÇÃO PERFIL;MATERIAL;PESO
+          const conjunto = simplifiedMatch[0]; // CONJUNTO → tag
+          const tagField = simplifiedMatch[1];  // TAG → posição
+          tag = conjunto;
+          posicao = tagField;
+          console.log(`📋 Novo formato - CONJUNTO: "${conjunto}" → tag, TAG: "${tagField}" → posição`);
+        } else {
+          // Formato antigo: MARCA;ITEM;QT.;DESCRIÇÃO;MATERIAL;PESO
+          const marca = simplifiedMatch[0];
+          const item = simplifiedMatch[1];
+          tag = marca;      // MARCA → tag
+          posicao = item;   // ITEM → posição
+          console.log(`📋 Formato antigo - MARCA: "${marca}" → tag, ITEM: "${item}" → posição`);
+        }
         
         // Extrair perfil da descrição (somente até o segundo X)
         const perfil = this.extractPerfilFromDescription(descricao);
@@ -154,16 +188,19 @@ export class FileParsingService {
         // Extrair comprimento da descrição (após o segundo X)
         const comprimento = this.extractLengthFromDescription(descricao);
         
-        const tagCompleta = `${marca}-${item}`;
+        // Converter quantidade corretamente
+        const quantidadeNum = parseInt(quantidade.replace(/[^\d]/g, '')) || 1;
+        
+        const tagCompleta = `${tag}-${posicao}`;
         const piece: any = {
-          id: `autocad-simp-${marca}-${item}-${Date.now()}`,
+          id: `autocad-simp-${tag}-${posicao}-${Date.now()}`,
           length: comprimento,
-          quantity: parseInt(quantidade),
+          quantity: quantidadeNum, // Garantir que quantidade seja processada corretamente
           obra,
-          tag: marca,    // MARCA vira tag
-          posicao: item, // ITEM vira posição da peça
+          tag: tag,       // Mapeamento correto conforme formato
+          posicao: posicao, // Mapeamento correto conforme formato
           perfil,
-          material: material || 'MATERIAL',
+          material: material,
           peso: peso ? parseFloat(peso.replace(',', '.')) : 0,
           tagCompleta,
           dimensoes: {
@@ -173,9 +210,8 @@ export class FileParsingService {
         };
         
         pieces.push(piece);
-        console.log(`✅ Peça simplificada: ${tagCompleta} - ${piece.length}mm - Qtd: ${piece.quantity}`);
-        console.log(`   MARCA: "${marca}" -> tag: "${piece.tag}"`);
-        console.log(`   ITEM: "${item}" -> posição: "${piece.posicao}"`);
+        console.log(`✅ Peça processada (${isNewFormat ? 'NOVO' : 'ANTIGO'}): ${tagCompleta} - ${piece.length}mm - Qtd: ${piece.quantity}`);
+        console.log(`   tag: "${piece.tag}", posição: "${piece.posicao}"`);
         console.log(`   DESCRIÇÃO: "${descricao}" -> perfil: "${piece.perfil}" (${comprimento}mm)`);
         console.log(`   ---`);
       } else {
@@ -288,8 +324,8 @@ export class FileParsingService {
   }
 
   static parseTXT(content: string): CutPiece[] {
-    // Verificar se é arquivo AutoCAD primeiro
-    if (content.includes('LM por Conjunto') || content.includes('OBRA:') || content.includes('MARCA') || content.includes('ITEM') || content.includes('DESCRIÇÃO') || content.includes('METALMAX')) {
+    // Verificar se é arquivo AutoCAD primeiro (incluindo novo formato)
+    if (content.includes('LM por Conjunto') || content.includes('OBRA:') || content.includes('MARCA') || content.includes('ITEM') || content.includes('CONJUNTO') || content.includes('TAG') || content.includes('DESCRIÇÃO') || content.includes('METALMAX')) {
       return this.parseAutoCADReport(content);
     }
     

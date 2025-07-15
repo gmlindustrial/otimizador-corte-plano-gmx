@@ -40,18 +40,22 @@ export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed, onProces
       
       if (pieces.length > 0) {
         // Mostrar estatísticas detalhadas
-        const conjuntos = [...new Set(pieces.map((p: any) => p.conjunto).filter(Boolean))];
+        const tags = [...new Set(pieces.map((p: any) => p.tag).filter(Boolean))];
+        const posicoes = [...new Set(pieces.map((p: any) => p.posicao).filter(Boolean))];
         const pages = [...new Set(pieces.map((p: any) => p.page).filter(Boolean))];
         const obra = (pieces[0] as any)?.obra || 'Não identificada';
+        const totalQuantidade = pieces.reduce((sum: number, p: any) => sum + (p.quantity || 1), 0);
         
         console.log(`📋 Arquivo processado com sucesso:
           - Obra: ${obra}
-          - Peças: ${pieces.length}
-          - Conjuntos: ${conjuntos.join(', ')}
+          - Peças únicas: ${pieces.length}
+          - Quantidade total: ${totalQuantidade}
+          - Tags: ${tags.slice(0, 5).join(', ')}${tags.length > 5 ? '...' : ''}
+          - Posições: ${posicoes.slice(0, 5).join(', ')}${posicoes.length > 5 ? '...' : ''}
           - Páginas: ${pages.join(', ')}`);
         
         onFileProcessed(pieces);
-        toast.success(`${pieces.length} peças encontradas no arquivo AutoCAD`);
+        toast.success(`${pieces.length} peças (${totalQuantidade} total) encontradas no arquivo AutoCAD`);
         setFile(null);
       } else {
         toast.warning('Nenhuma peça foi encontrada no arquivo');
