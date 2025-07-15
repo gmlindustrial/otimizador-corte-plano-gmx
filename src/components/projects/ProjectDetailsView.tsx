@@ -35,6 +35,7 @@ import { FileUploadDialog } from './FileUploadDialog';
 import { ProjectValidationAlert } from './ProjectValidationAlert';
 import { ProjectDuplicateManager } from './ProjectDuplicateManager';
 import { DeleteConfirmDialog } from '../management/DeleteConfirmDialog';
+import type { Project } from '@/pages/Index';
 
 interface Projeto {
   id: string;
@@ -81,6 +82,26 @@ export const ProjectDetailsView = ({
   const [deleting, setDeleting] = useState(false);
   const [showOptimizationDialog, setShowOptimizationDialog] = useState(false);
   const [viewResults, setViewResults] = useState<{ res: any; bar: number; id: string } | null>(null);
+
+  const mapProjetoToProject = (p: Projeto): Project => ({
+    id: (p as any).dados_projeto?.originalProjectId || p.id,
+    name: p.nome,
+    projectNumber: p.numero_projeto,
+    client: (p as any).clientes?.nome || (p as any).dados_projeto?.client || '',
+    obra: (p as any).obras?.nome || (p as any).dados_projeto?.obra || '',
+    enviarSobrasEstoque: p.enviar_sobras_estoque,
+    date: p.created_at,
+    tipoMaterial: (p as any).materiais?.tipo || (p as any).dados_projeto?.tipoMaterial || '',
+    lista: p.lista,
+    revisao: p.revisao,
+    turno: p.turno,
+    operador: (p as any).operadores?.nome || (p as any).dados_projeto?.operador || '',
+    aprovadorQA: (p as any).inspetores_qa?.nome || (p as any).dados_projeto?.aprovadorQA || '',
+    validacaoQA: p.validacao_qa,
+    qrCode: p.qr_code || ''
+  });
+
+  const projectForExport = mapProjetoToProject(project);
 
   useEffect(() => {
     loadProjectData();
@@ -694,7 +715,7 @@ export const ProjectDetailsView = ({
           onOpenChange={() => setViewResults(null)}
           results={viewResults?.res || null}
           barLength={viewResults?.bar || 0}
-          project={null}
+          project={projectForExport}
           optimizationId={viewResults?.id || null}
         />
         <DeleteConfirmDialog
