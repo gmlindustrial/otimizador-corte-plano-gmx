@@ -218,13 +218,13 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
       rows.push(['Data da Otimização:', new Date().toLocaleDateString('pt-BR')]);
       rows.push([]);
       rows.push(['=== VALIDAÇÕES ===']);
-      rows.push(['☐ Dimensões das barras conferidas']);
-      rows.push(['☐ Material correto selecionado']);
-      rows.push(['☐ TAGs das peças verificadas']);
-      rows.push(['☐ TAGs organizados corretamente']);
-      rows.push(['☐ Primeira peça cortada e validada']);
-      rows.push(['☐ Relatório aprovado pelo operador']);
-      rows.push(['☐ Assinatura do inspetor QA']);
+      rows.push(['□ Dimensões das barras conferidas']);
+      rows.push(['□ Material correto selecionado']);
+      rows.push(['□ TAGs das peças verificadas']);
+      rows.push(['□ TAGs organizados corretamente']);
+      rows.push(['□ Primeira peça cortada e validada']);
+      rows.push(['□ Relatório aprovado pelo operador']);
+      rows.push(['□ Assinatura do inspetor QA']);
 
       // Converter para CSV com encoding UTF-8 e separador adequado para Excel brasileiro
       const BOM = '\uFEFF'; // Byte Order Mark para UTF-8

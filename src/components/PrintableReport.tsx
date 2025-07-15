@@ -274,11 +274,10 @@ export const PrintableReport = ({ results, barLength, project, pieces, mode = 'c
                         <thead className="bg-gray-100">
                           <tr>
                             <th className="border border-gray-300 px-1 py-1">Seq.</th>
-                            <th className="border border-gray-300 px-1 py-1">TAG</th>
+                            <th className="border border-gray-300 px-1 py-1">TAG/Pos.</th>
                             <th className="border border-gray-300 px-1 py-1">Comprimento</th>
                             <th className="border border-gray-300 px-1 py-1">Conjunto</th>
                             <th className="border border-gray-300 px-1 py-1">Perfil</th>
-                            <th className="border border-gray-300 px-1 py-1">Posição</th>
                             <th className="border border-gray-300 px-1 py-1">Status</th>
                             <th className="border border-gray-300 px-1 py-1">Obs.</th>
                           </tr>
@@ -288,7 +287,7 @@ export const PrintableReport = ({ results, barLength, project, pieces, mode = 'c
                             <tr key={pieceIndex}>
                               <td className="border border-gray-300 px-1 py-1 text-center">{pieceIndex + 1}</td>
                               <td className="border border-gray-300 px-1 py-1 font-mono text-center">
-                                {piece.tag || `P${pieceIndex + 1}`}
+                                {piece.tag || `P${pieceIndex + 1}`} ({piece.posicao || '-'})
                               </td>
                               <td className="border border-gray-300 px-1 py-1 font-mono text-center">{piece.length}mm</td>
                               <td className="border border-gray-300 px-1 py-1 text-center text-xs">
@@ -296,9 +295,6 @@ export const PrintableReport = ({ results, barLength, project, pieces, mode = 'c
                               </td>
                               <td className="border border-gray-300 px-1 py-1 text-center text-xs">
                                 {piece.perfil || '-'}
-                              </td>
-                              <td className="border border-gray-300 px-1 py-1 text-center text-xs">
-                                {piece.posicao || '-'}
                               </td>
                               <td className="border border-gray-300 px-1 py-1 text-center"></td>
                               <td className="border border-gray-300 px-1 py-1 text-center"></td>
@@ -310,7 +306,6 @@ export const PrintableReport = ({ results, barLength, project, pieces, mode = 'c
                               <td className="border border-gray-300 px-1 py-1 text-center">-</td>
                               <td className="border border-gray-300 px-1 py-1 font-mono text-center text-red-600">{bar.waste}mm</td>
                               <td className="border border-gray-300 px-1 py-1 text-center">Descarte</td>
-                              <td className="border border-gray-300 px-1 py-1 text-center">-</td>
                               <td className="border border-gray-300 px-1 py-1 text-center">-</td>
                               <td className="border border-gray-300 px-1 py-1 text-center"></td>
                               <td className="border border-gray-300 px-1 py-1 text-center"></td>
@@ -365,7 +360,7 @@ export const PrintableReport = ({ results, barLength, project, pieces, mode = 'c
                     <td className="border border-gray-300 p-2 text-center">{(bar.totalUsed / 1000).toFixed(2)}m</td>
                     <td className="border border-gray-300 p-2 text-center">{(bar.waste / 1000).toFixed(3)}m</td>
                     <td className="border border-gray-300 p-2 text-center">{((bar.totalUsed / barLength) * 100).toFixed(1)}%</td>
-                    <td className="border border-gray-300 p-2 text-center">☐</td>
+                <td className="border border-gray-300 p-2 text-center">□</td>
                   </tr>
                 );
               })}
@@ -385,14 +380,14 @@ export const PrintableReport = ({ results, barLength, project, pieces, mode = 'c
           <div className="mt-6 p-4 border rounded">
             <h3 className="font-semibold mb-3">Check-list do Operador</h3>
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div>☐ Material conferido e correto</div>
-              <div>☐ Barras verificadas e posicionadas</div>
-              <div>☐ TAGs das peças conferidas</div>
-              <div>☐ Conjuntos organizados por prioridade</div>
-              <div>☐ Primeira peça cortada e validada</div>
-              <div>☐ Dimensões conferidas com padrão</div>
-              <div>☐ Sobras identificadas e separadas</div>
-              <div>☐ Relatório validado pelo inspetor QA</div>
+              <div>□ Material conferido e correto</div>
+              <div>□ Barras verificadas e posicionadas</div>
+              <div>□ TAGs das peças conferidas</div>
+              <div>□ Conjuntos organizados por prioridade</div>
+              <div>□ Primeira peça cortada e validada</div>
+              <div>□ Dimensões conferidas com padrão</div>
+              <div>□ Sobras identificadas e separadas</div>
+              <div>□ Relatório validado pelo inspetor QA</div>
             </div>
           </div>
         </div>

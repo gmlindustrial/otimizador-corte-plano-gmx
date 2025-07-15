@@ -531,7 +531,7 @@ export const FullscreenReportViewer = ({
                                     size="sm"
                                     onClick={() => togglePieceCheck(currentBar.barIndex, piece)}
                                   >
-                                    {isChecked ? <Check className="w-4 h-4" /> : '☐'}
+                                    {isChecked ? <Check className="w-4 h-4" /> : '□'}
                                   </Button>
                                 </td>
                                 <td className="border border-gray-300 px-4 py-3">

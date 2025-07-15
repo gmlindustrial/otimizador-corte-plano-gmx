@@ -34,35 +34,7 @@ export class PDFReportService {
   }
 
   private static addLegend(doc: jsPDF, currentY: number): number {
-    // Legenda de cores e indicadores
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Legenda de Identificação', 20, currentY);
-    currentY += 8;
-
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    
-    // Cores das barras
-    doc.text('Código de Cores:', 20, currentY);
-    currentY += 4;
-    doc.text('• Verde: Barra de sobra reutilizada', 25, currentY);
-    currentY += 4;
-    doc.text('• Azul: Barra nova', 25, currentY);
-    currentY += 4;
-    doc.text('• Cinza: Desperdício/Sobra', 25, currentY);
-    currentY += 6;
-
-    // Indicadores
-    doc.text('Indicadores:', 20, currentY);
-    currentY += 4;
-    doc.text('• NOVA: Material novo do estoque', 25, currentY);
-    currentY += 4;
-    doc.text('• SOBRA: Material reutilizado (localização indicada)', 25, currentY);
-    currentY += 4;
-    doc.text('• ♻: Símbolo de reutilização', 25, currentY);
-    currentY += 10;
-
+    // Mantido para compatibilidade mas não utilizado
     return currentY;
   }
 
@@ -94,9 +66,6 @@ export class PDFReportService {
     doc.text(`Barras SOBRA: ${sobraCount}`, 100, currentY + 5);
     
     currentY += 25;
-
-    // Adicionar legenda
-    currentY = this.addLegend(doc, currentY);
 
     // Resumo por Conjunto
     const conjuntoSummary = new Map<string, { count: number; totalLength: number; barras: Set<number> }>();
@@ -177,11 +146,10 @@ export class PDFReportService {
 
       // Tabela de peças
       doc.text('Seq.', 20, currentY);
-      doc.text('TAG', 30, currentY);
+      doc.text('TAG/Pos.', 30, currentY);
       doc.text('Comprimento', 55, currentY);
       doc.text('Conjunto', 85, currentY);
       doc.text('Perfil', 110, currentY);
-      doc.text('Posição', 135, currentY);
       doc.text('Status', 155, currentY);
       doc.text('Obs.', 175, currentY);
       currentY += 5;
@@ -198,11 +166,10 @@ export class PDFReportService {
         }
 
         doc.text(`${pieceIndex + 1}`, 20, currentY);
-        doc.text(piece.tag || `P${pieceIndex + 1}`, 30, currentY);
+        doc.text(`${piece.tag || `P${pieceIndex + 1}`} (${piece.posicao || '-'})`, 30, currentY);
         doc.text(`${piece.length || 0}mm`, 55, currentY);
         doc.text(piece.conjunto || 'Manual', 85, currentY);
         doc.text(piece.perfil || '-', 110, currentY);
-        doc.text(piece.posicao || '-', 135, currentY);
         doc.text('', 155, currentY); // Status vazio
         doc.text('', 175, currentY); // Observação vazia
         
@@ -220,7 +187,6 @@ export class PDFReportService {
         doc.text(`${bar.waste}mm`, 55, currentY);
         doc.text(bar.type === 'leftover' ? 'Sobra da Sobra' : 'Descarte', 85, currentY);
         doc.text('-', 110, currentY);
-        doc.text('-', 135, currentY);
         doc.text('', 155, currentY);
         doc.text('', 175, currentY);
         doc.setFont('helvetica', 'normal');
@@ -270,10 +236,7 @@ export class PDFReportService {
     doc.text(`Barras SOBRA: ${sobraCount}`, 100, currentY);
     currentY += 15;
 
-    // Adicionar legenda compacta
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Legenda: NOVA=Material novo | SOBRA=Reutilizado | ♻=Economia', 20, currentY);
+    // Espaço antes da lista de barras
     currentY += 10;
 
     // Processar barras em grupos para múltiplas páginas
@@ -353,11 +316,10 @@ export class PDFReportService {
         doc.setFontSize(8);
         doc.setFont('helvetica', 'bold');
         doc.text('Seq.', 20, currentY);
-        doc.text('TAG', 30, currentY);
+        doc.text('TAG/Pos.', 30, currentY);
         doc.text('Comp.', 55, currentY);
         doc.text('Conj.', 80, currentY);
         doc.text('Perfil', 105, currentY);
-        doc.text('Pos.', 130, currentY);
         doc.text('Status', 150, currentY);
         doc.text('Obs.', 170, currentY);
         if (bar.type === 'leftover') {
@@ -373,11 +335,10 @@ export class PDFReportService {
         doc.setFont('helvetica', 'normal');
         bar.pieces.forEach((piece: any, pieceIndex) => {
           doc.text(`${pieceIndex + 1}`, 20, currentY);
-          doc.text(piece.tag || `P${pieceIndex + 1}`, 30, currentY);
+          doc.text(`${piece.tag || `P${pieceIndex + 1}`} (${piece.posicao || '-'})`, 30, currentY);
           doc.text(`${piece.length || 0}mm`, 55, currentY);
           doc.text(piece.conjunto || 'Manual', 80, currentY);
           doc.text(piece.perfil || '-', 105, currentY);
-          doc.text(piece.posicao || '-', 130, currentY);
           doc.text('', 150, currentY);
           doc.text('', 170, currentY);
           if (bar.type === 'leftover') {
@@ -393,7 +354,6 @@ export class PDFReportService {
           doc.text(`${bar.waste}mm`, 55, currentY);
           doc.text(bar.type === 'leftover' ? 'Sobra da Sobra' : 'Descarte', 80, currentY);
           doc.text('-', 105, currentY);
-          doc.text('-', 130, currentY);
           doc.text('', 150, currentY);
           doc.text('', 170, currentY);
           doc.setFont('helvetica', 'normal');
@@ -447,7 +407,7 @@ export class PDFReportService {
       doc.text(conjuntos.size > 0 ? Array.from(conjuntos).join(',').substring(0, 8) : 'Manual', 70, currentY);
       doc.text(`${((bar.totalUsed / barLength) * 100).toFixed(1)}%`, 100, currentY);
       doc.text(`${(bar.waste / 1000).toFixed(3)}m`, 130, currentY);
-      doc.text('☐', 150, currentY);
+      doc.text('□', 150, currentY);
       currentY += 4;
     });
 
@@ -470,14 +430,14 @@ export class PDFReportService {
     doc.setFontSize(8);
     doc.setFont('helvetica', 'normal');
     const checklist = [
-      '☐ Material conferido e correto',
-      '☐ Barras verificadas e posicionadas',
-      '☐ TAGs das peças conferidas',
-      '☐ Conjuntos organizados por prioridade',
-      '☐ Primeira peça cortada e validada',
-      '☐ Dimensões conferidas com padrão',
-      '☐ Sobras identificadas e separadas',
-      '☐ Relatório validado pelo inspetor QA'
+      '□ Material conferido e correto',
+      '□ Barras verificadas e posicionadas',
+      '□ TAGs das peças conferidas',
+      '□ Conjuntos organizados por prioridade',
+      '□ Primeira peça cortada e validada',
+      '□ Dimensões conferidas com padrão',
+      '□ Sobras identificadas e separadas',
+      '□ Relatório validado pelo inspetor QA'
     ];
 
     checklist.forEach((item, index) => {
