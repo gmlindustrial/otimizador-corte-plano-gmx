@@ -524,12 +524,7 @@ export const ProjectDetailsView = ({
                                         className="mt-1 scale-110"
                                       />
                                       <div className="space-y-2">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-sm font-semibold text-gray-600">Qtd:</span>
-                                            <span className="text-sm text-gray-800 bg-blue-50 px-2 py-1 rounded">
-                                              {piece.quantidade}
-                                            </span>
-                                          </div>
+                                        
                                         {piece.perfil && (
                                           <div className="flex items-center gap-2">
                                             <span className="text-sm font-semibold text-gray-600">Perfil:</span>
@@ -557,6 +552,12 @@ export const ProjectDetailsView = ({
                                             <span className="text-sm font-semibold text-gray-600">Comprimento:</span>
                                             <span className="text-sm text-gray-800 bg-emerald-50 px-2 py-1 rounded">
                                               {piece.comprimento_mm}mm × {piece.quantidade}
+                                            </span>
+                                          </div>
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-sm font-semibold text-gray-600">Qtd:</span>
+                                            <span className="text-sm text-gray-800 bg-blue-50 px-2 py-1 rounded">
+                                              {piece.quantidade}
                                             </span>
                                           </div>
                                           {peso !== null && (
