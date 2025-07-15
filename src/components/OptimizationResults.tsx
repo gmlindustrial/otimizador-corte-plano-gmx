@@ -46,7 +46,7 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
 
   const handleExportPDF = async () => {
     try {
-      if (!pieces) {
+      if (!project) {
         toast({
           title: "Erro",
           description: "Dados do projeto não encontrados",
@@ -55,7 +55,7 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
         return;
       }
 
-      await PDFReportService.generateCompleteLinearReport(results, barLength, pieces);
+      await PDFReportService.generateCompleteLinearReport(results, barLength, project);
       
       toast({
         title: "PDF Exportado",
@@ -73,7 +73,7 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
 
   const handleExportSimplifiedPDF = async () => {
     try {
-      if (!pieces) {
+      if (!project) {
         toast({
           title: "Erro",
           description: "Dados do projeto não encontrados",
@@ -82,7 +82,7 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
         return;
       }
 
-      await PDFReportService.generateSimplifiedLinearReport(results, barLength, pieces);
+      await PDFReportService.generateSimplifiedLinearReport(results, barLength, project);
       
       toast({
         title: "PDF Simplificado Exportado",
