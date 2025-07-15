@@ -122,11 +122,28 @@ export const ProfileGroupingView = ({ projectId, pieces }: ProfileGroupingViewPr
 
               <div className="space-y-2">
                 <span className="font-medium text-sm">Peças:</span>
-                <div className="max-h-32 overflow-y-auto space-y-1">
+                <div className="max-h-40 overflow-y-auto space-y-2">
                   {group.pecas.map((peca) => (
-                    <div key={peca.id} className="flex justify-between text-sm bg-gray-50 p-2 rounded">
-                      <span>{peca.posicao}</span>
-                      <span>{peca.comprimento_mm}mm x {peca.quantidade}</span>
+                    <div key={peca.id} className="bg-gray-50 p-3 rounded border">
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="font-medium">Posição:</span> {peca.posicao}
+                        </div>
+                        <div>
+                          <span className="font-medium">Tag:</span> {peca.tag || 'N/A'}
+                        </div>
+                        <div>
+                          <span className="font-medium">Quantidade:</span> {peca.quantidade}
+                        </div>
+                        <div>
+                          <span className="font-medium">Comprimento:</span> {peca.comprimento_mm}mm
+                        </div>
+                        {peca.peso_por_metro && (
+                          <div className="col-span-2">
+                            <span className="font-medium">Peso:</span> {peca.peso_por_metro}kg/m
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
