@@ -243,279 +243,179 @@ export class PDFReportService {
     }
   }
 
-  static async generateSimplifiedLinearReport(results: OptimizationResult, barLength: number, project: Project): Promise<void> {
-    try {
-      const doc = new jsPDF();
-      let currentY = 55;
-      let pageNumber = 1;
-      const maxBarsPerPage = 4;
+  static async generateSimplifiedLinearReport(
+  results: OptimizationResult,
+  barLength: number,
+  project: Project
+): Promise<void> {
+  try {
+    const doc = new jsPDF();
+    let currentY = 55;
+    let pageNumber = 1;
 
-      this.addHeader(doc, project, 'Plano de Corte Simplificado - Produção', pageNumber);
+    this.addHeader(
+      doc,
+      project,
+      "Tabela de Corte - Produção Simplificada",
+      pageNumber
+    );
 
-    // Resumo Geral
+    // ==== INFORMAÇÕES DO PROJETO ====
     doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Resumo Geral', 20, currentY);
+    doc.setFont("helvetica", "bold");
+    doc.text("Informações da Lista", 20, currentY);
     currentY += 8;
 
     doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    // Calcular métricas de peças e peso
-    const totalPieces = results.bars.reduce((total, bar) => 
-      total + bar.pieces.reduce((barTotal, piece: any) => 
-        barTotal + (piece.quantidade || 1), 0), 0);
-    
-    const totalWeight = results.bars.reduce((total, bar) => 
-      total + bar.pieces.reduce((barTotal, piece: any) => 
-        barTotal + ((piece.length / 1000) * (piece.peso_por_metro || 0) * (piece.quantidade || 1)), 0), 0);
+    doc.setFont("helvetica", "normal");
 
-    const cutPieces = results.bars.reduce((total, bar) => 
-      total + bar.pieces.filter((piece: any) => piece.status === 'cortado' || piece.cortado === true).length, 0);
+    const formatDate = (date: Date) => {
+      return date.toLocaleDateString("pt-BR");
+    };
 
-    const cutWeight = results.bars.reduce((total, bar) => 
-      total + bar.pieces
-        .filter((piece: any) => piece.status === 'cortado' || piece.cortado === true)
-        .reduce((barTotal, piece: any) => 
-          barTotal + ((piece.length / 1000) * (piece.peso_por_metro || 0) * (piece.quantidade || 1)), 0), 0);
+    const totalPieces = results.bars.reduce(
+      (total, bar) =>
+        total +
+        bar.pieces.reduce(
+          (barTotal, piece: any) => barTotal + (piece.quantidade || 1),
+          0
+        ),
+      0
+    );
 
-    doc.text(`Total de Barras: ${results.totalBars}`, 20, currentY);
-    doc.text(`Barras NOVAS: ${results.bars.filter((bar: any) => bar.type !== 'leftover').length}`, 100, currentY);
-    currentY += 5;
-    doc.text(`Eficiência: ${results.efficiency.toFixed(1)}%`, 20, currentY);
-    doc.text(`Barras SOBRA: ${results.bars.filter((bar: any) => bar.type === 'leftover').length}`, 100, currentY);
-    currentY += 5;
-    doc.text(`Total de Peças: ${totalPieces}`, 20, currentY);
-    doc.text(`Peso Total: ${totalWeight.toFixed(1)}kg`, 100, currentY);
-    currentY += 5;
-    doc.text(`Peças Cortadas: ${cutPieces}`, 20, currentY);
-    doc.text(`Peso Cortado: ${cutWeight.toFixed(1)}kg`, 100, currentY);
-    currentY += 5;
-    doc.text(`Desperdício: ${(results.totalWaste / 1000).toFixed(2)}m`, 20, currentY);
-    doc.text(`Material: ${(project as any).tipoMaterial || 'N/A'}`, 100, currentY);
-    currentY += 5;
-    doc.text(`Perfil: ${PDFReportService.extractProfiles(results) || 'N/A'}`, 20, currentY);
-    currentY += 15;
+    const totalWeight = results.bars.reduce(
+      (total, bar) =>
+        total +
+        bar.pieces.reduce(
+          (barTotal, piece: any) =>
+            barTotal +
+            (piece.length / 1000) *
+              (piece.peso_por_metro || 0) *
+              (piece.quantidade || 1),
+          0
+        ),
+      0
+    );
 
-    // Espaço antes da lista de barras
-    currentY += 10;
-
-    // Processar barras em grupos para múltiplas páginas
-    const totalBars = results.bars.length;
-    let processedBars = 0;
-
-    while (processedBars < totalBars) {
-      const barsToProcess = Math.min(maxBarsPerPage, totalBars - processedBars);
-      const currentBars = results.bars.slice(processedBars, processedBars + barsToProcess);
-
-      // Se não é a primeira página, adicionar nova página
-      if (processedBars > 0) {
-        doc.addPage();
-        pageNumber++;
-        this.addHeader(doc, project, 'Plano de Corte Simplificado - Produção', pageNumber);
-        currentY = 55;
-      }
-
-      // Título da seção
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.text(`Barras ${processedBars + 1} a ${processedBars + barsToProcess} de ${totalBars}`, 20, currentY);
-      currentY += 10;
-
-      // Processar cada barra do grupo atual
-      currentBars.forEach((bar: any, localIndex) => {
-        const globalBarIndex = processedBars + localIndex;
-        
-        // Verificar se há espaço suficiente para a barra
-        if (currentY > 220) {
-          doc.addPage();
-          pageNumber++;
-          this.addHeader(doc, project, 'Plano de Corte Simplificado - Produção', pageNumber);
-          currentY = 55;
-        }
-
-        // Cabeçalho da barra com indicador
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'bold');
-        
-        // Identificar TAGs na barra
-        const tagsNaBarra = new Set((bar.pieces as any[])
-          .filter(p => p.tag)
-          .map(p => p.tag));
-        
-        const barType = bar.type === 'leftover' ? 'SOBRA' : 'NOVA';
-        let barTitle = `Barra ${globalBarIndex + 1} - ${barType}`;
-        
-        if (tagsNaBarra.size > 0) {
-          barTitle += ` - TAGs: ${Array.from(tagsNaBarra).join(', ')}`;
-        }
-        
-        doc.text(barTitle, 20, currentY);
-        currentY += 5;
-
-        // Informações da barra
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Eficiência: ${((bar.totalUsed / barLength) * 100).toFixed(1)}%`, 20, currentY);
-        doc.text(`Utilizado: ${(bar.totalUsed / 1000).toFixed(2)}m`, 70, currentY);
-        doc.text(`Sobra: ${(bar.waste / 1000).toFixed(3)}m`, 120, currentY);
-        
-        // Localização ou economia
-        if (bar.type === 'leftover') {
-          if (bar.location) {
-            doc.text(`Local: ${bar.location}`, 20, currentY + 4);
-          }
-          if (bar.economySaved) {
-            doc.text(`Economia: R$ ${bar.economySaved.toFixed(2)}`, 70, currentY + 4);
-          }
-          currentY += 4;
-        }
-        
-        currentY += 8;
-
-        // Tabela de peças
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Seq.', 20, currentY);
-        doc.text('TAG', 30, currentY);
-        doc.text('Pos.', 45, currentY);
-        doc.text('Qtd.', 60, currentY);
-        doc.text('Comp.', 70, currentY);
-        doc.text('Perfil', 105, currentY);
-        doc.text('Status', 140, currentY);
-        doc.text('Obs.', 170, currentY);
-        if (bar.type === 'leftover') {
-          doc.text('♻', 188, currentY);
-        }
-        currentY += 3;
-
-        // Linha da tabela
-        doc.line(20, currentY, 190, currentY);
-        currentY += 3;
-
-        // Peças da barra
-        doc.setFont('helvetica', 'normal');
-        bar.pieces.forEach((piece: any, pieceIndex) => {
-          doc.text(`${pieceIndex + 1}`, 20, currentY);
-          doc.text(piece.tag || `P${pieceIndex + 1}`, 30, currentY);
-          doc.text(`${piece.posicao || '-'}`, 45, currentY);
-          doc.text(`${piece.quantidade || 1}`, 60, currentY);
-          doc.text(`${piece.length || 0}mm`, 70, currentY);
-          doc.text(piece.perfil || '-', 105, currentY);
-          doc.text(piece.status === 'cortado' || piece.cortado ? '✓' : '□', 140, currentY);
-          doc.text('', 170, currentY);
-          if (bar.type === 'leftover') {
-            doc.text('♻', 188, currentY);
-          }
-          currentY += 4;
-        });
-
-        // Sobra se existir
-        if (bar.waste > 0) {
-          doc.setFont('helvetica', 'bold');
-          doc.text('Sobra', 20, currentY);
-          doc.text('-', 30, currentY);
-          doc.text('-', 45, currentY);
-          doc.text('0', 60, currentY);
-          doc.text(`${bar.waste}mm`, 70, currentY);
-          doc.text(bar.type === 'leftover' ? 'Sobra da Sobra' : 'Descarte', 105, currentY);
-          doc.text('', 140, currentY);
-          doc.text('', 170, currentY);
-          doc.setFont('helvetica', 'normal');
-          currentY += 4;
-        }
-
-        currentY += 8;
-      });
-
-      processedBars += barsToProcess;
-    }
-
-    // Página final com resumo e checklist
-    doc.addPage();
-    pageNumber++;
-    this.addHeader(doc, project, 'Plano de Corte Simplificado - Produção', pageNumber);
-    currentY = 55;
-
-    // Resumo Final
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Resumo Final e Controle', 20, currentY);
-    currentY += 10;
-
-    // Tabela resumo
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Barra', 20, currentY);
-    doc.text('Tipo', 35, currentY);
-    doc.text('Peças', 50, currentY);
-    doc.text('Eficiência', 85, currentY);
-    doc.text('Sobra', 115, currentY);
-    doc.text('Status', 140, currentY);
-    currentY += 5;
-
-    doc.line(20, currentY, 160, currentY);
-    currentY += 3;
-
-    doc.setFont('helvetica', 'normal');
-    results.bars.forEach((bar: any, index) => {
-      const barType = bar.type === 'leftover' ? 'SOBRA' : 'NOVA';
-
-      doc.text(`${index + 1}`, 20, currentY);
-      doc.text(barType, 35, currentY);
-      doc.text(`${bar.pieces.length}`, 50, currentY);
-      doc.text(`${((bar.totalUsed / barLength) * 100).toFixed(1)}%`, 85, currentY);
-      doc.text(`${(bar.waste / 1000).toFixed(3)}m`, 115, currentY);
-      doc.text('□', 140, currentY);
-      currentY += 4;
-    });
-
-    // Totais
-    currentY += 5;
-    doc.setFont('helvetica', 'bold');
-    doc.text('TOTAL', 20, currentY);
-    doc.text(`${results.totalBars}`, 35, currentY);
-    doc.text(`${results.bars.reduce((sum, bar) => sum + bar.pieces.length, 0)}`, 50, currentY);
-    doc.text(`${results.efficiency.toFixed(1)}%`, 85, currentY);
-    doc.text(`${(results.totalWaste / 1000).toFixed(2)}m`, 115, currentY);
-    currentY += 15;
-
-    // Check-list do operador
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Check-list do Operador', 20, currentY);
-    currentY += 8;
-
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    const checklist = [
-      '□ Material conferido e correto',
-      '□ Barras verificadas e posicionadas',
-      '□ TAGs das peças conferidas',
-      '□ Conjuntos organizados por prioridade',
-      '□ Primeira peça cortada e validada',
-      '□ Dimensões conferidas com padrão',
-      '□ Sobras identificadas e separadas',
-      '□ Relatório validado pelo inspetor QA'
+    const headerFields = [
+      {
+        label: "Material/Perfil",
+        value:
+          (project as any).tipoMaterial ||
+          PDFReportService.extractProfiles(results) ||
+          "-",
+      },
+      { label: "Qtd Barras", value: results.totalBars },
+      { label: "Qtd Peças", value: totalPieces },
+      { label: "Peso Total", value: `${totalWeight.toFixed(2)}kg` },
     ];
 
-    checklist.forEach((item, index) => {
-      if (index < 4) {
-        doc.text(item, 20, currentY);
-      } else {
-        doc.text(item, 110, currentY - (4 * 5));
-      }
-      if (index < 4) currentY += 5;
+    headerFields.forEach(({ label, value }, i) => {
+      const x = i % 2 === 0 ? 20 : 105;
+      if (i % 2 === 0 && i !== 0) currentY += 6;
+      doc.text(`${label}:`, x, currentY);
+      doc.setFont("helvetica", "bold");
+      doc.text(`${value}`, x + 35, currentY);
+      doc.setFont("helvetica", "normal");
     });
 
-      this.addFooter(doc, project);
-      doc.save(`plano-corte-${project.projectNumber}-${new Date().toISOString().split('T')[0]}.pdf`);
-    } catch (error) {
-      console.error('Erro ao gerar PDF simplificado:', error);
-      alert('Erro ao gerar PDF simplificado. Verifique os dados e tente novamente.');
-      throw error;
-    }
-  }
+    currentY += 12;
 
+    // ==== TABELA DE PEÇAS ====
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("Tabela Geral de Peças", 20, currentY);
+    currentY += 10;
+
+    // Cabeçalho ajustado
+    const headers = [
+      "Barra", "Tipo", "TAG", "Pos", "Qtd", "Comp", "Peso", "Sobra", "Status", "QC", "Obs"
+    ];
+    const colWidths = [12, 14, 15, 13, 12, 20, 20, 20, 15, 15, 20];
+    const colStarts: number[] = [];
+
+    // calcular posição inicial de cada coluna
+    colWidths.reduce((acc, width, i) => {
+      colStarts[i] = acc;
+      return acc + width;
+    }, 20);
+
+    const rowHeight = 6;
+
+    const drawTableRow = (values: string[], y: number, isHeader = false) => {
+      values.forEach((text, i) => {
+        const x = colStarts[i];
+        const w = colWidths[i];
+
+        // Caixa
+        doc.rect(x, y, w, rowHeight);
+
+        // Texto centralizado verticalmente
+        doc.setFont("helvetica", isHeader ? "bold" : "normal");
+        doc.setFontSize(isHeader ? 9 : 9);
+        doc.text(text, x + 1.5, y + 4);
+      });
+    };
+
+    drawTableRow(headers, currentY, true);
+    currentY += rowHeight;
+
+    results.bars.forEach((bar: any, barIndex: number) => {
+      const barType = bar.type === "leftover" ? "Sobra" : "Nova";
+      const wasteFormatted = `${(bar.waste / 1000).toFixed(2)}m`;
+
+      bar.pieces.forEach((piece: any, pieceIndex: number) => {
+        if (currentY + rowHeight > 280) {
+          doc.addPage();
+          pageNumber++;
+          this.addHeader(
+            doc,
+            project,
+            "Tabela de Corte - Produção Simplificada",
+            pageNumber
+          );
+          currentY = 55;
+          drawTableRow(headers, currentY, true);
+          currentY += rowHeight;
+        }
+
+        const peso = (
+          (piece.length / 1000) *
+          (piece.peso_por_metro || 0) *
+          (piece.quantidade || 1)
+        ).toFixed(2);
+
+        const row = [
+          `${barIndex + 1}`,
+          barType,
+          piece.tag || `P${pieceIndex + 1}`,
+          piece.posicao || "-",
+          `${piece.quantidade || 1}`,
+          `${piece.length || 0}mm`,
+          `${peso}kg`,
+          wasteFormatted,
+          "", "", ""
+        ];
+
+        drawTableRow(row, currentY);
+        currentY += rowHeight;
+      });
+    });
+
+    this.addFooter(doc, project);
+    doc.save(
+      `tabela-corte-${project.projectNumber}-${
+        new Date().toISOString().split("T")[0]
+      }.pdf`
+    );
+  } catch (error) {
+    console.error("Erro ao gerar PDF simplificado:", error);
+    alert("Erro ao gerar PDF simplificado. Verifique os dados e tente novamente.");
+    throw error;
+  }
+}
+
+ 
   static async generateLinearReport(results: OptimizationResult, barLength: number, project: Project): Promise<void> {
     return this.generateCompleteLinearReport(results, barLength, project);
   }
@@ -651,7 +551,7 @@ export class PDFReportService {
     // Rodapé
     const pageHeight = doc.internal.pageSize.height;
     doc.setFontSize(8);
-    doc.text('© Sistema de Otimização - Elite Soldas', 105, pageHeight - 10, { align: 'center' });
+    doc.text('© Sistema de Otimização - GMX Industrial', 105, pageHeight - 10, { align: 'center' });
 
     doc.save(`relatorio-materiais-${new Date().toISOString().split('T')[0]}.pdf`);
   }
