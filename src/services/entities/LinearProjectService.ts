@@ -242,47 +242,9 @@ export class LinearProjectService extends BaseService<Projeto> {
   }
 
   convertFromDatabase(dbProject: Projeto): LinearProjectData | null {
-    try {
-      const dadosProjeto = dbProject.dados_projeto as any;
-      
-      if (!dadosProjeto || dadosProjeto.type !== 'linear') {
-        return null;
-      }
-
-      // Use foreign key relationships if available, fallback to JSON data
-      const clientName = (dbProject as any).clientes?.nome || dadosProjeto.client || '';
-      const obraName = (dbProject as any).obras?.nome || dadosProjeto.obra || '';
-      const materialType = (dbProject as any).materiais?.tipo || dadosProjeto.tipoMaterial || '';
-      const operadorName = (dbProject as any).operadores?.nome || dadosProjeto.operador || '';
-      const inspetorName = (dbProject as any).inspetores_qa?.nome || dadosProjeto.aprovadorQA || '';
-
-      const project: Project = {
-        id: dadosProjeto.originalProjectId || dbProject.id,
-        name: dbProject.nome,
-        projectNumber: dbProject.numero_projeto,
-        client: clientName,
-        obra: obraName,
-        lista: dbProject.lista,
-        revisao: dbProject.revisao,
-        tipoMaterial: materialType,
-        operador: operadorName,
-        turno: dbProject.turno,
-        aprovadorQA: inspetorName,
-        validacaoQA: dbProject.validacao_qa,
-        enviarSobrasEstoque: dbProject.enviar_sobras_estoque,
-        qrCode: dbProject.qr_code || '',
-        date: dbProject.created_at
-      };
-
-      return {
-        project,
-        pieces: dadosProjeto.pieces || [],
-        barLength: dadosProjeto.barLength || 6000
-      };
-    } catch (error) {
-      console.error('Erro ao converter projeto do banco:', error);
-      return null;
-    }
+    // Since the simplified Projeto interface doesn't have dados_projeto,
+    // we can't convert from database to linear project data anymore
+    return null;
   }
 }
 

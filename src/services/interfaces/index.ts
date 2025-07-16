@@ -37,16 +37,6 @@ export interface Projeto extends BaseEntity {
   numero_projeto: string;
   cliente_id?: string;
   obra_id?: string;
-  material_id?: string;
-  operador_id?: string;
-  inspetor_id?: string;
-  lista: string;
-  revisao: string;
-  turno: string;
-  validacao_qa: boolean;
-  enviar_sobras_estoque: boolean;
-  qr_code?: string;
-  dados_projeto?: any;
 }
 
 export interface EstoqueSobra extends BaseEntity {

@@ -84,21 +84,21 @@ export const ProjectDetailsView = ({
   const [viewResults, setViewResults] = useState<{ res: any; bar: number; id: string } | null>(null);
 
   const mapProjetoToProject = (p: Projeto): Project => ({
-    id: (p as any).dados_projeto?.originalProjectId || p.id,
+    id: p.id,
     name: p.nome,
     projectNumber: p.numero_projeto,
-    client: (p as any).clientes?.nome || (p as any).dados_projeto?.client || '',
-    obra: (p as any).obras?.nome || (p as any).dados_projeto?.obra || '',
-    enviarSobrasEstoque: p.enviar_sobras_estoque,
+    client: (p as any).clientes?.nome || '',
+    obra: (p as any).obras?.nome || '',
+    enviarSobrasEstoque: false,
     date: p.created_at,
-    tipoMaterial: (p as any).materiais?.tipo || (p as any).dados_projeto?.tipoMaterial || '',
-    lista: p.lista,
-    revisao: p.revisao,
-    turno: p.turno,
-    operador: (p as any).operadores?.nome || (p as any).dados_projeto?.operador || '',
-    aprovadorQA: (p as any).inspetores_qa?.nome || (p as any).dados_projeto?.aprovadorQA || '',
-    validacaoQA: p.validacao_qa,
-    qrCode: p.qr_code || ''
+    tipoMaterial: '',
+    lista: '',
+    revisao: '',
+    turno: '',
+    operador: '',
+    aprovadorQA: '',
+    validacaoQA: false,
+    qrCode: ''
   });
 
   const projectForExport = mapProjetoToProject(project);
