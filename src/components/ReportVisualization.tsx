@@ -182,10 +182,10 @@ export const ReportVisualization = ({ results, barLength, project }: ReportVisua
                         <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Peça</th>
                         <th className="border border-gray-300 px-3 py-2 text-left font-semibold">TAG</th>
                         <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Posição</th>
-                        <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Quantidade</th>
-                        <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Peso</th>
+                        <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Quantidade</th>                  
                         <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Comprimento (mm)</th>
                         <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Perfil</th>
+                        <th className="border border-gray-300 px-3 py-2 text-left font-semibold">Peso</th>
                         <th className="border border-gray-300 px-3 py-2 text-left font-semibold">
                           {isLeftover ? 'Economia' : 'Status'}
                         </th>
@@ -229,11 +229,7 @@ export const ReportVisualization = ({ results, barLength, project }: ReportVisua
                               {piece.quantidade || 1}
                             </Badge>
                           </td>
-                           <td className="border border-gray-300 px-3 py-2 font-mono text-center">
-                            <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
-                              {piece.peso}
-                            </Badge>
-                          </td>
+                           
                           <td className="border border-gray-300 px-3 py-2 font-mono">{piece.length}</td>
                           
                           <td className="border border-gray-300 px-3 py-2">
@@ -245,6 +241,11 @@ export const ReportVisualization = ({ results, barLength, project }: ReportVisua
                             ) : (
                               <span className="text-gray-400 text-xs">-</span>
                             )}
+                          </td>
+                          <td className="border border-gray-300 px-3 py-2 font-mono text-center">
+                            <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
+                              {piece.peso}
+                            </Badge>
                           </td>
                           <td className="border border-gray-300 px-3 py-2 text-center">
                             {isLeftover ? (
