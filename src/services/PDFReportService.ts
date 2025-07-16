@@ -76,11 +76,13 @@ export class PDFReportService {
         barTotal + ((piece.length / 1000) * (piece.peso_por_metro || 0) * (piece.quantidade || 1)), 0), 0);
 
     const cutPieces = results.bars.reduce((total, bar) => 
-      total + bar.pieces.length, 0);
+      total + bar.pieces.filter((piece: any) => piece.status === 'cortado' || piece.cortado === true).length, 0);
 
     const cutWeight = results.bars.reduce((total, bar) => 
-      total + bar.pieces.reduce((barTotal, piece: any) => 
-        barTotal + ((piece.length / 1000) * (piece.peso_por_metro || 0)), 0), 0);
+      total + bar.pieces
+        .filter((piece: any) => piece.status === 'cortado' || piece.cortado === true)
+        .reduce((barTotal, piece: any) => 
+          barTotal + ((piece.length / 1000) * (piece.peso_por_metro || 0) * (piece.quantidade || 1)), 0), 0);
 
     doc.text(`Total de Barras: ${results.totalBars}`, 20, currentY);
     doc.text(`Barras NOVAS: ${results.bars.filter((bar: any) => bar.type !== 'leftover').length}`, 100, currentY);
@@ -178,8 +180,8 @@ export class PDFReportService {
       // Tabela de peças
       doc.text('Seq.', 20, currentY);
       doc.text('TAG', 30, currentY);
-      doc.text('Qtd.', 50, currentY);
-      doc.text('Pos.', 60, currentY);
+      doc.text('Pos.', 50, currentY);
+      doc.text('Qtd.', 65, currentY);
       doc.text('Comprimento', 75, currentY);
       doc.text('Perfil', 115, currentY);
       doc.text('Status', 155, currentY);
@@ -200,11 +202,11 @@ export class PDFReportService {
 
         doc.text(`${pieceIndex + 1}`, 20, currentY);
         doc.text(piece.tag || `P${pieceIndex + 1}`, 30, currentY);
-        doc.text(`${piece.quantidade || 1}`, 50, currentY);
-        doc.text(`${piece.posicao || '-'}`, 60, currentY);
+        doc.text(`${piece.posicao || '-'}`, 50, currentY);
+        doc.text(`${piece.quantidade || 1}`, 65, currentY);
         doc.text(`${piece.length || 0}mm`, 75, currentY);
         doc.text(piece.perfil || '-', 115, currentY);
-        doc.text('', 155, currentY); // Status vazio
+        doc.text(piece.status === 'cortado' || piece.cortado ? '✓' : '', 155, currentY); // Mostrar status cortado
         doc.text('', 175, currentY); // Observação vazia
         
         // Indicador de reutilização para sobras
@@ -219,8 +221,8 @@ export class PDFReportService {
         doc.setFont('helvetica', 'bold');
         doc.text('Sobra', 20, currentY);
         doc.text('-', 30, currentY);
-        doc.text('0', 50, currentY);
-        doc.text('-', 60, currentY);
+        doc.text('-', 50, currentY);
+        doc.text('0', 65, currentY);
         doc.text(`${bar.waste}mm`, 75, currentY);
         doc.text(bar.type === 'leftover' ? 'Sobra da Sobra' : 'Descarte', 115, currentY);
         doc.text('', 155, currentY);
@@ -268,11 +270,13 @@ export class PDFReportService {
         barTotal + ((piece.length / 1000) * (piece.peso_por_metro || 0) * (piece.quantidade || 1)), 0), 0);
 
     const cutPieces = results.bars.reduce((total, bar) => 
-      total + bar.pieces.length, 0);
+      total + bar.pieces.filter((piece: any) => piece.status === 'cortado' || piece.cortado === true).length, 0);
 
     const cutWeight = results.bars.reduce((total, bar) => 
-      total + bar.pieces.reduce((barTotal, piece: any) => 
-        barTotal + ((piece.length / 1000) * (piece.peso_por_metro || 0)), 0), 0);
+      total + bar.pieces
+        .filter((piece: any) => piece.status === 'cortado' || piece.cortado === true)
+        .reduce((barTotal, piece: any) => 
+          barTotal + ((piece.length / 1000) * (piece.peso_por_metro || 0) * (piece.quantidade || 1)), 0), 0);
 
     doc.text(`Total de Barras: ${results.totalBars}`, 20, currentY);
     doc.text(`Barras NOVAS: ${results.bars.filter((bar: any) => bar.type !== 'leftover').length}`, 100, currentY);
@@ -373,8 +377,8 @@ export class PDFReportService {
         doc.setFont('helvetica', 'bold');
         doc.text('Seq.', 20, currentY);
         doc.text('TAG', 30, currentY);
-        doc.text('Qtd.', 45, currentY);
-        doc.text('Pos.', 55, currentY);
+        doc.text('Pos.', 45, currentY);
+        doc.text('Qtd.', 60, currentY);
         doc.text('Comp.', 70, currentY);
         doc.text('Perfil', 105, currentY);
         doc.text('Status', 140, currentY);
@@ -393,11 +397,11 @@ export class PDFReportService {
         bar.pieces.forEach((piece: any, pieceIndex) => {
           doc.text(`${pieceIndex + 1}`, 20, currentY);
           doc.text(piece.tag || `P${pieceIndex + 1}`, 30, currentY);
-          doc.text(`${piece.quantidade || 1}`, 45, currentY);
-          doc.text(`${piece.posicao || '-'}`, 55, currentY);
+          doc.text(`${piece.posicao || '-'}`, 45, currentY);
+          doc.text(`${piece.quantidade || 1}`, 60, currentY);
           doc.text(`${piece.length || 0}mm`, 70, currentY);
           doc.text(piece.perfil || '-', 105, currentY);
-          doc.text('', 140, currentY);
+          doc.text(piece.status === 'cortado' || piece.cortado ? '✓' : '□', 140, currentY);
           doc.text('', 170, currentY);
           if (bar.type === 'leftover') {
             doc.text('♻', 188, currentY);
@@ -410,8 +414,8 @@ export class PDFReportService {
           doc.setFont('helvetica', 'bold');
           doc.text('Sobra', 20, currentY);
           doc.text('-', 30, currentY);
-          doc.text('0', 45, currentY);
-          doc.text('-', 55, currentY);
+          doc.text('-', 45, currentY);
+          doc.text('0', 60, currentY);
           doc.text(`${bar.waste}mm`, 70, currentY);
           doc.text(bar.type === 'leftover' ? 'Sobra da Sobra' : 'Descarte', 105, currentY);
           doc.text('', 140, currentY);

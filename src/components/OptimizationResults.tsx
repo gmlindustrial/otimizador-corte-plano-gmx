@@ -54,13 +54,15 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
 
   const calculateCutPieces = () => {
     return results.bars.reduce((total, bar) => 
-      total + bar.pieces.length, 0);
+      total + bar.pieces.filter((piece: any) => piece.status === 'cortado' || piece.cortado === true).length, 0);
   };
 
   const calculateCutWeight = () => {
     return results.bars.reduce((total, bar) => 
-      total + bar.pieces.reduce((barTotal, piece: any) => 
-        barTotal + ((piece.length / 1000) * (piece.peso_por_metro || 0)), 0), 0);
+      total + bar.pieces
+        .filter((piece: any) => piece.status === 'cortado' || piece.cortado === true)
+        .reduce((barTotal, piece: any) => 
+          barTotal + ((piece.length / 1000) * (piece.peso_por_metro || 0) * (piece.quantidade || 1)), 0), 0);
   };
 
   const totalPieces = calculateTotalPieces();
