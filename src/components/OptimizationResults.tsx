@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { OptimizationResult, Project, CutPiece } from '@/pages/Index';
-import { BarChart, Download, Printer, FileSpreadsheet, FileText, Wrench, Fullscreen, Recycle, MapPin, DollarSign, Leaf } from 'lucide-react';
+import { BarChart, Download, Printer, FileSpreadsheet, FileText, Wrench, Fullscreen, Recycle, MapPin, DollarSign, Leaf, Package } from 'lucide-react';
 import { ReportVisualization } from './ReportVisualization';
 import { PrintableReport } from './PrintableReport';
 import { FullscreenReportViewer } from './reports/FullscreenReportViewer';
@@ -38,6 +38,35 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
   // Cast for accessing sustainability properties if they exist
   const extendedResults = results as ExtendedOptimizationResult;
   const hasSustainabilityData = extendedResults.sustainability;
+
+  // Cálculos para as novas métricas de peças e peso
+  const calculateTotalPieces = () => {
+    return results.bars.reduce((total, bar) => 
+      total + bar.pieces.reduce((barTotal, piece: any) => 
+        barTotal + (piece.quantidade || 1), 0), 0);
+  };
+
+  const calculateTotalWeight = () => {
+    return results.bars.reduce((total, bar) => 
+      total + bar.pieces.reduce((barTotal, piece: any) => 
+        barTotal + ((piece.length / 1000) * (piece.peso_por_metro || 0) * (piece.quantidade || 1)), 0), 0);
+  };
+
+  const calculateCutPieces = () => {
+    return results.bars.reduce((total, bar) => 
+      total + bar.pieces.length, 0);
+  };
+
+  const calculateCutWeight = () => {
+    return results.bars.reduce((total, bar) => 
+      total + bar.pieces.reduce((barTotal, piece: any) => 
+        barTotal + ((piece.length / 1000) * (piece.peso_por_metro || 0)), 0), 0);
+  };
+
+  const totalPieces = calculateTotalPieces();
+  const totalWeight = calculateTotalWeight();
+  const cutPieces = calculateCutPieces();
+  const cutWeight = calculateCutWeight();
 
   const handlePrint = (mode: 'complete' | 'simplified') => {
     setPrintMode(mode);
@@ -190,6 +219,14 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
         ]);
       });
 
+      // Adicionar totais gerais
+      rows.push([]);
+      rows.push(['=== TOTAIS GERAIS ===']);
+      rows.push(['Total de Peças:', totalPieces.toString()]);
+      rows.push(['Peso Total (kg):', totalWeight.toFixed(2)]);
+      rows.push(['Peças Cortadas:', cutPieces.toString()]);
+      rows.push(['Peso Peças Cortadas (kg):', cutWeight.toFixed(2)]);
+
       // Adicionar seção de sustentabilidade se houver dados
       if (hasSustainabilityData) {
         rows.push([]);
@@ -315,7 +352,7 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
               <div className="text-center p-3 bg-blue-50 rounded-lg">
                 <div className="text-2xl font-bold text-blue-600">{results.totalBars}</div>
                 <div className="text-sm text-gray-600">Barras Utilizadas</div>
@@ -324,6 +361,14 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
                 <div className="text-2xl font-bold text-green-600">{results.efficiency.toFixed(1)}%</div>
                 <div className="text-sm text-gray-600">Eficiência</div>
               </div>
+              <div className="text-center p-3 bg-purple-50 rounded-lg">
+                <div className="text-2xl font-bold text-purple-600">{totalPieces}</div>
+                <div className="text-sm text-gray-600">Total de Peças</div>
+              </div>
+              <div className="text-center p-3 bg-indigo-50 rounded-lg">
+                <div className="text-2xl font-bold text-indigo-600">{totalWeight.toFixed(1)}kg</div>
+                <div className="text-sm text-gray-600">Peso Total</div>
+              </div>
               <div className="text-center p-3 bg-red-50 rounded-lg">
                 <div className="text-2xl font-bold text-red-600">{(results.totalWaste / 1000).toFixed(2)}m</div>
                 <div className="text-sm text-gray-600">Desperdício</div>
@@ -331,6 +376,24 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
               <div className="text-center p-3 bg-yellow-50 rounded-lg">
                 <div className="text-2xl font-bold text-yellow-600">{results.wastePercentage.toFixed(1)}%</div>
                 <div className="text-sm text-gray-600">% Desperdício</div>
+              </div>
+            </div>
+
+            {/* Informações de Peças Cortadas */}
+            <div className="border-t pt-4 mb-4">
+              <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                <Package className="w-4 h-4 text-gray-600" />
+                Detalhes das Peças Cortadas
+              </h4>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="text-center p-2 bg-slate-50 rounded">
+                  <div className="text-lg font-bold text-slate-600">{cutPieces}</div>
+                  <div className="text-xs text-gray-600">Peças Cortadas</div>
+                </div>
+                <div className="text-center p-2 bg-slate-50 rounded">
+                  <div className="text-lg font-bold text-slate-600">{cutWeight.toFixed(1)}kg</div>
+                  <div className="text-xs text-gray-600">Peso das Peças Cortadas</div>
+                </div>
               </div>
             </div>
 

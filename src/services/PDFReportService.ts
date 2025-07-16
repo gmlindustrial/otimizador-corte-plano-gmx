@@ -66,17 +66,37 @@ export class PDFReportService {
 
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
+    // Calcular métricas de peças e peso
+    const totalPieces = results.bars.reduce((total, bar) => 
+      total + bar.pieces.reduce((barTotal, piece: any) => 
+        barTotal + (piece.quantidade || 1), 0), 0);
+    
+    const totalWeight = results.bars.reduce((total, bar) => 
+      total + bar.pieces.reduce((barTotal, piece: any) => 
+        barTotal + ((piece.length / 1000) * (piece.peso_por_metro || 0) * (piece.quantidade || 1)), 0), 0);
+
+    const cutPieces = results.bars.reduce((total, bar) => 
+      total + bar.pieces.length, 0);
+
+    const cutWeight = results.bars.reduce((total, bar) => 
+      total + bar.pieces.reduce((barTotal, piece: any) => 
+        barTotal + ((piece.length / 1000) * (piece.peso_por_metro || 0)), 0), 0);
+
     doc.text(`Total de Barras: ${results.totalBars}`, 20, currentY);
     doc.text(`Barras NOVAS: ${results.bars.filter((bar: any) => bar.type !== 'leftover').length}`, 100, currentY);
     doc.text(`Eficiência: ${results.efficiency.toFixed(1)}%`, 20, currentY + 5);
     doc.text(`Barras SOBRA: ${results.bars.filter((bar: any) => bar.type === 'leftover').length}`, 100, currentY + 5);
-    doc.text(`Desperdício: ${(results.totalWaste / 1000).toFixed(2)}m`, 20, currentY + 10);
-    doc.text(`Material: ${(project as any).tipoMaterial || 'N/A'}`, 100, currentY + 10);
-    doc.text(`Comprimento da Barra: ${barLength}mm`, 20, currentY + 15);
-    doc.text(`Perfil: ${PDFReportService.extractProfiles(results) || 'N/A'}`, 100, currentY + 15);
+    doc.text(`Total de Peças: ${totalPieces}`, 20, currentY + 10);
+    doc.text(`Peso Total: ${totalWeight.toFixed(1)}kg`, 100, currentY + 10);
+    doc.text(`Peças Cortadas: ${cutPieces}`, 20, currentY + 15);
+    doc.text(`Peso Cortado: ${cutWeight.toFixed(1)}kg`, 100, currentY + 15);
+    doc.text(`Desperdício: ${(results.totalWaste / 1000).toFixed(2)}m`, 20, currentY + 20);
+    doc.text(`Material: ${(project as any).tipoMaterial || 'N/A'}`, 100, currentY + 20);
+    doc.text(`Comprimento da Barra: ${barLength}mm`, 20, currentY + 25);
+    doc.text(`Perfil: ${PDFReportService.extractProfiles(results) || 'N/A'}`, 100, currentY + 25);
 
     // Espaço após resumo
-    currentY += 25;
+    currentY += 35;
 
     // Resumo por TAG
     const tagSummary = new Map<string, { count: number; totalLength: number; barras: Set<number> }>();
@@ -158,9 +178,10 @@ export class PDFReportService {
       // Tabela de peças
       doc.text('Seq.', 20, currentY);
       doc.text('TAG', 30, currentY);
-      doc.text('Pos.', 55, currentY);
-      doc.text('Comprimento', 70, currentY);
-      doc.text('Perfil', 110, currentY);
+      doc.text('Qtd.', 50, currentY);
+      doc.text('Pos.', 60, currentY);
+      doc.text('Comprimento', 75, currentY);
+      doc.text('Perfil', 115, currentY);
       doc.text('Status', 155, currentY);
       doc.text('Obs.', 175, currentY);
       currentY += 5;
@@ -179,9 +200,10 @@ export class PDFReportService {
 
         doc.text(`${pieceIndex + 1}`, 20, currentY);
         doc.text(piece.tag || `P${pieceIndex + 1}`, 30, currentY);
-        doc.text(`${piece.posicao || '-'}`, 55, currentY);
-        doc.text(`${piece.length || 0}mm`, 70, currentY);
-        doc.text(piece.perfil || '-', 110, currentY);
+        doc.text(`${piece.quantidade || 1}`, 50, currentY);
+        doc.text(`${piece.posicao || '-'}`, 60, currentY);
+        doc.text(`${piece.length || 0}mm`, 75, currentY);
+        doc.text(piece.perfil || '-', 115, currentY);
         doc.text('', 155, currentY); // Status vazio
         doc.text('', 175, currentY); // Observação vazia
         
@@ -197,9 +219,10 @@ export class PDFReportService {
         doc.setFont('helvetica', 'bold');
         doc.text('Sobra', 20, currentY);
         doc.text('-', 30, currentY);
-        doc.text('-', 55, currentY);
-        doc.text(`${bar.waste}mm`, 70, currentY);
-        doc.text(bar.type === 'leftover' ? 'Sobra da Sobra' : 'Descarte', 110, currentY);
+        doc.text('0', 50, currentY);
+        doc.text('-', 60, currentY);
+        doc.text(`${bar.waste}mm`, 75, currentY);
+        doc.text(bar.type === 'leftover' ? 'Sobra da Sobra' : 'Descarte', 115, currentY);
         doc.text('', 155, currentY);
         doc.text('', 175, currentY);
         doc.setFont('helvetica', 'normal');
@@ -235,11 +258,33 @@ export class PDFReportService {
 
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
+    // Calcular métricas de peças e peso
+    const totalPieces = results.bars.reduce((total, bar) => 
+      total + bar.pieces.reduce((barTotal, piece: any) => 
+        barTotal + (piece.quantidade || 1), 0), 0);
+    
+    const totalWeight = results.bars.reduce((total, bar) => 
+      total + bar.pieces.reduce((barTotal, piece: any) => 
+        barTotal + ((piece.length / 1000) * (piece.peso_por_metro || 0) * (piece.quantidade || 1)), 0), 0);
+
+    const cutPieces = results.bars.reduce((total, bar) => 
+      total + bar.pieces.length, 0);
+
+    const cutWeight = results.bars.reduce((total, bar) => 
+      total + bar.pieces.reduce((barTotal, piece: any) => 
+        barTotal + ((piece.length / 1000) * (piece.peso_por_metro || 0)), 0), 0);
+
     doc.text(`Total de Barras: ${results.totalBars}`, 20, currentY);
     doc.text(`Barras NOVAS: ${results.bars.filter((bar: any) => bar.type !== 'leftover').length}`, 100, currentY);
     currentY += 5;
     doc.text(`Eficiência: ${results.efficiency.toFixed(1)}%`, 20, currentY);
     doc.text(`Barras SOBRA: ${results.bars.filter((bar: any) => bar.type === 'leftover').length}`, 100, currentY);
+    currentY += 5;
+    doc.text(`Total de Peças: ${totalPieces}`, 20, currentY);
+    doc.text(`Peso Total: ${totalWeight.toFixed(1)}kg`, 100, currentY);
+    currentY += 5;
+    doc.text(`Peças Cortadas: ${cutPieces}`, 20, currentY);
+    doc.text(`Peso Cortado: ${cutWeight.toFixed(1)}kg`, 100, currentY);
     currentY += 5;
     doc.text(`Desperdício: ${(results.totalWaste / 1000).toFixed(2)}m`, 20, currentY);
     doc.text(`Material: ${(project as any).tipoMaterial || 'N/A'}`, 100, currentY);
@@ -328,9 +373,10 @@ export class PDFReportService {
         doc.setFont('helvetica', 'bold');
         doc.text('Seq.', 20, currentY);
         doc.text('TAG', 30, currentY);
-        doc.text('Pos.', 50, currentY);
-        doc.text('Comp.', 65, currentY);
-        doc.text('Perfil', 100, currentY);
+        doc.text('Qtd.', 45, currentY);
+        doc.text('Pos.', 55, currentY);
+        doc.text('Comp.', 70, currentY);
+        doc.text('Perfil', 105, currentY);
         doc.text('Status', 140, currentY);
         doc.text('Obs.', 170, currentY);
         if (bar.type === 'leftover') {
@@ -347,9 +393,10 @@ export class PDFReportService {
         bar.pieces.forEach((piece: any, pieceIndex) => {
           doc.text(`${pieceIndex + 1}`, 20, currentY);
           doc.text(piece.tag || `P${pieceIndex + 1}`, 30, currentY);
-          doc.text(`${piece.posicao || '-'}`, 50, currentY);
-          doc.text(`${piece.length || 0}mm`, 65, currentY);
-          doc.text(piece.perfil || '-', 100, currentY);
+          doc.text(`${piece.quantidade || 1}`, 45, currentY);
+          doc.text(`${piece.posicao || '-'}`, 55, currentY);
+          doc.text(`${piece.length || 0}mm`, 70, currentY);
+          doc.text(piece.perfil || '-', 105, currentY);
           doc.text('', 140, currentY);
           doc.text('', 170, currentY);
           if (bar.type === 'leftover') {
@@ -363,9 +410,10 @@ export class PDFReportService {
           doc.setFont('helvetica', 'bold');
           doc.text('Sobra', 20, currentY);
           doc.text('-', 30, currentY);
-          doc.text('-', 50, currentY);
-          doc.text(`${bar.waste}mm`, 65, currentY);
-          doc.text(bar.type === 'leftover' ? 'Sobra da Sobra' : 'Descarte', 100, currentY);
+          doc.text('0', 45, currentY);
+          doc.text('-', 55, currentY);
+          doc.text(`${bar.waste}mm`, 70, currentY);
+          doc.text(bar.type === 'leftover' ? 'Sobra da Sobra' : 'Descarte', 105, currentY);
           doc.text('', 140, currentY);
           doc.text('', 170, currentY);
           doc.setFont('helvetica', 'normal');
