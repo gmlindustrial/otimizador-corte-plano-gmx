@@ -184,7 +184,6 @@ export class PDFReportService {
       doc.text('Qtd.', 65, currentY);
       doc.text('Comprimento', 75, currentY);
       doc.text('Perfil', 115, currentY);
-      doc.text('Peso', 50, currentY);
       doc.text('Status', 155, currentY);
       doc.text('Obs.', 175, currentY);
       currentY += 5;
@@ -207,7 +206,6 @@ export class PDFReportService {
         doc.text(`${piece.quantidade || 1}`, 65, currentY);
         doc.text(`${piece.length || 0}mm`, 75, currentY);
         doc.text(piece.perfil || '-', 115, currentY);
-        doc.text(piece.peso || '-', 50, currentY);
         doc.text(piece.status === 'cortado' || piece.cortado ? '✓' : '', 155, currentY); // Mostrar status cortado
         doc.text('', 175, currentY); // Observação vazia
         
