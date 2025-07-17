@@ -1,15 +1,14 @@
-
-import { supabase } from '@/integrations/supabase/client';
-import { ErrorHandler } from './ErrorHandler';
-import type { 
-  ServiceResponse, 
-  ListResponse, 
-  CreateRequest, 
-  UpdateRequest, 
-  DeleteRequest, 
+import { supabase } from "@/integrations/supabase/client";
+import { ErrorHandler } from "./ErrorHandler";
+import type {
+  ServiceResponse,
+  ListResponse,
+  CreateRequest,
+  UpdateRequest,
+  DeleteRequest,
   QueryOptions,
-  BaseEntity 
-} from './types';
+  BaseEntity,
+} from "./types";
 
 export abstract class BaseService<T extends BaseEntity> {
   protected tableName: string;
@@ -20,20 +19,30 @@ export abstract class BaseService<T extends BaseEntity> {
 
   async getAll(options?: QueryOptions): Promise<ListResponse<T>> {
     try {
-      let query = supabase.from(this.tableName as any).select('*');
-      
+      let query = supabase.from("estoque_sobras").select(`
+    *,
+    perfis_materiais (
+      *
+    )
+  `);
+
       if (options?.orderBy) {
-        query = query.order(options.orderBy, { ascending: options.ascending ?? false });
+        query = query.order(options.orderBy, {
+          ascending: options.ascending ?? false,
+        });
       } else {
-        query = query.order('created_at', { ascending: false });
+        query = query.order("created_at", { ascending: false });
       }
-      
+
       if (options?.limit) {
         query = query.limit(options.limit);
       }
-      
+
       if (options?.offset) {
-        query = query.range(options.offset, options.offset + (options.limit || 10) - 1);
+        query = query.range(
+          options.offset,
+          options.offset + (options.limit || 10) - 1
+        );
       }
 
       const { data, error } = await query;
@@ -44,15 +53,18 @@ export abstract class BaseService<T extends BaseEntity> {
         data: (data as unknown as T[]) || [],
         error: null,
         success: true,
-        total: data?.length || 0
+        total: data?.length || 0,
       };
     } catch (error) {
-      const errorMessage = ErrorHandler.handle(error, `Erro ao buscar ${this.tableName}`);
+      const errorMessage = ErrorHandler.handle(
+        error,
+        `Erro ao buscar ${this.tableName}`
+      );
       return {
         data: [],
         error: errorMessage,
         success: false,
-        total: 0
+        total: 0,
       };
     }
   }
@@ -61,8 +73,8 @@ export abstract class BaseService<T extends BaseEntity> {
     try {
       const { data, error } = await supabase
         .from(this.tableName as any)
-        .select('*')
-        .eq('id', id)
+        .select("*")
+        .eq("id", id)
         .single();
 
       if (error) throw error;
@@ -70,14 +82,17 @@ export abstract class BaseService<T extends BaseEntity> {
       return {
         data: data as unknown as T,
         error: null,
-        success: true
+        success: true,
       };
     } catch (error) {
-      const errorMessage = ErrorHandler.handle(error, `Erro ao buscar ${this.tableName} por ID`);
+      const errorMessage = ErrorHandler.handle(
+        error,
+        `Erro ao buscar ${this.tableName} por ID`
+      );
       return {
         data: null,
         error: errorMessage,
-        success: false
+        success: false,
       };
     }
   }
@@ -93,18 +108,21 @@ export abstract class BaseService<T extends BaseEntity> {
       if (error) throw error;
 
       ErrorHandler.handleSuccess(`${this.tableName} criado com sucesso!`);
-      
+
       return {
         data: data as unknown as T,
         error: null,
-        success: true
+        success: true,
       };
     } catch (error) {
-      const errorMessage = ErrorHandler.handle(error, `Erro ao criar ${this.tableName}`);
+      const errorMessage = ErrorHandler.handle(
+        error,
+        `Erro ao criar ${this.tableName}`
+      );
       return {
         data: null,
         error: errorMessage,
-        success: false
+        success: false,
       };
     }
   }
@@ -114,25 +132,28 @@ export abstract class BaseService<T extends BaseEntity> {
       const { data, error } = await supabase
         .from(this.tableName as any)
         .update(request.data as any)
-        .eq('id', request.id)
+        .eq("id", request.id)
         .select()
         .single();
 
       if (error) throw error;
 
       ErrorHandler.handleSuccess(`${this.tableName} atualizado com sucesso!`);
-      
+
       return {
         data: data as unknown as T,
         error: null,
-        success: true
+        success: true,
       };
     } catch (error) {
-      const errorMessage = ErrorHandler.handle(error, `Erro ao atualizar ${this.tableName}`);
+      const errorMessage = ErrorHandler.handle(
+        error,
+        `Erro ao atualizar ${this.tableName}`
+      );
       return {
         data: null,
         error: errorMessage,
-        success: false
+        success: false,
       };
     }
   }
@@ -142,35 +163,38 @@ export abstract class BaseService<T extends BaseEntity> {
       const { error } = await supabase
         .from(this.tableName as any)
         .delete()
-        .eq('id', request.id);
+        .eq("id", request.id);
 
       if (error) throw error;
 
       ErrorHandler.handleInfo(`${this.tableName} removido com sucesso!`);
-      
+
       return {
         data: true,
         error: null,
-        success: true
+        success: true,
       };
     } catch (error) {
-      const errorMessage = ErrorHandler.handle(error, `Erro ao remover ${this.tableName}`);
+      const errorMessage = ErrorHandler.handle(
+        error,
+        `Erro ao remover ${this.tableName}`
+      );
       return {
         data: false,
         error: errorMessage,
-        success: false
+        success: false,
       };
     }
   }
 
   protected handleError(error: any, context: string) {
-    const errorMessage = error?.message || 'Erro desconhecido';
+    const errorMessage = error?.message || "Erro desconhecido";
     console.error(`${context}: ${errorMessage}`, error);
     return {
       data: [],
       error: errorMessage,
       success: false,
-      total: 0
+      total: 0,
     };
   }
 }

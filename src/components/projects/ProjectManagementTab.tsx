@@ -1,24 +1,24 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FolderPlus, Upload, Calculator, AlertTriangle } from 'lucide-react';
-import { ProjectsList } from './ProjectsList';
-import { ProjectDetailsView } from './ProjectDetailsView';
-import { ProjectEditDialog } from './ProjectEditDialog';
-import { ProjectDeleteDialog } from './ProjectDeleteDialog';
-import { ProjectCreationWizard } from './ProjectCreationWizard';
-import { PieceRegistrationForm } from './PieceRegistrationForm';
-import { FileUploadDialog } from './FileUploadDialog';
-import { ProfileGroupingView } from './ProfileGroupingView';
-import { ProjectValidationAlert } from './ProjectValidationAlert';
-import { projetoPecaService } from '@/services/entities/ProjetoPecaService';
-import { projetoOtimizacaoService } from '@/services/entities/ProjetoOtimizacaoService';
-import type { ProjetoPeca, ProjectPieceValidation } from '@/types/project';
-import { runLinearOptimizationWithLeftovers } from '@/lib/runLinearOptimization';
-import { estoqueSobrasService } from '@/services/entities/EstoqueSobrasService';
-import { WasteStockService } from '@/services/WasteStockService';
-import { toast } from 'sonner';
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FolderPlus, Upload, Calculator, AlertTriangle } from "lucide-react";
+import { ProjectsList } from "./ProjectsList";
+import { ProjectDetailsView } from "./ProjectDetailsView";
+import { ProjectEditDialog } from "./ProjectEditDialog";
+import { ProjectDeleteDialog } from "./ProjectDeleteDialog";
+import { ProjectCreationWizard } from "./ProjectCreationWizard";
+import { PieceRegistrationForm } from "./PieceRegistrationForm";
+import { FileUploadDialog } from "./FileUploadDialog";
+import { ProfileGroupingView } from "./ProfileGroupingView";
+import { ProjectValidationAlert } from "./ProjectValidationAlert";
+import { projetoPecaService } from "@/services/entities/ProjetoPecaService";
+import { projetoOtimizacaoService } from "@/services/entities/ProjetoOtimizacaoService";
+import type { ProjetoPeca, ProjectPieceValidation } from "@/types/project";
+import { runLinearOptimizationWithLeftovers } from "@/lib/runLinearOptimization";
+import { estoqueSobrasService } from "@/services/entities/EstoqueSobrasService";
+import { WasteStockService } from "@/services/WasteStockService";
+import { toast } from "sonner";
 
 interface Projeto {
   id: string;
@@ -35,8 +35,10 @@ interface ProjectManagementTabProps {
   onNavigateToProfileManagement?: () => void;
 }
 
-export const ProjectManagementTab = ({ onNavigateToProfileManagement }: ProjectManagementTabProps = {}) => {
-  const [view, setView] = useState<'list' | 'details' | 'create'>('list');
+export const ProjectManagementTab = ({
+  onNavigateToProfileManagement,
+}: ProjectManagementTabProps = {}) => {
+  const [view, setView] = useState<"list" | "details" | "create">("list");
   const [selectedProject, setSelectedProject] = useState<Projeto | null>(null);
   const [editingProject, setEditingProject] = useState<Projeto | null>(null);
   const [deletingProject, setDeletingProject] = useState<Projeto | null>(null);
@@ -45,7 +47,7 @@ export const ProjectManagementTab = ({ onNavigateToProfileManagement }: ProjectM
 
   const handleProjectSelect = (project: Projeto) => {
     setSelectedProject(project);
-    setView('details');
+    setView("details");
   };
 
   const handleProjectEdit = (project: Projeto) => {
@@ -59,22 +61,22 @@ export const ProjectManagementTab = ({ onNavigateToProfileManagement }: ProjectM
   };
 
   const handleCreateNew = () => {
-    setView('create');
+    setView("create");
   };
 
   const handleBack = () => {
     setSelectedProject(null);
-    setView('list');
+    setView("list");
   };
 
   const handleProjectCreated = (project: Projeto) => {
     setSelectedProject(project);
-    setView('details');
+    setView("details");
   };
 
   const handleProjectUpdated = (project: Projeto) => {
     setSelectedProject(project);
-    if (view === 'details') {
+    if (view === "details") {
       // Refresh the details view
     }
   };
@@ -82,7 +84,7 @@ export const ProjectManagementTab = ({ onNavigateToProfileManagement }: ProjectM
   const handleProjectDeleted = () => {
     setSelectedProject(null);
     setDeletingProject(null);
-    setView('list');
+    setView("list");
   };
 
   const handleCreateOptimization = async (
@@ -93,28 +95,44 @@ export const ProjectManagementTab = ({ onNavigateToProfileManagement }: ProjectM
     if (!selectedProject || selectedPieces.length === 0) return;
 
     // Validação adicional: verificar se todas as peças têm perfil
-    const piecesWithoutProfile = selectedPieces.filter(piece => !piece.perfil_id);
+    const piecesWithoutProfile = selectedPieces.filter(
+      (piece) => !piece.perfil_id
+    );
     if (piecesWithoutProfile.length > 0) {
-      toast.error(`Erro: ${piecesWithoutProfile.length} peça(s) sem perfil definido. Defina os perfis antes de criar a otimização.`);
+      toast.error(
+        `Erro: ${piecesWithoutProfile.length} peça(s) sem perfil definido. Defina os perfis antes de criar a otimização.`
+      );
       return;
     }
 
     try {
-      const piecesForAlgo = selectedPieces.map(p => ({
+      const piecesForAlgo = selectedPieces.map((p) => ({
         length: p.comprimento_mm,
         quantity: p.quantidade,
         tag: p.tag || undefined,
         posicao: p.posicao,
-        perfil: p.perfil?.descricao_perfil || p.descricao_perfil_raw || undefined,
-        peso: p.peso_por_metro || undefined
+        perfil:
+          p.perfil?.descricao_perfil || p.descricao_perfil_raw || undefined,
+        peso: p.peso || undefined,
       }));
 
       const stockResp = await estoqueSobrasService.getAll();
       const sobras = stockResp.success && stockResp.data ? stockResp.data : [];
+
+      const perfilIdsUsados = piecesForAlgo
+        .map((p) => p.perfil)
+        .filter(Boolean);
+
+      const sobrasFiltradas = sobras.filter((sobra) =>
+        perfilIdsUsados.includes(sobra.perfis_materiais.descricao_perfil)
+      );
+
+      console.log(sobrasFiltradas);
+
       const resultWithLeftovers = runLinearOptimizationWithLeftovers(
         piecesForAlgo,
         barLength,
-        sobras
+        sobrasFiltradas
       );
 
       const created = await projetoOtimizacaoService.create({
@@ -122,52 +140,62 @@ export const ProjectManagementTab = ({ onNavigateToProfileManagement }: ProjectM
           projeto_id: selectedProject.id,
           nome_lista: name,
           tamanho_barra: barLength,
-          pecas_selecionadas: selectedPieces.map(p => p.id) as any,
-          resultados: resultWithLeftovers as any
-        }
+          pecas_selecionadas: selectedPieces.map((p) => p.id) as any,
+          resultados: resultWithLeftovers as any,
+        },
       });
 
       if (created.success && created.data) {
-        console.log('=== APLICANDO USO DE SOBRAS ===');
-        console.log('Sobras disponíveis:', sobras.map(s => ({ id: s.id, comprimento: s.comprimento, quantidade: s.quantidade })));
-        console.log('leftoverUsage:', resultWithLeftovers.leftoverUsage);
-        
-        for (const [id, qtyStr] of Object.entries(resultWithLeftovers.leftoverUsage)) {
+        for (const [id, qtyStr] of Object.entries(
+          resultWithLeftovers.leftoverUsage
+        )) {
           // Validar se a sobra ainda existe e se a quantidade é válida
           const qty = parseInt(qtyStr, 10);
-          const sobra = sobras.find(s => s.id === id);
+          const sobra = sobras.find((s) => s.id === id);
           if (sobra && qty > 0 && qty <= sobra.quantidade) {
-            console.log(`Usando sobra: ${id}, quantidade: ${qty}/${sobra.quantidade}`);
             await estoqueSobrasService.useQuantity(id, qty);
           } else {
-            console.warn(`Tentativa de usar sobra inválida: ${id}, qty: ${qty}, sobra existente:`, sobra);
+            console.warn(
+              `Tentativa de usar sobra inválida: ${id}, qty: ${qty}, sobra existente:`,
+              sobra
+            );
           }
         }
-        
+
         // Detectar perfil mais comum nas peças selecionadas
         const perfilIds = selectedPieces
-          .map(p => p.perfil_id)
+          .map((p) => p.perfil_id)
           .filter(Boolean);
-        const mostCommonPerfilId = perfilIds.length > 0 
-          ? perfilIds.reduce((a, b, i, arr) => 
-              arr.filter(v => v === a).length >= arr.filter(v => v === b).length ? a : b
-            )
-          : undefined;
-          
-        await WasteStockService.addWasteToStock(created.data.id, resultWithLeftovers, mostCommonPerfilId);
+        const mostCommonPerfilId =
+          perfilIds.length > 0
+            ? perfilIds.reduce((a, b, i, arr) =>
+                arr.filter((v) => v === a).length >=
+                arr.filter((v) => v === b).length
+                  ? a
+                  : b
+              )
+            : undefined;
+
+        await WasteStockService.addWasteToStock(
+          created.data.id,
+          resultWithLeftovers,
+          mostCommonPerfilId
+        );
       }
 
       // remove optimized pieces from project
-      await Promise.all(selectedPieces.map(p => projetoPecaService.delete(p.id)));
+      await Promise.all(
+        selectedPieces.map((p) => projetoPecaService.delete(p.id))
+      );
 
-      toast.success('Otimização criada com sucesso');
+      toast.success("Otimização criada com sucesso");
     } catch (err) {
-      console.error('Erro ao criar otimização:', err);
-      toast.error('Erro ao criar otimização');
+      console.error("Erro ao criar otimização:", err);
+      toast.error("Erro ao criar otimização");
     }
   };
 
-  if (view === 'create') {
+  if (view === "create") {
     return (
       <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
         <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
@@ -183,7 +211,7 @@ export const ProjectManagementTab = ({ onNavigateToProfileManagement }: ProjectM
     );
   }
 
-  if (view === 'details' && selectedProject) {
+  if (view === "details" && selectedProject) {
     return (
       <>
         <ProjectDetailsView
@@ -194,14 +222,14 @@ export const ProjectManagementTab = ({ onNavigateToProfileManagement }: ProjectM
           onCreateOptimization={handleCreateOptimization}
           onNavigateToProfileManagement={onNavigateToProfileManagement}
         />
-        
+
         <ProjectEditDialog
           open={showEditDialog}
           onOpenChange={setShowEditDialog}
           project={editingProject}
           onProjectUpdated={handleProjectUpdated}
         />
-        
+
         <ProjectDeleteDialog
           open={showDeleteDialog}
           onOpenChange={setShowDeleteDialog}
@@ -220,14 +248,14 @@ export const ProjectManagementTab = ({ onNavigateToProfileManagement }: ProjectM
         onProjectDelete={handleProjectDelete}
         onCreateNew={handleCreateNew}
       />
-      
+
       <ProjectEditDialog
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
         project={editingProject}
         onProjectUpdated={handleProjectUpdated}
       />
-      
+
       <ProjectDeleteDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}

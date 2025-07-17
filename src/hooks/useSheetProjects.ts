@@ -1,9 +1,8 @@
-
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { isUUID } from '@/lib/utils';
-import { toast } from 'sonner';
-import type { SheetProject, SheetCutPiece } from '@/types/sheet';
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { isUUID } from "@/lib/utils";
+import { toast } from "sonner";
+import type { SheetProject, SheetCutPiece } from "@/types/sheet";
 
 export interface SheetProjectData {
   project: SheetProject;
@@ -20,9 +19,9 @@ export const useSheetProjects = () => {
     if (isUUID(name)) return name;
     try {
       const { data, error } = await supabase
-        .from('clientes')
-        .select('id')
-        .ilike('nome', name.trim())
+        .from("clientes")
+        .select("id")
+        .ilike("nome", name.trim())
         .maybeSingle();
 
       if (error || !data) return null;
@@ -38,9 +37,9 @@ export const useSheetProjects = () => {
     if (isUUID(name)) return name;
     try {
       const { data, error } = await supabase
-        .from('obras')
-        .select('id')
-        .ilike('nome', name.trim())
+        .from("obras")
+        .select("id")
+        .ilike("nome", name.trim())
         .maybeSingle();
 
       if (error || !data) return null;
@@ -56,9 +55,9 @@ export const useSheetProjects = () => {
     if (isUUID(type)) return type;
     try {
       const { data, error } = await supabase
-        .from('materiais')
-        .select('id')
-        .ilike('tipo', type.trim())
+        .from("materiais")
+        .select("id")
+        .ilike("tipo", type.trim())
         .maybeSingle();
 
       if (error || !data) return null;
@@ -74,9 +73,9 @@ export const useSheetProjects = () => {
     if (isUUID(name)) return name;
     try {
       const { data, error } = await supabase
-        .from('operadores')
-        .select('id')
-        .ilike('nome', name.trim())
+        .from("operadores")
+        .select("id")
+        .ilike("nome", name.trim())
         .maybeSingle();
 
       if (error || !data) return null;
@@ -92,9 +91,9 @@ export const useSheetProjects = () => {
     if (isUUID(name)) return name;
     try {
       const { data, error } = await supabase
-        .from('inspetores_qa')
-        .select('id')
-        .ilike('nome', name.trim())
+        .from("inspetores_qa")
+        .select("id")
+        .ilike("nome", name.trim())
         .maybeSingle();
 
       if (error || !data) return null;
@@ -129,38 +128,40 @@ export const useSheetProjects = () => {
         revisao: project.revisao,
         validacao_qa: project.validacaoQA,
         qr_code: generateQRCode(project.id, project.lista),
-        dados_projeto: JSON.parse(JSON.stringify({
-          type: 'sheet',
-          client: project.client,
-          obra: project.obra,
-          sheetWidth: project.sheetWidth,
-          sheetHeight: project.sheetHeight,
-          thickness: project.thickness,
-          kerf: project.kerf,
-          process: project.process,
-          material: project.material,
-          operador: project.operador,
-          aprovadorQA: project.aprovadorQA,
-          pieces: pieces,
-          originalProjectId: project.id
-        }))
+        dados_projeto: JSON.parse(
+          JSON.stringify({
+            type: "sheet",
+            client: project.client,
+            obra: project.obra,
+            sheetWidth: project.sheetWidth,
+            sheetHeight: project.sheetHeight,
+            thickness: project.thickness,
+            kerf: project.kerf,
+            process: project.process,
+            material: project.material,
+            operador: project.operador,
+            aprovadorQA: project.aprovadorQA,
+            pieces: pieces,
+            originalProjectId: project.id,
+          })
+        ),
       };
 
       const { data, error } = await supabase
-        .from('projetos')
+        .from("projetos")
         .insert(insertData)
         .select()
         .single();
 
       if (error) throw error;
 
-      console.log('Projeto de chapas salvo com IDs mapeados:', data);
-      toast.success('Projeto de chapas salvo com sucesso');
+      console.log("Projeto de chapas salvo com IDs mapeados:", data);
+      toast.success("Projeto de chapas salvo com sucesso");
       await loadProjects();
       return data;
     } catch (error) {
-      console.error('Erro ao salvar projeto de chapas:', error);
-      toast.error('Erro ao salvar projeto de chapas');
+      console.error("Erro ao salvar projeto de chapas:", error);
+      toast.error("Erro ao salvar projeto de chapas");
       throw error;
     }
   };
@@ -169,17 +170,19 @@ export const useSheetProjects = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('projetos')
-        .select(`
+        .from("projetos")
+        .select(
+          `
           *,
           clientes:cliente_id(nome),
           obras:obra_id(nome),
           materiais:material_id(tipo),
           operadores:operador_id(nome),
           inspetores_qa:inspetor_id(nome)
-        `)
-        .eq('dados_projeto->>type', 'sheet')
-        .order('created_at', { ascending: false });
+        `
+        )
+        .eq("dados_projeto->>type", "sheet")
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
 
@@ -189,8 +192,7 @@ export const useSheetProjects = () => {
 
       setSavedProjects(convertedProjects);
     } catch (error) {
-      console.error('Erro ao carregar projetos de chapas:', error);
-      toast.error('Erro ao carregar projetos de chapas');
+      console.error("Erro ao carregar projetos de chapas:", error);
     } finally {
       setLoading(false);
     }
@@ -199,17 +201,20 @@ export const useSheetProjects = () => {
   const convertFromDatabase = (dbProject: any): SheetProjectData | null => {
     try {
       const dadosProjeto = dbProject.dados_projeto;
-      
-      if (!dadosProjeto || dadosProjeto.type !== 'sheet') {
+
+      if (!dadosProjeto || dadosProjeto.type !== "sheet") {
         return null;
       }
 
       // Use foreign key relationships if available, fallback to JSON data
-      const clientName = dbProject.clientes?.nome || dadosProjeto.client || '';
-      const obraName = dbProject.obras?.nome || dadosProjeto.obra || '';
-      const materialType = dbProject.materiais?.tipo || dadosProjeto.material || '';
-      const operadorName = dbProject.operadores?.nome || dadosProjeto.operador || '';
-      const inspetorName = dbProject.inspetores_qa?.nome || dadosProjeto.aprovadorQA || '';
+      const clientName = dbProject.clientes?.nome || dadosProjeto.client || "";
+      const obraName = dbProject.obras?.nome || dadosProjeto.obra || "";
+      const materialType =
+        dbProject.materiais?.tipo || dadosProjeto.material || "";
+      const operadorName =
+        dbProject.operadores?.nome || dadosProjeto.operador || "";
+      const inspetorName =
+        dbProject.inspetores_qa?.nome || dadosProjeto.aprovadorQA || "";
 
       const project: SheetProject = {
         id: dadosProjeto.originalProjectId || dbProject.id,
@@ -223,28 +228,30 @@ export const useSheetProjects = () => {
         sheetHeight: dadosProjeto.sheetHeight || 6000,
         thickness: dadosProjeto.thickness || 6,
         kerf: dadosProjeto.kerf || 2,
-        process: dadosProjeto.process || 'plasma',
+        process: dadosProjeto.process || "plasma",
         material: materialType,
         operador: operadorName,
         turno: dbProject.turno,
         aprovadorQA: inspetorName,
         validacaoQA: dbProject.validacao_qa,
-        date: dbProject.created_at
+        date: dbProject.created_at,
       };
 
       return {
         project,
-        pieces: dadosProjeto.pieces || []
+        pieces: dadosProjeto.pieces || [],
       };
     } catch (error) {
-      console.error('Erro ao converter projeto de chapas:', error);
+      console.error("Erro ao converter projeto de chapas:", error);
       return null;
     }
   };
 
   const generateQRCode = (projectId: string, lista: string) => {
     const qrData = `${window.location.origin}/lista/${projectId}/${lista}`;
-    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrData)}`;
+    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+      qrData
+    )}`;
   };
 
   useEffect(() => {
@@ -255,6 +262,6 @@ export const useSheetProjects = () => {
     savedProjects,
     loading,
     saveProject,
-    loadProjects
+    loadProjects,
   };
 };

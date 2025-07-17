@@ -1,4 +1,5 @@
-import type { BaseEntity } from '../base/types';
+import { PerfilMaterial } from "@/types/project";
+import type { BaseEntity } from "../base/types";
 
 export interface Obra extends BaseEntity {
   nome: string;
@@ -43,6 +44,7 @@ export interface EstoqueSobra extends BaseEntity {
   comprimento: number;
   quantidade: number;
   id_projeto_otimizacao?: string;
+  perfis_materiais: PerfilMaterial;
 }
 
 export interface HistoricoOtimizacao extends BaseEntity {

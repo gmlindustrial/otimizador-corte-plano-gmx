@@ -1,12 +1,17 @@
-import { useState, useEffect } from 'react';
-import { toast } from 'sonner';
-import type { Project, OptimizationResult, CutPiece } from '@/pages/Index';
-import { OptimizationHistoryService, type OptimizationHistoryEntry } from '@/services/OptimizationHistoryService';
-import { WasteStockService } from '@/services/WasteStockService';
-import { useOptimizationStats } from './useOptimizationStats';
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import type { Project, OptimizationResult, CutPiece } from "@/pages/Index";
+import {
+  OptimizationHistoryService,
+  type OptimizationHistoryEntry,
+} from "@/services/OptimizationHistoryService";
+import { WasteStockService } from "@/services/WasteStockService";
+import { useOptimizationStats } from "./useOptimizationStats";
 
 export const useOptimizationHistoryPersistent = () => {
-  const [optimizationHistory, setOptimizationHistory] = useState<OptimizationHistoryEntry[]>([]);
+  const [optimizationHistory, setOptimizationHistory] = useState<
+    OptimizationHistoryEntry[]
+  >([]);
   const [loading, setLoading] = useState(false);
 
   const loadHistory = async () => {
@@ -14,11 +19,10 @@ export const useOptimizationHistoryPersistent = () => {
       setLoading(true);
       const convertedHistory = await OptimizationHistoryService.loadHistory();
       setOptimizationHistory(convertedHistory);
-      
-      console.log('Histórico carregado do Supabase:', convertedHistory);
+
+      console.log("Histórico carregado do Supabase:", convertedHistory);
     } catch (error) {
-      console.error('Erro ao carregar histórico:', error);
-      toast.error('Erro ao carregar histórico de otimizações');
+      console.error("Erro ao carregar histórico:", error);
     } finally {
       setLoading(false);
     }
@@ -40,19 +44,22 @@ export const useOptimizationHistoryPersistent = () => {
         barLength
       );
 
-      setOptimizationHistory(prev => [newEntry, ...prev]);
+      setOptimizationHistory((prev) => [newEntry, ...prev]);
 
       // Auto-enviar sobras para estoque se habilitado
       if (project.enviarSobrasEstoque && results.totalWaste > 0) {
-        await WasteStockService.addWasteToStock(newEntry.id, results as any, perfilId);
+        await WasteStockService.addWasteToStock(
+          newEntry.id,
+          results as any,
+          perfilId
+        );
       }
 
-      console.log('Otimização salva no histórico:', newEntry);
-      toast.success('Projeto salvo e otimização adicionada ao histórico');
-
+      console.log("Otimização salva no histórico:", newEntry);
+      toast.success("Projeto salvo e otimização adicionada ao histórico");
     } catch (error) {
-      console.error('Erro ao salvar no histórico:', error);
-      toast.error('Erro ao salvar otimização no histórico');
+      console.error("Erro ao salvar no histórico:", error);
+      toast.error("Erro ao salvar otimização no histórico");
     }
   };
 
@@ -60,21 +67,21 @@ export const useOptimizationHistoryPersistent = () => {
     try {
       await OptimizationHistoryService.clearHistory();
       setOptimizationHistory([]);
-      toast.success('Histórico limpo com sucesso');
+      toast.success("Histórico limpo com sucesso");
     } catch (error) {
-      console.error('Erro ao limpar histórico:', error);
-      toast.error('Erro ao limpar histórico');
+      console.error("Erro ao limpar histórico:", error);
+      toast.error("Erro ao limpar histórico");
     }
   };
 
   const removeFromHistory = async (id: string) => {
     try {
       await OptimizationHistoryService.removeEntry(id);
-      setOptimizationHistory(prev => prev.filter(entry => entry.id !== id));
-      toast.success('Entrada removida do histórico');
+      setOptimizationHistory((prev) => prev.filter((entry) => entry.id !== id));
+      toast.success("Entrada removida do histórico");
     } catch (error) {
-      console.error('Erro ao remover do histórico:', error);
-      toast.error('Erro ao remover do histórico');
+      console.error("Erro ao remover do histórico:", error);
+      toast.error("Erro ao remover do histórico");
     }
   };
 
@@ -91,6 +98,6 @@ export const useOptimizationHistoryPersistent = () => {
     clearHistory,
     removeFromHistory,
     getHistoryStats,
-    loadHistory
+    loadHistory,
   };
 };
