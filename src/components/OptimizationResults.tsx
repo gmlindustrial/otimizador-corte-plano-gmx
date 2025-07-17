@@ -50,23 +50,23 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
     return results.bars.reduce((total, bar) => 
       total + bar.pieces.reduce((barTotal, piece: any) => {
         // Priorizar peso extraído do arquivo, usar peso por metro como fallback
-        const weight = piece.peso || (piece.peso_por_metro * piece.length / 1000) || 0;
+        const weight = piece.peso || 0;
         return barTotal + (weight * (piece.quantidade || 1));
       }, 0), 0);
   };
 
   const calculateCutPieces = () => {
     return results.bars.reduce((total, bar) => 
-      total + bar.pieces.filter((piece: any) => piece.status === 'cortado' || piece.cortado === true).length, 0);
+      total + bar.pieces.filter((piece: any) => piece.cortada === true).length, 0);
   };
 
   const calculateCutWeight = () => {
     return results.bars.reduce((total, bar) => 
       total + bar.pieces
-        .filter((piece: any) => piece.status === 'cortado' || piece.cortado === true)
+        .filter((piece: any) => piece.cortada === true)
         .reduce((barTotal, piece: any) => {
           // Priorizar peso extraído do arquivo, usar peso por metro como fallback
-          const weight = piece.peso || (piece.peso_por_metro * piece.length / 1000) || 0;
+          const weight = piece.peso || 0;
           return barTotal + (weight * (piece.quantidade || 1));
         }, 0), 0);
   };
@@ -365,10 +365,6 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
                 <div className="text-2xl font-bold text-blue-600">{results.totalBars}</div>
                 <div className="text-sm text-gray-600">Barras Utilizadas</div>
               </div>
-              <div className="text-center p-3 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">{results.efficiency.toFixed(1)}%</div>
-                <div className="text-sm text-gray-600">Eficiência</div>
-              </div>
               <div className="text-center p-3 bg-purple-50 rounded-lg">
                 <div className="text-2xl font-bold text-purple-600">{totalPieces}</div>
                 <div className="text-sm text-gray-600">Total de Peças</div>
@@ -376,6 +372,10 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
               <div className="text-center p-3 bg-indigo-50 rounded-lg">
                 <div className="text-2xl font-bold text-indigo-600">{totalWeight.toFixed(1)}kg</div>
                 <div className="text-sm text-gray-600">Peso Total</div>
+              </div>
+              <div className="text-center p-3 bg-green-50 rounded-lg">
+                <div className="text-2xl font-bold text-green-600">{results.efficiency.toFixed(1)}%</div>
+                <div className="text-sm text-gray-600">Eficiência</div>
               </div>
               <div className="text-center p-3 bg-red-50 rounded-lg">
                 <div className="text-2xl font-bold text-red-600">{(results.totalWaste / 1000).toFixed(2)}m</div>
