@@ -16,17 +16,18 @@ interface OptimizationCreateDialogProps {
   onOpenChange: (open: boolean) => void;
   onCreate: (name: string, barLength: number) => void;
   selectedPieces?: ProjetoPeca[];
+  projectId?: string;
   onNavigateToProfileManagement?: () => void;
 }
 
-export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selectedPieces = [], onNavigateToProfileManagement }: OptimizationCreateDialogProps) => {
+export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selectedPieces = [], projectId, onNavigateToProfileManagement }: OptimizationCreateDialogProps) => {
   const [name, setName] = useState('');
   const [barLength, setBarLength] = useState('6000');
   const [loading, setLoading] = useState(false);
   const [availableBarSizes, setAvailableBarSizes] = useState<Array<{ comprimento: number; descricao: string }>>([]);
   const [suggestedBarSize, setSuggestedBarSize] = useState<number>(6000);
 
-  // Buscar tamanhos de barra disponíveis
+  // Buscar tamanhos de barra disponíveis e gerar nome sugerido
   useEffect(() => {
     const fetchBarSizes = async () => {
       const { data } = await supabase
@@ -41,6 +42,66 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selecte
     
     fetchBarSizes();
   }, []);
+
+  // Gerar nome sequencial baseado no projeto e perfil
+  useEffect(() => {
+    const generateSequentialName = async () => {
+      if (!projectId || !selectedPieces.length || !open) return;
+      
+      try {
+        // Buscar otimizações anteriores do projeto
+        const { data: optimizations } = await supabase
+          .from('projeto_otimizacoes')
+          .select('nome_lista')
+          .eq('projeto_id', projectId)
+          .order('created_at', { ascending: false });
+
+        // Encontrar o último número sequencial
+        let lastNumber = 0;
+        if (optimizations) {
+          optimizations.forEach(opt => {
+            const match = opt.nome_lista.match(/^Lista (\d+)/);
+            if (match) {
+              const num = parseInt(match[1], 10);
+              if (num > lastNumber) lastNumber = num;
+            }
+          });
+        }
+
+        // Obter perfil predominante das peças selecionadas
+        const perfilIds = [...new Set(selectedPieces.map(p => p.perfil_id).filter(Boolean))];
+        let predominantProfile = 'Perfil Mix';
+        
+        if (perfilIds.length === 1) {
+          // Se todas as peças têm o mesmo perfil, buscar o nome
+          const { data: perfil } = await supabase
+            .from('perfis_materiais')
+            .select('descricao_perfil')
+            .eq('id', perfilIds[0])
+            .single();
+          
+          if (perfil) {
+            predominantProfile = perfil.descricao_perfil;
+          }
+        } else if (perfilIds.length > 1) {
+          // Se há múltiplos perfis, usar "Mix"
+          predominantProfile = 'Perfil Mix';
+        }
+
+        // Gerar nome: Lista {numero} - {perfil}
+        const nextNumber = lastNumber + 1;
+        const suggestedName = `Lista ${nextNumber} - ${predominantProfile}`;
+        setName(suggestedName);
+
+      } catch (error) {
+        console.error('Erro ao gerar nome sequencial:', error);
+        // Fallback para nome básico
+        setName(`Lista 1`);
+      }
+    };
+
+    generateSequentialName();
+  }, [projectId, selectedPieces, open]);
 
   // Validar peças sem perfil
   const piecesWithoutProfile = selectedPieces.filter(piece => !piece.perfil_id);
