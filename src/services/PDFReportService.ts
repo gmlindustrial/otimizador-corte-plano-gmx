@@ -72,8 +72,11 @@ export class PDFReportService {
         barTotal + (piece.quantidade || 1), 0), 0);
     
     const totalWeight = results.bars.reduce((total, bar) => 
-      total + bar.pieces.reduce((barTotal, piece: any) => 
-        barTotal + ((piece.length / 1000) * (piece.peso_por_metro || 0) * (piece.quantidade || 1)), 0), 0);
+      total + bar.pieces.reduce((barTotal, piece: any) => {
+        // Priorizar peso extraído do arquivo
+        const weight = piece.peso || (piece.peso_por_metro * piece.length / 1000) || 0;
+        return barTotal + (weight * (piece.quantidade || 1));
+      }, 0), 0);
 
     const cutPieces = results.bars.reduce((total, bar) => 
       total + bar.pieces.filter((piece: any) => piece.status === 'cortado' || piece.cortado === true).length, 0);
@@ -81,8 +84,11 @@ export class PDFReportService {
     const cutWeight = results.bars.reduce((total, bar) => 
       total + bar.pieces
         .filter((piece: any) => piece.status === 'cortado' || piece.cortado === true)
-        .reduce((barTotal, piece: any) => 
-          barTotal + ((piece.length / 1000) * (piece.peso_por_metro || 0) * (piece.quantidade || 1)), 0), 0);
+        .reduce((barTotal, piece: any) => {
+          // Priorizar peso extraído do arquivo para cálculo correto
+          const weight = piece.peso || (piece.peso_por_metro * piece.length / 1000) || 0;
+          return barTotal + (weight * (piece.quantidade || 1));
+        }, 0), 0);
 
     doc.text(`Total de Barras: ${results.totalBars}`, 20, currentY);
     doc.text(`Barras NOVAS: ${results.bars.filter((bar: any) => bar.type !== 'leftover').length}`, 100, currentY);

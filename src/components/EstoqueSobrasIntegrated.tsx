@@ -9,7 +9,7 @@ import { useEstoqueSobras } from '@/hooks/useEstoqueSobras';
 import { usePerfilService } from '@/hooks/services/usePerfilService';
 
 export const EstoqueSobrasIntegrated = () => {
-  const { sobras, loading, adicionarSobra, usarSobra, removerSobra } =
+  const { sobras, loading, adicionarSobra, removerSobra } =
     useEstoqueSobras();
   const { perfis } = usePerfilService();
 
@@ -124,50 +124,87 @@ export const EstoqueSobrasIntegrated = () => {
           </div>
 
           {loading ? (
-            <div className="text-center">Carregando...</div>
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+              <p className="text-gray-500 mt-2">Carregando estoque...</p>
+            </div>
           ) : (
-            <div className="space-y-4">
-              {Object.entries(sobrasAgrupadas).map(([perfilNome, sobrasDoGrupo]) => (
-                <div key={perfilNome} className="space-y-2">
-                  <h4 className="font-semibold text-sm text-gray-700 border-b pb-1">
-                    {perfilNome}
-                  </h4>
-                  <div className="space-y-2">
-                    {(sobrasDoGrupo as any[]).map((sobra) => (
-                      <div
-                        key={sobra.id}
-                        className="flex items-center justify-between bg-green-50 p-2 rounded"
-                      >
-                        <span className="text-sm">
-                          {sobra.comprimento}mm - {sobra.quantidade} un
-                          {sobra.tipo_perfil && (
-                            <span className="text-gray-500 ml-2">({sobra.tipo_perfil})</span>
-                          )}
-                        </span>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => usarSobra(sobra.id)}
-                          >
-                            Usar
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removerSobra(sobra.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+            <div className="space-y-6">
+              {Object.entries(sobrasAgrupadas).map(([perfilNome, sobrasDoGrupo]) => {
+                const sobras = sobrasDoGrupo as any[];
+                const totalSobras = sobras.reduce((acc, sobra) => acc + sobra.quantidade, 0);
+                const perfilInfo = sobras[0]?.tipo_perfil;
+                const kgPorMetro = sobras[0]?.kg_por_metro;
+                
+                return (
+                  <Card key={perfilNome} className="border-l-4 border-l-green-500 shadow-sm">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-lg font-semibold text-gray-800">
+                            {perfilNome}
+                          </CardTitle>
+                          <div className="flex items-center gap-4 mt-1">
+                            {perfilInfo && (
+                              <span className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                                {perfilInfo}
+                              </span>
+                            )}
+                            {kgPorMetro && (
+                              <span className="text-sm text-green-700 bg-green-100 px-2 py-1 rounded">
+                                {kgPorMetro} kg/m
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-lg font-bold text-green-600">
+                            {totalSobras}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {totalSobras === 1 ? 'sobra' : 'sobras'}
+                          </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {sobras.map((sobra) => (
+                          <div
+                            key={sobra.id}
+                            className="flex items-center justify-between bg-gradient-to-r from-green-50 to-emerald-50 p-3 rounded-lg border border-green-100 hover:shadow-md transition-all duration-200"
+                          >
+                            <div className="flex-1">
+                              <div className="font-semibold text-gray-800">
+                                {sobra.comprimento}mm
+                              </div>
+                              <div className="text-sm text-gray-600">
+                                {sobra.quantidade} {sobra.quantidade === 1 ? 'unidade' : 'unidades'}
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removerSobra(sobra.id)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 ml-3 h-8 w-8 p-0"
+                              title="Remover sobra"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
               {Object.keys(sobrasAgrupadas).length === 0 && (
-                <div className="text-center text-sm text-gray-500">
-                  Nenhuma sobra encontrada
+                <div className="text-center py-12">
+                  <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma sobra encontrada</h3>
+                  <p className="text-sm text-gray-500">
+                    {filtroPerfilId ? 'Não há sobras para o perfil selecionado.' : 'Adicione sobras usando o formulário acima.'}
+                  </p>
                 </div>
               )}
             </div>

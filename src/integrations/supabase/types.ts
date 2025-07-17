@@ -326,6 +326,7 @@ export type Database = {
           id: string
           perfil_id: string | null
           perfil_nao_encontrado: boolean
+          peso: number | null
           peso_por_metro: number | null
           posicao: string
           projeto_id: string
@@ -340,6 +341,7 @@ export type Database = {
           id?: string
           perfil_id?: string | null
           perfil_nao_encontrado?: boolean
+          peso?: number | null
           peso_por_metro?: number | null
           posicao: string
           projeto_id: string
@@ -354,6 +356,7 @@ export type Database = {
           id?: string
           perfil_id?: string | null
           perfil_nao_encontrado?: boolean
+          peso?: number | null
           peso_por_metro?: number | null
           posicao?: string
           projeto_id?: string

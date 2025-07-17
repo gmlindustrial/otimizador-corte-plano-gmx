@@ -16,6 +16,7 @@ export interface ProjetoPeca {
   comprimento_mm: number;
   quantidade: number;
   peso_por_metro?: number;
+  peso?: number; // Peso real extraído do arquivo CAD (kg)
   perfil_nao_encontrado: boolean;
   created_at: string;
   perfil?: PerfilMaterial;

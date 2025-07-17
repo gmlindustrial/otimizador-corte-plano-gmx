@@ -101,9 +101,10 @@ export const useLinearOptimization = () => {
     sortedPieces.sort((a, b) => b.length - a.length);
 
     // Filtrar sobras por perfil se especificado
+    // CORRIGIR: Usar apenas sobras do perfil específico
     const sobrasCompatibles = perfilId 
       ? sobras.filter(s => s.id_perfis_materiais === perfilId)
-      : sobras;
+      : []; // NÃO usar sobras se perfil não especificado
 
     // Filtrar e ordenar sobras disponíveis
     const expandedLeftovers = sobrasCompatibles.flatMap(s =>

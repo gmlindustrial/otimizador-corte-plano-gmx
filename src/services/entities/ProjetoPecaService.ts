@@ -99,7 +99,8 @@ export class ProjetoPecaService {
         comprimento_mm: piece.length || piece.comprimento || piece.comprimento_mm,
         quantidade: piece.quantity || piece.quantidade || 1,
         // PRIORIZAR peso do perfil cadastrado no Supabase
-        peso_por_metro: perfil?.kg_por_metro || piece.peso || 1.0,
+        peso_por_metro: perfil?.kg_por_metro || 1.0,
+        peso: piece.peso, // Peso total da peça extraído do arquivo
         perfil_nao_encontrado: !perfil
       };
 
