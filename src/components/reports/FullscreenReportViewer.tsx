@@ -9,6 +9,7 @@ import {
   Package, Tag, Wrench, Printer, Check, Square, Recycle, MapPin, DollarSign
 } from 'lucide-react';
 import type { OptimizationResult, Project } from '@/pages/Index';
+import { useAuditLogger } from '@/hooks/useAuditLogger';
 
 interface FullscreenReportViewerProps {
   isOpen: boolean;
@@ -28,6 +29,7 @@ export const FullscreenReportViewer = ({
   onResultsChange
 }: FullscreenReportViewerProps) => {
   const [selectedBar, setSelectedBar] = useState<number>(0);
+  const { logPieceAction } = useAuditLogger();
   const [svgZoomLevel, setSvgZoomLevel] = useState<number>(1);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [filterByConjunto, setFilterByConjunto] = useState<string>('');
@@ -103,7 +105,7 @@ export const FullscreenReportViewer = ({
     return () => document.removeEventListener('keydown', handleKeyPress);
   }, [isOpen, onClose, filteredBars.length]);
 
-  const togglePieceCheck = (barIndex: number, piece: any) => {
+  const togglePieceCheck = async (barIndex: number, piece: any) => {
     const pieceId = `${barIndex}-${piece.tag || piece.length}`;
     const newChecked = new Set(checkedPieces);
 
@@ -119,6 +121,23 @@ export const FullscreenReportViewer = ({
     piece.cortada = checked;
     setCheckedPieces(newChecked);
     onResultsChange?.(results);
+
+    // Log da ação no histórico
+    if (project) {
+      await logPieceAction(
+        checked ? 'MARCAR_CORTADA' : 'DESMARCAR_CORTADA',
+        pieceId,
+        project.projectNumber || project.name || 'Projeto',
+        {
+          tag: piece.tag,
+          length: piece.length,
+          perfil: piece.perfil,
+          barIndex: barIndex + 1,
+          quantidade: piece.quantidade,
+          status: checked ? 'cortada' : 'pendente'
+        }
+      );
+    }
   };
 
   const currentBar = filteredBars[selectedBar];
