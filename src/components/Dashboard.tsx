@@ -6,12 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BarChart3, Clock, Users, Scissors, AlertTriangle, TrendingUp, Download, Send } from 'lucide-react';
+import { BarChart3, Clock, Users, Scissors, AlertTriangle, TrendingUp, Download, Send, Shield } from 'lucide-react';
 import { OperationalKPIs } from './dashboard/OperationalKPIs';
 import { EfficiencyReport } from './dashboard/EfficiencyReport';
 import { BladeManagement } from './dashboard/BladeManagement';
 import { MaterialUtilization } from './dashboard/MaterialUtilization';
 import { DuplicityMonitor } from './dashboard/DuplicityMonitor';
+import { AuditLogViewer } from './audit/AuditLogViewer';
 import { useSupabaseData } from '@/hooks/useSupabaseData';
 import { useSystemSettings } from '@/hooks/useSystemSettings';
 
@@ -163,12 +164,16 @@ export const Dashboard = ({ history }: DashboardProps) => {
 
       {/* Tabs de Relatórios */}
       <Tabs defaultValue="operational" className="w-full">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="operational">KPIs Operacionais</TabsTrigger>
           <TabsTrigger value="efficiency">Eficiência</TabsTrigger>
           <TabsTrigger value="blade">Gestão Lâmina</TabsTrigger>
           <TabsTrigger value="material">Material</TabsTrigger>
           <TabsTrigger value="duplicity">Duplicidade</TabsTrigger>
+          <TabsTrigger value="audit">
+            <Shield className="w-4 h-4 mr-2" />
+            Auditoria
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="operational">
@@ -218,6 +223,10 @@ export const Dashboard = ({ history }: DashboardProps) => {
             onSendWhatsApp={handleSendWhatsApp}
             onSendTelegram={handleSendTelegram}
           />
+        </TabsContent>
+
+        <TabsContent value="audit">
+          <AuditLogViewer />
         </TabsContent>
       </Tabs>
     </div>
