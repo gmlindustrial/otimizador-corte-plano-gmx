@@ -9,11 +9,12 @@ interface OptimizationResultsDialogProps {
   barLength: number;
   project: Project | null;
   optimizationId: string | null;
+  listName?: string;
 }
 
 import { projetoOtimizacaoService } from '@/services/entities/ProjetoOtimizacaoService';
 
-export const OptimizationResultsDialog = ({ open, onOpenChange, results, barLength, project, optimizationId }: OptimizationResultsDialogProps) => {
+export const OptimizationResultsDialog = ({ open, onOpenChange, results, barLength, project, optimizationId, listName }: OptimizationResultsDialogProps) => {
   if (!results) return null;
   const handleResultsChange = async (r: OptimizationResult) => {
     if (!optimizationId) return;
@@ -28,7 +29,7 @@ export const OptimizationResultsDialog = ({ open, onOpenChange, results, barLeng
             Visualize o plano de corte otimizado e as estatísticas detalhadas do projeto.
           </DialogDescription>
         </DialogHeader>
-        <OptimizationResults results={results} barLength={barLength} project={project} pieces={[]} onResultsChange={handleResultsChange} />
+        <OptimizationResults results={results} barLength={barLength} project={project} pieces={[]} onResultsChange={handleResultsChange} listName={listName} />
       </DialogContent>
     </Dialog>
   );

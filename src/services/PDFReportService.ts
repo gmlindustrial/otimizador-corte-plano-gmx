@@ -68,7 +68,8 @@ export class PDFReportService {
   static async generateCompleteLinearReport(
     results: OptimizationResult,
     barLength: number,
-    project: Project
+    project: Project,
+    listName?: string
   ): Promise<void> {
     try {
       const doc = new jsPDF();
@@ -366,7 +367,8 @@ export class PDFReportService {
   static async generateSimplifiedLinearReport(
     results: OptimizationResult,
     barLength: number,
-    project: Project
+    project: Project,
+    listName?: string
   ): Promise<void> {
     try {
       const doc = new jsPDF();
@@ -544,9 +546,10 @@ export class PDFReportService {
   static async generateLinearReport(
     results: OptimizationResult,
     barLength: number,
-    project: Project
+    project: Project,
+    listName?: string
   ): Promise<void> {
-    return this.generateCompleteLinearReport(results, barLength, project);
+    return this.generateCompleteLinearReport(results, barLength, project, listName);
   }
 
   static async generateSheetReport(

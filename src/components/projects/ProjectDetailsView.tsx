@@ -81,7 +81,7 @@ export const ProjectDetailsView = ({
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showOptimizationDialog, setShowOptimizationDialog] = useState(false);
-  const [viewResults, setViewResults] = useState<{ res: any; bar: number; id: string } | null>(null);
+  const [viewResults, setViewResults] = useState<{ res: any; bar: number; id: string; nome_lista: string } | null>(null);
 
   const mapProjetoToProject = (p: Projeto): Project => ({
     id: p.id,
@@ -674,7 +674,8 @@ export const ProjectDetailsView = ({
                                   setViewResults({
                                     res: optimization.resultados,
                                     bar: optimization.tamanho_barra,
-                                    id: optimization.id
+                                    id: optimization.id,
+                                    nome_lista: optimization.nome_lista
                                   })
                                 }
                                 className="hover:bg-indigo-50 hover:border-indigo-300 transition-all duration-300"
@@ -718,6 +719,7 @@ export const ProjectDetailsView = ({
           barLength={viewResults?.bar || 0}
           project={projectForExport}
           optimizationId={viewResults?.id || null}
+          listName={viewResults?.nome_lista}
         />
         <DeleteConfirmDialog
           open={confirmDelete}

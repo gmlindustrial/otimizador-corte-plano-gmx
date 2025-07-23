@@ -16,6 +16,7 @@ interface OptimizationResultsProps {
   project: Project | null;
   pieces: CutPiece[];
   onResultsChange?: (results: OptimizationResult) => void;
+  listName?: string;
 }
 
 // Interface estendida para suportar informações de sustentabilidade
@@ -29,7 +30,7 @@ interface ExtendedOptimizationResult extends OptimizationResult {
   };
 }
 
-export const OptimizationResults = ({ results, barLength, project, pieces, onResultsChange }: OptimizationResultsProps) => {
+export const OptimizationResults = ({ results, barLength, project, pieces, onResultsChange, listName }: OptimizationResultsProps) => {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [printMode, setPrintMode] = useState<'complete' | 'simplified'>('complete');
@@ -93,7 +94,7 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
         return;
       }
 
-      await PDFReportService.generateCompleteLinearReport(results, barLength, project);
+      await PDFReportService.generateCompleteLinearReport(results, barLength, project, listName);
       
       toast({
         title: "PDF Exportado",
@@ -120,7 +121,7 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
         return;
       }
 
-      await PDFReportService.generateSimplifiedLinearReport(results, barLength, project);
+      await PDFReportService.generateSimplifiedLinearReport(results, barLength, project, listName);
       
       toast({
         title: "PDF Simplificado Exportado",
