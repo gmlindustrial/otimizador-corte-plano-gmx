@@ -72,8 +72,8 @@ export class ProjetoPecaService {
   }
 
   async validateAndProcessPieces(pieces: any[], projectId: string): Promise<{
-    validPieces: ProjetoPeca[];
-    invalidPieces: ProjectPieceValidation[];
+    allPieces: ProjetoPeca[]; // TODAS as peças para salvar (com e sem perfil)
+    invalidPieces: ProjectPieceValidation[]; // Apenas para exibir alertas
     stats: {
       total: number;
       withProfile: number;
@@ -82,7 +82,7 @@ export class ProjetoPecaService {
       conjuntos: string[];
     };
   }> {
-    const validPieces: ProjetoPeca[] = [];
+    const allPieces: ProjetoPeca[] = [];
     const invalidPieces: ProjectPieceValidation[] = [];
 
     for (const piece of pieces) {
@@ -104,15 +104,18 @@ export class ProjetoPecaService {
         perfil_nao_encontrado: !perfil
       };
 
+      // SEMPRE adicionar à lista de peças para salvar
+      allPieces.push(peca as ProjetoPeca);
+
       if (perfil) {
         console.log(`✅ Perfil encontrado para ${peca.posicao}: ${perfil.descricao_perfil} (${perfil.kg_por_metro} kg/m)`);
-        validPieces.push(peca as ProjetoPeca);
       } else {
         console.log(`❌ Perfil não encontrado para ${peca.posicao}: ${perfilDescription}`);
         
         // Buscar sugestões de perfis similares
         const suggestions = await perfilService.searchByDescription(perfilDescription);
 
+        // Adicionar à lista de validações apenas para exibir alertas
         invalidPieces.push({
           peca: peca as ProjetoPeca,
           isValid: false,
@@ -124,15 +127,17 @@ export class ProjetoPecaService {
     // Gerar estatísticas
     const stats = {
       total: pieces.length,
-      withProfile: validPieces.length,
-      withoutProfile: invalidPieces.length,
+      withProfile: allPieces.filter(p => !p.perfil_nao_encontrado).length,
+      withoutProfile: allPieces.filter(p => p.perfil_nao_encontrado).length,
       pages: [...new Set(pieces.map(p => p.page).filter(Boolean))],
-      conjuntos: [...new Set(pieces.map(p => p.tag).filter(Boolean))]
+      conjuntos: [...new Set(pieces.map(p => p.tag || p.conjunto || p.set).filter(Boolean))]
     };
 
     console.log('📊 Estatísticas do processamento:', stats);
+    console.log(`📦 Total de peças para salvar: ${allPieces.length}`);
+    console.log(`⚠️ Peças sem perfil (precisam ser resolvidas): ${invalidPieces.length}`);
 
-    return { validPieces, invalidPieces, stats };
+    return { allPieces, invalidPieces, stats };
   }
 
   async update(id: string, peca: Partial<ProjetoPeca>) {

@@ -139,21 +139,33 @@ export const ProjectDetailsView = ({
   };
 
   const handleFileProcessed = async (imported: any[]) => {
-    const { validPieces, invalidPieces } =
+    const { allPieces, invalidPieces } =
       await projetoPecaService.validateAndProcessPieces(imported, project.id);
 
-    const duplicates = validPieces.filter((vp) =>
+    // Verificar duplicatas baseado em posição
+    const duplicates = allPieces.filter((vp) =>
       pieces.some((p) => p.posicao === vp.posicao)
     ).map((vp) => ({ existing: pieces.find(p => p.posicao === vp.posicao)!, imported: vp }));
 
-    const uniqueValid = validPieces.filter(
+    const uniquePieces = allPieces.filter(
       (vp) => !pieces.some((p) => p.posicao === vp.posicao)
     );
 
-    if (uniqueValid.length > 0) {
-      const resp = await projetoPecaService.createBatch(uniqueValid);
+    if (uniquePieces.length > 0) {
+      // Salvar TODAS as peças únicas (com e sem perfil)
+      const resp = await projetoPecaService.createBatch(uniquePieces);
       if (resp.success && resp.data) {
-        toast.success(`${resp.data.length} peça(s) cadastradas`);
+        const withProfile = resp.data.filter(p => !p.perfil_nao_encontrado).length;
+        const withoutProfile = resp.data.filter(p => p.perfil_nao_encontrado).length;
+        
+        if (withProfile > 0 && withoutProfile > 0) {
+          toast.success(`${withProfile} peça(s) cadastradas com perfil, ${withoutProfile} precisam ser revisadas`);
+        } else if (withProfile > 0) {
+          toast.success(`${withProfile} peça(s) cadastradas`);
+        } else {
+          toast.warning(`${withoutProfile} peça(s) cadastradas mas precisam ser revisadas`);
+        }
+        
         await loadProjectData();
       } else {
         toast.error('Erro ao cadastrar peças');
@@ -167,8 +179,10 @@ export const ProjectDetailsView = ({
 
     if (invalidPieces.length > 0) {
       setValidations(invalidPieces);
-      toast.warning('Algumas peças precisam ser revisadas');
-      setActiveTab('register');
+      toast.info('Algumas peças precisam ter seus perfis definidos');
+      if (duplicates.length === 0) {
+        setActiveTab('pieces'); // Ir para a aba de peças para mostrar as peças salvas
+      }
     } else {
       setActiveTab('pieces');
     }
@@ -179,18 +193,40 @@ export const ProjectDetailsView = ({
   };
 
   const handleResolveValidation = async (validation: ProjectPieceValidation, perfil: PerfilMaterial) => {
-    const resp = await projetoPecaService.create({
-      ...validation.peca,
-      perfil_id: perfil.id,
-      peso_por_metro: perfil.kg_por_metro,
-      perfil_nao_encontrado: false
-    });
-    if (resp.success && resp.data) {
-      setPieces(prev => [...prev, resp.data]);
-      setValidations(prev => prev.filter(v => v !== validation));
-      toast.success('Peça validada e cadastrada');
+    // Buscar a peça existente na lista para atualizar
+    const existingPiece = pieces.find(p => p.posicao === validation.peca.posicao);
+    
+    if (existingPiece) {
+      // Atualizar peça existente
+      const resp = await projetoPecaService.update(existingPiece.id, {
+        perfil_id: perfil.id,
+        peso_por_metro: perfil.kg_por_metro,
+        perfil_nao_encontrado: false
+      });
+      
+      if (resp.success && resp.data) {
+        // Atualizar na lista local
+        setPieces(prev => prev.map(p => p.id === existingPiece.id ? resp.data : p));
+        setValidations(prev => prev.filter(v => v.peca.posicao !== validation.peca.posicao));
+        toast.success(`Perfil definido para peça ${validation.peca.posicao}`);
+      } else {
+        toast.error('Erro ao atualizar peça');
+      }
     } else {
-      toast.error('Erro ao cadastrar peça');
+      // Criar nova peça (fallback)
+      const resp = await projetoPecaService.create({
+        ...validation.peca,
+        perfil_id: perfil.id,
+        peso_por_metro: perfil.kg_por_metro,
+        perfil_nao_encontrado: false
+      });
+      if (resp.success && resp.data) {
+        setPieces(prev => [...prev, resp.data]);
+        setValidations(prev => prev.filter(v => v !== validation));
+        toast.success('Peça validada e cadastrada');
+      } else {
+        toast.error('Erro ao cadastrar peça');
+      }
     }
   };
 
@@ -384,6 +420,11 @@ export const ProjectDetailsView = ({
             <TabsTrigger value="pieces" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg transition-all duration-300">
               <Package className="w-4 h-4" />
               Peças ({pieces.length})
+              {pieces.filter(p => p.perfil_nao_encontrado).length > 0 && (
+                <Badge variant="destructive" className="text-xs px-1 py-0 h-4 min-w-4 bg-orange-500 hover:bg-orange-600">
+                  {pieces.filter(p => p.perfil_nao_encontrado).length}
+                </Badge>
+              )}
             </TabsTrigger>
             <TabsTrigger value="register" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg transition-all duration-300">
               <Plus className="w-4 h-4" />
@@ -542,7 +583,11 @@ export const ProjectDetailsView = ({
                                   ? (piece.peso_por_metro * piece.comprimento_mm) / 1000
                                   : null;
                                 return (
-                                  <div key={piece.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-white rounded-xl border border-gray-100 hover:shadow-sm transition-all duration-300">
+                                   <div key={piece.id} className={`flex items-center justify-between p-4 rounded-xl border hover:shadow-sm transition-all duration-300 ${
+                                     piece.perfil_nao_encontrado 
+                                       ? 'bg-gradient-to-r from-orange-50 to-yellow-50 border-orange-200' 
+                                       : 'bg-gradient-to-r from-gray-50 to-white border-gray-100'
+                                   }`}>
                                     <div className="flex items-start gap-4">
                                       <Checkbox
                                         checked={selected}
@@ -551,14 +596,43 @@ export const ProjectDetailsView = ({
                                       />
                                       <div className="space-y-2">
                                         
-                                        {piece.perfil && (
-                                          <div className="flex items-center gap-2">
-                                            <span className="text-sm font-semibold text-gray-600">Perfil:</span>
-                                            <span className="text-sm text-gray-800 bg-blue-50 px-2 py-1 rounded">
-                                              {piece.perfil.descricao_perfil}
-                                            </span>
-                                          </div>
-                                        )}
+                                         {piece.perfil ? (
+                                           <div className="flex items-center gap-2">
+                                             <span className="text-sm font-semibold text-gray-600">Perfil:</span>
+                                             <span className="text-sm text-gray-800 bg-blue-50 px-2 py-1 rounded">
+                                               {piece.perfil.descricao_perfil}
+                                             </span>
+                                           </div>
+                                         ) : (
+                                           <div className="flex items-center gap-2">
+                                             <span className="text-sm font-semibold text-orange-600">⚠️ Perfil:</span>
+                                             <span className="text-sm text-orange-800 bg-orange-50 px-2 py-1 rounded border border-orange-200">
+                                               {piece.descricao_perfil_raw || 'Não definido'}
+                                             </span>
+                                             <Button
+                                               size="sm"
+                                               variant="outline"
+                                               onClick={() => {
+                                                 const validation: ProjectPieceValidation = {
+                                                   peca: piece,
+                                                   isValid: false,
+                                                   suggestions: []
+                                                 };
+                                                 setValidations(prev => {
+                                                   const exists = prev.some(v => v.peca.posicao === piece.posicao);
+                                                   if (!exists) {
+                                                     return [...prev, validation];
+                                                   }
+                                                   return prev;
+                                                 });
+                                                 setActiveTab('register');
+                                               }}
+                                               className="ml-2 text-xs px-2 py-1 h-6 bg-orange-100 text-orange-700 border-orange-300 hover:bg-orange-200"
+                                             >
+                                               Definir Perfil
+                                             </Button>
+                                           </div>
+                                         )}
                                         <div className="flex items-center gap-2">
                                           <span className="text-sm font-semibold text-gray-600">Posição:</span>
                                           <span className="text-sm text-gray-800 font-mono bg-gray-100 px-2 py-1 rounded">
