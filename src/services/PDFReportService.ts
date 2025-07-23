@@ -410,6 +410,24 @@ export class PDFReportService {
         0
       );
 
+      // Calcular peças cortadas para estatísticas
+      const cutPieces = results.bars.reduce(
+        (total, bar) =>
+          total + bar.pieces.filter((piece: any) => piece.cortada === true).length,
+        0
+      );
+
+      const cutWeight = results.bars.reduce(
+        (total, bar) =>
+          total +
+          bar.pieces
+            .filter((piece: any) => piece.cortada === true)
+            .reduce((barTotal, piece: any) => barTotal + (piece.peso || 0), 0),
+        0
+      );
+
+      const progressPercent = totalPieces > 0 ? ((cutPieces / totalPieces) * 100).toFixed(1) : '0.0';
+
       // Combinar os dois grupos
       const infoFields = [
         {
@@ -418,11 +436,11 @@ export class PDFReportService {
         },
         {
           left: { label: "Peso Total", value: `${totalWeight.toFixed(2)}kg` },
-          right: { label: "Qtd. Barras Estoque GMX", value: "" },
+          right: { label: "Peso Cortado", value: `${cutWeight.toFixed(2)}kg` },
         },
         {
           left: { label: "Qtd Peças", value: totalPieces },
-          right: { label: "Total de Barras", value: "" },
+          right: { label: "Peças Cortadas", value: `${cutPieces} (${progressPercent}%)` },
         },
       ];
 
@@ -451,7 +469,13 @@ export class PDFReportService {
       doc.setFontSize(11);
       doc.setFont("helvetica", "bold");
       doc.text("Tabela Geral de Peças", 20, currentY);
-      currentY += 10;
+      currentY += 8;
+
+      // Legenda para status
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text("Legenda: ✓ = Cortada | ○ = Pendente", 20, currentY);
+      currentY += 8;
 
       // Cabeçalho ajustado
       const headers = [
@@ -526,7 +550,7 @@ export class PDFReportService {
             `${piece.length || 0}mm`,
             `${peso}kg`,
             wasteFormatted,
-            "",
+            piece.cortada ? "✓" : "○",
             "",
             "",
           ];
