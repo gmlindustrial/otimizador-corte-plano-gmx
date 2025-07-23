@@ -122,19 +122,26 @@ export const FullscreenReportViewer = ({
     setCheckedPieces(newChecked);
     onResultsChange?.(results);
 
-    // Log da ação no histórico
+    // Log da ação no histórico com descrição detalhada
     if (project) {
+      const descricaoDetalhada = checked 
+        ? `Peça da TAG ${piece.tag || piece.length} - Posição ${piece.posicao || 'Manual'}, da Lista ${barIndex + 1} foi marcada como cortada`
+        : `Peça da TAG ${piece.tag || piece.length} - Posição ${piece.posicao || 'Manual'}, da Lista ${barIndex + 1} foi desmarcada`;
+
       await logPieceAction(
         checked ? 'MARCAR_CORTADA' : 'DESMARCAR_CORTADA',
         pieceId,
         project.projectNumber || project.name || 'Projeto',
         {
+          descricaoCustomizada: descricaoDetalhada,
           tag: piece.tag,
-          length: piece.length,
+          posicao: piece.posicao || 'Manual',
+          lista: barIndex + 1,
+          comprimento: piece.length,
           perfil: piece.perfil,
-          barIndex: barIndex + 1,
           quantidade: piece.quantidade,
-          status: checked ? 'cortada' : 'pendente'
+          statusAnterior: !checked ? 'cortada' : 'pendente',
+          statusAtual: checked ? 'cortada' : 'pendente'
         }
       );
     }

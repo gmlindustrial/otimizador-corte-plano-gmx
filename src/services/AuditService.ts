@@ -359,11 +359,13 @@ export class AuditService {
   }
 
   async logPieceAction(action: string, pieceId: string, projectName: string, details?: any) {
+    const descricao = details?.descricaoCustomizada || `${action} peça no projeto: ${projectName}`;
+    
     return this.logSystemActivity({
       actionType: action,
       entityType: 'PECA',
       entityId: pieceId,
-      description: `${action} peça no projeto: ${projectName}`,
+      description: descricao,
       details
     });
   }
