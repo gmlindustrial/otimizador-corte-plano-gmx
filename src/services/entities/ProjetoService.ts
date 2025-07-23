@@ -2,10 +2,100 @@
 import { BaseService } from '../base/BaseService';
 import { supabase } from '@/integrations/supabase/client';
 import type { Projeto } from '../interfaces';
+import { auditService } from '../AuditService';
 
 export class ProjetoService extends BaseService<Projeto> {
   constructor() {
     super('projetos');
+  }
+
+  // Métodos específicos com logging de auditoria
+  async createWithAudit(data: Omit<Projeto, 'id' | 'created_at'>): Promise<{ data?: Projeto; error?: any; success: boolean }> {
+    try {
+      const { data: projeto, error } = await supabase
+        .from('projetos')
+        .insert(data)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Log da ação
+      if (projeto) {
+        await auditService.logProjectAction(
+          'CRIAR',
+          projeto.id,
+          projeto.nome,
+          { projeto }
+        );
+      }
+
+      return { data: projeto, success: true };
+    } catch (error) {
+      console.error('Erro ao criar projeto:', error);
+      return { error, success: false };
+    }
+  }
+
+  async updateWithAudit(id: string, data: Partial<Projeto>): Promise<{ data?: Projeto; error?: any; success: boolean }> {
+    try {
+      const { data: projeto, error } = await supabase
+        .from('projetos')
+        .update(data)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Log da ação
+      if (projeto) {
+        await auditService.logProjectAction(
+          'EDITAR',
+          projeto.id,
+          projeto.nome,
+          { updates: data }
+        );
+      }
+
+      return { data: projeto, success: true };
+    } catch (error) {
+      console.error('Erro ao atualizar projeto:', error);
+      return { error, success: false };
+    }
+  }
+
+  async deleteWithAudit(id: string): Promise<{ success: boolean; error?: any }> {
+    try {
+      // Buscar dados do projeto antes de deletar
+      const { data: projeto } = await supabase
+        .from('projetos')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      const { error } = await supabase
+        .from('projetos')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      // Log da ação
+      if (projeto) {
+        await auditService.logProjectAction(
+          'EXCLUIR',
+          id,
+          projeto.nome,
+          { deletedProject: projeto }
+        );
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Erro ao deletar projeto:', error);
+      return { success: false, error };
+    }
   }
 
   async getAllWithCounts() {

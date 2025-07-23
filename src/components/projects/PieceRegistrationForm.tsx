@@ -7,6 +7,7 @@ import { projetoPecaService } from '@/services/entities/ProjetoPecaService';
 import { perfilService } from '@/services/entities/PerfilService';
 import type { ProjetoPeca } from '@/types/project';
 import { toast } from 'sonner';
+import { useAuditLogger } from '@/hooks/useAuditLogger';
 
 interface PieceRegistrationFormProps {
   projectId: string;
@@ -22,6 +23,7 @@ export const PieceRegistrationForm = ({ projectId, onPieceAdded }: PieceRegistra
     quantidade: '1'
   });
   const [loading, setLoading] = useState(false);
+  const { logPieceAction } = useAuditLogger();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,6 +67,21 @@ export const PieceRegistrationForm = ({ projectId, onPieceAdded }: PieceRegistra
         } else {
           toast.success('Peça cadastrada com sucesso!');
         }
+
+        // Log da ação manual
+        await logPieceAction(
+          'ADICIONAR',
+          response.data.id,
+          'Projeto Atual',
+          { 
+            method: 'manual',
+            piece: {
+              posicao: response.data.posicao,
+              comprimento_mm: response.data.comprimento_mm,
+              quantidade: response.data.quantidade
+            }
+          }
+        );
       }
     } catch (error) {
       console.error('Erro ao cadastrar peça:', error);

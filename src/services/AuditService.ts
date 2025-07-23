@@ -387,6 +387,67 @@ export class AuditService {
       details
     });
   }
+
+  /**
+   * Busca histórico específico de um projeto
+   */
+  async getProjectHistory(projectId: string, filters: AuditFilters = {}): Promise<{
+    data: SystemActivityLog[];
+    total: number;
+    success: boolean;
+    error?: string;
+  }> {
+    try {
+      let query = supabase
+        .from('system_activity_logs')
+        .select('*', { count: 'exact' })
+        .or(`entity_id.eq.${projectId},description.ilike.%${projectId}%`)
+        .order('timestamp', { ascending: false });
+
+      // Aplicar filtros adicionais
+      if (filters.startDate) {
+        query = query.gte('timestamp', filters.startDate.toISOString());
+      }
+      if (filters.endDate) {
+        query = query.lte('timestamp', filters.endDate.toISOString());
+      }
+      if (filters.userId) {
+        query = query.eq('user_id', filters.userId);
+      }
+      if (filters.actionType) {
+        query = query.eq('action_type', filters.actionType);
+      }
+      if (filters.entityType) {
+        query = query.eq('entity_type', filters.entityType);
+      }
+
+      // Paginação
+      if (filters.limit) {
+        query = query.limit(filters.limit);
+      }
+      if (filters.offset) {
+        query = query.range(filters.offset, (filters.offset + (filters.limit || 50)) - 1);
+      }
+
+      const { data, error, count } = await query;
+
+      if (error) throw error;
+
+      return {
+        data: data || [],
+        total: count || 0,
+        success: true
+      };
+    } catch (error) {
+      const errorMessage = EnhancedErrorHandler.handle(error, 'AuditService.getProjectHistory');
+      return {
+        data: [],
+        total: 0,
+        success: false,
+        error: errorMessage
+      };
+    }
+  }
 }
 
 export const auditService = AuditService.getInstance();

@@ -36,6 +36,7 @@ import { ProjectValidationAlert } from './ProjectValidationAlert';
 import { ProjectDuplicateManager } from './ProjectDuplicateManager';
 import { DeleteConfirmDialog } from '../management/DeleteConfirmDialog';
 import type { Project } from '@/pages/Index';
+import { ProjectHistoryTab } from './ProjectHistoryTab';
 
 interface Projeto {
   id: string;
@@ -74,7 +75,7 @@ export const ProjectDetailsView = ({
   const [loading, setLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
   const [validations, setValidations] = useState<ProjectPieceValidation[]>([]);
-  const [activeTab, setActiveTab] = useState<'pieces' | 'register' | 'optimizations'>('pieces');
+  const [activeTab, setActiveTab] = useState<'pieces' | 'register' | 'optimizations' | 'history'>('pieces');
   const [importing, setImporting] = useState(false);
   const [duplicateItems, setDuplicateItems] = useState<{ existing: ProjetoPeca; imported: ProjetoPeca }[]>([]);
   const [selectedPieces, setSelectedPieces] = useState<Set<string>>(new Set());
@@ -378,8 +379,8 @@ export const ProjectDetailsView = ({
         </Card>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'pieces' | 'optimizations' | 'register')} className="space-y-8">
-          <TabsList className="grid w-full grid-cols-3 bg-white/80 backdrop-blur-sm p-2 rounded-xl shadow-lg border-0">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'pieces' | 'optimizations' | 'register' | 'history')} className="space-y-8">
+          <TabsList className="grid w-full grid-cols-4 bg-white/80 backdrop-blur-sm p-2 rounded-xl shadow-lg border-0">
             <TabsTrigger value="pieces" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg transition-all duration-300">
               <Package className="w-4 h-4" />
               Peças ({pieces.length})
@@ -391,6 +392,10 @@ export const ProjectDetailsView = ({
             <TabsTrigger value="optimizations" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg transition-all duration-300">
               <Calculator className="w-4 h-4" />
               Otimizações ({optimizations.length})
+            </TabsTrigger>
+            <TabsTrigger value="history" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg transition-all duration-300">
+              <Calendar className="w-4 h-4" />
+              Histórico
             </TabsTrigger>
           </TabsList>
 
@@ -691,6 +696,13 @@ export const ProjectDetailsView = ({
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="history">
+            <ProjectHistoryTab 
+              projectId={project.id}
+              projectName={project.nome}
+            />
           </TabsContent>
         </Tabs>
 
