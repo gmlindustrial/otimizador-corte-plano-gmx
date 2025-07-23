@@ -44,7 +44,7 @@ export const FullscreenReportViewer = ({
     results.bars.forEach((bar, bIdx) => {
       bar.pieces.forEach((piece: any) => {
         if (piece.cortada) {
-          initial.add(`${bIdx}-${piece.tag || piece.length}`);
+          initial.add(`${piece.tag || piece.length}-${piece.posicao || 'Manual'}`);
         }
       });
     });
@@ -70,7 +70,7 @@ export const FullscreenReportViewer = ({
       
       const matchesConjunto = !filterByConjunto || piece.conjunto === filterByConjunto;
       
-      const pieceId = `${barIndex}-${piece.tag || piece.length}`;
+      const pieceId = `${piece.tag || piece.length}-${piece.posicao || 'Manual'}`;
       const matchesPending = !showOnlyPending || !checkedPieces.has(pieceId);
       
       return matchesSearch && matchesConjunto && matchesPending;
@@ -106,7 +106,7 @@ export const FullscreenReportViewer = ({
   }, [isOpen, onClose, filteredBars.length]);
 
   const togglePieceCheck = async (barIndex: number, piece: any) => {
-    const pieceId = `${barIndex}-${piece.tag || piece.length}`;
+    const pieceId = `${piece.tag || piece.length}-${piece.posicao || 'Manual'}`;
     const newChecked = new Set(checkedPieces);
 
     let checked: boolean;
@@ -426,7 +426,7 @@ export const FullscreenReportViewer = ({
                           let currentX = 0;
                           return currentBar.pieces.map((piece: any, pieceIndex) => {
                             const segmentWidth = piece.length / 10;
-                            const pieceId = `${currentBar.barIndex}-${piece.tag || piece.length}`;
+                            const pieceId = `${piece.tag || piece.length}-${piece.posicao || 'Manual'}`;
                             const isChecked = checkedPieces.has(pieceId);
                             
                             // Cor baseada no tipo de barra
@@ -531,15 +531,15 @@ export const FullscreenReportViewer = ({
                             <th className="border border-gray-300 px-4 py-3 text-left">Status</th>
                             <th className="border border-gray-300 px-4 py-3 text-left">Peça</th>
                             <th className="border border-gray-300 px-4 py-3 text-left">TAG</th>
+                            <th className="border border-gray-300 px-4 py-3 text-left">Posição</th>
                             <th className="border border-gray-300 px-4 py-3 text-left">Comprimento</th>
                             <th className="border border-gray-300 px-4 py-3 text-left">Conjunto</th>
                             <th className="border border-gray-300 px-4 py-3 text-left">Perfil</th>
-                            <th className="border border-gray-300 px-4 py-3 text-left">Ações</th>
                           </tr>
                         </thead>
                         <tbody>
                           {currentBar.pieces.map((piece: any, pieceIndex) => {
-                            const pieceId = `${currentBar.barIndex}-${piece.tag || piece.length}`;
+                            const pieceId = `${piece.tag || piece.length}-${piece.posicao || 'Manual'}`;
                             const isChecked = checkedPieces.has(pieceId);
                             
                             return (
@@ -573,6 +573,11 @@ export const FullscreenReportViewer = ({
                                     <span className="text-gray-400">-</span>
                                   )}
                                 </td>
+                                <td className="border border-gray-300 px-4 py-3">
+                                  <div className="text-sm font-medium">
+                                    {piece.posicao || 'Manual'}
+                                  </div>
+                                </td>
                                 <td className="border border-gray-300 px-4 py-3 font-mono text-lg font-bold">
                                   {piece.length}mm
                                 </td>
@@ -596,11 +601,6 @@ export const FullscreenReportViewer = ({
                                     <span className="text-gray-400">-</span>
                                   )}
                                 </td>
-                                <td className="border border-gray-300 px-4 py-3">
-                                  <div className="text-xs text-gray-500">
-                                    Pos: {piece.posicao || 'Manual'}
-                                  </div>
-                                </td>
                               </tr>
                             );
                           })}
@@ -618,6 +618,7 @@ export const FullscreenReportViewer = ({
                                 </div>
                               </td>
                               <td className="border border-gray-300 px-4 py-3 text-gray-400">-</td>
+                              <td className="border border-gray-300 px-4 py-3 text-gray-400">N/A</td>
                               <td className="border border-gray-300 px-4 py-3 font-mono text-red-600 font-bold">
                                 {currentBar.waste}mm
                               </td>
@@ -625,7 +626,6 @@ export const FullscreenReportViewer = ({
                               <td className="border border-gray-300 px-4 py-3 text-gray-400">
                                 {(currentBar as any).type === 'leftover' ? 'Sobra da Sobra' : 'Desperdício'}
                               </td>
-                              <td className="border border-gray-300 px-4 py-3 text-gray-400">Final</td>
                             </tr>
                           )}
                         </tbody>
