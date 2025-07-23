@@ -102,8 +102,8 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({ onClose }) => {
   const handleFilterChange = () => {
     const newFilters: AuditFilters = {
       ...filters,
-      actionType: selectedActionType || undefined,
-      entityType: selectedEntityType || undefined,
+      actionType: selectedActionType === 'all' ? undefined : selectedActionType || undefined,
+      entityType: selectedEntityType === 'all' ? undefined : selectedEntityType || undefined,
       offset: 0
     };
     
@@ -271,7 +271,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({ onClose }) => {
                   <SelectValue placeholder="Tipo de Ação" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas as Ações</SelectItem>
+                  <SelectItem value="all">Todas as Ações</SelectItem>
                   <SelectItem value="CRIAR">Criar</SelectItem>
                   <SelectItem value="EDITAR">Editar</SelectItem>
                   <SelectItem value="EXCLUIR">Excluir</SelectItem>
@@ -287,7 +287,7 @@ export const AuditLogViewer: React.FC<AuditLogViewerProps> = ({ onClose }) => {
                   <SelectValue placeholder="Tipo de Entidade" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas as Entidades</SelectItem>
+                  <SelectItem value="all">Todas as Entidades</SelectItem>
                   <SelectItem value="PROJETO">Projeto</SelectItem>
                   <SelectItem value="PECA">Peça</SelectItem>
                   <SelectItem value="OTIMIZACAO">Otimização</SelectItem>
