@@ -104,32 +104,14 @@ export const ProjectHistoryTab = ({ projectId, projectName }: ProjectHistoryTabP
       // Carregar logs de atividade do sistema
       const systemLogsResponse = await auditService.getSystemActivityLogs(filters);
       
-      // Carregar logs de auditoria automática para cada tabela
-      const auditResponses = await Promise.all([
-        auditService.getAuditLogs({
-          ...filters,
-          tableName: 'projetos'
-        }),
-        auditService.getAuditLogs({
-          ...filters,
-          tableName: 'projeto_pecas'
-        }),
-        auditService.getAuditLogs({
-          ...filters,
-          tableName: 'projeto_otimizacoes'
-        })
-      ]);
-
-      let allHistoryEntries: ProjectHistoryEntry[] = [];
-
-      // Mapear logs de atividade do sistema
       if (systemLogsResponse.success && systemLogsResponse.data) {
-        const projectRelatedSystemLogs = systemLogsResponse.data.filter(log => 
+        // Filtrar logs relacionados ao projeto
+        const projectRelatedLogs = systemLogsResponse.data.filter(log => 
           log.entity_id === projectId || 
           log.description.toLowerCase().includes(projectName.toLowerCase())
         );
 
-        const systemHistory = projectRelatedSystemLogs.map(log => ({
+        const mappedHistory: ProjectHistoryEntry[] = projectRelatedLogs.map(log => ({
           id: log.id,
           timestamp: new Date(log.timestamp),
           user: {
@@ -143,54 +125,14 @@ export const ProjectHistoryTab = ({ projectId, projectName }: ProjectHistoryTabP
           icon: getActionIcon(log.entity_type, log.action_type),
           color: getActionColor(log.action_type)
         }));
-        
-        allHistoryEntries = [...allHistoryEntries, ...systemHistory];
+
+        // Ordenar por timestamp (mais recente primeiro)
+        mappedHistory.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+
+        setHistory(mappedHistory);
+      } else {
+        setHistory([]);
       }
-
-      // Mapear logs de auditoria automática de todas as respostas
-      auditResponses.forEach(auditResponse => {
-        if (auditResponse.success && auditResponse.data) {
-          // Filtrar logs relacionados ao projeto
-          const projectRelatedAuditLogs = auditResponse.data.filter(log => 
-            log.record_id === projectId || 
-            (log.new_values && JSON.stringify(log.new_values).includes(projectId)) ||
-            (log.old_values && JSON.stringify(log.old_values).includes(projectId))
-          );
-
-          const auditHistory = projectRelatedAuditLogs.map(log => ({
-            id: `audit_${log.id}`,
-            timestamp: new Date(log.timestamp),
-            user: {
-              id: log.user_id,
-              name: log.user_name || 'Sistema'
-            },
-            action: log.action_type,
-            entity: (log.table_name === 'projetos' ? 'PROJETO' : 
-                     log.table_name === 'projeto_pecas' ? 'PECA' : 
-                     log.table_name === 'projeto_otimizacoes' ? 'OTIMIZACAO' : 'REGISTRO') as any,
-            description: `${log.action_type} em ${log.table_name}`,
-            details: {
-              old_values: log.old_values,
-              new_values: log.new_values,
-              record_id: log.record_id
-            },
-            icon: getActionIcon(
-              log.table_name === 'projetos' ? 'PROJETO' : 
-              log.table_name === 'projeto_pecas' ? 'PECA' : 
-              log.table_name === 'projeto_otimizacoes' ? 'OTIMIZACAO' : 'REGISTRO', 
-              log.action_type
-            ),
-            color: getActionColor(log.action_type)
-          }));
-          
-          allHistoryEntries = [...allHistoryEntries, ...auditHistory];
-        }
-      });
-
-      // Ordenar por timestamp (mais recente primeiro)
-      allHistoryEntries.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-
-      setHistory(allHistoryEntries);
       
     } catch (error) {
       console.error('Erro ao carregar histórico:', error);
