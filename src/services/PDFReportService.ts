@@ -133,7 +133,6 @@ export class PDFReportService {
         0
       );
 
-      doc.text(`Nome da Lista: ${listName || "N/A"}`, 20, currentY);
       doc.text(`Total de Barras: ${results.totalBars}`, 100, currentY);
       doc.text(
         `Barras NOVAS: ${
@@ -373,15 +372,10 @@ export class PDFReportService {
   ): Promise<void> {
     try {
       const doc = new jsPDF();
-      let currentY = 55;
+      let currentY = 50;
       let pageNumber = 1;
 
-      this.addHeader(
-        doc,
-        project,
-        "Tabela de Corte - Produção Simplificada",
-        pageNumber
-      );
+      this.addHeader(doc, project, `Lista de Corte - ${listName}`, pageNumber);
 
       // ==== INFORMAÇÕES DO PROJETO ====
       doc.setFontSize(12);
@@ -416,30 +410,42 @@ export class PDFReportService {
         0
       );
 
-      const headerFields = [
-        { label: "Nome da Lista", value: listName || "N/A" },
+      // Combinar os dois grupos
+      const infoFields = [
         {
-          label: "Material/Perfil",
-          value:
-            (project as any).tipoMaterial ||
-            PDFReportService.extractProfiles(results) ||
-            "-",
+          left: { label: "Qtd Barras", value: results.totalBars },
+          right: { label: "Qtd. Barras Compradas", value: "" },
         },
-        { label: "Qtd Barras", value: results.totalBars },
-        { label: "Qtd Peças", value: totalPieces },
-        { label: "Peso Total", value: `${totalWeight.toFixed(2)}kg` },
+        {
+          left: { label: "Peso Total", value: `${totalWeight.toFixed(2)}kg` },
+          right: { label: "Qtd. Barras Estoque GMX", value: "" },
+        },
+        {
+          left: { label: "Qtd Peças", value: totalPieces },
+          right: { label: "Total de Barras", value: "" },
+        },
       ];
 
-      headerFields.forEach(({ label, value }, i) => {
-        const x = i % 2 === 0 ? 20 : 105;
-        if (i % 2 === 0 && i !== 0) currentY += 6;
-        doc.text(`${label}:`, x, currentY);
+      const spacingY = 6;
+      const col1X = 20;
+      const col2X = 105;
+
+      doc.setFont("helvetica", "bold");
+    
+
+      infoFields.forEach(({ left, right }) => {
         doc.setFont("helvetica", "bold");
-        doc.text(`${value}`, x + 35, currentY);
+        doc.text(`${left.label}:`, col1X, currentY);
+        doc.text(`${right.label}:`, col2X, currentY);
+
         doc.setFont("helvetica", "normal");
+        doc.text(`${left.value}`, col1X + 20, currentY);
+        doc.text(`${right.value}`, col2X + 50, currentY);
+
+        currentY += spacingY;
       });
 
-      currentY += 12;
+      currentY += 6;
 
       // ==== TABELA DE PEÇAS ====
       doc.setFontSize(11);
@@ -501,7 +507,7 @@ export class PDFReportService {
             this.addHeader(
               doc,
               project,
-              "Tabela de Corte - Produção Simplificada",
+              `Lista de Corte - ${project.name}`,
               pageNumber
             );
             currentY = 55;
@@ -551,7 +557,12 @@ export class PDFReportService {
     project: Project,
     listName?: string
   ): Promise<void> {
-    return this.generateCompleteLinearReport(results, barLength, project, listName);
+    return this.generateCompleteLinearReport(
+      results,
+      barLength,
+      project,
+      listName
+    );
   }
 
   static async generateSheetReport(
