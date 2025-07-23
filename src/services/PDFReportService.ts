@@ -133,16 +133,12 @@ export class PDFReportService {
         0
       );
 
-      doc.text(`Total de Barras: ${results.totalBars}`, 20, currentY);
+      doc.text(`Nome da Lista: ${listName || "N/A"}`, 20, currentY);
+      doc.text(`Total de Barras: ${results.totalBars}`, 100, currentY);
       doc.text(
         `Barras NOVAS: ${
           results.bars.filter((bar: any) => bar.type !== "leftover").length
         }`,
-        100,
-        currentY
-      );
-      doc.text(
-        `Eficiência: ${results.efficiency.toFixed(1)}%`,
         20,
         currentY + 5
       );
@@ -153,25 +149,30 @@ export class PDFReportService {
         100,
         currentY + 5
       );
-      doc.text(`Total de Peças: ${totalPieces}`, 20, currentY + 10);
-      doc.text(`Peso Total: ${totalWeight.toFixed(1)}kg`, 100, currentY + 10);
-      doc.text(`Peças Cortadas: ${cutPieces}`, 20, currentY + 15);
+      doc.text(
+        `Eficiência: ${results.efficiency.toFixed(1)}%`,
+        20,
+        currentY + 10
+      );
+      doc.text(`Total de Peças: ${totalPieces}`, 100, currentY + 10);
+      doc.text(`Peso Total: ${totalWeight.toFixed(1)}kg`, 20, currentY + 15);
       doc.text(`Peso Cortado: ${cutWeight.toFixed(1)}kg`, 100, currentY + 15);
+      doc.text(`Peças Cortadas: ${cutPieces}`, 20, currentY + 20);
       doc.text(
         `Desperdício: ${(results.totalWaste / 1000).toFixed(2)}m`,
-        20,
+        100,
         currentY + 20
       );
       doc.text(
         `Material: ${(project as any).tipoMaterial || "N/A"}`,
-        100,
-        currentY + 20
+        20,
+        currentY + 25
       );
-      doc.text(`Comprimento da Barra: ${barLength}mm`, 20, currentY + 25);
+      doc.text(`Comprimento da Barra: ${barLength}mm`, 100, currentY + 25);
       doc.text(
         `Perfil: ${PDFReportService.extractProfiles(results) || "N/A"}`,
-        100,
-        currentY + 25
+        20,
+        currentY + 30
       );
 
       // Espaço após resumo
@@ -416,6 +417,7 @@ export class PDFReportService {
       );
 
       const headerFields = [
+        { label: "Nome da Lista", value: listName || "N/A" },
         {
           label: "Material/Perfil",
           value:
