@@ -319,7 +319,7 @@ export class PDFReportService {
           doc.text(`${piece.quantidade || 1}`, 65, currentY);
           doc.text(`${piece.length || 0}mm`, 75, currentY);
           doc.text(piece.perfil || "-", 115, currentY);
-          doc.text(piece.cortada ? "✓" : "", 155, currentY); // Mostrar status cortado
+          doc.text(piece.cortada ? "OK" : "", 155, currentY); // Mostrar status cortado
           doc.text("", 175, currentY); // Observação vazia
 
           // Indicador de reutilização para sobras
@@ -474,7 +474,7 @@ export class PDFReportService {
       // Legenda para status
       doc.setFontSize(8);
       doc.setFont("helvetica", "normal");
-      doc.text("Legenda: ✓ = Cortada | ○ = Pendente", 20, currentY);
+      doc.text("Legenda: OK = Cortada | (vazio) = Pendente", 20, currentY);
       currentY += 8;
 
       // Cabeçalho ajustado
@@ -550,7 +550,7 @@ export class PDFReportService {
             `${piece.length || 0}mm`,
             `${peso}kg`,
             wasteFormatted,
-            piece.cortada ? "✓" : "○",
+            piece.cortada ? "OK" : "",
             "",
             "",
           ];
