@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

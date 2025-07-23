@@ -1,3 +1,4 @@
+
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePerfilService } from '@/hooks/services/usePerfilService';
@@ -21,7 +22,7 @@ export const ProfileSelector = ({ selectedPerfilId, onPerfilChange }: ProfileSel
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Todos os perfis</SelectItem>
-          {perfis.map((perfil) => (
+          {perfis.filter(perfil => perfil.id && perfil.id.trim() !== '').map((perfil) => (
             <SelectItem key={perfil.id} value={perfil.id}>
               {perfil.descricao_perfil} ({perfil.tipo_perfil})
             </SelectItem>

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -115,7 +116,7 @@ export const ProjectCreationWizard = ({
               <SelectValue placeholder="Selecione o cliente" />
             </SelectTrigger>
             <SelectContent>
-              {clientes.map((cliente) => (
+              {clientes.filter(cliente => cliente.id && cliente.id.trim() !== '').map((cliente) => (
                 <SelectItem key={cliente.id} value={cliente.id}>
                   {cliente.nome}
                 </SelectItem>
@@ -136,7 +137,7 @@ export const ProjectCreationWizard = ({
               <SelectValue placeholder="Selecione a obra" />
             </SelectTrigger>
             <SelectContent>
-              {obras.map((obra) => (
+              {obras.filter(obra => obra.id && obra.id.trim() !== '').map((obra) => (
                 <SelectItem key={obra.id} value={obra.id}>
                   {obra.nome}
                 </SelectItem>

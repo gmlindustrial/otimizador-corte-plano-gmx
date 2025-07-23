@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
@@ -46,7 +47,7 @@ export const ValidationStep = ({
               <SelectValue placeholder="Selecione o inspetor responsável" />
             </SelectTrigger>
             <SelectContent>
-              {inspetoresQA.map((inspetor) => (
+              {inspetoresQA.filter(inspetor => inspetor.id && inspetor.id.trim() !== '').map((inspetor) => (
                 <SelectItem key={inspetor.id} value={inspetor.id}>
                   {inspetor.nome}
                 </SelectItem>

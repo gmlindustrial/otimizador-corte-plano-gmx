@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -133,7 +134,7 @@ export const ProjectEditDialog = ({
                 <SelectValue placeholder="Selecione o cliente" />
               </SelectTrigger>
               <SelectContent>
-                {clientes.map((cliente) => (
+                {clientes.filter(cliente => cliente.id && cliente.id.trim() !== '').map((cliente) => (
                   <SelectItem key={cliente.id} value={cliente.id}>
                     {cliente.nome}
                   </SelectItem>
@@ -152,7 +153,7 @@ export const ProjectEditDialog = ({
                 <SelectValue placeholder="Selecione a obra" />
               </SelectTrigger>
               <SelectContent>
-                {obras.map((obra) => (
+                {obras.filter(obra => obra.id && obra.id.trim() !== '').map((obra) => (
                   <SelectItem key={obra.id} value={obra.id}>
                     {obra.nome}
                   </SelectItem>
