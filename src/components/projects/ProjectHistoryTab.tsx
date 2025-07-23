@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { auditService, type AuditFilters, type SystemActivityLog } from '@/services/AuditService';
+import { auditService, type AuditFilters, type AuditLog } from '@/services/AuditService';
 import { toast } from 'sonner';
 
 interface ProjectHistoryEntry {
@@ -41,17 +41,90 @@ interface ProjectHistoryTabProps {
   projectName: string;
 }
 
-const getActionIcon = (entityType: string, actionType: string) => {
-  switch (entityType) {
-    case 'PROJETO':
+const getActionIcon = (tableName: string, actionType: string) => {
+  switch (tableName) {
+    case 'projetos':
       return FileText;
-    case 'PECA':
+    case 'projeto_pecas':
       return Package;
-    case 'OTIMIZACAO':
+    case 'projeto_otimizacoes':
       return Calculator;
     default:
       return Activity;
   }
+};
+
+const mapActionType = (actionType: string) => {
+  switch (actionType) {
+    case 'INSERT':
+      return 'Criar';
+    case 'UPDATE':
+      return 'Editar';
+    case 'DELETE':
+      return 'Excluir';
+    default:
+      return actionType;
+  }
+};
+
+const mapEntityType = (tableName: string) => {
+  switch (tableName) {
+    case 'projetos':
+      return 'PROJETO';
+    case 'projeto_pecas':
+      return 'PECA';
+    case 'projeto_otimizacoes':
+      return 'OTIMIZACAO';
+    default:
+      return 'SISTEMA';
+  }
+};
+
+const generateDescription = (log: AuditLog) => {
+  const action = mapActionType(log.action_type);
+  const entity = mapEntityType(log.table_name);
+  
+  if (log.table_name === 'projeto_pecas') {
+    const newValues = log.new_values as any;
+    const oldValues = log.old_values as any;
+    
+    if (log.action_type === 'INSERT' && newValues) {
+      const tag = newValues.tag || newValues.posicao || 'Sem tag';
+      const comprimento = newValues.comprimento_mm ? `${newValues.comprimento_mm}mm` : '';
+      const quantidade = newValues.quantidade ? `${newValues.quantidade}x` : '';
+      return `${action} peça ${tag} ${quantidade} ${comprimento}`.trim();
+    } else if (log.action_type === 'UPDATE' && newValues && oldValues) {
+      const tag = newValues.tag || newValues.posicao || oldValues.tag || oldValues.posicao || 'Sem tag';
+      return `${action} peça ${tag}`;
+    } else if (log.action_type === 'DELETE' && oldValues) {
+      const tag = oldValues.tag || oldValues.posicao || 'Sem tag';
+      return `${action} peça ${tag}`;
+    }
+  } else if (log.table_name === 'projeto_otimizacoes') {
+    const newValues = log.new_values as any;
+    const oldValues = log.old_values as any;
+    
+    if (log.action_type === 'INSERT' && newValues) {
+      const nome = newValues.nome_lista || 'Otimização';
+      return `${action} ${nome.toLowerCase()}`;
+    } else if (log.action_type === 'UPDATE' && newValues) {
+      const nome = newValues.nome_lista || 'otimização';
+      return `${action} ${nome.toLowerCase()}`;
+    }
+  } else if (log.table_name === 'projetos') {
+    const newValues = log.new_values as any;
+    const oldValues = log.old_values as any;
+    
+    if (log.action_type === 'INSERT' && newValues) {
+      return `${action} projeto ${newValues.nome || ''}`;
+    } else if (log.action_type === 'UPDATE' && newValues) {
+      return `${action} projeto ${newValues.nome || oldValues?.nome || ''}`;
+    } else if (log.action_type === 'DELETE' && oldValues) {
+      return `${action} projeto ${oldValues.nome || ''}`;
+    }
+  }
+  
+  return `${action} ${entity.toLowerCase()}`;
 };
 
 const getActionColor = (actionType: string) => {
@@ -96,35 +169,71 @@ export const ProjectHistoryTab = ({ projectId, projectName }: ProjectHistoryTabP
       const filters: AuditFilters = {
         startDate,
         endDate,
-        actionType: selectedActionType === 'all' ? undefined : selectedActionType,
-        entityType: selectedEntityType === 'all' ? undefined : selectedEntityType,
-        limit: 100
+        limit: 200
       };
 
-      // Carregar logs de atividade do sistema
-      const systemLogsResponse = await auditService.getSystemActivityLogs(filters);
+      // Carregar logs de auditoria
+      const auditLogsResponse = await auditService.getAuditLogs(filters);
       
-      if (systemLogsResponse.success && systemLogsResponse.data) {
+      if (auditLogsResponse.success && auditLogsResponse.data) {
         // Filtrar logs relacionados ao projeto
-        const projectRelatedLogs = systemLogsResponse.data.filter(log => 
-          log.entity_id === projectId || 
-          log.description.toLowerCase().includes(projectName.toLowerCase())
-        );
+        const projectRelatedLogs = auditLogsResponse.data.filter(log => {
+          // Filtrar por tabelas relacionadas ao projeto
+          const isProjectTable = ['projetos', 'projeto_pecas', 'projeto_otimizacoes'].includes(log.table_name);
+          if (!isProjectTable) return false;
+          
+          // Para a tabela projetos, filtrar pelo ID do projeto
+          if (log.table_name === 'projetos') {
+            return log.record_id === projectId;
+          }
+          
+          // Para outras tabelas, verificar se o projeto_id corresponde
+          const newValues = log.new_values as any;
+          const oldValues = log.old_values as any;
+          const recordProjectId = newValues?.projeto_id || oldValues?.projeto_id;
+          
+          return recordProjectId === projectId;
+        });
 
-        const mappedHistory: ProjectHistoryEntry[] = projectRelatedLogs.map(log => ({
-          id: log.id,
-          timestamp: new Date(log.timestamp),
-          user: {
-            id: log.user_id,
-            name: log.user_name || 'Sistema'
-          },
-          action: log.action_type,
-          entity: log.entity_type as any,
-          description: log.description,
-          details: log.details,
-          icon: getActionIcon(log.entity_type, log.action_type),
-          color: getActionColor(log.action_type)
-        }));
+        // Aplicar filtros de tipo de ação e entidade
+        const filteredLogs = projectRelatedLogs.filter(log => {
+          const mappedAction = mapActionType(log.action_type);
+          const mappedEntity = mapEntityType(log.table_name);
+          
+          const actionMatch = selectedActionType === 'all' || 
+            mappedAction.toLowerCase().includes(selectedActionType.toLowerCase());
+          
+          const entityMatch = selectedEntityType === 'all' || 
+            mappedEntity === selectedEntityType;
+          
+          return actionMatch && entityMatch;
+        });
+
+        const mappedHistory: ProjectHistoryEntry[] = filteredLogs.map(log => {
+          const action = mapActionType(log.action_type);
+          const entity = mapEntityType(log.table_name);
+          const description = generateDescription(log);
+          
+          return {
+            id: log.id,
+            timestamp: new Date(log.timestamp),
+            user: {
+              id: log.user_id,
+              name: log.user_name || 'Sistema'
+            },
+            action,
+            entity: entity as any,
+            description,
+            details: {
+              table: log.table_name,
+              recordId: log.record_id,
+              oldValues: log.old_values,
+              newValues: log.new_values
+            },
+            icon: getActionIcon(log.table_name, log.action_type),
+            color: getActionColor(action)
+          };
+        });
 
         // Ordenar por timestamp (mais recente primeiro)
         mappedHistory.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
@@ -250,10 +359,9 @@ export const ProjectHistoryTab = ({ projectId, projectName }: ProjectHistoryTabP
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas as Ações</SelectItem>
-              <SelectItem value="CRIAR">Criar</SelectItem>
-              <SelectItem value="EDITAR">Editar</SelectItem>
-              <SelectItem value="EXCLUIR">Excluir</SelectItem>
-              <SelectItem value="VISUALIZAR">Visualizar</SelectItem>
+              <SelectItem value="Criar">Criar</SelectItem>
+              <SelectItem value="Editar">Editar</SelectItem>
+              <SelectItem value="Excluir">Excluir</SelectItem>
             </SelectContent>
           </Select>
 
