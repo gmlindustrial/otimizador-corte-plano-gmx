@@ -39,3 +39,59 @@ export interface ProjectPieceValidation {
   isValid: boolean;
   suggestions: PerfilMaterial[];
 }
+
+// ===== INTERFACES PARA SISTEMA DE EMENDAS =====
+
+export interface EmendaConfiguration {
+  emendaObrigatoria: boolean;
+  permitirEmendas: boolean;
+  tamanhoMinimoSobra: number;
+  maxEmendasPorPeca: number;
+  perdasPorEmenda: number;
+  prioridadeEstoque: 'sobra_mesmo_perfil' | 'sobra_qualquer' | 'nova_barra';
+}
+
+export interface SegmentoEmenda {
+  comprimento: number;
+  origemTipo: 'sobra' | 'nova_barra';
+  origemId: string;
+  perfilId: string;
+  posicaoNaBarra: number;
+  estoqueId?: string;
+}
+
+export interface EmendaInfo {
+  posicao: number;
+  perdasEmenda: number;
+  qualidadeAfetada: boolean;
+  inspecaoObrigatoria: boolean;
+}
+
+export interface PecaComEmenda {
+  id: string;
+  comprimentoOriginal: number;
+  tag?: string;
+  posicao?: string;
+  conjunto?: string;
+  perfil?: string;
+  peso?: number;
+  perfilId?: string;
+  quantidade: number;
+  segmentos: SegmentoEmenda[];
+  emendas: EmendaInfo[];
+  statusQualidade: 'pendente' | 'aprovada' | 'reprovada';
+  temEmenda: boolean;
+  observacoes?: string;
+}
+
+export interface OptimizationPiece {
+  id: string;
+  length: number;
+  quantity: number;
+  tag?: string;
+  posicao?: string;
+  conjunto?: string;
+  perfil?: string;
+  peso?: number;
+  perfilId?: string;
+}

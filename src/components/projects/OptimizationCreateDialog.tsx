@@ -7,14 +7,14 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, CheckCircle, Users } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Users, Link, Info } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
-import { ProjetoPeca } from '@/types/project';
+import { ProjetoPeca, EmendaConfiguration } from '@/types/project';
 
 interface OptimizationCreateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreate: (name: string, barLength: number) => void;
+  onCreate: (name: string, barLength: number, emendaConfig?: EmendaConfiguration) => void;
   selectedPieces?: ProjetoPeca[];
   projectId?: string;
   onNavigateToProfileManagement?: () => void;
@@ -26,6 +26,16 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selecte
   const [loading, setLoading] = useState(false);
   const [availableBarSizes, setAvailableBarSizes] = useState<Array<{ comprimento: number; descricao: string }>>([]);
   const [suggestedBarSize, setSuggestedBarSize] = useState<number>(6000);
+  
+  // Estados para configuração de emendas
+  const [emendaConfig, setEmendaConfig] = useState<EmendaConfiguration>({
+    emendaObrigatoria: false,
+    permitirEmendas: false,
+    tamanhoMinimoSobra: 200,
+    maxEmendasPorPeca: 3,
+    perdasPorEmenda: 3,
+    prioridadeEstoque: 'sobra_mesmo_perfil'
+  });
 
   // Buscar tamanhos de barra disponíveis e gerar nome sugerido
   useEffect(() => {
@@ -107,10 +117,12 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selecte
   const piecesWithoutProfile = selectedPieces.filter(piece => !piece.perfil_id);
   const hasInvalidPieces = piecesWithoutProfile.length > 0;
 
-  // Calcular tamanho sugerido baseado nas peças selecionadas
+  // Calcular tamanho sugerido baseado nas peças selecionadas e detectar emendas obrigatórias
   useEffect(() => {
     if (selectedPieces.length > 0) {
       const maxLength = Math.max(...selectedPieces.map(p => p.comprimento_mm));
+      const maxBarraDisponivel = Math.max(...availableBarSizes.map(b => b.comprimento), 12000);
+      
       let suggested = 6000; // padrão
       
       if (maxLength <= 3000) {
@@ -125,8 +137,15 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selecte
       
       setSuggestedBarSize(suggested);
       setBarLength(suggested.toString());
+
+      // Detectar se emenda é obrigatória
+      const temPecaGrande = selectedPieces.some(p => p.comprimento_mm > maxBarraDisponivel);
+      setEmendaConfig(prev => ({
+        ...prev,
+        emendaObrigatoria: temPecaGrande
+      }));
     }
-  }, [selectedPieces]);
+  }, [selectedPieces, availableBarSizes]);
 
   const handleSubmit = () => {
     if (!name) return;
@@ -140,14 +159,15 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selecte
     const selectedBarLength = parseInt(barLength, 10);
     const maxPieceLength = selectedPieces.length > 0 ? Math.max(...selectedPieces.map(p => p.comprimento_mm)) : 0;
     
-    if (maxPieceLength > selectedBarLength) {
-      alert(`Atenção: Existe peça com ${maxPieceLength}mm que não cabe na barra de ${selectedBarLength}mm selecionada.`);
+    // Se peça é maior que barra e emendas não estão habilitadas
+    if (maxPieceLength > selectedBarLength && !emendaConfig.permitirEmendas && !emendaConfig.emendaObrigatoria) {
+      alert(`Atenção: Existe peça com ${maxPieceLength}mm que não cabe na barra de ${selectedBarLength}mm selecionada. Habilite emendas para continuar.`);
       return;
     }
     
     setLoading(true);
     try {
-      onCreate(name, selectedBarLength);
+      onCreate(name, selectedBarLength, emendaConfig);
       onOpenChange(false);
       setName('');
     } finally {
@@ -157,7 +177,8 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selecte
 
   const maxPieceLength = selectedPieces.length > 0 ? Math.max(...selectedPieces.map(p => p.comprimento_mm)) : 0;
   const selectedBarLengthNum = parseInt(barLength, 10);
-  const isValidSelection = maxPieceLength <= selectedBarLengthNum;
+  const isValidSelection = maxPieceLength <= selectedBarLengthNum || emendaConfig.permitirEmendas || emendaConfig.emendaObrigatoria;
+  const pecasQueNecessitamEmenda = selectedPieces.filter(p => p.comprimento_mm > selectedBarLengthNum);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -254,10 +275,17 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selecte
               </SelectContent>
             </Select>
             
-            {!isValidSelection && (
-              <div className="flex items-center gap-2 mt-2 text-sm text-red-600">
+            {!isValidSelection && !emendaConfig.permitirEmendas && (
+              <div className="flex items-center gap-2 mt-2 text-sm text-orange-600">
                 <AlertTriangle className="h-4 w-4" />
-                Barra muito pequena para a maior peça ({maxPieceLength}mm)
+                Barra muito pequena para a maior peça ({maxPieceLength}mm). Habilite emendas para continuar.
+              </div>
+            )}
+            
+            {pecasQueNecessitamEmenda.length > 0 && (emendaConfig.permitirEmendas || emendaConfig.emendaObrigatoria) && (
+              <div className="flex items-center gap-2 mt-2 text-sm text-blue-600">
+                <Link className="h-4 w-4" />
+                {pecasQueNecessitamEmenda.length} peça(s) será(ão) emendada(s) automaticamente
               </div>
             )}
           </div>
