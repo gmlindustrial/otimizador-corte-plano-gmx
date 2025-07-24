@@ -83,28 +83,71 @@ const mapEntityType = (tableName: string) => {
 };
 
 const detectSpecificAction = (log: AuditLog): string | null => {
-  if (log.table_name === 'emendas_otimizacao' && log.new_values?.status_qualidade === 'cortada') {
-    return 'Peça Cortada';
+  // Detectar peça cortada em projeto_otimizacoes.resultados
+  if (log.table_name === 'projeto_otimizacoes' && log.action_type === 'UPDATE') {
+    const oldValues = log.old_values as any;
+    const newValues = log.new_values as any;
+    
+    if (oldValues?.resultados && newValues?.resultados) {
+      const oldPieces = oldValues.resultados.pieces || [];
+      const newPieces = newValues.resultados.pieces || [];
+      
+      // Procurar peças que mudaram de cortada: false para cortada: true
+      for (let i = 0; i < newPieces.length; i++) {
+        const oldPiece = oldPieces[i];
+        const newPiece = newPieces[i];
+        
+        if (oldPiece && newPiece && 
+            (!oldPiece.cortada || oldPiece.cortada === false) && 
+            newPiece.cortada === true) {
+          return 'Peça Cortada';
+        }
+      }
+    }
+    
+    // Detectar otimização finalizada (primeira criação de resultados)
+    if (!oldValues?.resultados && newValues?.resultados) {
+      return 'Otimização Finalizada';
+    }
   }
-  if (log.table_name === 'projeto_otimizacoes' && log.new_values?.resultados && log.action_type === 'UPDATE') {
-    return 'Otimização Finalizada';
-  }
+  
   return null;
 };
 
 const generateDescription = (log: AuditLog) => {
   const specificAction = detectSpecificAction(log);
   if (specificAction) {
-    const data = log.new_values as any;
+    const oldValues = log.old_values as any;
+    const newValues = log.new_values as any;
     
-    if (specificAction === 'Peça Cortada' && data?.peca_tag) {
-      return `${specificAction} | ${data.peca_tag}`;
+    if (specificAction === 'Peça Cortada') {
+      // Extrair informações da peça que foi cortada
+      if (oldValues?.resultados && newValues?.resultados) {
+        const oldPieces = oldValues.resultados.pieces || [];
+        const newPieces = newValues.resultados.pieces || [];
+        
+        // Encontrar a peça que foi cortada
+        for (let i = 0; i < newPieces.length; i++) {
+          const oldPiece = oldPieces[i];
+          const newPiece = newPieces[i];
+          
+          if (oldPiece && newPiece && 
+              (!oldPiece.cortada || oldPiece.cortada === false) && 
+              newPiece.cortada === true) {
+            const tag = newPiece.tag || newPiece.position || 'Sem tag';
+            const perfil = newPiece.profile || '';
+            const nomeLista = newValues.nome_lista || 'Lista';
+            return `${specificAction} | ${tag} - ${nomeLista}${perfil ? ` - ${perfil}` : ''}`;
+          }
+        }
+      }
+      return specificAction;
     }
     
-    if (specificAction === 'Otimização Finalizada' && data?.nome_lista) {
-      const efficiency = data.resultados?.efficiency ? `${data.resultados.efficiency.toFixed(1)}%` : '';
-      const totalBars = data.resultados?.totalBars || '';
-      return `${specificAction} | ${data.nome_lista}${totalBars ? ` - ${totalBars} barras` : ''}${efficiency ? ` - ${efficiency}` : ''}`;
+    if (specificAction === 'Otimização Finalizada' && newValues?.nome_lista) {
+      const efficiency = newValues.resultados?.efficiency ? `${newValues.resultados.efficiency.toFixed(1)}%` : '';
+      const totalBars = newValues.resultados?.totalBars || '';
+      return `${specificAction} | ${newValues.nome_lista}${totalBars ? ` - ${totalBars} barras` : ''}${efficiency ? ` - ${efficiency}` : ''}`;
     }
     
     return specificAction;
@@ -553,11 +596,34 @@ export const ProjectHistoryTab = ({ projectId, projectName }: ProjectHistoryTabP
                       {hasDetails && isExpanded && (
                         <div className="mt-4 p-3 bg-gray-50 rounded-lg">
                           <p className="text-sm font-medium text-gray-700 mb-3">Detalhes:</p>
-                          {(() => {
+                           {(() => {
                             const { table, newValues, oldValues } = entry.details;
                             let formattedDetails: Record<string, any> = {};
                             
-                            if (table === 'projeto_pecas') {
+                            // Para ações específicas como "Peça Cortada", mostrar apenas informações da peça cortada
+                            if (entry.description.startsWith('Peça Cortada') && table === 'projeto_otimizacoes') {
+                              // Encontrar a peça que foi cortada
+                              const oldPieces = oldValues?.resultados?.pieces || [];
+                              const newPieces = newValues?.resultados?.pieces || [];
+                              
+                              for (let i = 0; i < newPieces.length; i++) {
+                                const oldPiece = oldPieces[i];
+                                const newPiece = newPieces[i];
+                                
+                                if (oldPiece && newPiece && 
+                                    (!oldPiece.cortada || oldPiece.cortada === false) && 
+                                    newPiece.cortada === true) {
+                                  formattedDetails = {
+                                    'Tag da Peça': newPiece.tag || newPiece.position || 'Sem tag',
+                                    'Comprimento': newPiece.length ? `${newPiece.length}mm` : '',
+                                    'Perfil': newPiece.profile || '',
+                                    'Posição na Barra': newPiece.bar ? `Barra ${newPiece.bar}` : '',
+                                    'Status': 'Cortada'
+                                  };
+                                  break;
+                                }
+                              }
+                            } else if (table === 'projeto_pecas') {
                               formattedDetails = formatPieceDetails(newValues || oldValues);
                             } else if (table === 'projeto_otimizacoes') {
                               formattedDetails = formatOptimizationDetails(newValues || oldValues);
