@@ -378,6 +378,56 @@ export type Database = {
         }
         Relationships: []
       }
+      project_history: {
+        Row: {
+          action_type: Database["public"]["Enums"]["project_action_type"]
+          created_at: string
+          description: string
+          details: Json | null
+          entity_id: string
+          entity_type: Database["public"]["Enums"]["project_entity_type"]
+          id: string
+          project_id: string
+          timestamp: string
+          user_id: string | null
+          user_name: string
+        }
+        Insert: {
+          action_type: Database["public"]["Enums"]["project_action_type"]
+          created_at?: string
+          description: string
+          details?: Json | null
+          entity_id: string
+          entity_type: Database["public"]["Enums"]["project_entity_type"]
+          id?: string
+          project_id: string
+          timestamp?: string
+          user_id?: string | null
+          user_name: string
+        }
+        Update: {
+          action_type?: Database["public"]["Enums"]["project_action_type"]
+          created_at?: string
+          description?: string
+          details?: Json | null
+          entity_id?: string
+          entity_type?: Database["public"]["Enums"]["project_entity_type"]
+          id?: string
+          project_id?: string
+          timestamp?: string
+          user_id?: string | null
+          user_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_project_history_project_id"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projeto_otimizacoes: {
         Row: {
           created_at: string
@@ -726,7 +776,12 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      project_action_type:
+        | "PECA_CORTADA"
+        | "PECA_DELETADA"
+        | "OTIMIZACAO_CRIADA"
+        | "OTIMIZACAO_DELETADA"
+      project_entity_type: "PECA" | "OTIMIZACAO"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -853,6 +908,14 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      project_action_type: [
+        "PECA_CORTADA",
+        "PECA_DELETADA",
+        "OTIMIZACAO_CRIADA",
+        "OTIMIZACAO_DELETADA",
+      ],
+      project_entity_type: ["PECA", "OTIMIZACAO"],
+    },
   },
 } as const

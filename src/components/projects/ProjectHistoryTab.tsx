@@ -1,316 +1,150 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import React, { useState } from 'react';
+import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { 
-  Clock, 
-  User, 
-  Activity, 
   Search, 
+  Calendar,
   Filter,
-  FileText,
-  Package,
-  Settings,
-  Calculator,
   Download,
+  Clock,
+  User,
+  FileText,
+  Scissors,
+  Trash2,
+  Plus,
+  Settings,
   ChevronDown,
   ChevronRight
 } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { auditService, type AuditFilters, type AuditLog } from '@/services/AuditService';
-import { toast } from 'sonner';
-
-interface ProjectHistoryEntry {
-  id: string;
-  timestamp: Date;
-  user: { id?: string; name: string };
-  action: string;
-  entity: 'PROJETO' | 'PECA' | 'OTIMIZACAO' | 'SISTEMA';
-  description: string;
-  details?: any;
-  icon: any;
-  color: string;
-}
+import { useProjectHistory } from '@/hooks/useProjectHistory';
+import { type ProjectHistoryEntry } from '@/services/entities/ProjectHistoryService';
 
 interface ProjectHistoryTabProps {
   projectId: string;
   projectName: string;
 }
 
-const getActionIcon = (tableName: string, actionType: string) => {
-  switch (tableName) {
-    case 'projetos':
-      return FileText;
-    case 'projeto_pecas':
-      return Package;
-    case 'projeto_otimizacoes':
-      return Calculator;
-    default:
-      return Activity;
-  }
-};
-
-const mapActionType = (actionType: string) => {
+const getActionIcon = (actionType: string) => {
   switch (actionType) {
-    case 'INSERT':
-      return 'Criar';
-    case 'UPDATE':
-      return 'Editar';
-    case 'DELETE':
-      return 'Excluir';
+    case 'PECA_CORTADA':
+      return <Scissors className="w-4 h-4" />;
+    case 'PECA_DELETADA':
+      return <Trash2 className="w-4 h-4" />;
+    case 'OTIMIZACAO_CRIADA':
+      return <Plus className="w-4 h-4" />;
+    case 'OTIMIZACAO_DELETADA':
+      return <Trash2 className="w-4 h-4" />;
     default:
-      return actionType;
+      return <FileText className="w-4 h-4" />;
   }
 };
 
-const mapEntityType = (tableName: string) => {
-  switch (tableName) {
-    case 'projetos':
-      return 'PROJETO';
-    case 'projeto_pecas':
-      return 'PECA';
-    case 'projeto_otimizacoes':
-      return 'OTIMIZACAO';
-    default:
-      return 'SISTEMA';
+const getActionColor = (actionType: string): string => {
+  switch (actionType) {
+    case 'PECA_CORTADA': return 'text-blue-600 bg-blue-50';
+    case 'PECA_DELETADA': return 'text-red-600 bg-red-50';
+    case 'OTIMIZACAO_CRIADA': return 'text-green-600 bg-green-50';
+    case 'OTIMIZACAO_DELETADA': return 'text-red-600 bg-red-50';
+    default: return 'text-gray-600 bg-gray-50';
   }
 };
 
-const generateDescription = (log: AuditLog) => {
-  const action = mapActionType(log.action_type);
-  const entity = mapEntityType(log.table_name);
-  
-  if (log.table_name === 'projeto_pecas') {
-    const newValues = log.new_values as any;
-    const oldValues = log.old_values as any;
-    
-    if (log.action_type === 'INSERT' && newValues) {
-      const tag = newValues.tag || newValues.posicao || 'Sem tag';
-      const comprimento = newValues.comprimento_mm ? `${newValues.comprimento_mm}mm` : '';
-      const quantidade = newValues.quantidade ? `${newValues.quantidade}x` : '';
-      return `${action} peça ${tag} ${quantidade} ${comprimento}`.trim();
-    } else if (log.action_type === 'UPDATE' && newValues && oldValues) {
-      const tag = newValues.tag || newValues.posicao || oldValues.tag || oldValues.posicao || 'Sem tag';
-      return `${action} peça ${tag}`;
-    } else if (log.action_type === 'DELETE' && oldValues) {
-      const tag = oldValues.tag || oldValues.posicao || 'Sem tag';
-      return `${action} peça ${tag}`;
-    }
-  } else if (log.table_name === 'projeto_otimizacoes') {
-    const newValues = log.new_values as any;
-    const oldValues = log.old_values as any;
-    
-    if (log.action_type === 'INSERT' && newValues) {
-      const nome = newValues.nome_lista || 'Otimização';
-      return `${action} ${nome.toLowerCase()}`;
-    } else if (log.action_type === 'UPDATE' && newValues) {
-      const nome = newValues.nome_lista || 'otimização';
-      return `${action} ${nome.toLowerCase()}`;
-    }
-  } else if (log.table_name === 'projetos') {
-    const newValues = log.new_values as any;
-    const oldValues = log.old_values as any;
-    
-    if (log.action_type === 'INSERT' && newValues) {
-      return `${action} projeto ${newValues.nome || ''}`;
-    } else if (log.action_type === 'UPDATE' && newValues) {
-      return `${action} projeto ${newValues.nome || oldValues?.nome || ''}`;
-    } else if (log.action_type === 'DELETE' && oldValues) {
-      return `${action} projeto ${oldValues.nome || ''}`;
-    }
-  }
-  
-  return `${action} ${entity.toLowerCase()}`;
-};
-
-const getActionColor = (actionType: string) => {
-  switch (actionType.toLowerCase()) {
-    case 'criar':
-    case 'adicionar':
-      return 'text-green-600 bg-green-50 border-green-200';
-    case 'editar':
-    case 'atualizar':
-      return 'text-blue-600 bg-blue-50 border-blue-200';
-    case 'excluir':
-    case 'deletar':
-      return 'text-red-600 bg-red-50 border-red-200';
-    case 'visualizar':
-    case 'acessar':
-      return 'text-purple-600 bg-purple-50 border-purple-200';
-    default:
-      return 'text-gray-600 bg-gray-50 border-gray-200';
+const formatActionType = (actionType: string): string => {
+  switch (actionType) {
+    case 'PECA_CORTADA': return 'Peça Cortada';
+    case 'PECA_DELETADA': return 'Peça Deletada';
+    case 'OTIMIZACAO_CRIADA': return 'Otimização Criada';
+    case 'OTIMIZACAO_DELETADA': return 'Otimização Deletada';
+    default: return actionType;
   }
 };
 
-export const ProjectHistoryTab = ({ projectId, projectName }: ProjectHistoryTabProps) => {
-  const [history, setHistory] = useState<ProjectHistoryEntry[]>([]);
-  const [loading, setLoading] = useState(true);
+const ProjectHistoryTab: React.FC<ProjectHistoryTabProps> = ({ projectId, projectName }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedActionType, setSelectedActionType] = useState<string>('all');
-  const [selectedEntityType, setSelectedEntityType] = useState<string>('all');
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
-  const [dateRange, setDateRange] = useState<string>('7');
+  
+  const { 
+    history, 
+    loading, 
+    filters, 
+    exportHistory, 
+    updateFilters 
+  } = useProjectHistory(projectId);
 
-  useEffect(() => {
-    loadProjectHistory();
-  }, [projectId, selectedActionType, selectedEntityType, dateRange]);
+  // Filter history based on search term
+  const filteredHistory = history.filter(entry =>
+    entry.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    entry.user_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    entry.entity_id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const loadProjectHistory = async () => {
-    setLoading(true);
-    try {
-      const endDate = new Date();
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - parseInt(dateRange));
-
-      const filters: AuditFilters = {
-        startDate,
-        endDate,
-        limit: 200
-      };
-
-      // Carregar logs de auditoria
-      const auditLogsResponse = await auditService.getAuditLogs(filters);
-      
-      if (auditLogsResponse.success && auditLogsResponse.data) {
-        // Filtrar logs relacionados ao projeto
-        const projectRelatedLogs = auditLogsResponse.data.filter(log => {
-          // Filtrar por tabelas relacionadas ao projeto
-          const isProjectTable = ['projetos', 'projeto_pecas', 'projeto_otimizacoes'].includes(log.table_name);
-          if (!isProjectTable) return false;
-          
-          // Para a tabela projetos, filtrar pelo ID do projeto
-          if (log.table_name === 'projetos') {
-            return log.record_id === projectId;
-          }
-          
-          // Para outras tabelas, verificar se o projeto_id corresponde
-          const newValues = log.new_values as any;
-          const oldValues = log.old_values as any;
-          const recordProjectId = newValues?.projeto_id || oldValues?.projeto_id;
-          
-          return recordProjectId === projectId;
-        });
-
-        // Aplicar filtros de tipo de ação e entidade
-        const filteredLogs = projectRelatedLogs.filter(log => {
-          const mappedAction = mapActionType(log.action_type);
-          const mappedEntity = mapEntityType(log.table_name);
-          
-          const actionMatch = selectedActionType === 'all' || 
-            mappedAction.toLowerCase().includes(selectedActionType.toLowerCase());
-          
-          const entityMatch = selectedEntityType === 'all' || 
-            mappedEntity === selectedEntityType;
-          
-          return actionMatch && entityMatch;
-        });
-
-        const mappedHistory: ProjectHistoryEntry[] = filteredLogs.map(log => {
-          const action = mapActionType(log.action_type);
-          const entity = mapEntityType(log.table_name);
-          const description = generateDescription(log);
-          
-          return {
-            id: log.id,
-            timestamp: new Date(log.timestamp),
-            user: {
-              id: log.user_id,
-              name: log.user_name || 'Sistema'
-            },
-            action,
-            entity: entity as any,
-            description,
-            details: {
-              table: log.table_name,
-              recordId: log.record_id,
-              oldValues: log.old_values,
-              newValues: log.new_values
-            },
-            icon: getActionIcon(log.table_name, log.action_type),
-            color: getActionColor(action)
-          };
-        });
-
-        // Ordenar por timestamp (mais recente primeiro)
-        mappedHistory.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
-
-        setHistory(mappedHistory);
-      } else {
-        setHistory([]);
-      }
-      
-    } catch (error) {
-      console.error('Erro ao carregar histórico:', error);
-      toast.error('Erro ao carregar histórico do projeto');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredHistory = history.filter(entry => {
-    const matchesSearch = searchTerm === '' || 
-      entry.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      entry.user.name.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesSearch;
-  });
-
+  // Toggle expanded state
   const toggleExpanded = (id: string) => {
-    setExpandedItems(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
-    });
+    const newExpanded = new Set(expandedItems);
+    if (newExpanded.has(id)) {
+      newExpanded.delete(id);
+    } else {
+      newExpanded.add(id);
+    }
+    setExpandedItems(newExpanded);
   };
 
-  const exportHistory = async () => {
-    try {
-      const filters: AuditFilters = {
-        startDate: new Date(Date.now() - parseInt(dateRange) * 24 * 60 * 60 * 1000),
-        endDate: new Date(),
-        actionType: selectedActionType === 'all' ? undefined : selectedActionType,
-        entityType: selectedEntityType === 'all' ? undefined : selectedEntityType
-      };
-
-      const response = await auditService.exportAuditLogs(filters);
-      
-      if (response.success && response.data) {
-        const blob = new Blob([response.data], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `historico-projeto-${projectName}-${format(new Date(), 'yyyy-MM-dd')}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        toast.success('Histórico exportado com sucesso');
-      } else {
-        toast.error('Erro ao exportar histórico');
-      }
-    } catch (error) {
-      console.error('Erro ao exportar:', error);
-      toast.error('Erro ao exportar histórico');
+  // Date range helpers
+  const getDateRangeStart = (range: string): string => {
+    const now = new Date();
+    switch (range) {
+      case '7d': return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+      case '30d': return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      case '90d': return new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString();
+      default: return '';
     }
+  };
+
+  const handleFilterChange = (key: string, value: string) => {
+    const newFilters = { ...filters };
+    
+    if (key === 'dateRange') {
+      if (value) {
+        newFilters.start_date = getDateRangeStart(value);
+        newFilters.end_date = new Date().toISOString();
+      } else {
+        delete newFilters.start_date;
+        delete newFilters.end_date;
+      }
+    } else if (key === 'actionType') {
+      if (value) {
+        newFilters.action_type = value;
+      } else {
+        delete newFilters.action_type;
+      }
+    } else if (key === 'entityType') {
+      if (value) {
+        newFilters.entity_type = value;
+      } else {
+        delete newFilters.entity_type;
+      }
+    }
+    
+    updateFilters(newFilters);
   };
 
   if (loading) {
     return (
-      <Card className="bg-white/95 backdrop-blur-lg shadow-xl border-0 rounded-2xl">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center py-12">
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-              <p className="text-gray-600 font-medium">Carregando histórico...</p>
+      <Card>
+        <CardHeader>
+          <CardTitle>Histórico do Projeto</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-center items-center py-8">
+            <div className="flex flex-col items-center gap-2">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <p className="text-sm text-muted-foreground">Carregando histórico...</p>
             </div>
           </div>
         </CardContent>
@@ -319,18 +153,16 @@ export const ProjectHistoryTab = ({ projectId, projectName }: ProjectHistoryTabP
   }
 
   return (
-    <Card className="bg-white/95 backdrop-blur-lg shadow-xl border-0 rounded-2xl">
+    <Card>
       <CardHeader>
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          <CardTitle className="flex items-center gap-3 text-xl font-semibold text-gray-800">
-            <div className="p-2 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg">
-              <Clock className="w-5 h-5 text-white" />
-            </div>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="w-5 h-5" />
             Histórico do Projeto
           </CardTitle>
-          <Button
-            onClick={exportHistory}
-            variant="outline"
+          <Button 
+            onClick={exportHistory} 
+            variant="outline" 
             size="sm"
             className="flex items-center gap-2"
           >
@@ -340,141 +172,139 @@ export const ProjectHistoryTab = ({ projectId, projectName }: ProjectHistoryTabP
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-6">
-        {/* Filtros */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <Input
-              placeholder="Buscar por descrição ou usuário..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
+      <CardContent className="space-y-4">
+        {/* Search and Filters */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Buscar por descrição, usuário ou ID..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
           </div>
           
-          <Select value={selectedActionType} onValueChange={setSelectedActionType}>
-            <SelectTrigger>
-              <SelectValue placeholder="Tipo de Ação" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as Ações</SelectItem>
-              <SelectItem value="Criar">Criar</SelectItem>
-              <SelectItem value="Editar">Editar</SelectItem>
-              <SelectItem value="Excluir">Excluir</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex gap-2">
+            <Select value={filters.action_type || ''} onValueChange={(value) => handleFilterChange('actionType', value)}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Todas as ações" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todas as ações</SelectItem>
+                <SelectItem value="PECA_CORTADA">Peça Cortada</SelectItem>
+                <SelectItem value="PECA_DELETADA">Peça Deletada</SelectItem>
+                <SelectItem value="OTIMIZACAO_CRIADA">Otimização Criada</SelectItem>
+                <SelectItem value="OTIMIZACAO_DELETADA">Otimização Deletada</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <Select value={selectedEntityType} onValueChange={setSelectedEntityType}>
-            <SelectTrigger>
-              <SelectValue placeholder="Tipo de Entidade" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas as Entidades</SelectItem>
-              <SelectItem value="PROJETO">Projeto</SelectItem>
-              <SelectItem value="PECA">Peça</SelectItem>
-              <SelectItem value="OTIMIZACAO">Otimização</SelectItem>
-            </SelectContent>
-          </Select>
+            <Select value={filters.entity_type || ''} onValueChange={(value) => handleFilterChange('entityType', value)}>
+              <SelectTrigger className="w-[130px]">
+                <SelectValue placeholder="Todas entidades" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todas entidades</SelectItem>
+                <SelectItem value="PECA">Peças</SelectItem>
+                <SelectItem value="OTIMIZACAO">Otimizações</SelectItem>
+              </SelectContent>
+            </Select>
 
-          <Select value={dateRange} onValueChange={setDateRange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Período" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">Último dia</SelectItem>
-              <SelectItem value="7">Últimos 7 dias</SelectItem>
-              <SelectItem value="30">Últimos 30 dias</SelectItem>
-              <SelectItem value="90">Últimos 90 dias</SelectItem>
-            </SelectContent>
-          </Select>
+            <Select onValueChange={(value) => handleFilterChange('dateRange', value)}>
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder="Período" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="7d">7 dias</SelectItem>
+                <SelectItem value="30d">30 dias</SelectItem>
+                <SelectItem value="90d">90 dias</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <Separator />
 
-        {/* Timeline do Histórico */}
-        <div className="space-y-4">
-          {filteredHistory.length === 0 ? (
-            <div className="text-center py-12">
-              <Activity className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 font-medium">Nenhuma atividade encontrada</p>
-              <p className="text-gray-400 text-sm">Ajuste os filtros para ver mais resultados</p>
-            </div>
-          ) : (
-            filteredHistory.map((entry, index) => {
-              const Icon = entry.icon;
-              const isExpanded = expandedItems.has(entry.id);
-              const hasDetails = entry.details && Object.keys(entry.details).length > 0;
-
-              return (
+        {/* History Timeline */}
+        <ScrollArea className="h-[500px]">
+          <div className="space-y-4">
+            {filteredHistory.length === 0 ? (
+              <div className="text-center py-8">
+                <Clock className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 font-medium">Nenhuma atividade encontrada</p>
+                <p className="text-gray-400 text-sm">Ajuste os filtros para ver mais resultados</p>
+              </div>
+            ) : (
+              filteredHistory.map((entry, index) => (
                 <div key={entry.id} className="relative">
-                  {/* Linha conectora */}
+                  {/* Timeline connector */}
                   {index < filteredHistory.length - 1 && (
-                    <div className="absolute left-6 top-12 w-0.5 h-6 bg-gray-200" />
+                    <div className="absolute left-6 top-12 w-0.5 h-6 bg-gray-200"></div>
                   )}
                   
-                  <div className="flex gap-4 p-4 rounded-lg border border-gray-100 bg-white hover:shadow-md transition-all duration-200">
-                    {/* Ícone */}
-                    <div className={`flex-shrink-0 w-12 h-12 rounded-lg flex items-center justify-center ${entry.color}`}>
-                      <Icon className="w-5 h-5" />
+                  <div className="flex gap-4 p-4 rounded-lg border bg-card hover:shadow-md transition-shadow">
+                    <div className={`p-2 rounded-full ${getActionColor(entry.action_type)}`}>
+                      {getActionIcon(entry.action_type)}
                     </div>
-                    
-                    {/* Conteúdo */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 leading-tight">
-                            {entry.description}
-                          </p>
-                          <div className="flex items-center gap-3 mt-2 text-sm text-gray-500">
-                            <div className="flex items-center gap-1">
-                              <User className="w-3 h-3" />
-                              <span>{entry.user.name}</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              <span>{format(entry.timestamp, 'dd/MM/yyyy HH:mm', { locale: ptBR })}</span>
-                            </div>
-                            <Badge variant="outline" className="text-xs">
-                              {entry.entity}
-                            </Badge>
-                          </div>
-                        </div>
-                        
-                        {/* Botão de expansão */}
-                        {hasDetails && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleExpanded(entry.id)}
-                            className="flex-shrink-0"
-                          >
-                            {isExpanded ? (
-                              <ChevronDown className="w-4 h-4" />
-                            ) : (
-                              <ChevronRight className="w-4 h-4" />
-                            )}
-                          </Button>
-                        )}
+                      <p className="text-sm font-medium text-gray-900 truncate">
+                        {entry.description}
+                      </p>
+                      <div className="flex items-center gap-4 mt-1">
+                        <span className="text-xs text-gray-500 flex items-center gap-1">
+                          <User className="w-3 h-3" />
+                          {entry.user_name}
+                        </span>
+                        <span className="text-xs text-gray-500 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {new Date(entry.timestamp).toLocaleString('pt-BR')}
+                        </span>
+                        <Badge variant="outline" className="text-xs">
+                          {formatActionType(entry.action_type)}
+                        </Badge>
                       </div>
-                      
-                      {/* Detalhes expandidos */}
-                      {hasDetails && isExpanded && (
-                        <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                          <p className="text-sm font-medium text-gray-700 mb-2">Detalhes:</p>
-                          <pre className="text-xs text-gray-600 whitespace-pre-wrap">
-                            {JSON.stringify(entry.details, null, 2)}
-                          </pre>
-                        </div>
-                      )}
                     </div>
+                    {entry.details && Object.keys(entry.details).length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleExpanded(entry.id)}
+                        className="p-1"
+                      >
+                        {expandedItems.has(entry.id) ? (
+                          <ChevronDown className="w-4 h-4" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4" />
+                        )}
+                      </Button>
+                    )}
                   </div>
+
+                  {expandedItems.has(entry.id) && entry.details && (
+                    <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                      <h4 className="text-sm font-medium text-gray-900 mb-2">Detalhes:</h4>
+                      <div className="space-y-1 text-sm text-gray-600">
+                        {Object.entries(entry.details).map(([key, value]) => (
+                          <div key={key} className="flex justify-between">
+                            <span className="font-medium capitalize">{key.replace(/_/g, ' ')}:</span>
+                            <span>{typeof value === 'object' ? JSON.stringify(value) : String(value)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              );
-            })
-          )}
-        </div>
+              ))
+            )}
+          </div>
+        </ScrollArea>
       </CardContent>
     </Card>
   );
 };
+
+export default ProjectHistoryTab;
+export { ProjectHistoryTab };

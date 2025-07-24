@@ -1,9 +1,10 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/integrations/supabase/client'
 
 export const useAuthGuard = (requiredRole?: string) => {
   const navigate = useNavigate()
+  const [user, setUser] = useState<any>(null)
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -13,13 +14,17 @@ export const useAuthGuard = (requiredRole?: string) => {
         return
       }
 
+      // Buscar dados do usuário
+      const { data: userData } = await supabase
+        .from('usuarios')
+        .select('*')
+        .eq('id', session.user.id)
+        .single()
+      
+      setUser(userData)
+
       if (requiredRole) {
-        const { data } = await supabase
-          .from('usuarios')
-          .select('role')
-          .eq('id', session.user.id)
-          .single()
-        if (data?.role !== requiredRole) {
+        if (userData?.role !== requiredRole) {
           navigate('/')
         }
       }
@@ -35,4 +40,6 @@ export const useAuthGuard = (requiredRole?: string) => {
       subscription.unsubscribe()
     }
   }, [navigate, requiredRole])
+
+  return { user }
 }
