@@ -75,84 +75,12 @@ const mapEntityType = (tableName: string) => {
       return 'PECA';
     case 'projeto_otimizacoes':
       return 'OTIMIZACAO';
-    case 'emendas_otimizacao':
-      return 'EMENDA';
     default:
       return 'SISTEMA';
   }
 };
 
-const detectSpecificAction = (log: AuditLog): string | null => {
-  // Detectar peça cortada em projeto_otimizacoes.resultados
-  if (log.table_name === 'projeto_otimizacoes' && log.action_type === 'UPDATE') {
-    const oldValues = log.old_values as any;
-    const newValues = log.new_values as any;
-    
-    if (oldValues?.resultados && newValues?.resultados) {
-      const oldPieces = oldValues.resultados.pieces || [];
-      const newPieces = newValues.resultados.pieces || [];
-      
-      // Procurar peças que mudaram de cortada: false para cortada: true
-      for (let i = 0; i < newPieces.length; i++) {
-        const oldPiece = oldPieces[i];
-        const newPiece = newPieces[i];
-        
-        if (oldPiece && newPiece && 
-            (!oldPiece.cortada || oldPiece.cortada === false) && 
-            newPiece.cortada === true) {
-          return 'Peça Cortada';
-        }
-      }
-    }
-    
-    // Detectar otimização finalizada (primeira criação de resultados)
-    if (!oldValues?.resultados && newValues?.resultados) {
-      return 'Otimização Finalizada';
-    }
-  }
-  
-  return null;
-};
-
 const generateDescription = (log: AuditLog) => {
-  const specificAction = detectSpecificAction(log);
-  if (specificAction) {
-    const oldValues = log.old_values as any;
-    const newValues = log.new_values as any;
-    
-    if (specificAction === 'Peça Cortada') {
-      // Extrair informações da peça que foi cortada
-      if (oldValues?.resultados && newValues?.resultados) {
-        const oldPieces = oldValues.resultados.pieces || [];
-        const newPieces = newValues.resultados.pieces || [];
-        
-        // Encontrar a peça que foi cortada
-        for (let i = 0; i < newPieces.length; i++) {
-          const oldPiece = oldPieces[i];
-          const newPiece = newPieces[i];
-          
-          if (oldPiece && newPiece && 
-              (!oldPiece.cortada || oldPiece.cortada === false) && 
-              newPiece.cortada === true) {
-            const tag = newPiece.tag || newPiece.position || 'Sem tag';
-            const perfil = newPiece.profile || '';
-            const nomeLista = newValues.nome_lista || 'Lista';
-            return `${specificAction} | ${tag} - ${nomeLista}${perfil ? ` - ${perfil}` : ''}`;
-          }
-        }
-      }
-      return specificAction;
-    }
-    
-    if (specificAction === 'Otimização Finalizada' && newValues?.nome_lista) {
-      const efficiency = newValues.resultados?.efficiency ? `${newValues.resultados.efficiency.toFixed(1)}%` : '';
-      const totalBars = newValues.resultados?.totalBars || '';
-      return `${specificAction} | ${newValues.nome_lista}${totalBars ? ` - ${totalBars} barras` : ''}${efficiency ? ` - ${efficiency}` : ''}`;
-    }
-    
-    return specificAction;
-  }
-  
   const action = mapActionType(log.action_type);
   const entity = mapEntityType(log.table_name);
   
@@ -162,14 +90,15 @@ const generateDescription = (log: AuditLog) => {
     
     if (log.action_type === 'INSERT' && newValues) {
       const tag = newValues.tag || newValues.posicao || 'Sem tag';
-      const perfil = newValues.descricao_perfil_raw || '';
-      return `${action} Peça | ${tag}${perfil ? ` - ${perfil}` : ''}`;
+      const comprimento = newValues.comprimento_mm ? `${newValues.comprimento_mm}mm` : '';
+      const quantidade = newValues.quantidade ? `${newValues.quantidade}x` : '';
+      return `${action} peça ${tag} ${quantidade} ${comprimento}`.trim();
     } else if (log.action_type === 'UPDATE' && newValues && oldValues) {
       const tag = newValues.tag || newValues.posicao || oldValues.tag || oldValues.posicao || 'Sem tag';
-      return `${action} Peça | ${tag}`;
+      return `${action} peça ${tag}`;
     } else if (log.action_type === 'DELETE' && oldValues) {
       const tag = oldValues.tag || oldValues.posicao || 'Sem tag';
-      return `${action} Peça | ${tag}`;
+      return `${action} peça ${tag}`;
     }
   } else if (log.table_name === 'projeto_otimizacoes') {
     const newValues = log.new_values as any;
@@ -177,81 +106,25 @@ const generateDescription = (log: AuditLog) => {
     
     if (log.action_type === 'INSERT' && newValues) {
       const nome = newValues.nome_lista || 'Otimização';
-      return `${action} Lista | ${nome}`;
+      return `${action} ${nome.toLowerCase()}`;
     } else if (log.action_type === 'UPDATE' && newValues) {
       const nome = newValues.nome_lista || 'otimização';
-      return `${action} Lista | ${nome}`;
+      return `${action} ${nome.toLowerCase()}`;
     }
   } else if (log.table_name === 'projetos') {
     const newValues = log.new_values as any;
     const oldValues = log.old_values as any;
     
     if (log.action_type === 'INSERT' && newValues) {
-      return `${action} Projeto | ${newValues.nome || ''}`;
+      return `${action} projeto ${newValues.nome || ''}`;
     } else if (log.action_type === 'UPDATE' && newValues) {
-      return `${action} Projeto | ${newValues.nome || oldValues?.nome || ''}`;
+      return `${action} projeto ${newValues.nome || oldValues?.nome || ''}`;
     } else if (log.action_type === 'DELETE' && oldValues) {
-      return `${action} Projeto | ${oldValues.nome || ''}`;
+      return `${action} projeto ${oldValues.nome || ''}`;
     }
   }
   
   return `${action} ${entity.toLowerCase()}`;
-};
-
-const formatPieceDetails = (data: any) => {
-  if (!data) return {};
-  
-  return {
-    'Tag': data.tag,
-    'Comprimento': data.comprimento_mm ? `${data.comprimento_mm}mm` : '',
-    'Perfil': data.descricao_perfil_raw,
-    'Quantidade': data.quantidade,
-    'Peso': data.peso ? `${data.peso}kg` : '',
-    'Posição': data.posicao,
-    'Conjunto': data.conjunto
-  };
-};
-
-const formatOptimizationDetails = (data: any) => {
-  if (!data) return {};
-  
-  const details: any = {
-    'Nome da Lista': data.nome_lista,
-    'Tamanho da Barra': data.tamanho_barra ? `${data.tamanho_barra}mm` : ''
-  };
-  
-  if (data.resultados) {
-    const r = data.resultados;
-    details['Eficiência'] = r.efficiency ? `${r.efficiency.toFixed(1)}%` : '';
-    details['Total de Barras'] = r.totalBars;
-    details['Desperdício Total'] = r.totalWaste ? `${(r.totalWaste / 1000).toFixed(2)}m` : '';
-    details['Custo Material'] = r.materialCost ? `R$ ${r.materialCost.toFixed(2)}` : '';
-  }
-  
-  return details;
-};
-
-const formatProjectDetails = (data: any) => {
-  if (!data) return {};
-  
-  return {
-    'Nome': data.nome,
-    'Número do Projeto': data.numero_projeto,
-    'Cliente ID': data.cliente_id,
-    'Obra ID': data.obra_id
-  };
-};
-
-const formatEmendaDetails = (data: any) => {
-  if (!data) return {};
-  
-  return {
-    'Tag da Peça': data.peca_tag,
-    'Status de Qualidade': data.status_qualidade,
-    'Quantidade de Emendas': data.quantidade_emendas,
-    'Comprimento Original': data.comprimento_original ? `${data.comprimento_original}mm` : '',
-    'Observações': data.observacoes
-  };
 };
 
 const getActionColor = (actionType: string) => {
@@ -306,19 +179,12 @@ export const ProjectHistoryTab = ({ projectId, projectName }: ProjectHistoryTabP
         // Filtrar logs relacionados ao projeto
         const projectRelatedLogs = auditLogsResponse.data.filter(log => {
           // Filtrar por tabelas relacionadas ao projeto
-          const isProjectTable = ['projetos', 'projeto_pecas', 'projeto_otimizacoes', 'emendas_otimizacao'].includes(log.table_name);
+          const isProjectTable = ['projetos', 'projeto_pecas', 'projeto_otimizacoes'].includes(log.table_name);
           if (!isProjectTable) return false;
           
           // Para a tabela projetos, filtrar pelo ID do projeto
           if (log.table_name === 'projetos') {
             return log.record_id === projectId;
-          }
-          
-          // Para tabela emendas_otimizacao, verificar projeto_otimizacao_id
-          if (log.table_name === 'emendas_otimizacao') {
-            // Precisamos verificar se a emenda pertence a uma otimização do projeto
-            // Por enquanto, incluir todas as emendas e filtrar depois se necessário
-            return true;
           }
           
           // Para outras tabelas, verificar se o projeto_id corresponde
@@ -595,63 +461,10 @@ export const ProjectHistoryTab = ({ projectId, projectName }: ProjectHistoryTabP
                       {/* Detalhes expandidos */}
                       {hasDetails && isExpanded && (
                         <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                          <p className="text-sm font-medium text-gray-700 mb-3">Detalhes:</p>
-                           {(() => {
-                            const { table, newValues, oldValues } = entry.details;
-                            let formattedDetails: Record<string, any> = {};
-                            
-                            // Para ações específicas como "Peça Cortada", mostrar apenas informações da peça cortada
-                            if (entry.description.startsWith('Peça Cortada') && table === 'projeto_otimizacoes') {
-                              // Encontrar a peça que foi cortada
-                              const oldPieces = oldValues?.resultados?.pieces || [];
-                              const newPieces = newValues?.resultados?.pieces || [];
-                              
-                              for (let i = 0; i < newPieces.length; i++) {
-                                const oldPiece = oldPieces[i];
-                                const newPiece = newPieces[i];
-                                
-                                if (oldPiece && newPiece && 
-                                    (!oldPiece.cortada || oldPiece.cortada === false) && 
-                                    newPiece.cortada === true) {
-                                  formattedDetails = {
-                                    'Tag da Peça': newPiece.tag || newPiece.position || 'Sem tag',
-                                    'Comprimento': newPiece.length ? `${newPiece.length}mm` : '',
-                                    'Perfil': newPiece.profile || '',
-                                    'Posição na Barra': newPiece.bar ? `Barra ${newPiece.bar}` : '',
-                                    'Status': 'Cortada'
-                                  };
-                                  break;
-                                }
-                              }
-                            } else if (table === 'projeto_pecas') {
-                              formattedDetails = formatPieceDetails(newValues || oldValues);
-                            } else if (table === 'projeto_otimizacoes') {
-                              formattedDetails = formatOptimizationDetails(newValues || oldValues);
-                            } else if (table === 'projetos') {
-                              formattedDetails = formatProjectDetails(newValues || oldValues);
-                            } else if (table === 'emendas_otimizacao') {
-                              formattedDetails = formatEmendaDetails(newValues || oldValues);
-                            }
-                            
-                            const relevantDetails = Object.entries(formattedDetails).filter(([_, value]) => value && value !== '');
-                            
-                            if (relevantDetails.length === 0) {
-                              return (
-                                <p className="text-xs text-gray-500 italic">Nenhum detalhe adicional disponível</p>
-                              );
-                            }
-                            
-                            return (
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {relevantDetails.map(([key, value]) => (
-                                  <div key={key} className="flex flex-col">
-                                    <span className="text-xs font-medium text-gray-600">{key}:</span>
-                                    <span className="text-sm text-gray-800">{value}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            );
-                          })()}
+                          <p className="text-sm font-medium text-gray-700 mb-2">Detalhes:</p>
+                          <pre className="text-xs text-gray-600 whitespace-pre-wrap">
+                            {JSON.stringify(entry.details, null, 2)}
+                          </pre>
                         </div>
                       )}
                     </div>
