@@ -35,8 +35,7 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selecte
     emendaObrigatoria: false,
     permitirEmendas: false,
     tamanhoMinimoSobra: 200,
-    maxEmendasPorPeca: 3,
-    prioridadeEstoque: 'sobra_mesmo_perfil'
+    maxEmendasPorPeca: 3
   });
 
   // Buscar tamanhos de barra disponíveis e gerar nome sugerido
@@ -392,39 +391,6 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selecte
                       </div>
 
 
-                      {/* Prioridade do Estoque */}
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">
-                          Prioridade do Estoque
-                        </Label>
-                        <Select
-                          value={emendaConfig.prioridadeEstoque}
-                          onValueChange={(value: 'sobra_mesmo_perfil' | 'sobra_qualquer' | 'nova_barra') => 
-                            setEmendaConfig(prev => ({ 
-                              ...prev, 
-                              prioridadeEstoque: value 
-                            }))
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="sobra_mesmo_perfil">
-                              Sobra do mesmo perfil
-                            </SelectItem>
-                            <SelectItem value="sobra_qualquer">
-                              Qualquer sobra compatível
-                            </SelectItem>
-                            <SelectItem value="nova_barra">
-                              Preferir barras novas
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <p className="text-xs text-muted-foreground">
-                          Define a ordem de prioridade para usar materiais
-                        </p>
-                      </div>
                     </>
                   )}
                 </CardContent>
