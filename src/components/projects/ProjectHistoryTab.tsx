@@ -75,12 +75,41 @@ const mapEntityType = (tableName: string) => {
       return 'PECA';
     case 'projeto_otimizacoes':
       return 'OTIMIZACAO';
+    case 'emendas_otimizacao':
+      return 'EMENDA';
     default:
       return 'SISTEMA';
   }
 };
 
+const detectSpecificAction = (log: AuditLog): string | null => {
+  if (log.table_name === 'emendas_otimizacao' && log.new_values?.status_qualidade === 'cortada') {
+    return 'Peça Cortada';
+  }
+  if (log.table_name === 'projeto_otimizacoes' && log.new_values?.resultados && log.action_type === 'UPDATE') {
+    return 'Otimização Finalizada';
+  }
+  return null;
+};
+
 const generateDescription = (log: AuditLog) => {
+  const specificAction = detectSpecificAction(log);
+  if (specificAction) {
+    const data = log.new_values as any;
+    
+    if (specificAction === 'Peça Cortada' && data?.peca_tag) {
+      return `${specificAction} | ${data.peca_tag}`;
+    }
+    
+    if (specificAction === 'Otimização Finalizada' && data?.nome_lista) {
+      const efficiency = data.resultados?.efficiency ? `${data.resultados.efficiency.toFixed(1)}%` : '';
+      const totalBars = data.resultados?.totalBars || '';
+      return `${specificAction} | ${data.nome_lista}${totalBars ? ` - ${totalBars} barras` : ''}${efficiency ? ` - ${efficiency}` : ''}`;
+    }
+    
+    return specificAction;
+  }
+  
   const action = mapActionType(log.action_type);
   const entity = mapEntityType(log.table_name);
   
@@ -90,15 +119,14 @@ const generateDescription = (log: AuditLog) => {
     
     if (log.action_type === 'INSERT' && newValues) {
       const tag = newValues.tag || newValues.posicao || 'Sem tag';
-      const comprimento = newValues.comprimento_mm ? `${newValues.comprimento_mm}mm` : '';
-      const quantidade = newValues.quantidade ? `${newValues.quantidade}x` : '';
-      return `${action} peça ${tag} ${quantidade} ${comprimento}`.trim();
+      const perfil = newValues.descricao_perfil_raw || '';
+      return `${action} Peça | ${tag}${perfil ? ` - ${perfil}` : ''}`;
     } else if (log.action_type === 'UPDATE' && newValues && oldValues) {
       const tag = newValues.tag || newValues.posicao || oldValues.tag || oldValues.posicao || 'Sem tag';
-      return `${action} peça ${tag}`;
+      return `${action} Peça | ${tag}`;
     } else if (log.action_type === 'DELETE' && oldValues) {
       const tag = oldValues.tag || oldValues.posicao || 'Sem tag';
-      return `${action} peça ${tag}`;
+      return `${action} Peça | ${tag}`;
     }
   } else if (log.table_name === 'projeto_otimizacoes') {
     const newValues = log.new_values as any;
@@ -106,25 +134,81 @@ const generateDescription = (log: AuditLog) => {
     
     if (log.action_type === 'INSERT' && newValues) {
       const nome = newValues.nome_lista || 'Otimização';
-      return `${action} ${nome.toLowerCase()}`;
+      return `${action} Lista | ${nome}`;
     } else if (log.action_type === 'UPDATE' && newValues) {
       const nome = newValues.nome_lista || 'otimização';
-      return `${action} ${nome.toLowerCase()}`;
+      return `${action} Lista | ${nome}`;
     }
   } else if (log.table_name === 'projetos') {
     const newValues = log.new_values as any;
     const oldValues = log.old_values as any;
     
     if (log.action_type === 'INSERT' && newValues) {
-      return `${action} projeto ${newValues.nome || ''}`;
+      return `${action} Projeto | ${newValues.nome || ''}`;
     } else if (log.action_type === 'UPDATE' && newValues) {
-      return `${action} projeto ${newValues.nome || oldValues?.nome || ''}`;
+      return `${action} Projeto | ${newValues.nome || oldValues?.nome || ''}`;
     } else if (log.action_type === 'DELETE' && oldValues) {
-      return `${action} projeto ${oldValues.nome || ''}`;
+      return `${action} Projeto | ${oldValues.nome || ''}`;
     }
   }
   
   return `${action} ${entity.toLowerCase()}`;
+};
+
+const formatPieceDetails = (data: any) => {
+  if (!data) return {};
+  
+  return {
+    'Tag': data.tag,
+    'Comprimento': data.comprimento_mm ? `${data.comprimento_mm}mm` : '',
+    'Perfil': data.descricao_perfil_raw,
+    'Quantidade': data.quantidade,
+    'Peso': data.peso ? `${data.peso}kg` : '',
+    'Posição': data.posicao,
+    'Conjunto': data.conjunto
+  };
+};
+
+const formatOptimizationDetails = (data: any) => {
+  if (!data) return {};
+  
+  const details: any = {
+    'Nome da Lista': data.nome_lista,
+    'Tamanho da Barra': data.tamanho_barra ? `${data.tamanho_barra}mm` : ''
+  };
+  
+  if (data.resultados) {
+    const r = data.resultados;
+    details['Eficiência'] = r.efficiency ? `${r.efficiency.toFixed(1)}%` : '';
+    details['Total de Barras'] = r.totalBars;
+    details['Desperdício Total'] = r.totalWaste ? `${(r.totalWaste / 1000).toFixed(2)}m` : '';
+    details['Custo Material'] = r.materialCost ? `R$ ${r.materialCost.toFixed(2)}` : '';
+  }
+  
+  return details;
+};
+
+const formatProjectDetails = (data: any) => {
+  if (!data) return {};
+  
+  return {
+    'Nome': data.nome,
+    'Número do Projeto': data.numero_projeto,
+    'Cliente ID': data.cliente_id,
+    'Obra ID': data.obra_id
+  };
+};
+
+const formatEmendaDetails = (data: any) => {
+  if (!data) return {};
+  
+  return {
+    'Tag da Peça': data.peca_tag,
+    'Status de Qualidade': data.status_qualidade,
+    'Quantidade de Emendas': data.quantidade_emendas,
+    'Comprimento Original': data.comprimento_original ? `${data.comprimento_original}mm` : '',
+    'Observações': data.observacoes
+  };
 };
 
 const getActionColor = (actionType: string) => {
@@ -179,12 +263,19 @@ export const ProjectHistoryTab = ({ projectId, projectName }: ProjectHistoryTabP
         // Filtrar logs relacionados ao projeto
         const projectRelatedLogs = auditLogsResponse.data.filter(log => {
           // Filtrar por tabelas relacionadas ao projeto
-          const isProjectTable = ['projetos', 'projeto_pecas', 'projeto_otimizacoes'].includes(log.table_name);
+          const isProjectTable = ['projetos', 'projeto_pecas', 'projeto_otimizacoes', 'emendas_otimizacao'].includes(log.table_name);
           if (!isProjectTable) return false;
           
           // Para a tabela projetos, filtrar pelo ID do projeto
           if (log.table_name === 'projetos') {
             return log.record_id === projectId;
+          }
+          
+          // Para tabela emendas_otimizacao, verificar projeto_otimizacao_id
+          if (log.table_name === 'emendas_otimizacao') {
+            // Precisamos verificar se a emenda pertence a uma otimização do projeto
+            // Por enquanto, incluir todas as emendas e filtrar depois se necessário
+            return true;
           }
           
           // Para outras tabelas, verificar se o projeto_id corresponde
@@ -461,10 +552,40 @@ export const ProjectHistoryTab = ({ projectId, projectName }: ProjectHistoryTabP
                       {/* Detalhes expandidos */}
                       {hasDetails && isExpanded && (
                         <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-                          <p className="text-sm font-medium text-gray-700 mb-2">Detalhes:</p>
-                          <pre className="text-xs text-gray-600 whitespace-pre-wrap">
-                            {JSON.stringify(entry.details, null, 2)}
-                          </pre>
+                          <p className="text-sm font-medium text-gray-700 mb-3">Detalhes:</p>
+                          {(() => {
+                            const { table, newValues, oldValues } = entry.details;
+                            let formattedDetails: Record<string, any> = {};
+                            
+                            if (table === 'projeto_pecas') {
+                              formattedDetails = formatPieceDetails(newValues || oldValues);
+                            } else if (table === 'projeto_otimizacoes') {
+                              formattedDetails = formatOptimizationDetails(newValues || oldValues);
+                            } else if (table === 'projetos') {
+                              formattedDetails = formatProjectDetails(newValues || oldValues);
+                            } else if (table === 'emendas_otimizacao') {
+                              formattedDetails = formatEmendaDetails(newValues || oldValues);
+                            }
+                            
+                            const relevantDetails = Object.entries(formattedDetails).filter(([_, value]) => value && value !== '');
+                            
+                            if (relevantDetails.length === 0) {
+                              return (
+                                <p className="text-xs text-gray-500 italic">Nenhum detalhe adicional disponível</p>
+                              );
+                            }
+                            
+                            return (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                {relevantDetails.map(([key, value]) => (
+                                  <div key={key} className="flex flex-col">
+                                    <span className="text-xs font-medium text-gray-600">{key}:</span>
+                                    <span className="text-sm text-gray-800">{value}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            );
+                          })()}
                         </div>
                       )}
                     </div>
