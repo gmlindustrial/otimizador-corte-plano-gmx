@@ -83,13 +83,8 @@ export class EmendaOptimizer {
       );
 
       for (const peca of pecasParaEmendaOpcional) {
-        // Primeiro: tentar sobras do mesmo perfil
-        let sobrasDisponiveis = this.buscarSobrasCompatiiveis(peca, true);
-        
-        // Se não encontrar, tentar qualquer sobra compatível
-        if (sobrasDisponiveis.length === 0) {
-          sobrasDisponiveis = this.buscarSobrasCompatiiveis(peca, false);
-        }
+        // Apenas sobras do mesmo perfil (nunca usar outros perfis)
+        const sobrasDisponiveis = this.buscarSobrasCompatiiveis(peca, true);
         if (sobrasDisponiveis.length > 0) {
           try {
             const pecaComEmenda = await this.criarEmendaOpcional(peca, sobrasDisponiveis);
