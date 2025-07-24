@@ -188,12 +188,12 @@ const ProjectHistoryTab: React.FC<ProjectHistoryTabProps> = ({ projectId, projec
           </div>
           
           <div className="flex gap-2">
-            <Select value={filters.action_type || ''} onValueChange={(value) => handleFilterChange('actionType', value)}>
+            <Select value={filters.action_type || 'all'} onValueChange={(value) => handleFilterChange('actionType', value === 'all' ? '' : value)}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Todas as ações" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas as ações</SelectItem>
+                <SelectItem value="all">Todas as ações</SelectItem>
                 <SelectItem value="PECA_CORTADA">Peça Cortada</SelectItem>
                 <SelectItem value="PECA_DELETADA">Peça Deletada</SelectItem>
                 <SelectItem value="OTIMIZACAO_CRIADA">Otimização Criada</SelectItem>
@@ -201,23 +201,23 @@ const ProjectHistoryTab: React.FC<ProjectHistoryTabProps> = ({ projectId, projec
               </SelectContent>
             </Select>
 
-            <Select value={filters.entity_type || ''} onValueChange={(value) => handleFilterChange('entityType', value)}>
+            <Select value={filters.entity_type || 'all'} onValueChange={(value) => handleFilterChange('entityType', value === 'all' ? '' : value)}>
               <SelectTrigger className="w-[130px]">
                 <SelectValue placeholder="Todas entidades" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas entidades</SelectItem>
+                <SelectItem value="all">Todas entidades</SelectItem>
                 <SelectItem value="PECA">Peças</SelectItem>
                 <SelectItem value="OTIMIZACAO">Otimizações</SelectItem>
               </SelectContent>
             </Select>
 
-            <Select onValueChange={(value) => handleFilterChange('dateRange', value)}>
+            <Select onValueChange={(value) => handleFilterChange('dateRange', value === 'all' ? '' : value)}>
               <SelectTrigger className="w-[120px]">
                 <SelectValue placeholder="Período" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos</SelectItem>
+                <SelectItem value="all">Todos</SelectItem>
                 <SelectItem value="7d">7 dias</SelectItem>
                 <SelectItem value="30d">30 dias</SelectItem>
                 <SelectItem value="90d">90 dias</SelectItem>
