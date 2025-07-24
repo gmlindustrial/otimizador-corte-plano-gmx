@@ -11,7 +11,7 @@ import { AlertTriangle, CheckCircle, Users, Link, Info, Settings } from 'lucide-
 import { supabase } from '@/integrations/supabase/client';
 import { ProjetoPeca, EmendaConfiguration } from '@/types/project';
 import { Switch } from '@/components/ui/switch';
-
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 interface OptimizationCreateDialogProps {
   open: boolean;
@@ -28,7 +28,7 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selecte
   const [loading, setLoading] = useState(false);
   const [availableBarSizes, setAvailableBarSizes] = useState<Array<{ comprimento: number; descricao: string }>>([]);
   const [suggestedBarSize, setSuggestedBarSize] = useState<number>(6000);
-  
+  const [showEmendaSettings, setShowEmendaSettings] = useState(false);
   
   // Estados para configuração de emendas
   const [emendaConfig, setEmendaConfig] = useState<EmendaConfiguration>({
@@ -294,154 +294,166 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selecte
           </div>
 
           {/* Configurações de Emenda */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Settings className="h-4 w-4" />
+          <Collapsible open={showEmendaSettings} onOpenChange={setShowEmendaSettings}>
+            <CollapsibleTrigger asChild>
+              <Button variant="outline" size="sm" className="w-full">
+                <Settings className="h-4 w-4 mr-2" />
                 Configurações de Emenda
                 {(emendaConfig.permitirEmendas || emendaConfig.emendaObrigatoria) && (
-                  <Badge variant="secondary">Ativo</Badge>
+                  <Badge variant="secondary" className="ml-2">Ativo</Badge>
                 )}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Permitir Emendas */}
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label className="text-sm font-medium">Permitir Emendas</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Habilita o uso de emendas para otimizar aproveitamento
-                  </p>
-                </div>
-                <Switch
-                  checked={emendaConfig.permitirEmendas}
-                  onCheckedChange={(checked) => 
-                    setEmendaConfig(prev => ({ ...prev, permitirEmendas: checked }))
-                  }
-                  disabled={emendaConfig.emendaObrigatoria}
-                />
-              </div>
+              </Button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="space-y-4 mt-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm">Opções de Emenda</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Permitir Emendas */}
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-sm font-medium">Permitir Emendas</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Habilita o uso de emendas para otimizar aproveitamento
+                      </p>
+                    </div>
+                    <Switch
+                      checked={emendaConfig.permitirEmendas}
+                      onCheckedChange={(checked) => 
+                        setEmendaConfig(prev => ({ ...prev, permitirEmendas: checked }))
+                      }
+                      disabled={emendaConfig.emendaObrigatoria}
+                    />
+                  </div>
 
-              {emendaConfig.emendaObrigatoria && (
-                <Alert>
-                  <Info className="h-4 w-4" />
-                  <AlertDescription className="text-sm">
-                    Emendas obrigatórias detectadas: existem peças maiores que as barras disponíveis.
-                  </AlertDescription>
-                </Alert>
-              )}
+                  {emendaConfig.emendaObrigatoria && (
+                    <Alert>
+                      <Info className="h-4 w-4" />
+                      <AlertDescription className="text-sm">
+                        Emendas obrigatórias detectadas: existem peças maiores que as barras disponíveis.
+                      </AlertDescription>
+                    </Alert>
+                  )}
 
-              {/* Tamanho Mínimo Sobra */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">
-                  Tamanho Mínimo da Sobra (mm)
-                </Label>
-                <Input
-                  type="number"
-                  value={emendaConfig.tamanhoMinimoSobra}
-                  onChange={(e) => 
-                    setEmendaConfig(prev => ({ 
-                      ...prev, 
-                      tamanhoMinimoSobra: parseInt(e.target.value) || 200 
-                    }))
-                  }
-                  min="50"
-                  max="1000"
-                  className="text-sm"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Sobras menores que este valor serão descartadas
-                </p>
-              </div>
+                  {/* Configurações avançadas - só aparecem se emendas estão habilitadas */}
+                  {(emendaConfig.permitirEmendas || emendaConfig.emendaObrigatoria) && (
+                    <>
+                      {/* Tamanho Mínimo Sobra */}
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">
+                          Tamanho Mínimo da Sobra (mm)
+                        </Label>
+                        <Input
+                          type="number"
+                          value={emendaConfig.tamanhoMinimoSobra}
+                          onChange={(e) => 
+                            setEmendaConfig(prev => ({ 
+                              ...prev, 
+                              tamanhoMinimoSobra: parseInt(e.target.value) || 200 
+                            }))
+                          }
+                          min="50"
+                          max="1000"
+                          className="text-sm"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Sobras menores que este valor serão descartadas
+                        </p>
+                      </div>
 
-              {/* Máximo Emendas por Peça */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">
-                  Máximo de Emendas por Peça
-                </Label>
-                <Select
-                  value={emendaConfig.maxEmendasPorPeca.toString()}
-                  onValueChange={(value) => 
-                    setEmendaConfig(prev => ({ 
-                      ...prev, 
-                      maxEmendasPorPeca: parseInt(value) 
-                    }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">1 emenda</SelectItem>
-                    <SelectItem value="2">2 emendas</SelectItem>
-                    <SelectItem value="3">3 emendas</SelectItem>
-                    <SelectItem value="4">4 emendas</SelectItem>
-                    <SelectItem value="5">5 emendas</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Limite máximo de segmentos por peça
-                </p>
-              </div>
+                      {/* Máximo Emendas por Peça */}
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">
+                          Máximo de Emendas por Peça
+                        </Label>
+                        <Select
+                          value={emendaConfig.maxEmendasPorPeca.toString()}
+                          onValueChange={(value) => 
+                            setEmendaConfig(prev => ({ 
+                              ...prev, 
+                              maxEmendasPorPeca: parseInt(value) 
+                            }))
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">1 emenda</SelectItem>
+                            <SelectItem value="2">2 emendas</SelectItem>
+                            <SelectItem value="3">3 emendas</SelectItem>
+                            <SelectItem value="4">4 emendas</SelectItem>
+                            <SelectItem value="5">5 emendas</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Limite máximo de segmentos por peça
+                        </p>
+                      </div>
 
-              {/* Perdas por Emenda */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">
-                  Perdas por Emenda (mm)
-                </Label>
-                <Input
-                  type="number"
-                  value={emendaConfig.perdasPorEmenda}
-                  onChange={(e) => 
-                    setEmendaConfig(prev => ({ 
-                      ...prev, 
-                      perdasPorEmenda: parseInt(e.target.value) || 3 
-                    }))
-                  }
-                  min="0"
-                  max="20"
-                  className="text-sm"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Material perdido em cada ponto de emenda
-                </p>
-              </div>
+                      {/* Perdas por Emenda */}
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">
+                          Perdas por Emenda (mm)
+                        </Label>
+                        <Input
+                          type="number"
+                          value={emendaConfig.perdasPorEmenda}
+                          onChange={(e) => 
+                            setEmendaConfig(prev => ({ 
+                              ...prev, 
+                              perdasPorEmenda: parseInt(e.target.value) || 3 
+                            }))
+                          }
+                          min="0"
+                          max="20"
+                          className="text-sm"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Material perdido em cada ponto de emenda
+                        </p>
+                      </div>
 
-              {/* Prioridade do Estoque */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium">
-                  Prioridade do Estoque
-                </Label>
-                <Select
-                  value={emendaConfig.prioridadeEstoque}
-                  onValueChange={(value: 'sobra_mesmo_perfil' | 'sobra_qualquer' | 'nova_barra') => 
-                    setEmendaConfig(prev => ({ 
-                      ...prev, 
-                      prioridadeEstoque: value 
-                    }))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="sobra_mesmo_perfil">
-                      Sobra do mesmo perfil
-                    </SelectItem>
-                    <SelectItem value="sobra_qualquer">
-                      Qualquer sobra compatível
-                    </SelectItem>
-                    <SelectItem value="nova_barra">
-                      Preferir barras novas
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Define a ordem de prioridade para usar materiais
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+                      {/* Prioridade do Estoque */}
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">
+                          Prioridade do Estoque
+                        </Label>
+                        <Select
+                          value={emendaConfig.prioridadeEstoque}
+                          onValueChange={(value: 'sobra_mesmo_perfil' | 'sobra_qualquer' | 'nova_barra') => 
+                            setEmendaConfig(prev => ({ 
+                              ...prev, 
+                              prioridadeEstoque: value 
+                            }))
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="sobra_mesmo_perfil">
+                              Sobra do mesmo perfil
+                            </SelectItem>
+                            <SelectItem value="sobra_qualquer">
+                              Qualquer sobra compatível
+                            </SelectItem>
+                            <SelectItem value="nova_barra">
+                              Preferir barras novas
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <p className="text-xs text-muted-foreground">
+                          Define a ordem de prioridade para usar materiais
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </CollapsibleContent>
+          </Collapsible>
         </div>
 
         <div className="flex gap-2 pt-4">
