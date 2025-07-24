@@ -143,7 +143,7 @@ export const useAdvancedLinearOptimization = () => {
 
       // Executar otimização com algoritmo avançado
       const optimizer = new BestFitOptimizer();
-      const optimizationResult = optimizer.optimize(expandedPieces, barLength, sobras);
+      const optimizationResult = await optimizer.optimize(expandedPieces, barLength, sobras);
 
       console.log('Estratégia utilizada:', optimizationResult.strategy);
       console.log('Barras geradas:', optimizationResult.bars.length);

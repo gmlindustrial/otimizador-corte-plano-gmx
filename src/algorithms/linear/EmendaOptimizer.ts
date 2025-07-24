@@ -393,17 +393,18 @@ export class EmendaOptimizer {
       const emendasParaSalvar = pecasComEmenda.map(peca => ({
         projeto_otimizacao_id: optimizationId,
         peca_id: peca.id,
-        peca_tag: peca.tag,
+        peca_tag: peca.tag || null,
         comprimento_original: peca.comprimentoOriginal,
         quantidade_emendas: peca.emendas.length,
         segmentos: JSON.stringify(peca.segmentos),
         emendas: JSON.stringify(peca.emendas),
         status_qualidade: peca.statusQualidade,
-        observacoes: peca.observacoes
+        observacoes: peca.observacoes || null
       }));
 
+      // Como a tabela pode não estar ainda sincronizada no types.ts, usaremos uma abordagem genérica
       const { error } = await supabase
-        .from('emendas_otimizacao')
+        .from('emendas_otimizacao' as any)
         .insert(emendasParaSalvar);
 
       if (error) {

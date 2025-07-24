@@ -97,6 +97,59 @@ export type Database = {
         }
         Relationships: []
       }
+      emendas_otimizacao: {
+        Row: {
+          comprimento_original: number
+          created_at: string
+          emendas: Json
+          id: string
+          observacoes: string | null
+          peca_id: string
+          peca_tag: string | null
+          projeto_otimizacao_id: string | null
+          quantidade_emendas: number
+          segmentos: Json
+          status_qualidade: string
+          updated_at: string
+        }
+        Insert: {
+          comprimento_original: number
+          created_at?: string
+          emendas?: Json
+          id?: string
+          observacoes?: string | null
+          peca_id: string
+          peca_tag?: string | null
+          projeto_otimizacao_id?: string | null
+          quantidade_emendas?: number
+          segmentos?: Json
+          status_qualidade?: string
+          updated_at?: string
+        }
+        Update: {
+          comprimento_original?: number
+          created_at?: string
+          emendas?: Json
+          id?: string
+          observacoes?: string | null
+          peca_id?: string
+          peca_tag?: string | null
+          projeto_otimizacao_id?: string | null
+          quantidade_emendas?: number
+          segmentos?: Json
+          status_qualidade?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emendas_otimizacao_projeto_otimizacao_id_fkey"
+            columns: ["projeto_otimizacao_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_otimizacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       estoque_sobras: {
         Row: {
           comprimento: number

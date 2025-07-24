@@ -28,13 +28,20 @@ export class BestFitOptimizer {
 
   /**
    * Otimização Best-Fit Decreasing com análise de múltiplas estratégias
+   * Agora com suporte a emendas através do EmendaOptimizer
    */
-  optimize(pieces: Piece[], barLength: number, leftovers: any[] = []): {
+  async optimize(pieces: Piece[], barLength: number, leftovers: any[] = [], emendaConfig?: any): Promise<{
     bars: Bar[];
     efficiency: number;
     totalWaste: number;
     strategy: string;
-  } {
+    pecasComEmenda?: any[];
+  }> {
+    // Se emendas estão habilitadas, processar através do EmendaOptimizer
+    if (emendaConfig?.permitirEmendas || emendaConfig?.emendaObrigatoria) {
+      return await this.optimizeWithEmendas(pieces, barLength, leftovers, emendaConfig);
+    }
+
     // Testar múltiplas estratégias e escolher a melhor
     const strategies = [
       () => this.bestFitWithLeftoversFirst(pieces, barLength, leftovers),
@@ -54,6 +61,78 @@ export class BestFitOptimizer {
     }
 
     return { ...bestResult!, strategy: bestStrategy };
+  }
+
+  /**
+   * Otimização com sistema de emendas
+   */
+  private async optimizeWithEmendas(pieces: Piece[], barLength: number, leftovers: any[], emendaConfig: any) {
+    // Importar e usar EmendaOptimizer apenas quando necessário
+    const { EmendaOptimizer } = await import('./EmendaOptimizer');
+    
+    // Converter peças para o formato esperado pelo EmendaOptimizer
+    const optimizationPieces = pieces.map((piece, index) => ({
+      id: `piece-${index}`,
+      length: piece.length,
+      quantity: 1,
+      tag: piece.tag,
+      posicao: piece.posicao,
+      conjunto: piece.conjunto,
+      perfil: piece.perfil,
+      peso: piece.peso,
+      perfilId: piece.perfil
+    }));
+
+    const emendaOptimizer = new EmendaOptimizer(emendaConfig, leftovers, barLength);
+    const emendaResult = await emendaOptimizer.processPieces(optimizationPieces);
+
+    // Processar peças normais com algoritmo tradicional
+    const normalPieces = emendaResult.pecasNormais.map(p => ({
+      length: p.length,
+      tag: p.tag,
+      conjunto: p.conjunto,
+      perfil: p.perfil,
+      peso: p.peso,
+      posicao: p.posicao,
+      originalIndex: 0
+    }));
+
+    const normalResult = this.bestFitWithLeftoversFirst(normalPieces, barLength, leftovers);
+
+    // Converter peças com emenda para barras especiais
+    const emendasBars: Bar[] = emendaResult.pecasComEmenda.map((peca, index) => ({
+      id: `emenda-${index}`,
+      type: 'new',
+      originalLength: peca.comprimentoOriginal,
+      pieces: [{
+        length: peca.comprimentoOriginal,
+        tag: peca.tag || `Emenda-${index}`,
+        conjunto: peca.conjunto,
+        perfil: peca.perfil,
+        peso: peca.peso,
+        posicao: peca.posicao,
+        originalIndex: index
+      }],
+      totalUsed: peca.comprimentoOriginal,
+      waste: 0,
+      score: 100, // Prioridade alta para emendas
+      temEmenda: true,
+      informacoesEmenda: peca
+    }));
+
+    // Combinar resultados
+    const allBars = [...emendasBars, ...normalResult.bars];
+    const totalWaste = allBars.reduce((sum, bar) => sum + bar.waste, 0);
+    const totalMaterial = allBars.reduce((sum, bar) => sum + bar.originalLength, 0);
+    const efficiency = totalMaterial > 0 ? ((totalMaterial - totalWaste) / totalMaterial) * 100 : 0;
+
+    return {
+      bars: allBars,
+      efficiency,
+      totalWaste,
+      strategy: 'emendas-enabled',
+      pecasComEmenda: emendaResult.pecasComEmenda
+    };
   }
 
   /**

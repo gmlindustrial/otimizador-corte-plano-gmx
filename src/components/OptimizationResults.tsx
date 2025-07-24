@@ -2,13 +2,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { OptimizationResult, Project, CutPiece } from '@/pages/Index';
-import { BarChart, Download, Printer, FileSpreadsheet, FileText, Wrench, Fullscreen, Recycle, MapPin, DollarSign, Leaf, Package } from 'lucide-react';
+import { BarChart, Download, Printer, FileSpreadsheet, FileText, Wrench, Fullscreen, Recycle, MapPin, DollarSign, Leaf, Package, Link, AlertTriangle } from 'lucide-react';
 import { ReportVisualization } from './ReportVisualization';
 import { PrintableReport } from './PrintableReport';
 import { FullscreenReportViewer } from './reports/FullscreenReportViewer';
 import { PDFReportService } from '@/services/PDFReportService';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import type { PecaComEmenda } from '@/types/project';
 
 interface OptimizationResultsProps {
   results: OptimizationResult;
@@ -17,6 +18,7 @@ interface OptimizationResultsProps {
   pieces: CutPiece[];
   onResultsChange?: (results: OptimizationResult) => void;
   listName?: string;
+  pecasComEmenda?: PecaComEmenda[];
 }
 
 // Interface estendida para suportar informações de sustentabilidade
@@ -30,7 +32,15 @@ interface ExtendedOptimizationResult extends OptimizationResult {
   };
 }
 
-export const OptimizationResults = ({ results, barLength, project, pieces, onResultsChange, listName }: OptimizationResultsProps) => {
+export const OptimizationResults = ({ 
+  results, 
+  barLength, 
+  project, 
+  pieces, 
+  onResultsChange, 
+  listName,
+  pecasComEmenda = []
+}: OptimizationResultsProps) => {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [printMode, setPrintMode] = useState<'complete' | 'simplified'>('complete');
@@ -39,6 +49,10 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
   // Cast for accessing sustainability properties if they exist
   const extendedResults = results as ExtendedOptimizationResult;
   const hasSustainabilityData = extendedResults.sustainability;
+
+  // Verificar se há emendas
+  const hasEmendas = pecasComEmenda.length > 0;
+  const totalEmendas = pecasComEmenda.reduce((total, peca) => total + peca.emendas.length, 0);
 
   // Cálculos para as novas métricas de peças e peso
   const calculateTotalPieces = () => {
@@ -140,29 +154,35 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
   const handleExportExcel = () => {
     try {
       // Estrutura melhorada conforme especificação do operador
-        const headers = [
-          'Numero da Barra',
-          'Tipo (Nova ou Sobra)',
-          'Posição',
-          'TAG',
-          'Quantidade',
-          'Comprimento',
-          'Perfil/Material',
-          'Obra',
+      const headers = [
+        'Numero da Barra',
+        'Tipo (Nova ou Sobra)',
+        'Posição',
+        'TAG',
+        'Quantidade',
+        'Comprimento',
+        'Perfil/Material',
+        'Obra',
         'Status',
         'Eficiência',
         'Sobra Barra',
+        'Tem Emenda',
         'Observações'
       ];
       
       const rows: string[][] = [headers];
 
-      // Adicionar cada peça com informações de sobras
+      // Adicionar cada peça com informações de emendas
       results.bars.forEach((bar: any, barIndex) => {
         const barType = bar.type || 'new';
         const isLeftover = barType === 'leftover';
         
         bar.pieces.forEach((piece: any, pieceIndex) => {
+          // Verificar se esta peça tem emenda
+          const pecaComEmenda = pecasComEmenda.find(pe => 
+            pe.tag === piece.tag || pe.posicao === piece.posicao
+          );
+          
           rows.push([
             `Barra ${barIndex + 1}`, // Numero da Barra
             isLeftover ? 'SOBRA' : 'NOVA', // Tipo (Nova ou Sobra)
@@ -175,103 +195,30 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
             '', // Status (em branco)
             ((bar.totalUsed / (bar.originalLength || barLength)) * 100).toFixed(1), // Eficiência
             pieceIndex === bar.pieces.length - 1 ? bar.waste.toString() : '0', // Sobra Barra
-            '' // Observações (em branco)
+            pecaComEmenda ? `SIM (${pecaComEmenda.emendas.length} emenda(s))` : 'NÃO', // Tem Emenda
+            pecaComEmenda ? pecaComEmenda.observacoes || '' : '' // Observações
           ]);
         });
         
         // Adicionar linha de sobra se existir
-          if (bar.waste > 0) {
-            rows.push([
-              `Barra ${barIndex + 1}`, // Numero da Barra
-              barType.toUpperCase(), // Tipo (Nova ou Sobra)
-              '-', // Posição
-              'DESCARTE', // TAG
-              '0', // Quantidade
-              bar.waste.toString(), // Comprimento
+        if (bar.waste > 0) {
+          rows.push([
+            `Barra ${barIndex + 1}`, // Numero da Barra
+            barType.toUpperCase(), // Tipo (Nova ou Sobra)
+            '-', // Posição
+            'DESCARTE', // TAG
+            '0', // Quantidade
+            bar.waste.toString(), // Comprimento
             'Desperdício', // Perfil/Material
             project?.obra || 'N/A', // Obra
             '', // Status (em branco)
             '0', // Eficiência
             bar.waste.toString(), // Sobra Barra
+            'NÃO', // Tem Emenda
             '' // Observações (em branco)
           ]);
         }
       });
-
-      // Adicionar seção de resumo por conjunto
-      rows.push([]);
-      rows.push(['=== RESUMO POR TAG ===']);
-      
-      // Agrupar por TAG para resumo
-      const tagSummary = new Map<string, { count: number; totalLength: number; barras: Set<number> }>();
-      
-      results.bars.forEach((bar, barIndex) => {
-        bar.pieces.forEach((piece: any) => {
-          const tag = piece.tag || 'Entrada Manual';
-          if (!tagSummary.has(tag)) {
-            tagSummary.set(tag, { count: 0, totalLength: 0, barras: new Set() });
-          }
-          const summary = tagSummary.get(tag)!;
-          summary.count++;
-          summary.totalLength += piece.length;
-          summary.barras.add(barIndex + 1);
-        });
-      });
-
-      rows.push(['TAG', 'Qtd Peças', 'Comprimento Total (mm)', 'Barras Utilizadas', 'Numero da Barra']);
-      tagSummary.forEach((summary, tag) => {
-        rows.push([
-          tag,
-          summary.count.toString(),
-          summary.totalLength.toString(),
-          summary.barras.size.toString(),
-          Array.from(summary.barras).sort((a: number, b: number) => a - b).join(', ')
-        ]);
-      });
-
-      // Adicionar totais gerais
-      rows.push([]);
-      rows.push(['=== TOTAIS GERAIS ===']);
-      rows.push(['Total de Peças:', totalPieces.toString()]);
-      rows.push(['Peso Total (kg):', totalWeight.toFixed(2)]);
-      rows.push(['Peças Cortadas:', cutPieces.toString()]);
-      rows.push(['Peso Peças Cortadas (kg):', cutWeight.toFixed(2)]);
-
-      // Adicionar seção de sustentabilidade se houver dados
-      if (hasSustainabilityData) {
-        rows.push([]);
-        rows.push(['=== RELATÓRIO DE SUSTENTABILIDADE ===']);
-        rows.push(['Sobras Utilizadas:', hasSustainabilityData.leftoverBarsUsed.toString()]);
-        rows.push(['Barras Novas:', hasSustainabilityData.newBarsUsed.toString()]);
-        rows.push(['Material Reutilizado:', `${(hasSustainabilityData.materialReused / 1000).toFixed(2)}m`]);
-        rows.push(['Economia Total:', `R$ ${hasSustainabilityData.totalEconomy.toFixed(2)}`]);
-        rows.push(['Redução de Desperdício:', `${hasSustainabilityData.wasteReduction.toFixed(1)}%`]);
-        rows.push(['Taxa de Reaproveitamento:', `${((hasSustainabilityData.leftoverBarsUsed / results.totalBars) * 100).toFixed(1)}%`]);
-      }
-
-      // Adicionar seção de controle de qualidade
-      rows.push([]);
-      rows.push(['=== CONTROLE DE QUALIDADE ===']);
-      rows.push(['Projeto:', project?.projectNumber || 'N/A']);
-      rows.push(['Cliente:', project?.client || 'N/A']);
-      rows.push(['Obra:', project?.obra || 'N/A']);
-      rows.push(['Operador:', project?.operador || 'N/A']);
-      rows.push(['Turno:', project?.turno || 'N/A']);
-      rows.push(['Aprovador QA:', project?.aprovadorQA || 'Pendente']);
-      rows.push(['Material:', project?.tipoMaterial || 'N/A']);
-      rows.push(['Total de Barras:', results.totalBars.toString()]);
-      rows.push(['Eficiência Geral:', `${results.efficiency.toFixed(1)}%`]);
-      rows.push(['Desperdício Total:', `${(results.totalWaste / 1000).toFixed(2)}m`]);
-      rows.push(['Data da Otimização:', new Date().toLocaleDateString('pt-BR')]);
-      rows.push([]);
-      rows.push(['=== VALIDAÇÕES ===']);
-      rows.push(['☐ Dimensões das barras conferidas']);
-      rows.push(['☐ Material correto selecionado']);
-      rows.push(['☐ TAGs das peças verificadas']);
-      rows.push(['☐ TAGs organizados corretamente']);
-      rows.push(['☐ Primeira peça cortada e validada']);
-      rows.push(['☐ Relatório aprovado pelo operador']);
-      rows.push(['☐ Assinatura do inspetor QA']);
 
       // Converter para CSV com encoding UTF-8 e separador adequado para Excel brasileiro
       const BOM = '\uFEFF'; // Byte Order Mark para UTF-8
@@ -284,7 +231,7 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
-      link.setAttribute('download', `plano-corte-operador-${project?.projectNumber || 'projeto'}-${new Date().toISOString().split('T')[0]}.csv`);
+      link.setAttribute('download', `plano-corte-com-emendas-${project?.projectNumber || 'projeto'}-${new Date().toISOString().split('T')[0]}.csv`);
       link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
@@ -293,7 +240,7 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
 
       toast({
         title: "Excel Exportado",
-        description: "Plano de corte com informações de sustentabilidade foi baixado",
+        description: "Plano de corte com informações de emendas foi baixado",
       });
     } catch (error) {
       console.error('Erro ao exportar Excel:', error);
@@ -347,7 +294,7 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
   return (
     <>
       <div className="space-y-6">
-        {/* Resumo Estatístico com Sustentabilidade */}
+        {/* Resumo Estatístico com Sustentabilidade e Emendas */}
         <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
           <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
             <CardTitle className="flex items-center gap-2">
@@ -357,6 +304,12 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
                 <Badge variant="secondary" className="bg-green-200 text-green-800 ml-2">
                   <Recycle className="w-3 h-3 mr-1" />
                   Sustentável
+                </Badge>
+              )}
+              {hasEmendas && (
+                <Badge variant="secondary" className="bg-orange-200 text-orange-800 ml-2">
+                  <Link className="w-3 h-3 mr-1" />
+                  Com Emendas
                 </Badge>
               )}
             </CardTitle>
@@ -389,6 +342,86 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
               </div>
             </div>
 
+            {/* Informações de Emendas */}
+            {hasEmendas && (
+              <div className="border-t pt-4 mb-4">
+                <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                  <Link className="w-4 h-4 text-orange-600" />
+                  Informações de Emendas
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                  <div className="text-center p-2 bg-orange-50 rounded">
+                    <div className="text-lg font-bold text-orange-600">{pecasComEmenda.length}</div>
+                    <div className="text-xs text-gray-600">Peças com Emenda</div>
+                  </div>
+                  <div className="text-center p-2 bg-orange-50 rounded">
+                    <div className="text-lg font-bold text-orange-600">{totalEmendas}</div>
+                    <div className="text-xs text-gray-600">Total de Emendas</div>
+                  </div>
+                  <div className="text-center p-2 bg-red-50 rounded">
+                    <div className="text-lg font-bold text-red-600">
+                      {pecasComEmenda.filter(p => p.statusQualidade === 'pendente').length}
+                    </div>
+                    <div className="text-xs text-gray-600">Pendentes QA</div>
+                  </div>
+                  <div className="text-center p-2 bg-yellow-50 rounded">
+                    <div className="text-lg font-bold text-yellow-600">
+                      {pecasComEmenda.filter(p => p.emendas.some(e => e.inspecaoObrigatoria)).length}
+                    </div>
+                    <div className="text-xs text-gray-600">Inspeção Obrigatória</div>
+                  </div>
+                </div>
+                
+                {/* Lista de peças com emenda */}
+                <div className="mt-4 space-y-2">
+                  <h5 className="text-sm font-medium text-gray-700">Peças com Emenda:</h5>
+                  <div className="max-h-32 overflow-y-auto">
+                    {pecasComEmenda.map((peca, index) => (
+                      <div key={index} className="flex items-center justify-between text-xs bg-orange-50 p-2 rounded">
+                        <span>{peca.tag || peca.posicao || `Peça ${index + 1}`}</span>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {peca.emendas.length} emenda(s)
+                          </Badge>
+                          {peca.emendas.some(e => e.inspecaoObrigatoria) && (
+                            <AlertTriangle className="w-3 h-3 text-red-500" />
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Informações de Sustentabilidade */}
+            {hasSustainabilityData && (
+              <div className="border-t pt-4 mb-4">
+                <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                  <Recycle className="w-4 h-4 text-green-600" />
+                  Métricas de Sustentabilidade
+                </h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                  <div className="text-center p-2 bg-green-50 rounded">
+                    <div className="text-lg font-bold text-green-600">{extendedResults.sustainability.leftoverBarsUsed}</div>
+                    <div className="text-xs text-gray-600">Sobras Utilizadas</div>
+                  </div>
+                  <div className="text-center p-2 bg-green-50 rounded">
+                    <div className="text-lg font-bold text-green-600">{extendedResults.sustainability.newBarsUsed}</div>
+                    <div className="text-xs text-gray-600">Barras Novas</div>
+                  </div>
+                  <div className="text-center p-2 bg-green-50 rounded">
+                    <div className="text-lg font-bold text-green-600">{extendedResults.sustainability.materialReused.toFixed(2)}kg</div>
+                    <div className="text-xs text-gray-600">Material Reutilizado</div>
+                  </div>
+                  <div className="text-center p-2 bg-green-50 rounded">
+                    <div className="text-lg font-bold text-green-600">R$ {extendedResults.sustainability.totalEconomy.toFixed(2)}</div>
+                    <div className="text-xs text-gray-600">Economia Total</div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {/* Informações de Peças Cortadas */}
             <div className="border-t pt-4 mb-4">
               <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
@@ -407,100 +440,56 @@ export const OptimizationResults = ({ results, barLength, project, pieces, onRes
               </div>
             </div>
 
-            {/* Métricas de Sustentabilidade */}
-            {hasSustainabilityData && (
-              <div className="border-t pt-4">
-                <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-                  <Leaf className="w-4 h-4 text-green-600" />
-                  Impacto Sustentável
-                </h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                  <div className="text-center p-2 bg-green-50 rounded">
-                    <div className="text-lg font-bold text-green-600">{hasSustainabilityData.leftoverBarsUsed}</div>
-                    <div className="text-xs text-gray-600">Sobras Usadas</div>
-                  </div>
-                  <div className="text-center p-2 bg-blue-50 rounded">
-                    <div className="text-lg font-bold text-blue-600">{(hasSustainabilityData.materialReused / 1000).toFixed(1)}m</div>
-                    <div className="text-xs text-gray-600">Material Reutilizado</div>
-                  </div>
-                  <div className="text-center p-2 bg-emerald-50 rounded">
-                    <div className="text-lg font-bold text-emerald-600 flex items-center justify-center gap-1">
-                      <DollarSign className="w-3 h-3" />
-                      {hasSustainabilityData.totalEconomy.toFixed(0)}
-                    </div>
-                    <div className="text-xs text-gray-600">Economia (R$)</div>
-                  </div>
-                  <div className="text-center p-2 bg-teal-50 rounded">
-                    <div className="text-lg font-bold text-teal-600">{hasSustainabilityData.wasteReduction.toFixed(1)}%</div>
-                    <div className="text-xs text-gray-600">Redução Desperdício</div>
-                  </div>
-                </div>
+            {/* Ações e Exportação */}
+            <div className="flex justify-between items-center mt-6">
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex items-center gap-1" onClick={() => handlePrint('complete')}>
+                  <Printer className="w-4 h-4" />
+                  Imprimir
+                </Button>
+                <Button variant="outline" className="flex items-center gap-1" onClick={() => handlePrint('simplified')}>
+                  <FileText className="w-4 h-4" />
+                  Simplificado
+                </Button>
               </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
-          <CardContent className="p-6">
-            <div className="space-y-4">
-              <h4 className="font-medium text-gray-900">Exportar Resultados</h4>
-              
-        
-              <div className="space-y-2">
-                <div className="grid grid-cols-1 gap-2">
-                  <Button onClick={handleExportPDF} variant="outline" className="justify-start">
-                    <Download className="w-4 h-4 mr-2" />
-                    Exportar PDF Completo
-                  </Button>
-                  <Button onClick={handleExportSimplifiedPDF} variant="outline" className="justify-start">
-                    <Download className="w-4 h-4 mr-2" />
-                    Exportar PDF Simplificado (Produção)
-                  </Button>
-                  <Button onClick={handleExportExcel} variant="outline" className="justify-start">
-                    <FileSpreadsheet className="w-4 h-4 mr-2" />
-                    Exportar Plano do Operador (Excel)
-                    {hasSustainabilityData && hasSustainabilityData.leftoverBarsUsed > 0 && (
-                      <Badge variant="secondary" className="ml-2 bg-green-100 text-green-700">+Sustentabilidade</Badge>
-                    )}
-                  </Button>
-                </div>
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex items-center gap-1" onClick={handleExportExcel}>
+                  <FileSpreadsheet className="w-4 h-4" />
+                  Excel
+                </Button>
+                <Button variant="outline" className="flex items-center gap-1" onClick={handleExportPDF}>
+                  <Download className="w-4 h-4" />
+                  PDF Completo
+                </Button>
+                <Button variant="outline" className="flex items-center gap-1" onClick={handleExportSimplifiedPDF}>
+                  <Download className="w-4 h-4" />
+                  PDF Simplificado
+                </Button>
+                <Button variant="outline" className="flex items-center gap-1" onClick={() => setShowFullscreen(true)}>
+                  <Fullscreen className="w-4 h-4" />
+                  Fullscreen
+                </Button>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Visualização Detalhada com Indicadores de Sobras */}
+        {/* Gráfico de Otimização */}
         <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span className="text-lg">Plano de Corte Detalhado por TAG</span>
-              <div className="flex items-center gap-2">
-                {hasSustainabilityData && hasSustainabilityData.leftoverBarsUsed > 0 && (
-                  <Badge variant="outline" className="text-green-700 border-green-300">
-                    <Recycle className="w-3 h-3 mr-1" />
-                    {hasSustainabilityData.leftoverBarsUsed} sobra(s) reutilizada(s)
-                  </Badge>
-                )}
-                <Button 
-                  onClick={() => setShowFullscreen(true)}
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  <Fullscreen className="w-4 h-4" />
-                  Visualizar em Tela Cheia
-                </Button>
-              </div>
+          <CardHeader className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-t-lg">
+            <CardTitle className="flex items-center gap-2">
+              <Wrench className="w-5 h-5" />
+              Visualização da Otimização
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <ReportVisualization 
+            <ReportVisualization
               results={results}
               barLength={barLength}
               showLegend={true}
             />
           </CardContent>
         </Card>
-        
       </div>
 
       {/* Fullscreen Viewer */}
