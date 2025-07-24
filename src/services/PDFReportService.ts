@@ -404,12 +404,12 @@ export class PDFReportService {
       let currentY = 50;
       let pageNumber = 1;
 
-      this.addHeader(doc, project, `Produção - ${listName}`, pageNumber);
+      this.addHeader(doc, project, `Lista de Corte - ${listName}`, pageNumber);
 
       // ==== INFORMAÇÕES DO PROJETO ====
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      doc.text("Informações da Produção", 20, currentY);
+      doc.text("Informações da Lista", 20, currentY);
       currentY += 8;
 
       doc.setFontSize(10);
@@ -460,12 +460,16 @@ export class PDFReportService {
       // Combinar os dois grupos
       const infoFields = [
         {
-          left: { label: "Qtd Peças", value: totalPieces },
-          right: { label: "Peças Comprar", value: "" },
+          left: { label: "Qtd Barras", value: results.totalBars },
+          right: { label: "Qtd. Barras Compradas", value: "" },
         },
         {
-          left: { label: "Qtd Peças Estoque GMX", value: "" },
-          right: { label: "Total", value: "" },
+          left: { label: "Peso Total", value: `${totalWeight.toFixed(2)}kg` },
+          right: { label: "Peso Cortado", value: `${cutWeight.toFixed(2)}kg` },
+        },
+        {
+          left: { label: "Qtd Peças", value: totalPieces },
+          right: { label: "Peças Cortadas", value: `${cutPieces} (${progressPercent}%)` },
         },
       ];
 
@@ -496,6 +500,11 @@ export class PDFReportService {
       doc.text("Tabela Geral de Peças", 20, currentY);
       currentY += 8;
 
+      // Legenda para status
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text("Legenda: OK = Cortada | (vazio) = Pendente", 20, currentY);
+      currentY += 8;
 
       // Cabeçalho ajustado
       const headers = [
@@ -551,7 +560,7 @@ export class PDFReportService {
             this.addHeader(
               doc,
               project,
-              `Produção - ${project.name}`,
+              `Lista de Corte - ${project.name}`,
               pageNumber
             );
             currentY = 55;
@@ -592,7 +601,7 @@ export class PDFReportService {
 
       this.addFooter(doc, project);
       doc.save(
-        `producao-${project.projectNumber}-${
+        `tabela-corte-${project.projectNumber}-${
           new Date().toISOString().split("T")[0]
         }.pdf`
       );
