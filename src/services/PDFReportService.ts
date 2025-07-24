@@ -485,26 +485,26 @@ export class PDFReportService {
         },
       ];
 
-      const spacingY = 6;
+      const spacingY = 4;
       const col1X = 20;
-      const col2X = 105;
+      const col2X = 100;
 
       doc.setFont("helvetica", "bold");
     
 
       infoFields.forEach(({ left, right }) => {
         doc.setFont("helvetica", "bold");
-        doc.text(`${left.label}:`, col1X, currentY);
-        doc.text(`${right.label}:`, col2X, currentY);
+        doc.text(left.label, col1X, currentY);
+        doc.text(right.label, col2X, currentY);
 
         doc.setFont("helvetica", "normal");
-        doc.text(`${left.value}`, col1X + 20, currentY);
-        doc.text(`${right.value}`, col2X + 50, currentY);
+        doc.text(`${left.value}`, col1X + 15, currentY);
+        doc.text(`${right.value}`, col2X + 45, currentY);
 
         currentY += spacingY;
       });
 
-      currentY += 6;
+      currentY += 4;
 
       // ==== TABELA DE PEÇAS ====
       doc.setFontSize(11);
