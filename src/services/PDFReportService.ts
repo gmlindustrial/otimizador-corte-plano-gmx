@@ -457,49 +457,48 @@ export class PDFReportService {
 
       const progressPercent = totalPieces > 0 ? ((cutPieces / totalPieces) * 100).toFixed(1) : '0.0';
 
-      // Combinar os dois grupos
+      // Combinar os campos em 3 colunas
       const infoFields = [
         {
-          left: { label: "Qtd Barras", value: results.totalBars },
-          right: { label: "", value: "" },
+          col1: { label: "Qtd Barras", value: results.totalBars },
+          col2: { label: "Qtd. Barras Compradas", value: "" },
+          col3: { label: "Peso Total", value: `${totalWeight.toFixed(2)}kg` },
         },
         {
-          left: { label: "Qtd. Barras Estoque GMX", value: "" },
-          right: { label: "", value: "" },
+          col1: { label: "Qtd. Barras Estoque GMX", value: "" },
+          col2: { label: "Total Barras", value: "" },
+          col3: { label: "Peso Cortado", value: `${cutWeight.toFixed(2)}kg` },
         },
         {
-          left: { label: "Qtd. Barras Compradas", value: "" },
-          right: { label: "", value: "" },
+          col1: { label: "", value: "" },
+          col2: { label: "", value: "" },
+          col3: { label: "Qtd Peças", value: totalPieces },
         },
         {
-          left: { label: "Total Barras", value: "" },
-          right: { label: "", value: "" },
-        },
-        {
-          left: { label: "Peso Total", value: `${totalWeight.toFixed(2)}kg` },
-          right: { label: "Peso Cortado", value: `${cutWeight.toFixed(2)}kg` },
-        },
-        {
-          left: { label: "Qtd Peças", value: totalPieces },
-          right: { label: "Peças Cortadas", value: `${cutPieces} (${progressPercent}%)` },
+          col1: { label: "", value: "" },
+          col2: { label: "", value: "" },
+          col3: { label: "Peças Cortadas", value: `${cutPieces} (${progressPercent}%)` },
         },
       ];
 
       const spacingY = 4;
       const col1X = 20;
-      const col2X = 100;
+      const col2X = 80;
+      const col3X = 140;
 
       doc.setFont("helvetica", "bold");
     
 
-      infoFields.forEach(({ left, right }) => {
+      infoFields.forEach(({ col1, col2, col3 }) => {
         doc.setFont("helvetica", "bold");
-        doc.text(left.label, col1X, currentY);
-        doc.text(right.label, col2X, currentY);
+        if (col1.label) doc.text(col1.label, col1X, currentY);
+        if (col2.label) doc.text(col2.label, col2X, currentY);
+        if (col3.label) doc.text(col3.label, col3X, currentY);
 
         doc.setFont("helvetica", "normal");
-        doc.text(`${left.value}`, col1X + 15, currentY);
-        doc.text(`${right.value}`, col2X + 45, currentY);
+        if (col1.value) doc.text(`${col1.value}`, col1X + 15, currentY);
+        if (col2.value) doc.text(`${col2.value}`, col2X + 15, currentY);
+        if (col3.value) doc.text(`${col3.value}`, col3X + 15, currentY);
 
         currentY += spacingY;
       });
