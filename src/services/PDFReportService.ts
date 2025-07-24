@@ -471,6 +471,10 @@ export class PDFReportService {
           left: { label: "Qtd Peças", value: totalPieces },
           right: { label: "Peças Cortadas", value: `${cutPieces} (${progressPercent}%)` },
         },
+        {
+          left: { label: "Qtd. Barras Estoque GMX", value: "" },
+          right: { label: "Total Barras", value: "" },
+        },
       ];
 
       const spacingY = 6;
@@ -500,11 +504,6 @@ export class PDFReportService {
       doc.text("Tabela Geral de Peças", 20, currentY);
       currentY += 8;
 
-      // Legenda para status
-      doc.setFontSize(8);
-      doc.setFont("helvetica", "normal");
-      doc.text("Legenda: OK = Cortada | (vazio) = Pendente", 20, currentY);
-      currentY += 8;
 
       // Cabeçalho ajustado
       const headers = [
