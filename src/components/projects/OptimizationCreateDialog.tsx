@@ -184,13 +184,13 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selecte
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-md h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Nova Otimização</DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 pr-4">
-          <div className="space-y-4">
+        <ScrollArea className="flex-1 h-0">
+          <div className="space-y-4 p-1">
             <div>
               <Label htmlFor="name">Nome da Lista</Label>
               <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
@@ -402,7 +402,7 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selecte
           </div>
         </ScrollArea>
 
-        <div className="flex gap-2 pt-4 mt-4 border-t">
+        <div className="flex-shrink-0 flex gap-2 pt-4 mt-4 border-t">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1" disabled={loading}>
             Cancelar
           </Button>
