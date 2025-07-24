@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { ProjetoPeca, EmendaConfiguration } from '@/types/project';
 import { Switch } from '@/components/ui/switch';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface OptimizationCreateDialogProps {
   open: boolean;
@@ -183,223 +184,225 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selecte
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Nova Otimização</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="name">Nome da Lista</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
+        <ScrollArea className="flex-1 pr-4">
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="name">Nome da Lista</Label>
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+            </div>
 
-          {/* Validação de Perfis */}
-          {hasInvalidPieces && (
-            <Alert variant="destructive">
-              <AlertTriangle className="h-4 w-4" />
-              <AlertDescription>
-                <div className="space-y-2">
-                  <p className="font-medium">Peças sem perfil definido encontradas:</p>
-                  <div className="text-sm space-y-1">
-                    {piecesWithoutProfile.map((piece, index) => (
-                      <div key={index} className="bg-destructive/10 p-2 rounded">
-                        • POSIÇÃO: {piece.posicao} ({piece.comprimento_mm}mm)
-                        {piece.tag && ` - TAG: ${piece.tag}`}
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-sm mt-2">
-                    É necessário definir o perfil para todas as peças antes de criar uma otimização.
-                  </p>
-                  {onNavigateToProfileManagement && (
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => {
-                        onNavigateToProfileManagement();
-                        onOpenChange(false);
-                      }}
-                      className="mt-2"
-                    >
-                      <Users className="h-4 w-4 mr-2" />
-                      Gerenciar Perfis
-                    </Button>
-                  )}
-                </div>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Análise das Peças Selecionadas */}
-          {selectedPieces.length > 0 && !hasInvalidPieces && (
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Análise das Peças</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Peças selecionadas:</span>
-                  <Badge variant="secondary">{selectedPieces.length}</Badge>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Maior comprimento:</span>
-                  <Badge variant="outline">{maxPieceLength}mm</Badge>
-                </div>
-                <div className="flex justify-between text-sm items-center">
-                  <span>Sugestão:</span>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="default">{suggestedBarSize}mm</Badge>
-                    {parseInt(barLength) === suggestedBarSize ? (
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <AlertTriangle className="h-4 w-4 text-yellow-500" />
+            {/* Validação de Perfis */}
+            {hasInvalidPieces && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  <div className="space-y-2">
+                    <p className="font-medium">Peças sem perfil definido encontradas:</p>
+                    <div className="text-sm space-y-1">
+                      {piecesWithoutProfile.map((piece, index) => (
+                        <div key={index} className="bg-destructive/10 p-2 rounded">
+                          • POSIÇÃO: {piece.posicao} ({piece.comprimento_mm}mm)
+                          {piece.tag && ` - TAG: ${piece.tag}`}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-sm mt-2">
+                      É necessário definir o perfil para todas as peças antes de criar uma otimização.
+                    </p>
+                    {onNavigateToProfileManagement && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => {
+                          onNavigateToProfileManagement();
+                          onOpenChange(false);
+                        }}
+                        className="mt-2"
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        Gerenciar Perfis
+                      </Button>
                     )}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <div>
-            <Label htmlFor="bar">Tamanho da Barra</Label>
-            <Select value={barLength} onValueChange={(v) => setBarLength(v)}>
-              <SelectTrigger id="bar" className={!isValidSelection ? "border-red-500" : ""}>
-                <SelectValue placeholder="Tamanho da barra" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableBarSizes.map((size) => (
-                  <SelectItem key={size.comprimento} value={size.comprimento.toString()}>
-                    {size.comprimento}mm {size.descricao && `- ${size.descricao}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            
-            {!isValidSelection && !emendaConfig.permitirEmendas && (
-              <div className="flex items-center gap-2 mt-2 text-sm text-orange-600">
-                <AlertTriangle className="h-4 w-4" />
-                Barra muito pequena para a maior peça ({maxPieceLength}mm). Habilite emendas para continuar.
-              </div>
+                </AlertDescription>
+              </Alert>
             )}
-            
-            {pecasQueNecessitamEmenda.length > 0 && (emendaConfig.permitirEmendas || emendaConfig.emendaObrigatoria) && (
-              <div className="flex items-center gap-2 mt-2 text-sm text-blue-600">
-                <Link className="h-4 w-4" />
-                {pecasQueNecessitamEmenda.length} peça(s) será(ão) emendada(s) automaticamente
-              </div>
-            )}
-          </div>
 
-          {/* Configurações de Emenda */}
-          <Collapsible open={showEmendaSettings} onOpenChange={setShowEmendaSettings}>
-            <CollapsibleTrigger asChild>
-              <Button variant="outline" size="sm" className="w-full">
-                <Settings className="h-4 w-4 mr-2" />
-                Configurações de Emenda
-                {(emendaConfig.permitirEmendas || emendaConfig.emendaObrigatoria) && (
-                  <Badge variant="secondary" className="ml-2">Ativo</Badge>
-                )}
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-4 mt-4">
+            {/* Análise das Peças Selecionadas */}
+            {selectedPieces.length > 0 && !hasInvalidPieces && (
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-sm">Opções de Emenda</CardTitle>
+                  <CardTitle className="text-sm">Análise das Peças</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Permitir Emendas */}
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label className="text-sm font-medium">Permitir Emendas</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Habilita o uso de emendas para otimizar aproveitamento
-                      </p>
-                    </div>
-                    <Switch
-                      checked={emendaConfig.permitirEmendas}
-                      onCheckedChange={(checked) => 
-                        setEmendaConfig(prev => ({ ...prev, permitirEmendas: checked }))
-                      }
-                      disabled={emendaConfig.emendaObrigatoria}
-                    />
+                <CardContent className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Peças selecionadas:</span>
+                    <Badge variant="secondary">{selectedPieces.length}</Badge>
                   </div>
-
-                  {emendaConfig.emendaObrigatoria && (
-                    <Alert>
-                      <Info className="h-4 w-4" />
-                      <AlertDescription className="text-sm">
-                        Emendas obrigatórias detectadas: existem peças maiores que as barras disponíveis.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-
-                  {/* Configurações avançadas - só aparecem se emendas estão habilitadas */}
-                  {(emendaConfig.permitirEmendas || emendaConfig.emendaObrigatoria) && (
-                    <>
-                      {/* Tamanho Mínimo Sobra */}
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">
-                          Tamanho Mínimo da Sobra (mm)
-                        </Label>
-                        <Input
-                          type="number"
-                          value={emendaConfig.tamanhoMinimoSobra}
-                          onChange={(e) => 
-                            setEmendaConfig(prev => ({ 
-                              ...prev, 
-                              tamanhoMinimoSobra: parseInt(e.target.value) || 200 
-                            }))
-                          }
-                          min="50"
-                          max="1000"
-                          className="text-sm"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Sobras menores que este valor serão descartadas
-                        </p>
-                      </div>
-
-                      {/* Máximo Emendas por Peça */}
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">
-                          Máximo de Emendas por Peça
-                        </Label>
-                        <Select
-                          value={emendaConfig.maxEmendasPorPeca.toString()}
-                          onValueChange={(value) => 
-                            setEmendaConfig(prev => ({ 
-                              ...prev, 
-                              maxEmendasPorPeca: parseInt(value) 
-                            }))
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="1">1 emenda</SelectItem>
-                            <SelectItem value="2">2 emendas</SelectItem>
-                            <SelectItem value="3">3 emendas</SelectItem>
-                            <SelectItem value="4">4 emendas</SelectItem>
-                            <SelectItem value="5">5 emendas</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <p className="text-xs text-muted-foreground">
-                          Limite máximo de segmentos por peça
-                        </p>
-                      </div>
-
-
-                    </>
-                  )}
+                  <div className="flex justify-between text-sm">
+                    <span>Maior comprimento:</span>
+                    <Badge variant="outline">{maxPieceLength}mm</Badge>
+                  </div>
+                  <div className="flex justify-between text-sm items-center">
+                    <span>Sugestão:</span>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="default">{suggestedBarSize}mm</Badge>
+                      {parseInt(barLength) === suggestedBarSize ? (
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                      ) : (
+                        <AlertTriangle className="h-4 w-4 text-yellow-500" />
+                      )}
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
-            </CollapsibleContent>
-          </Collapsible>
-        </div>
+            )}
 
-        <div className="flex gap-2 pt-4">
+            <div>
+              <Label htmlFor="bar">Tamanho da Barra</Label>
+              <Select value={barLength} onValueChange={(v) => setBarLength(v)}>
+                <SelectTrigger id="bar" className={!isValidSelection ? "border-red-500" : ""}>
+                  <SelectValue placeholder="Tamanho da barra" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableBarSizes.map((size) => (
+                    <SelectItem key={size.comprimento} value={size.comprimento.toString()}>
+                      {size.comprimento}mm {size.descricao && `- ${size.descricao}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              {!isValidSelection && !emendaConfig.permitirEmendas && (
+                <div className="flex items-center gap-2 mt-2 text-sm text-orange-600">
+                  <AlertTriangle className="h-4 w-4" />
+                  Barra muito pequena para a maior peça ({maxPieceLength}mm). Habilite emendas para continuar.
+                </div>
+              )}
+              
+              {pecasQueNecessitamEmenda.length > 0 && (emendaConfig.permitirEmendas || emendaConfig.emendaObrigatoria) && (
+                <div className="flex items-center gap-2 mt-2 text-sm text-blue-600">
+                  <Link className="h-4 w-4" />
+                  {pecasQueNecessitamEmenda.length} peça(s) será(ão) emendada(s) automaticamente
+                </div>
+              )}
+            </div>
+
+            {/* Configurações de Emenda */}
+            <Collapsible open={showEmendaSettings} onOpenChange={setShowEmendaSettings}>
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" size="sm" className="w-full">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Configurações de Emenda
+                  {(emendaConfig.permitirEmendas || emendaConfig.emendaObrigatoria) && (
+                    <Badge variant="secondary" className="ml-2">Ativo</Badge>
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-4 mt-4">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Opções de Emenda</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Permitir Emendas */}
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-medium">Permitir Emendas</Label>
+                        <p className="text-xs text-muted-foreground">
+                          Habilita o uso de emendas para otimizar aproveitamento
+                        </p>
+                      </div>
+                      <Switch
+                        checked={emendaConfig.permitirEmendas}
+                        onCheckedChange={(checked) => 
+                          setEmendaConfig(prev => ({ ...prev, permitirEmendas: checked }))
+                        }
+                        disabled={emendaConfig.emendaObrigatoria}
+                      />
+                    </div>
+
+                    {emendaConfig.emendaObrigatoria && (
+                      <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertDescription className="text-sm">
+                          Emendas obrigatórias detectadas: existem peças maiores que as barras disponíveis.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    {/* Configurações avançadas - só aparecem se emendas estão habilitadas */}
+                    {(emendaConfig.permitirEmendas || emendaConfig.emendaObrigatoria) && (
+                      <>
+                        {/* Tamanho Mínimo Sobra */}
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">
+                            Tamanho Mínimo da Sobra (mm)
+                          </Label>
+                          <Input
+                            type="number"
+                            value={emendaConfig.tamanhoMinimoSobra}
+                            onChange={(e) => 
+                              setEmendaConfig(prev => ({ 
+                                ...prev, 
+                                tamanhoMinimoSobra: parseInt(e.target.value) || 200 
+                              }))
+                            }
+                            min="50"
+                            max="1000"
+                            className="text-sm"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Sobras menores que este valor serão descartadas
+                          </p>
+                        </div>
+
+                        {/* Máximo Emendas por Peça */}
+                        <div className="space-y-2">
+                          <Label className="text-sm font-medium">
+                            Máximo de Emendas por Peça
+                          </Label>
+                          <Select
+                            value={emendaConfig.maxEmendasPorPeca.toString()}
+                            onValueChange={(value) => 
+                              setEmendaConfig(prev => ({ 
+                                ...prev, 
+                                maxEmendasPorPeca: parseInt(value) 
+                              }))
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="1">1 emenda</SelectItem>
+                              <SelectItem value="2">2 emendas</SelectItem>
+                              <SelectItem value="3">3 emendas</SelectItem>
+                              <SelectItem value="4">4 emendas</SelectItem>
+                              <SelectItem value="5">5 emendas</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground">
+                            Limite máximo de segmentos por peça
+                          </p>
+                        </div>
+
+
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
+        </ScrollArea>
+
+        <div className="flex gap-2 pt-4 mt-4 border-t">
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1" disabled={loading}>
             Cancelar
           </Button>
