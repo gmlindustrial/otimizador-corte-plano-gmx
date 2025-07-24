@@ -306,5 +306,5 @@ const ProjectHistoryTab: React.FC<ProjectHistoryTabProps> = ({ projectId, projec
   );
 };
 
-export default ProjectHistoryTab;
 export { ProjectHistoryTab };
+export default ProjectHistoryTab;
