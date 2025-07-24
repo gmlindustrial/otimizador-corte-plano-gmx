@@ -175,11 +175,9 @@ export class EmendaOptimizer {
         posicaoEmenda += comprimentoSegmento;
         emendas.push({
           posicao: posicaoEmenda,
-          perdasEmenda: this.config.perdasPorEmenda,
           qualidadeAfetada: true,
           inspecaoObrigatoria: true
         });
-        comprimentoRestante -= this.config.perdasPorEmenda;
       }
     }
 
@@ -197,7 +195,6 @@ export class EmendaOptimizer {
         posicaoEmenda += segmentos[segmentos.length - 2].comprimento;
         emendas.push({
           posicao: posicaoEmenda,
-          perdasEmenda: this.config.perdasPorEmenda,
           qualidadeAfetada: true,
           inspecaoObrigatoria: true
         });
@@ -253,7 +250,6 @@ export class EmendaOptimizer {
         posicaoEmenda += comprimentoSegmento;
         emendas.push({
           posicao: posicaoEmenda,
-          perdasEmenda: this.config.perdasPorEmenda,
           qualidadeAfetada: false,
           inspecaoObrigatoria: false
         });
@@ -303,7 +299,7 @@ export class EmendaOptimizer {
     comprimentoNecessario: number;
     desperdicio: number;
   } | null {
-    const comprimentoNecessario = peca.length + (this.config.perdasPorEmenda * (this.config.maxEmendasPorPeca - 1));
+    const comprimentoNecessario = peca.length;
     
     // Tentar diferentes combinações (algoritmo guloso simples)
     for (let maxSobras = 2; maxSobras <= Math.min(this.config.maxEmendasPorPeca + 1, sobras.length); maxSobras++) {

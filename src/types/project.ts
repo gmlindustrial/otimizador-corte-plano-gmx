@@ -47,7 +47,6 @@ export interface EmendaConfiguration {
   permitirEmendas: boolean;
   tamanhoMinimoSobra: number;
   maxEmendasPorPeca: number;
-  perdasPorEmenda: number;
   prioridadeEstoque: 'sobra_mesmo_perfil' | 'sobra_qualquer' | 'nova_barra';
 }
 
@@ -62,7 +61,6 @@ export interface SegmentoEmenda {
 
 export interface EmendaInfo {
   posicao: number;
-  perdasEmenda: number;
   qualidadeAfetada: boolean;
   inspecaoObrigatoria: boolean;
 }

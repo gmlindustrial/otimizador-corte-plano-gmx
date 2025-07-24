@@ -36,7 +36,6 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selecte
     permitirEmendas: false,
     tamanhoMinimoSobra: 200,
     maxEmendasPorPeca: 3,
-    perdasPorEmenda: 3,
     prioridadeEstoque: 'sobra_mesmo_perfil'
   });
 
@@ -392,28 +391,6 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selecte
                         </p>
                       </div>
 
-                      {/* Perdas por Emenda */}
-                      <div className="space-y-2">
-                        <Label className="text-sm font-medium">
-                          Perdas por Emenda (mm)
-                        </Label>
-                        <Input
-                          type="number"
-                          value={emendaConfig.perdasPorEmenda}
-                          onChange={(e) => 
-                            setEmendaConfig(prev => ({ 
-                              ...prev, 
-                              perdasPorEmenda: parseInt(e.target.value) || 3 
-                            }))
-                          }
-                          min="0"
-                          max="20"
-                          className="text-sm"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          Material perdido em cada ponto de emenda
-                        </p>
-                      </div>
 
                       {/* Prioridade do Estoque */}
                       <div className="space-y-2">
