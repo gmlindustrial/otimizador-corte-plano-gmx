@@ -457,34 +457,29 @@ export class PDFReportService {
 
       const progressPercent = totalPieces > 0 ? ((cutPieces / totalPieces) * 100).toFixed(1) : '0.0';
 
-      // Combinar os campos em 3 colunas
+      // Organizar campos em 3 colunas de forma lógica
       const infoFields = [
         {
           col1: { label: "Qtd Barras", value: results.totalBars },
-          col2: { label: "Qtd. Barras Compradas", value: "" },
-          col3: { label: "Peso Total", value: `${totalWeight.toFixed(2)}kg` },
+          col2: { label: "Qtd. Barras Estoque GMX", value: "" },
+          col3: { label: "Qtd. Barras Compradas", value: "" },
         },
         {
-          col1: { label: "Qtd. Barras Estoque GMX", value: "" },
-          col2: { label: "Total Barras", value: "" },
+          col1: { label: "Total Barras", value: "" },
+          col2: { label: "Peso Total", value: `${totalWeight.toFixed(2)}kg` },
           col3: { label: "Peso Cortado", value: `${cutWeight.toFixed(2)}kg` },
         },
         {
-          col1: { label: "", value: "" },
-          col2: { label: "", value: "" },
-          col3: { label: "Qtd Peças", value: totalPieces },
-        },
-        {
-          col1: { label: "", value: "" },
-          col2: { label: "", value: "" },
-          col3: { label: "Peças Cortadas", value: `${cutPieces} (${progressPercent}%)` },
+          col1: { label: "Qtd Peças", value: totalPieces },
+          col2: { label: "Peças Cortadas", value: `${cutPieces} (${progressPercent}%)` },
+          col3: { label: "", value: "" },
         },
       ];
 
-      const spacingY = 4;
+      const spacingY = 6;
       const col1X = 20;
-      const col2X = 80;
-      const col3X = 140;
+      const col2X = 90;
+      const col3X = 160;
 
       doc.setFont("helvetica", "bold");
     
