@@ -10,7 +10,6 @@ import { PDFReportService } from '@/services/PDFReportService';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { PecaComEmenda } from '@/types/project';
-
 interface OptimizationResultsProps {
   results: OptimizationResult;
   barLength: number;
@@ -31,20 +30,21 @@ interface ExtendedOptimizationResult extends OptimizationResult {
     wasteReduction: number;
   };
 }
-
-export const OptimizationResults = ({ 
-  results, 
-  barLength, 
-  project, 
-  pieces, 
-  onResultsChange, 
+export const OptimizationResults = ({
+  results,
+  barLength,
+  project,
+  pieces,
+  onResultsChange,
   listName,
   pecasComEmenda = []
 }: OptimizationResultsProps) => {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
   const [printMode, setPrintMode] = useState<'complete' | 'simplified'>('complete');
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
 
   // Cast for accessing sustainability properties if they exist
   const extendedResults = results as ExtendedOptimizationResult;
@@ -56,196 +56,182 @@ export const OptimizationResults = ({
 
   // Cálculos para as novas métricas de peças e peso
   const calculateTotalPieces = () => {
-    return results.bars.reduce((total, bar) => 
-      total + bar.pieces.reduce((barTotal, piece: any) => 
-        barTotal + (piece.quantidade || 1), 0), 0);
+    return results.bars.reduce((total, bar) => total + bar.pieces.reduce((barTotal, piece: any) => barTotal + (piece.quantidade || 1), 0), 0);
   };
-
   const calculateTotalWeight = () => {
-        console.log(results.bars)
-    return results.bars.reduce((total, bar) => 
-      total + bar.pieces.reduce((barTotal, piece: any) => {
-        // Priorizar peso extraído do arquivo, usar peso por metro como fallback
-        const weight = piece.peso || (piece.peso_por_metro * piece.length / 1000) || 0;
-        return barTotal + (weight * (piece.quantidade || 1));
-      }, 0), 0);
+    console.log(results.bars);
+    return results.bars.reduce((total, bar) => total + bar.pieces.reduce((barTotal, piece: any) => {
+      // Priorizar peso extraído do arquivo, usar peso por metro como fallback
+      const weight = piece.peso || piece.peso_por_metro * piece.length / 1000 || 0;
+      return barTotal + weight * (piece.quantidade || 1);
+    }, 0), 0);
   };
-
   const calculateCutPieces = () => {
-    return results.bars.reduce((total, bar) => 
-      total + bar.pieces.filter((piece: any) => piece.status === 'cortado' || piece.cortado === true).length, 0);
+    return results.bars.reduce((total, bar) => total + bar.pieces.filter((piece: any) => piece.status === 'cortado' || piece.cortado === true).length, 0);
   };
-
   const calculateCutWeight = () => {
-    return results.bars.reduce((total, bar) => 
-      total + bar.pieces
-        .filter((piece: any) => piece.status === 'cortado' || piece.cortado === true)
-        .reduce((barTotal, piece: any) => {
-          // Priorizar peso extraído do arquivo, usar peso por metro como fallback
-          const weight = piece.peso || (piece.peso_por_metro * piece.length / 1000) || 0;
-          return barTotal + (weight * (piece.quantidade || 1));
-        }, 0), 0);
+    return results.bars.reduce((total, bar) => total + bar.pieces.filter((piece: any) => piece.status === 'cortado' || piece.cortado === true).reduce((barTotal, piece: any) => {
+      // Priorizar peso extraído do arquivo, usar peso por metro como fallback
+      const weight = piece.peso || piece.peso_por_metro * piece.length / 1000 || 0;
+      return barTotal + weight * (piece.quantidade || 1);
+    }, 0), 0);
   };
-
   const totalPieces = calculateTotalPieces();
   const totalWeight = calculateTotalWeight();
   const cutPieces = calculateCutPieces();
   const cutWeight = calculateCutWeight();
-
   const handlePrint = (mode: 'complete' | 'simplified') => {
     setPrintMode(mode);
     setShowPrintPreview(true);
   };
-
   const handleExportPDF = async () => {
     try {
       if (!project) {
         toast({
           title: "Erro",
           description: "Dados do projeto não encontrados",
-          variant: "destructive",
+          variant: "destructive"
         });
         return;
       }
-
       await PDFReportService.generateCompleteLinearReport(results, barLength, project, listName);
-      
       toast({
         title: "PDF Exportado",
-        description: "Relatório PDF completo foi gerado com sucesso",
+        description: "Relatório PDF completo foi gerado com sucesso"
       });
     } catch (error) {
       console.error('Erro ao exportar PDF:', error);
       toast({
         title: "Erro ao exportar PDF",
         description: "Não foi possível gerar o relatório PDF",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const handleExportSimplifiedPDF = async () => {
     try {
       if (!project) {
         toast({
           title: "Erro",
           description: "Dados do projeto não encontrados",
-          variant: "destructive",
+          variant: "destructive"
         });
         return;
       }
-
       await PDFReportService.generateSimplifiedLinearReport(results, barLength, project, listName);
-      
       toast({
         title: "PDF Simplificado Exportado",
-        description: "Plano de corte simplificado foi gerado com sucesso",
+        description: "Plano de corte simplificado foi gerado com sucesso"
       });
     } catch (error) {
       console.error('Erro ao exportar PDF simplificado:', error);
       toast({
         title: "Erro ao exportar PDF",
         description: "Não foi possível gerar o plano simplificado",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const handleExportEmendasPDF = async () => {
     try {
-      const { PDFReportService } = await import('@/services/PDFReportService');
+      const {
+        PDFReportService
+      } = await import('@/services/PDFReportService');
       await PDFReportService.generateEmendaReport(project.id, project);
       toast({
         title: "Relatório de Emendas Gerado",
-        description: "Relatório específico de emendas foi gerado com sucesso",
+        description: "Relatório específico de emendas foi gerado com sucesso"
       });
     } catch (error) {
       console.error('Erro ao gerar relatório de emendas:', error);
       toast({
         title: "Erro ao gerar relatório de emendas",
         description: "Não foi possível gerar o relatório de emendas",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const handleExportExcel = () => {
     try {
       // Estrutura melhorada conforme especificação do operador
-      const headers = [
-        'Numero da Barra',
-        'Tipo (Nova ou Sobra)',
-        'Posição',
-        'TAG',
-        'Quantidade',
-        'Comprimento',
-        'Perfil/Material',
-        'Obra',
-        'Status',
-        'Eficiência',
-        'Sobra Barra',
-        'Tem Emenda',
-        'Observações'
-      ];
-      
+      const headers = ['Numero da Barra', 'Tipo (Nova ou Sobra)', 'Posição', 'TAG', 'Quantidade', 'Comprimento', 'Perfil/Material', 'Obra', 'Status', 'Eficiência', 'Sobra Barra', 'Tem Emenda', 'Observações'];
       const rows: string[][] = [headers];
 
       // Adicionar cada peça com informações de emendas
       results.bars.forEach((bar: any, barIndex) => {
         const barType = bar.type || 'new';
         const isLeftover = barType === 'leftover';
-        
         bar.pieces.forEach((piece: any, pieceIndex) => {
           // Verificar se esta peça tem emenda
-          const pecaComEmenda = pecasComEmenda.find(pe => 
-            pe.tag === piece.tag || pe.posicao === piece.posicao
-          );
-          
-          rows.push([
-            `Barra ${barIndex + 1}`, // Numero da Barra
-            isLeftover ? 'SOBRA' : 'NOVA', // Tipo (Nova ou Sobra)
-            piece.posicao || 'Manual', // Posição
-            piece.tag || 'Entrada Manual', // TAG
-            piece.quantidade || '1', // Quantidade
-            piece.length.toString(), // Comprimento
-            piece.perfil || piece.material || project?.tipoMaterial || 'Material', // Perfil/Material
-            piece.obra || project?.obra || 'N/A', // Obra
-            '', // Status (em branco)
-            ((bar.totalUsed / (bar.originalLength || barLength)) * 100).toFixed(1), // Eficiência
-            pieceIndex === bar.pieces.length - 1 ? bar.waste.toString() : '0', // Sobra Barra
-            pecaComEmenda ? `SIM (${pecaComEmenda.emendas.length} emenda(s))` : 'NÃO', // Tem Emenda
-            pecaComEmenda ? pecaComEmenda.observacoes || '' : '' // Observações
+          const pecaComEmenda = pecasComEmenda.find(pe => pe.tag === piece.tag || pe.posicao === piece.posicao);
+          rows.push([`Barra ${barIndex + 1}`,
+          // Numero da Barra
+          isLeftover ? 'SOBRA' : 'NOVA',
+          // Tipo (Nova ou Sobra)
+          piece.posicao || 'Manual',
+          // Posição
+          piece.tag || 'Entrada Manual',
+          // TAG
+          piece.quantidade || '1',
+          // Quantidade
+          piece.length.toString(),
+          // Comprimento
+          piece.perfil || piece.material || project?.tipoMaterial || 'Material',
+          // Perfil/Material
+          piece.obra || project?.obra || 'N/A',
+          // Obra
+          '',
+          // Status (em branco)
+          (bar.totalUsed / (bar.originalLength || barLength) * 100).toFixed(1),
+          // Eficiência
+          pieceIndex === bar.pieces.length - 1 ? bar.waste.toString() : '0',
+          // Sobra Barra
+          pecaComEmenda ? `SIM (${pecaComEmenda.emendas.length} emenda(s))` : 'NÃO',
+          // Tem Emenda
+          pecaComEmenda ? pecaComEmenda.observacoes || '' : '' // Observações
           ]);
         });
-        
+
         // Adicionar linha de sobra se existir
         if (bar.waste > 0) {
-          rows.push([
-            `Barra ${barIndex + 1}`, // Numero da Barra
-            barType.toUpperCase(), // Tipo (Nova ou Sobra)
-            '-', // Posição
-            'DESCARTE', // TAG
-            '0', // Quantidade
-            bar.waste.toString(), // Comprimento
-            'Desperdício', // Perfil/Material
-            project?.obra || 'N/A', // Obra
-            '', // Status (em branco)
-            '0', // Eficiência
-            bar.waste.toString(), // Sobra Barra
-            'NÃO', // Tem Emenda
-            '' // Observações (em branco)
+          rows.push([`Barra ${barIndex + 1}`,
+          // Numero da Barra
+          barType.toUpperCase(),
+          // Tipo (Nova ou Sobra)
+          '-',
+          // Posição
+          'DESCARTE',
+          // TAG
+          '0',
+          // Quantidade
+          bar.waste.toString(),
+          // Comprimento
+          'Desperdício',
+          // Perfil/Material
+          project?.obra || 'N/A',
+          // Obra
+          '',
+          // Status (em branco)
+          '0',
+          // Eficiência
+          bar.waste.toString(),
+          // Sobra Barra
+          'NÃO',
+          // Tem Emenda
+          '' // Observações (em branco)
           ]);
         }
       });
 
       // Converter para CSV com encoding UTF-8 e separador adequado para Excel brasileiro
       const BOM = '\uFEFF'; // Byte Order Mark para UTF-8
-      const csvContent = BOM + rows.map(row => 
-        row.map(cell => `"${cell}"`).join(';') // Usar ponto e vírgula para Excel brasileiro
+      const csvContent = BOM + rows.map(row => row.map(cell => `"${cell}"`).join(';') // Usar ponto e vírgula para Excel brasileiro
       ).join('\n');
 
       // Download com nome mais descritivo
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const blob = new Blob([csvContent], {
+        type: 'text/csv;charset=utf-8;'
+      });
       const link = document.createElement('a');
       const url = URL.createObjectURL(blob);
       link.setAttribute('href', url);
@@ -255,24 +241,21 @@ export const OptimizationResults = ({
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-
       toast({
         title: "Excel Exportado",
-        description: "Plano de corte com informações de emendas foi baixado",
+        description: "Plano de corte com informações de emendas foi baixado"
       });
     } catch (error) {
       console.error('Erro ao exportar Excel:', error);
       toast({
         title: "Erro ao exportar Excel",
         description: "Não foi possível gerar o arquivo Excel",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   if (showPrintPreview) {
-    return (
-      <div className="fixed inset-0 bg-white z-50 flex flex-col h-screen w-screen">
+    return <div className="fixed inset-0 bg-white z-50 flex flex-col h-screen w-screen">
         <div className="p-4 bg-gray-100 border-b flex justify-between items-center flex-shrink-0">
           <h2 className="text-lg font-semibold">
             {printMode === 'complete' ? 'Relatório Completo' : 'Plano Simplificado'}
@@ -289,28 +272,15 @@ export const OptimizationResults = ({
         </div>
         <div className="flex-1 overflow-auto p-4">
           <div className="w-full h-full">
-            <ReportVisualization
-              results={results}
-              barLength={barLength}
-              showLegend={true}
-            />
+            <ReportVisualization results={results} barLength={barLength} showLegend={true} />
           </div>
           <div className="w-full">
-            <PrintableReport
-              results={results}
-              barLength={barLength}
-              project={project}
-              pieces={pieces}
-              mode={printMode}
-            />
+            <PrintableReport results={results} barLength={barLength} project={project} pieces={pieces} mode={printMode} />
           </div>
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <>
+  return <>
       <div className="space-y-6">
         {/* Resumo Estatístico com Sustentabilidade e Emendas */}
         <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
@@ -318,18 +288,14 @@ export const OptimizationResults = ({
             <CardTitle className="flex items-center gap-2">
               <BarChart className="w-5 h-5" />
               Resumo da Otimização
-              {hasSustainabilityData && hasSustainabilityData.leftoverBarsUsed > 0 && (
-                <Badge variant="secondary" className="bg-green-200 text-green-800 ml-2">
+              {hasSustainabilityData && hasSustainabilityData.leftoverBarsUsed > 0 && <Badge variant="secondary" className="bg-green-200 text-green-800 ml-2">
                   <Recycle className="w-3 h-3 mr-1" />
                   Sustentável
-                </Badge>
-              )}
-              {hasEmendas && (
-                <Badge variant="secondary" className="bg-orange-200 text-orange-800 ml-2">
+                </Badge>}
+              {hasEmendas && <Badge variant="secondary" className="bg-orange-200 text-orange-800 ml-2">
                   <Link className="w-3 h-3 mr-1" />
                   Com Emendas
-                </Badge>
-              )}
+                </Badge>}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
@@ -361,8 +327,7 @@ export const OptimizationResults = ({
             </div>
 
             {/* Informações de Emendas */}
-            {hasEmendas && (
-              <div className="border-t pt-4 mb-4">
+            {hasEmendas && <div className="border-t pt-4 mb-4">
                 <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
                   <Link className="w-4 h-4 text-orange-600" />
                   Informações de Emendas
@@ -394,27 +359,21 @@ export const OptimizationResults = ({
                 <div className="mt-4 space-y-2">
                   <h5 className="text-sm font-medium text-gray-700">Peças com Emenda:</h5>
                   <div className="max-h-32 overflow-y-auto">
-                    {pecasComEmenda.map((peca, index) => (
-                      <div key={index} className="flex items-center justify-between text-xs bg-orange-50 p-2 rounded">
+                    {pecasComEmenda.map((peca, index) => <div key={index} className="flex items-center justify-between text-xs bg-orange-50 p-2 rounded">
                         <span>{peca.tag || peca.posicao || `Peça ${index + 1}`}</span>
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className="text-xs">
                             {peca.emendas.length} emenda(s)
                           </Badge>
-                          {peca.emendas.some(e => e.inspecaoObrigatoria) && (
-                            <AlertTriangle className="w-3 h-3 text-red-500" />
-                          )}
+                          {peca.emendas.some(e => e.inspecaoObrigatoria) && <AlertTriangle className="w-3 h-3 text-red-500" />}
                         </div>
-                      </div>
-                    ))}
+                      </div>)}
                   </div>
                 </div>
-              </div>
-            )}
+              </div>}
 
             {/* Informações de Sustentabilidade */}
-            {hasSustainabilityData && (
-              <div className="border-t pt-4 mb-4">
+            {hasSustainabilityData && <div className="border-t pt-4 mb-4">
                 <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
                   <Recycle className="w-4 h-4 text-green-600" />
                   Métricas de Sustentabilidade
@@ -437,8 +396,7 @@ export const OptimizationResults = ({
                     <div className="text-xs text-gray-600">Economia Total</div>
                   </div>
                 </div>
-              </div>
-            )}
+              </div>}
             
             {/* Informações de Peças Cortadas */}
             <div className="border-t pt-4 mb-4">
@@ -460,16 +418,7 @@ export const OptimizationResults = ({
 
             {/* Ações e Exportação */}
             <div className="flex justify-between items-center mt-6">
-              <div className="flex gap-2">
-                <Button variant="outline" className="flex items-center gap-1" onClick={() => handlePrint('complete')}>
-                  <Printer className="w-4 h-4" />
-                  Imprimir
-                </Button>
-                <Button variant="outline" className="flex items-center gap-1" onClick={() => handlePrint('simplified')}>
-                  <FileText className="w-4 h-4" />
-                  Simplificado
-                </Button>
-              </div>
+              
               <div className="flex gap-2">
                 <Button variant="outline" className="flex items-center gap-1" onClick={handleExportExcel}>
                   <FileSpreadsheet className="w-4 h-4" />
@@ -483,12 +432,10 @@ export const OptimizationResults = ({
                   <Download className="w-4 h-4" />
                   PDF Simplificado
                 </Button>
-                {hasEmendas && (
-                  <Button variant="outline" className="flex items-center gap-1" onClick={handleExportEmendasPDF}>
+                {hasEmendas && <Button variant="outline" className="flex items-center gap-1" onClick={handleExportEmendasPDF}>
                     <Link className="w-4 h-4" />
                     Emendas PDF
-                  </Button>
-                )}
+                  </Button>}
                 <Button variant="outline" className="flex items-center gap-1" onClick={() => setShowFullscreen(true)}>
                   <Fullscreen className="w-4 h-4" />
                   Fullscreen
@@ -507,24 +454,12 @@ export const OptimizationResults = ({
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <ReportVisualization
-              results={results}
-              barLength={barLength}
-              showLegend={true}
-            />
+            <ReportVisualization results={results} barLength={barLength} showLegend={true} />
           </CardContent>
         </Card>
       </div>
 
       {/* Fullscreen Viewer */}
-      <FullscreenReportViewer
-        isOpen={showFullscreen}
-        onClose={() => setShowFullscreen(false)}
-        results={results}
-        barLength={barLength}
-        project={project}
-        onResultsChange={onResultsChange}
-      />
-    </>
-  );
+      <FullscreenReportViewer isOpen={showFullscreen} onClose={() => setShowFullscreen(false)} results={results} barLength={barLength} project={project} onResultsChange={onResultsChange} />
+    </>;
 };
