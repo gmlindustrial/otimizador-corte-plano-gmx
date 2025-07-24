@@ -457,43 +457,33 @@ export class PDFReportService {
 
       const progressPercent = totalPieces > 0 ? ((cutPieces / totalPieces) * 100).toFixed(1) : '0.0';
 
-      // Organizar campos em 3 colunas de forma lógica
+      // Organizar campos em 2 colunas agrupando dados relacionados
       const infoFields = [
-        {
-          col1: { label: "Qtd Barras", value: results.totalBars },
-          col2: { label: "Qtd. Barras Estoque GMX", value: "" },
-          col3: { label: "Qtd. Barras Compradas", value: "" },
-        },
-        {
-          col1: { label: "Total Barras", value: "" },
-          col2: { label: "Peso Total", value: `${totalWeight.toFixed(2)}kg` },
-          col3: { label: "Peso Cortado", value: `${cutWeight.toFixed(2)}kg` },
-        },
-        {
-          col1: { label: "Qtd Peças", value: totalPieces },
-          col2: { label: "Peças Cortadas", value: `${cutPieces} (${progressPercent}%)` },
-          col3: { label: "", value: "" },
-        },
+        // Grupo Barras
+        { col1: { label: "Qtd Barras", value: results.totalBars }, col2: { label: "Peso Total", value: `${totalWeight.toFixed(2)}kg` } },
+        { col1: { label: "Qtd. Barras Estoque GMX", value: "0" }, col2: { label: "Peso Cortado", value: `${cutWeight.toFixed(2)}kg` } },
+        { col1: { label: "Qtd. Barras Compradas", value: results.totalBars }, col2: { label: "", value: "" } },
+        // Espaço
+        { col1: { label: "", value: "" }, col2: { label: "", value: "" } },
+        // Grupo Peças
+        { col1: { label: "Qtd Peças", value: totalPieces }, col2: { label: "Peças Cortadas", value: `${cutPieces} (${progressPercent}%)` } },
       ];
 
-      const spacingY = 6;
+      const spacingY = 7;
       const col1X = 20;
-      const col2X = 90;
-      const col3X = 160;
+      const col2X = 110;
 
       doc.setFont("helvetica", "bold");
     
 
-      infoFields.forEach(({ col1, col2, col3 }) => {
+      infoFields.forEach(({ col1, col2 }) => {
         doc.setFont("helvetica", "bold");
         if (col1.label) doc.text(col1.label, col1X, currentY);
         if (col2.label) doc.text(col2.label, col2X, currentY);
-        if (col3.label) doc.text(col3.label, col3X, currentY);
 
         doc.setFont("helvetica", "normal");
-        if (col1.value) doc.text(`${col1.value}`, col1X + 15, currentY);
-        if (col2.value) doc.text(`${col2.value}`, col2X + 15, currentY);
-        if (col3.value) doc.text(`${col3.value}`, col3X + 15, currentY);
+        if (col1.value) doc.text(`${col1.value}`, col1X + 25, currentY);
+        if (col2.value) doc.text(`${col2.value}`, col2X + 25, currentY);
 
         currentY += spacingY;
       });
