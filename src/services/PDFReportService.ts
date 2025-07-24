@@ -1,6 +1,8 @@
 import jsPDF from "jspdf";
 import type { OptimizationResult, Project } from "@/pages/Index";
 import type { SheetOptimizationResult, SheetProject } from "@/types/sheet";
+import type { PecaComEmenda, EmendaInfo, SegmentoEmenda } from "@/types/project";
+import { supabase } from "@/integrations/supabase/client";
 
 export class PDFReportService {
   private static addHeader(
@@ -82,6 +84,10 @@ export class PDFReportService {
         "Relatório Completo de Otimização Linear",
         pageNumber
       );
+
+      // Verificar se existem emendas para este projeto
+      const emendasData = await this.getEmendasData(project.id);
+      const hasEmendas = emendasData && emendasData.length > 0;
 
       // Resumo Executivo
       doc.setFontSize(12);
@@ -174,8 +180,21 @@ export class PDFReportService {
         currentY + 30
       );
 
-      // Espaço após resumo
-      currentY += 35;
+      // Adicionar informações de emendas se existirem
+      if (hasEmendas) {
+        const totalEmendas = emendasData.length;
+        const emendasObrigatorias = emendasData.filter(e => e.peca_tag?.includes('OBRIG') || false).length;
+        doc.text(`Total de Emendas: ${totalEmendas}`, 20, currentY + 35);
+        doc.text(`Emendas Obrigatórias: ${emendasObrigatorias}`, 100, currentY + 35);
+        currentY += 40;
+      } else {
+        currentY += 35;
+      }
+
+      // Adicionar seção de Plano de Emendas se existirem emendas
+      if (hasEmendas) {
+        currentY = await this.addEmendaPlan(doc, emendasData, currentY, project, pageNumber);
+      }
 
       // Resumo por TAG
       const tagSummary = new Map<
@@ -314,13 +333,23 @@ export class PDFReportService {
           }
 
           doc.text(`${pieceIndex + 1}`, 20, currentY);
-          doc.text(piece.tag || `P${pieceIndex + 1}`, 30, currentY);
+          // Verificar se a peça tem emenda
+          const pecaComEmenda = hasEmendas ? emendasData.find(e => 
+            e.peca_tag === piece.tag
+          ) : null;
+          
+          const tagText = pecaComEmenda ? `🔗 ${piece.tag || `P${pieceIndex + 1}`}` : `${piece.tag || `P${pieceIndex + 1}`}`;
+          
+          doc.text(tagText, 30, currentY);
           doc.text(`${piece.posicao || "-"}`, 50, currentY);
           doc.text(`${piece.quantidade || 1}`, 65, currentY);
           doc.text(`${piece.length || 0}mm`, 75, currentY);
           doc.text(piece.perfil || "-", 115, currentY);
-          doc.text(piece.cortada ? "OK" : "", 155, currentY); // Mostrar status cortado
-          doc.text("", 175, currentY); // Observação vazia
+          doc.text(piece.cortada ? "OK" : "", 155, currentY);
+          
+          // Observação sobre emenda
+          const obsText = pecaComEmenda ? "Emenda" : "";
+          doc.text(obsText, 175, currentY);
 
           // Indicador de reutilização para sobras
           if (bar.type === "leftover") {
@@ -480,18 +509,18 @@ export class PDFReportService {
       // Cabeçalho ajustado
       const headers = [
         "Barra",
-        "Tipo",
+        "Tipo", 
         "TAG",
         "Pos",
         "Qtd",
         "Comp",
         "Peso",
-        "Sobra",
+        "Sobra", 
         "Status",
         "QC",
-        "Obs",
+        "Obs"
       ];
-      const colWidths = [12, 14, 15, 13, 12, 20, 20, 20, 15, 15, 20];
+      const colWidths = [12, 14, 15, 13, 12, 18, 18, 18, 15, 15, 15];
       const colStarts: number[] = [];
 
       // calcular posição inicial de cada coluna
@@ -541,10 +570,20 @@ export class PDFReportService {
 
           const peso = piece.peso.toFixed(2);
 
+          // Verificar se há emendas para essa peça - removido await para manter performance
+          // const emendasData = await this.getEmendasData(project.id);
+          // const pecaComEmenda = emendasData ? emendasData.find(e => 
+          //   e.tag === piece.tag || e.posicao === piece.posicao
+          // ) : null;
+          const pecaComEmenda = null; // Simplificado para este relatório
+          
+          const emendaIndicator = pecaComEmenda ? "🔗" : "";
+          const tagText = pecaComEmenda ? `🔗 ${piece.tag || `P${pieceIndex + 1}`}` : piece.tag || `P${pieceIndex + 1}`;
+
           const row = [
             `${barIndex + 1}`,
             barType,
-            piece.tag || `P${pieceIndex + 1}`,
+            tagText,
             piece.posicao || "-",
             `${piece.quantidade || 1}`,
             `${piece.length || 0}mm`,
@@ -552,7 +591,7 @@ export class PDFReportService {
             wasteFormatted,
             piece.cortada ? "OK" : "",
             "",
-            "",
+            ""
           ];
 
           drawTableRow(row, currentY);
@@ -766,5 +805,277 @@ export class PDFReportService {
     doc.save(
       `relatorio-materiais-${new Date().toISOString().split("T")[0]}.pdf`
     );
+  }
+
+  // ===== MÉTODOS PARA EMENDAS =====
+
+  private static async getEmendasData(projectId: string): Promise<any[] | null> {
+    try {
+      const { data, error } = await supabase
+        .from('emendas_otimizacao')
+        .select('*')
+        .eq('projeto_otimizacao_id', projectId);
+      
+      if (error) {
+        console.error('Erro ao buscar emendas:', error);
+        return null;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Erro ao buscar emendas:', error);
+      return null;
+    }
+  }
+
+  private static async addEmendaPlan(
+    doc: jsPDF, 
+    emendasData: any[], 
+    currentY: number, 
+    project: Project,
+    pageNumber: number
+  ): Promise<number> {
+    // Verificar se precisa de nova página
+    if (currentY > 200) {
+      doc.addPage();
+      pageNumber++;
+      this.addHeader(doc, project, "Relatório Completo de Otimização Linear", pageNumber);
+      currentY = 55;
+    }
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("🔗 Plano de Emendas", 20, currentY);
+    currentY += 10;
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text("Legenda: 🔗 = Peça com Emenda | ⚠️ = Emenda Obrigatória | ✅ = Aprovada | ⏳ = Pendente", 20, currentY);
+    currentY += 8;
+
+    // Cabeçalho da tabela de emendas
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "bold");
+    doc.text("TAG/Pos", 20, currentY);
+    doc.text("Tipo", 50, currentY);
+    doc.text("Segmentos", 70, currentY);
+    doc.text("Localização", 120, currentY);
+    doc.text("Status QA", 160, currentY);
+    doc.text("Obs", 180, currentY);
+    currentY += 5;
+
+    doc.line(20, currentY, 195, currentY);
+    currentY += 3;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+
+    emendasData.forEach((emenda, index) => {
+      if (currentY > 275) {
+        doc.addPage();
+        pageNumber++;
+        this.addHeader(doc, project, "Relatório Completo de Otimização Linear", pageNumber);
+        currentY = 55;
+      }
+
+      const tipoIcon = emenda.peca_tag?.includes('OBRIG') ? '⚠️' : '🔗';
+      const statusIcon = emenda.status_qualidade === 'aprovada' ? '✅' : 
+                        emenda.status_qualidade === 'reprovada' ? '❌' : '⏳';
+      
+      doc.text(`${tipoIcon} ${emenda.peca_tag || `E${index + 1}`}`, 20, currentY);
+      doc.text(emenda.peca_tag?.includes('OBRIG') ? 'Obrig.' : 'Opc.', 50, currentY);
+      doc.text(`${emenda.quantidade_emendas || 1} emenda(s)`, 70, currentY);
+      doc.text('Centro', 120, currentY);
+      doc.text(`${statusIcon} ${emenda.status_qualidade || 'Pend.'}`, 160, currentY);
+      doc.text(emenda.observacoes ? emenda.observacoes.substring(0, 10) + '...' : '', 180, currentY);
+      
+      currentY += 5;
+    });
+
+    currentY += 10;
+
+    // Instruções de soldagem
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.text("📋 Instruções de Soldagem", 20, currentY);
+    currentY += 8;
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    const instrucoes = [
+      "1. Verificar alinhamento dos segmentos antes da soldagem",
+      "2. Preparar chanfro conforme especificação do perfil",
+      "3. Aplicar passe de raiz com eletrodo apropriado",
+      "4. Executar passes de enchimento e acabamento",
+      "5. Inspeção visual e dimensional obrigatória",
+      "6. Registrar aprovação do QA antes da liberação"
+    ];
+
+    instrucoes.forEach(instrucao => {
+      if (currentY > 275) {
+        doc.addPage();
+        pageNumber++;
+        this.addHeader(doc, project, "Relatório Completo de Otimização Linear", pageNumber);
+        currentY = 55;
+      }
+      doc.text(instrucao, 20, currentY);
+      currentY += 5;
+    });
+
+    return currentY + 10;
+  }
+
+  static async generateEmendaReport(
+    projectId: string,
+    project: Project
+  ): Promise<void> {
+    try {
+      const doc = new jsPDF();
+      let currentY = 55;
+      let pageNumber = 1;
+
+      this.addHeader(doc, project, "Relatório Específico de Emendas", pageNumber);
+
+      // Buscar dados de emendas
+      const emendasData = await this.getEmendasData(projectId);
+      
+      if (!emendasData || emendasData.length === 0) {
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "normal");
+        doc.text("Nenhuma emenda encontrada para este projeto.", 20, currentY);
+        doc.save(`relatorio-emendas-${project.projectNumber}-${new Date().toISOString().split("T")[0]}.pdf`);
+        return;
+      }
+
+      // Resumo de emendas
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("📊 Resumo de Emendas", 20, currentY);
+      currentY += 10;
+
+      const totalEmendas = emendasData.length;
+      const emendasObrigatorias = emendasData.filter(e => e.peca_tag?.includes('OBRIG') || false).length;
+      const emendasOpcionais = totalEmendas - emendasObrigatorias;
+      const emendasAprovadas = emendasData.filter(e => e.status_qualidade === 'aprovada').length;
+      const emendasPendentes = emendasData.filter(e => e.status_qualidade === 'pendente').length;
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Total de Emendas: ${totalEmendas}`, 20, currentY);
+      doc.text(`Emendas Obrigatórias: ${emendasObrigatorias}`, 100, currentY);
+      doc.text(`Emendas Opcionais: ${emendasOpcionais}`, 20, currentY + 5);
+      doc.text(`Status Aprovado: ${emendasAprovadas}`, 100, currentY + 5);
+      doc.text(`Status Pendente: ${emendasPendentes}`, 20, currentY + 10);
+      currentY += 20;
+
+      // Detalhamento das emendas
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("🔗 Detalhamento das Emendas", 20, currentY);
+      currentY += 15;
+
+      emendasData.forEach((emenda, index) => {
+        if (currentY > 240) {
+          doc.addPage();
+          pageNumber++;
+          this.addHeader(doc, project, "Relatório Específico de Emendas", pageNumber);
+          currentY = 55;
+        }
+
+        // Cabeçalho da emenda
+        doc.setFontSize(11);
+        doc.setFont("helvetica", "bold");
+        const tipoIcon = emenda.peca_tag?.includes('OBRIG') ? '⚠️' : '🔗';
+        doc.text(`${tipoIcon} Emenda ${index + 1} - ${emenda.peca_tag || `E${index + 1}`}`, 20, currentY);
+        currentY += 8;
+
+        // Detalhes da emenda
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.text(`Tipo: ${emenda.peca_tag?.includes('OBRIG') ? 'Obrigatória' : 'Opcional'}`, 25, currentY);
+        doc.text(`Localização: Centro da peça`, 25, currentY + 5);
+        doc.text(`Emendas: ${emenda.quantidade_emendas || 1}`, 25, currentY + 10);
+        doc.text(`Comprimento Original: ${emenda.comprimento_original || 'N/A'}mm`, 25, currentY + 15);
+        
+        const statusIcon = emenda.status_qualidade === 'aprovada' ? '✅' : 
+                          emenda.status_qualidade === 'reprovada' ? '❌' : '⏳';
+        doc.text(`Status QA: ${statusIcon} ${emenda.status_qualidade || 'Pendente'}`, 25, currentY + 20);
+
+        if (emenda.observacoes) {
+          doc.text(`Observações: ${emenda.observacoes}`, 25, currentY + 25);
+          currentY += 30;
+        } else {
+          currentY += 25;
+        }
+
+        // Instruções específicas para esta emenda
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "bold");
+        doc.text("📋 Instruções Específicas:", 25, currentY);
+        currentY += 5;
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        const instrucoes = [
+          `• Preparar chanfro apropriado para o perfil`,
+          `• Verificar alinhamento dos segmentos`,
+          `• Executar soldagem conforme procedimento ${emenda.peca_tag?.includes('OBRIG') ? 'WPS-001' : 'WPS-002'}`,
+          `• Inspeção obrigatória após conclusão`,
+        ];
+
+        instrucoes.forEach(instrucao => {
+          doc.text(instrucao, 30, currentY);
+          currentY += 4;
+        });
+
+        currentY += 10;
+
+        // Seção para assinaturas
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.text("Soldador: _________________________ Data: ___/___/___", 25, currentY);
+        doc.text("QA: _________________________ Data: ___/___/___", 25, currentY + 5);
+        
+        currentY += 15;
+      });
+
+      // Checklist geral de QA
+      if (currentY > 200) {
+        doc.addPage();
+        pageNumber++;
+        this.addHeader(doc, project, "Relatório Específico de Emendas", pageNumber);
+        currentY = 55;
+      }
+
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.text("✅ Checklist de Controle de Qualidade", 20, currentY);
+      currentY += 15;
+
+      const checklist = [
+        "☐ Todas as emendas foram executadas conforme projeto",
+        "☐ Alinhamento dimensional verificado",
+        "☐ Inspeção visual aprovada",
+        "☐ Teste de continuidade realizado (se aplicável)",
+        "☐ Documentação fotográfica realizada",
+        "☐ Aprovação final do QA",
+        "☐ Peças liberadas para montagem"
+      ];
+
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      checklist.forEach(item => {
+        doc.text(item, 20, currentY);
+        currentY += 6;
+      });
+
+      this.addFooter(doc, project);
+      doc.save(`relatorio-emendas-${project.projectNumber}-${new Date().toISOString().split("T")[0]}.pdf`);
+
+    } catch (error) {
+      console.error("Erro ao gerar relatório de emendas:", error);
+      alert("Erro ao gerar relatório de emendas. Verifique os dados e tente novamente.");
+      throw error;
+    }
   }
 }

@@ -151,6 +151,24 @@ export const OptimizationResults = ({
     }
   };
 
+  const handleExportEmendasPDF = async () => {
+    try {
+      const { PDFReportService } = await import('@/services/PDFReportService');
+      await PDFReportService.generateEmendaReport(project.id, project);
+      toast({
+        title: "Relatório de Emendas Gerado",
+        description: "Relatório específico de emendas foi gerado com sucesso",
+      });
+    } catch (error) {
+      console.error('Erro ao gerar relatório de emendas:', error);
+      toast({
+        title: "Erro ao gerar relatório de emendas",
+        description: "Não foi possível gerar o relatório de emendas",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleExportExcel = () => {
     try {
       // Estrutura melhorada conforme especificação do operador
@@ -465,6 +483,12 @@ export const OptimizationResults = ({
                   <Download className="w-4 h-4" />
                   PDF Simplificado
                 </Button>
+                {hasEmendas && (
+                  <Button variant="outline" className="flex items-center gap-1" onClick={handleExportEmendasPDF}>
+                    <Link className="w-4 h-4" />
+                    Emendas PDF
+                  </Button>
+                )}
                 <Button variant="outline" className="flex items-center gap-1" onClick={() => setShowFullscreen(true)}>
                   <Fullscreen className="w-4 h-4" />
                   Fullscreen

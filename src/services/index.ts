@@ -26,3 +26,6 @@ export { estoqueSobrasService } from './entities/EstoqueSobrasService';
 export { historicoOtimizacaoService } from './entities/HistoricoOtimizacaoService';
 export { usuarioService } from './entities/UsuarioService';
 export { projetoOtimizacaoService } from './entities/ProjetoOtimizacaoService';
+
+// PDF Service
+export { PDFReportService } from './PDFReportService';
