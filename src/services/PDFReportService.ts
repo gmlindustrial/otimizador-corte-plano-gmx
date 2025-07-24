@@ -461,7 +461,19 @@ export class PDFReportService {
       const infoFields = [
         {
           left: { label: "Qtd Barras", value: results.totalBars },
-          right: { label: "Qtd. Barras Compradas", value: "" },
+          right: { label: "", value: "" },
+        },
+        {
+          left: { label: "Qtd. Barras Estoque GMX", value: "" },
+          right: { label: "", value: "" },
+        },
+        {
+          left: { label: "Qtd. Barras Compradas", value: "" },
+          right: { label: "", value: "" },
+        },
+        {
+          left: { label: "Total Barras", value: "" },
+          right: { label: "", value: "" },
         },
         {
           left: { label: "Peso Total", value: `${totalWeight.toFixed(2)}kg` },
@@ -470,10 +482,6 @@ export class PDFReportService {
         {
           left: { label: "Qtd Peças", value: totalPieces },
           right: { label: "Peças Cortadas", value: `${cutPieces} (${progressPercent}%)` },
-        },
-        {
-          left: { label: "Qtd. Barras Estoque GMX", value: "" },
-          right: { label: "Total Barras", value: "" },
         },
       ];
 
