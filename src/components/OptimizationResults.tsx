@@ -430,7 +430,7 @@ export const OptimizationResults = ({
                 </Button>
                 <Button variant="outline" className="flex items-center gap-1" onClick={handleExportSimplifiedPDF}>
                   <Download className="w-4 h-4" />
-                  PDF Simplificado
+                  PDF Produção
                 </Button>
                 {hasEmendas && <Button variant="outline" className="flex items-center gap-1" onClick={handleExportEmendasPDF}>
                     <Link className="w-4 h-4" />
