@@ -179,14 +179,7 @@ export class LinearProjectService extends BaseService<Projeto> {
     try {
       const { data, error } = await supabase
         .from('projetos')
-        .select(`
-          *,
-          clientes:cliente_id(nome),
-          obras:obra_id(nome),
-          materiais:material_id(tipo),
-          operadores:operador_id(nome),
-          inspetores_qa:inspetor_id(nome)
-        `)
+        .select('*')
         .not('dados_projeto', 'is', null)
         .eq('dados_projeto->>type', 'linear')
         .order('created_at', { ascending: false });
@@ -241,10 +234,45 @@ export class LinearProjectService extends BaseService<Projeto> {
     }
   }
 
-  convertFromDatabase(dbProject: Projeto): LinearProjectData | null {
-    // Since the simplified Projeto interface doesn't have dados_projeto,
-    // we can't convert from database to linear project data anymore
-    return null;
+  convertFromDatabase(dbProject: any): LinearProjectData | null {
+    try {
+      if (!dbProject || !dbProject.dados_projeto) {
+        return null;
+      }
+
+      const dadosProjeto = dbProject.dados_projeto;
+      
+      if (dadosProjeto.type !== 'linear') {
+        return null;
+      }
+
+      const project = {
+        id: dadosProjeto.originalProjectId || dbProject.id,
+        name: dbProject.nome,
+        projectNumber: dbProject.numero_projeto,
+        client: dadosProjeto.client || '',
+        obra: dadosProjeto.obra || '',
+        tipoMaterial: dadosProjeto.tipoMaterial || '',
+        operador: dadosProjeto.operador || '',
+        aprovadorQA: dadosProjeto.aprovadorQA || '',
+        turno: dbProject.turno || '',
+        lista: dbProject.lista || '',
+        revisao: dbProject.revisao || '',
+        validacaoQA: dbProject.validacao_qa || false,
+        enviarSobrasEstoque: dbProject.enviar_sobras_estoque || false,
+        qrCode: dbProject.qr_code || '',
+        date: new Date().toISOString()
+      };
+
+      return {
+        project,
+        pieces: dadosProjeto.pieces || [],
+        barLength: dadosProjeto.barLength || 6000
+      };
+    } catch (error) {
+      console.error('Erro ao converter projeto do banco:', error);
+      return null;
+    }
   }
 }
 

@@ -15,6 +15,7 @@ export * from './entities/ProjetoService';
 export * from './entities/EstoqueSobrasService';
 export * from './entities/HistoricoOtimizacaoService';
 export * from './entities/ProjectHistoryService';
+export * from './entities/ProjetoPecaService';
 
 // Instâncias dos services para uso direto
 export { obraService } from './entities/ObraService';
@@ -28,6 +29,7 @@ export { historicoOtimizacaoService } from './entities/HistoricoOtimizacaoServic
 export { usuarioService } from './entities/UsuarioService';
 export { projetoOtimizacaoService } from './entities/ProjetoOtimizacaoService';
 export { projectHistoryService } from './entities/ProjectHistoryService';
+export { projetoPecaService } from './entities/ProjetoPecaService';
 
 // PDF Service
 export { PDFReportService } from './PDFReportService';

@@ -236,10 +236,12 @@ export class ProjetoPecaService {
       const existingPieces = existingResponse.data;
       console.log(`📦 Encontradas ${existingPieces.length} peças existentes no projeto`);
 
-      // Buscar otimizações do projeto
-      const { projetoOtimizacaoService } = await import('../index');
-      const optimizationsResponse = await projetoOtimizacaoService.getByProjectId(projectId);
-      const optimizations = optimizationsResponse.success ? optimizationsResponse.data || [] : [];
+      // Buscar peças em otimizações ativas - query direta para evitar import circular
+      const { data: optimizations = [] } = await supabase
+        .from('projeto_otimizacoes')
+        .select('pecas_selecionadas')
+        .eq('projeto_id', projectId);
+      
       console.log(`⚙️ Encontradas ${optimizations.length} otimizações do projeto`);
 
       // Criar mapas para busca rápida
@@ -270,7 +272,11 @@ export class ProjetoPecaService {
       const optimizedPiecesIds = new Set<string>();
       optimizations.forEach(opt => {
         if (opt.pecas_selecionadas && Array.isArray(opt.pecas_selecionadas)) {
-          opt.pecas_selecionadas.forEach(id => optimizedPiecesIds.add(id));
+          opt.pecas_selecionadas.forEach(id => {
+            if (typeof id === 'string') {
+              optimizedPiecesIds.add(id);
+            }
+          });
         }
       });
 
@@ -278,7 +284,8 @@ export class ProjetoPecaService {
       existingPieces.forEach(peca => {
         if (optimizedPiecesIds.has(peca.id)) {
           const optimization = optimizations.find(opt => 
-            opt.pecas_selecionadas?.includes(peca.id)
+            Array.isArray(opt.pecas_selecionadas) && 
+            opt.pecas_selecionadas.some(id => typeof id === 'string' && id === peca.id)
           );
           if (optimization) {
             inOptimizations.push({ peca, optimization });
