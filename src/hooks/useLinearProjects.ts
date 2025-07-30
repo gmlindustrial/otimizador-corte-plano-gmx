@@ -26,9 +26,6 @@ export const useLinearProjects = () => {
         
         setSavedProjects(convertedProjects);
         console.log('Projetos lineares carregados:', convertedProjects);
-      } else {
-        console.log('Nenhum projeto linear encontrado ou erro:', response.error);
-        setSavedProjects([]);
       }
     } catch (error) {
       console.error('Erro ao carregar projetos:', error);
