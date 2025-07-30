@@ -323,12 +323,13 @@ export class PDFReportService {
         // Tabela de peças
         doc.text("Seq.", 20, currentY);
         doc.text("TAG", 30, currentY);
-        doc.text("Pos.", 50, currentY);
-        doc.text("Qtd.", 65, currentY);
-        doc.text("Comprimento", 75, currentY);
-        doc.text("Perfil", 115, currentY);
-        doc.text("Status", 155, currentY);
-        doc.text("Obs.", 175, currentY);
+        doc.text("Fase", 45, currentY);
+        doc.text("Pos.", 60, currentY);
+        doc.text("Qtd.", 75, currentY);
+        doc.text("Comprimento", 85, currentY);
+        doc.text("Perfil", 125, currentY);
+        doc.text("Status", 165, currentY);
+        doc.text("Obs.", 185, currentY);
         currentY += 5;
 
         // Linha da tabela
@@ -543,6 +544,7 @@ export class PDFReportService {
         "Barra",
         "Tipo",
         "TAG",
+        "Fase",
         "Pos",
         "Qtd",
         "Comp",
@@ -552,7 +554,7 @@ export class PDFReportService {
         "QC",
         "Obs",
       ];
-      const colWidths = [12, 14, 15, 13, 12, 18, 18, 18, 15, 15, 15];
+      const colWidths = [12, 14, 15, 12, 13, 12, 16, 16, 16, 14, 14, 14];
       const colStarts: number[] = [];
 
       // calcular posição inicial de cada coluna
@@ -618,6 +620,7 @@ export class PDFReportService {
             `${barIndex + 1}`,
             barType,
             tagText,
+            piece.conjunto || "-", // Campo FASE
             piece.posicao || "-",
             `${piece.quantidade || 1}`,
             `${piece.length || 0}mm`,

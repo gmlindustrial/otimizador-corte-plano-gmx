@@ -154,7 +154,7 @@ export const OptimizationResults = ({
   const handleExportExcel = () => {
     try {
       // Estrutura melhorada conforme especificação do operador
-      const headers = ['Numero da Barra', 'Tipo (Nova ou Sobra)', 'Posição', 'TAG', 'Quantidade', 'Comprimento', 'Perfil/Material', 'Obra', 'Status', 'Eficiência', 'Sobra Barra', 'Tem Emenda', 'Observações'];
+      const headers = ['Numero da Barra', 'Tipo (Nova ou Sobra)', 'Posição', 'TAG', 'Fase', 'Quantidade', 'Comprimento', 'Perfil/Material', 'Obra', 'Status', 'Eficiência', 'Sobra Barra', 'Tem Emenda', 'Observações'];
       const rows: string[][] = [headers];
 
       // Adicionar cada peça com informações de emendas
@@ -172,6 +172,7 @@ export const OptimizationResults = ({
           // Posição
           piece.tag || 'Entrada Manual',
           // TAG
+          piece.conjunto || '-', // Campo FASE
           piece.quantidade || '1',
           // Quantidade
           piece.length.toString(),
@@ -202,6 +203,7 @@ export const OptimizationResults = ({
           // Posição
           'DESCARTE',
           // TAG
+          '-', // Campo FASE para desperdício
           '0',
           // Quantidade
           bar.waste.toString(),

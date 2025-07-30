@@ -7,6 +7,7 @@ export interface AutoCADCutPiece {
   obra?: string;
   tag?: string;        // Novo mapeamento: CONJUNTO → tag (formato novo) ou MARCA → tag (formato antigo)
   posicao?: string;    // Novo mapeamento: TAG → posição (formato novo) ou ITEM → posição (formato antigo) 
+  conjunto?: string;   // Campo FASE extraído do arquivo
   perfil?: string;
   material?: string;
   peso?: number;

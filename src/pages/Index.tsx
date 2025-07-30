@@ -44,6 +44,10 @@ export interface CutPiece {
   id: string;
   tag?: string;
   posicao?: string;
+  conjunto?: string; // Campo FASE
+  perfil?: string;
+  material?: string;
+  peso?: number;
 }
 
 export interface OptimizationResult {

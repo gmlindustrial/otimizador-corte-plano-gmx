@@ -161,18 +161,24 @@ export class FileParsingService {
       if (simplifiedMatch && simplifiedMatch.length >= 4) {
         let tag = '';
         let posicao = '';
+        let fase = '';
         const quantidade = simplifiedMatch[2];
         const descricao = simplifiedMatch[3];
         const material = simplifiedMatch[4] || 'MATERIAL';
         const peso = simplifiedMatch[5] || '0';
         
+        // Verificar se há campo FASE (posição 6)
+        if (simplifiedMatch.length >= 7) {
+          fase = simplifiedMatch[6]; // FASE
+        }
+        
         if (isNewFormat) {
-          // Novo formato: CONJUNTO;TAG;QT.;DESCRIÇÃO PERFIL;MATERIAL;PESO
+          // Novo formato: CONJUNTO;TAG;QT.;DESCRIÇÃO PERFIL;MATERIAL;PESO;FASE
           const conjunto = simplifiedMatch[0]; // CONJUNTO → tag
           const tagField = simplifiedMatch[1];  // TAG → posição
           tag = conjunto;
           posicao = tagField;
-          console.log(`📋 Novo formato - CONJUNTO: "${conjunto}" → tag, TAG: "${tagField}" → posição`);
+          console.log(`📋 Novo formato - CONJUNTO: "${conjunto}" → tag, TAG: "${tagField}" → posição, FASE: "${fase}"`);
         } else {
           // Formato antigo: MARCA;ITEM;QT.;DESCRIÇÃO;MATERIAL;PESO
           const marca = simplifiedMatch[0];
