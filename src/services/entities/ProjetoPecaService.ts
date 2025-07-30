@@ -217,153 +217,180 @@ export class ProjetoPecaService {
     }
   }
 
-  async findExistingPieces(projectId: string, newPieces: any[]): Promise<{
-    existing: ProjetoPeca[];
-    inOptimizations: { peca: ProjetoPeca; optimization: any }[];
-    new: any[];
-    matches: { newPiece: any; existingPiece: ProjetoPeca; matchType: 'posicao' | 'tag' | 'comprimento' }[];
-  }> {
+  async findExistingPieces(projectId: string, newPieces: any[]) {
+    console.log('🔍 Procurando peças existentes para', newPieces.length, 'peças novas');
+    
     try {
-      console.log(`🔍 Iniciando comparação de peças para projeto ${projectId}`);
-      
-      // Buscar peças existentes do projeto
-      const existingResponse = await this.getByProjectId(projectId);
-      if (!existingResponse.success || !existingResponse.data) {
-        console.log('❌ Erro ao buscar peças existentes:', existingResponse.error);
-        return { existing: [], inOptimizations: [], new: newPieces, matches: [] };
+      // 1. Buscar peças existentes do projeto
+      const existingResult = await this.getByProjectId(projectId);
+      if (!existingResult.success || !existingResult.data) {
+        console.log('❌ Erro ao buscar peças existentes:', existingResult.error);
+        return {
+          matches: [],
+          newPieces: newPieces,
+          inOptimizations: [],
+          stats: {
+            existing: 0,
+            inOptimizations: 0,
+            new: newPieces.length,
+            total: newPieces.length
+          }
+        };
       }
 
-      const existingPieces = existingResponse.data;
-      console.log(`📦 Encontradas ${existingPieces.length} peças existentes no projeto`);
+      const existingPieces = existingResult.data;
+      console.log('📦 Peças existentes encontradas:', existingPieces.length);
 
-      // Buscar peças em otimizações ativas - query direta para evitar import circular
-      const { data: optimizations = [] } = await supabase
+      // 2. Buscar otimizações ativas para verificar peças em uso
+      const { data: optimizations, error: optError } = await supabase
         .from('projeto_otimizacoes')
         .select('pecas_selecionadas')
         .eq('projeto_id', projectId);
-      
-      console.log(`⚙️ Encontradas ${optimizations.length} otimizações do projeto`);
 
-      // Criar mapas para busca rápida
-      const posicaoMap = new Map<string, ProjetoPeca>();
-      const tagMap = new Map<string, ProjetoPeca>();
-      const comprimentoMap = new Map<string, ProjetoPeca[]>();
+      if (optError) {
+        console.log('⚠️ Erro ao buscar otimizações:', optError);
+      }
 
-      existingPieces.forEach(peca => {
-        // Indexar por posição
-        if (peca.posicao) {
-          posicaoMap.set(peca.posicao.toLowerCase().trim(), peca);
-        }
+      // Extrair IDs das peças em otimizações
+      const piecesInOptimizations = new Set<string>();
+      if (optimizations) {
+        optimizations.forEach(opt => {
+          if (opt.pecas_selecionadas && Array.isArray(opt.pecas_selecionadas)) {
+            opt.pecas_selecionadas.forEach((id: string) => {
+              piecesInOptimizations.add(id);
+            });
+          }
+        });
+      }
 
-        // Indexar por tag
-        if (peca.tag) {
-          tagMap.set(peca.tag.toLowerCase().trim(), peca);
-        }
+      console.log('🔧 Peças em otimizações:', piecesInOptimizations.size);
 
-        // Indexar por comprimento
-        const comprimentoKey = `${peca.comprimento_mm}_${peca.descricao_perfil_raw || ''}`;
-        if (!comprimentoMap.has(comprimentoKey)) {
-          comprimentoMap.set(comprimentoKey, []);
-        }
-        comprimentoMap.get(comprimentoKey)!.push(peca);
-      });
+      // 3. Sistema de match melhorado com múltiplos critérios
+      const matches: Array<{
+        newPiece: any;
+        existingPiece: ProjetoPeca;
+        matchType: string;
+        score: number;
+      }> = [];
 
-      // Identificar peças que estão em otimizações
-      const optimizedPiecesIds = new Set<string>();
-      optimizations.forEach(opt => {
-        if (opt.pecas_selecionadas && Array.isArray(opt.pecas_selecionadas)) {
-          opt.pecas_selecionadas.forEach(id => {
-            if (typeof id === 'string') {
-              optimizedPiecesIds.add(id);
+      const unmatchedNew: any[] = [];
+
+      newPieces.forEach(newPiece => {
+        console.log(`🔍 Analisando peça nova:`, {
+          posicao: newPiece.posicao,
+          tag: newPiece.tag,
+          perfil: newPiece.perfil,
+          comprimento: newPiece.length
+        });
+
+        let bestMatch: ProjetoPeca | null = null;
+        let bestScore = 0;
+        let bestMatchType = '';
+
+        existingPieces.forEach(existing => {
+          let score = 0;
+          let matchCriteria: string[] = [];
+
+          // Critério 1: Posição (peso 4 - mais importante)
+          if (newPiece.posicao && existing.posicao && 
+              newPiece.posicao.toString().trim() === existing.posicao.toString().trim()) {
+            score += 4;
+            matchCriteria.push('posicao');
+          }
+
+          // Critério 2: Tag (peso 3)
+          if (newPiece.tag && existing.tag && 
+              newPiece.tag.toString().trim() === existing.tag.toString().trim()) {
+            score += 3;
+            matchCriteria.push('tag');
+          }
+
+          // Critério 3: Perfil (peso 2)
+          if (newPiece.perfil && existing.descricao_perfil_raw && 
+              newPiece.perfil.toString().trim() === existing.descricao_perfil_raw.toString().trim()) {
+            score += 2;
+            matchCriteria.push('perfil');
+          }
+
+          // Critério 4: Comprimento (peso 3 - muito importante)
+          if (newPiece.length && existing.comprimento_mm && 
+              Math.abs(newPiece.length - existing.comprimento_mm) < 1) {
+            score += 3;
+            matchCriteria.push('comprimento');
+          }
+
+          // Só considera match se tiver pelo menos critério de comprimento + outro
+          if (score >= 4 && matchCriteria.includes('comprimento')) {
+            if (score > bestScore) {
+              bestMatch = existing;
+              bestScore = score;
+              bestMatchType = matchCriteria.join('_');
             }
+          }
+        });
+
+        if (bestMatch) {
+          console.log(`✅ Match encontrado (score: ${bestScore}):`, {
+            new: { posicao: newPiece.posicao, tag: newPiece.tag, comprimento: newPiece.length },
+            existing: { posicao: bestMatch.posicao, tag: bestMatch.tag, comprimento: bestMatch.comprimento_mm },
+            matchType: bestMatchType
           });
+
+          matches.push({
+            newPiece,
+            existingPiece: bestMatch,
+            matchType: bestMatchType,
+            score: bestScore
+          });
+        } else {
+          console.log(`❌ Nenhum match encontrado para:`, {
+            posicao: newPiece.posicao,
+            tag: newPiece.tag,
+            comprimento: newPiece.length
+          });
+          unmatchedNew.push(newPiece);
         }
       });
 
-      const inOptimizations: { peca: ProjetoPeca; optimization: any }[] = [];
-      existingPieces.forEach(peca => {
-        if (optimizedPiecesIds.has(peca.id)) {
-          const optimization = optimizations.find(opt => 
-            Array.isArray(opt.pecas_selecionadas) && 
-            opt.pecas_selecionadas.some(id => typeof id === 'string' && id === peca.id)
-          );
-          if (optimization) {
-            inOptimizations.push({ peca, optimization });
-          }
-        }
-      });
+      // 4. Identificar peças em otimizações
+      const inOptimizations = matches.filter(match => 
+        piecesInOptimizations.has(match.existingPiece.id)
+      );
 
-      console.log(`🔧 ${inOptimizations.length} peças estão em otimizações ativas`);
+      console.log('✅ Resultado da análise:');
+      console.log('  - Matches encontrados:', matches.length);
+      console.log('  - Peças novas:', unmatchedNew.length);
+      console.log('  - Em otimizações:', inOptimizations.length);
 
-      // Comparar peças novas com existentes
-      const matches: { newPiece: any; existingPiece: ProjetoPeca; matchType: 'posicao' | 'tag' | 'comprimento' }[] = [];
-      const matchedNewPieces = new Set<number>();
-      const matchedExistingPieces = new Set<string>();
+      const stats = {
+        existing: matches.length - inOptimizations.length,
+        inOptimizations: inOptimizations.length,
+        new: unmatchedNew.length,
+        total: newPieces.length
+      };
 
-      newPieces.forEach((newPiece, index) => {
-        let match: ProjetoPeca | null = null;
-        let matchType: 'posicao' | 'tag' | 'comprimento' | null = null;
-
-        // 1. Prioridade: Comparar por posição
-        const posicao = newPiece.posicao || newPiece.tag || `PEÇA-${index + 1}`;
-        if (posicao && posicaoMap.has(posicao.toLowerCase().trim())) {
-          match = posicaoMap.get(posicao.toLowerCase().trim())!;
-          matchType = 'posicao';
-          console.log(`✅ Match por posição: ${posicao} -> ${match.posicao}`);
-        }
-
-        // 2. Segundo: Comparar por tag (se ambos tiverem)
-        if (!match && newPiece.tag && tagMap.has(newPiece.tag.toLowerCase().trim())) {
-          match = tagMap.get(newPiece.tag.toLowerCase().trim())!;
-          matchType = 'tag';
-          console.log(`✅ Match por tag: ${newPiece.tag} -> ${match.tag}`);
-        }
-
-        // 3. Terceiro: Comparar por comprimento + descrição do perfil
-        if (!match) {
-          const comprimento = newPiece.length || newPiece.comprimento || newPiece.comprimento_mm;
-          const perfil = newPiece.profile || newPiece.perfil || newPiece.descricao;
-          
-          if (comprimento && perfil) {
-            const comprimentoKey = `${comprimento}_${perfil}`;
-            const candidatos = comprimentoMap.get(comprimentoKey);
-            
-            if (candidatos && candidatos.length > 0) {
-              // Pegar o primeiro candidato que ainda não foi matched
-              match = candidatos.find(c => !matchedExistingPieces.has(c.id)) || null;
-              if (match) {
-                matchType = 'comprimento';
-                console.log(`✅ Match por comprimento+perfil: ${comprimento}mm ${perfil} -> ${match.posicao}`);
-              }
-            }
-          }
-        }
-
-        if (match && matchType) {
-          matches.push({ newPiece, existingPiece: match, matchType });
-          matchedNewPieces.add(index);
-          matchedExistingPieces.add(match.id);
-        }
-      });
-
-      // Separar peças novas (que não tiveram match)
-      const newUnmatchedPieces = newPieces.filter((_, index) => !matchedNewPieces.has(index));
-
-      console.log(`📊 Resultado da comparação:`);
-      console.log(`   - ${matches.length} peças com correspondência encontrada`);
-      console.log(`   - ${newUnmatchedPieces.length} peças completamente novas`);
-      console.log(`   - ${inOptimizations.length} peças em otimizações ativas`);
+      console.log('📊 Estatísticas finais:', stats);
 
       return {
-        existing: existingPieces,
-        inOptimizations,
-        new: newUnmatchedPieces,
-        matches
+        matches,
+        newPieces: unmatchedNew,
+        inOptimizations: inOptimizations.map(m => m.existingPiece),
+        stats
       };
 
     } catch (error: any) {
-      console.error('Erro inesperado ao comparar peças:', error);
-      return { existing: [], inOptimizations: [], new: newPieces, matches: [] };
+      console.error('❌ Erro em findExistingPieces:', error);
+      return {
+        matches: [],
+        newPieces: newPieces,
+        inOptimizations: [],
+        stats: {
+          existing: 0,
+          inOptimizations: 0,
+          new: newPieces.length,
+          total: newPieces.length
+        }
+      };
     }
   }
 

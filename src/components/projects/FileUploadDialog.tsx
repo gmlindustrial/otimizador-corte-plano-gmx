@@ -56,21 +56,20 @@ export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed, onProces
         // Se há um projeto, verificar peças existentes
         if (projectId) {
           try {
+            console.log('🔍 Verificando peças existentes para projeto:', projectId);
             const comparison = await projetoPecaService.findExistingPieces(projectId, pieces);
             
-            const stats = {
-              existing: comparison.existing.length,
-              inOptimizations: comparison.inOptimizations.length,
-              new: comparison.new.length,
-              total: pieces.length
-            };
+            console.log('📊 Resultado da comparação:', comparison.stats);
             
-            setComparisonStats(stats);
+            setComparisonStats(comparison.stats);
             
             // Se há peças existentes, mostrar modal de escolha
-            if (stats.existing > 0 || stats.inOptimizations > 0) {
+            if (comparison.stats.existing > 0 || comparison.stats.inOptimizations > 0) {
+              console.log('🔄 Mostrando modal de decisão');
               setShowUpdateMode(true);
               return;
+            } else {
+              console.log('✅ Todas as peças são novas, processando diretamente');
             }
           } catch (error) {
             console.error('Erro ao verificar peças existentes:', error);

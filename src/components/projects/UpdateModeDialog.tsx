@@ -46,6 +46,11 @@ export const UpdateModeDialog = ({ open, onOpenChange, onModeSelect, stats }: Up
             </Card>
           </div>
 
+          {/* Debug Info */}
+          <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
+            Debug: Total={stats.total}, Existing={stats.existing}, InOpt={stats.inOptimizations}, New={stats.new}
+          </div>
+
           {(stats.existing > 0 || stats.inOptimizations > 0) && (
             <div className="space-y-3">
               <h4 className="text-sm font-medium text-muted-foreground">Peças Existentes Detectadas:</h4>

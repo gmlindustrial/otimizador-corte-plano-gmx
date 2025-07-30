@@ -154,8 +154,8 @@ export const ProjectDetailsView = ({
         }
         
         // Cadastrar peças completamente novas
-        if (comparison.new.length > 0) {
-          const { allPieces } = await projetoPecaService.validateAndProcessPieces(comparison.new, project.id);
+        if (comparison.newPieces.length > 0) {
+          const { allPieces } = await projetoPecaService.validateAndProcessPieces(comparison.newPieces, project.id);
           const resp = await projetoPecaService.createBatch(allPieces);
           
           if (resp.success && resp.data) {
