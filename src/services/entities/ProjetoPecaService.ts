@@ -94,7 +94,7 @@ export class ProjetoPecaService {
         projeto_id: projectId,
         posicao: piece.posicao || piece.tag || `PEÇA-${pieces.indexOf(piece) + 1}`,
         tag: piece.tag || piece.conjunto || piece.set,
-        conjunto: piece.conjunto || piece.fase, // Campo FASE
+        fase: piece.fase || piece.conjunto, // Campo FASE
         perfil_id: perfil?.id,
         descricao_perfil_raw: perfilDescription,
         comprimento_mm: piece.length || piece.comprimento || piece.comprimento_mm,

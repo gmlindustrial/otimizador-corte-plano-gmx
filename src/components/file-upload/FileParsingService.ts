@@ -205,6 +205,7 @@ export class FileParsingService {
           obra,
           tag: tag,       // Mapeamento correto conforme formato
           posicao: posicao, // Mapeamento correto conforme formato
+          fase: fase, // Campo FASE
           perfil,
           material: material,
           peso: peso ? parseFloat(peso.replace(',', '.')) : 0,

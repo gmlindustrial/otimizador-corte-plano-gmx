@@ -8,7 +8,7 @@ interface ExpandedPiece {
   originalIndex: number;
   originalPiece: CutPiece;
   // Informações preservadas do AutoCAD
-  conjunto?: string;
+  fase?: string;
   tag?: string;
   perfil?: string;
   material?: string;
@@ -22,7 +22,7 @@ interface EnhancedBarPiece {
   color: string;
   label: string;
   // Informações adicionais preservadas
-  conjunto?: string;
+  fase?: string;
   tag?: string;
   perfil?: string;
   material?: string;
@@ -86,7 +86,7 @@ export const useLinearOptimization = () => {
           originalIndex: index,
           originalPiece: piece,
           // Preservar informações do AutoCAD se existirem
-          conjunto: (piece as any).conjunto,
+          fase: (piece as any).fase,
           tag: (piece as any).tag,
           perfil: (piece as any).perfil,
           material: (piece as any).material,
@@ -167,7 +167,7 @@ export const useLinearOptimization = () => {
             color: colors[piece.originalIndex % colors.length],
             label: piece.tag || `${piece.length}mm`,
             // Preservar todas as informações
-            conjunto: piece.conjunto,
+            fase: piece.fase,
             tag: piece.tag,
             perfil: piece.perfil,
             material: piece.material,
@@ -214,7 +214,7 @@ export const useLinearOptimization = () => {
             length: piece.length,
             color: colors[piece.originalIndex % colors.length],
             label: piece.tag || `${piece.length}mm`,
-            conjunto: piece.conjunto,
+            fase: piece.fase,
             tag: piece.tag,
             perfil: piece.perfil,
             material: piece.material,
@@ -239,7 +239,7 @@ export const useLinearOptimization = () => {
             length: piece.length,
             color: colors[piece.originalIndex % colors.length],
             label: piece.tag || `${piece.length}mm`,
-            conjunto: piece.conjunto,
+            fase: piece.fase,
             tag: piece.tag,
             perfil: piece.perfil,
             material: piece.material,

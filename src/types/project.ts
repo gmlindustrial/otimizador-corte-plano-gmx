@@ -11,7 +11,7 @@ export interface ProjetoPeca {
   projeto_id: string;
   posicao: string;
   tag?: string;
-  conjunto?: string; // Campo FASE
+  fase?: string; // Campo FASE
   perfil_id?: string;
   descricao_perfil_raw?: string;
   comprimento_mm: number;
@@ -70,7 +70,7 @@ export interface PecaComEmenda {
   comprimentoOriginal: number;
   tag?: string;
   posicao?: string;
-  conjunto?: string;
+  fase?: string;
   perfil?: string;
   peso?: number;
   perfilId?: string;
@@ -88,7 +88,7 @@ export interface OptimizationPiece {
   quantity: number;
   tag?: string;
   posicao?: string;
-  conjunto?: string;
+  fase?: string;
   perfil?: string;
   peso?: number;
   perfilId?: string;

@@ -1,7 +1,7 @@
 interface Piece {
   length: number;
   tag?: string;
-  conjunto?: string;
+  fase?: string;
   perfil?: string;
   peso?: number;
   posicao?: string;
@@ -77,7 +77,7 @@ export class BestFitOptimizer {
       quantity: 1,
       tag: piece.tag,
       posicao: piece.posicao,
-      conjunto: piece.conjunto,
+      fase: piece.fase,
       perfil: piece.perfil,
       peso: piece.peso,
       perfilId: piece.perfil
@@ -90,7 +90,7 @@ export class BestFitOptimizer {
     const normalPieces = emendaResult.pecasNormais.map(p => ({
       length: p.length,
       tag: p.tag,
-      conjunto: p.conjunto,
+      fase: p.fase,
       perfil: p.perfil,
       peso: p.peso,
       posicao: p.posicao,
@@ -107,7 +107,7 @@ export class BestFitOptimizer {
       pieces: [{
         length: peca.comprimentoOriginal,
         tag: peca.tag || `Emenda-${index}`,
-        conjunto: peca.conjunto,
+        fase: peca.fase,
         perfil: peca.perfil,
         peso: peca.peso,
         posicao: peca.posicao,

@@ -2,7 +2,7 @@ interface AnalysisPiece {
   length: number;
   quantity: number;
   tag?: string;
-  conjunto?: string;
+  fase?: string;
 }
 
 interface AnalysisResult {

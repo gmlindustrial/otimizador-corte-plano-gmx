@@ -32,7 +32,7 @@ export const FullscreenReportViewer = ({
   const { logPieceAction } = useAuditLogger();
   const [svgZoomLevel, setSvgZoomLevel] = useState<number>(1);
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [filterByConjunto, setFilterByConjunto] = useState<string>('');
+  const [filterByFase, setFilterByFase] = useState<string>('');
   const [showOnlyPending, setShowOnlyPending] = useState<boolean>(false);
   const [checkedPieces, setCheckedPieces] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'overview' | 'detailed'>('detailed');
@@ -51,11 +51,11 @@ export const FullscreenReportViewer = ({
     setCheckedPieces(initial);
   }, [isOpen, results]);
 
-  // Extrair conjuntos únicos
-  const allConjuntos = new Set<string>();
+  // Extrair fases únicas
+  const allFases = new Set<string>();
   results.bars.forEach(bar => {
     bar.pieces.forEach((piece: any) => {
-      if (piece.conjunto) allConjuntos.add(piece.conjunto);
+      if (piece.fase) allFases.add(piece.fase);
     });
   });
 
@@ -66,14 +66,14 @@ export const FullscreenReportViewer = ({
     pieces: bar.pieces.filter((piece: any) => {
       const matchesSearch = !searchTerm || 
         (piece.tag && piece.tag.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (piece.conjunto && piece.conjunto.toLowerCase().includes(searchTerm.toLowerCase()));
+        (piece.fase && piece.fase.toLowerCase().includes(searchTerm.toLowerCase()));
       
-      const matchesConjunto = !filterByConjunto || piece.conjunto === filterByConjunto;
+      const matchesFase = !filterByFase || piece.fase === filterByFase;
       
       const pieceId = `${piece.tag || piece.length}-${piece.posicao || 'Manual'}`;
       const matchesPending = !showOnlyPending || !checkedPieces.has(pieceId);
       
-      return matchesSearch && matchesConjunto && matchesPending;
+      return matchesSearch && matchesFase && matchesPending;
     })
   })).filter(bar => bar.pieces.length > 0);
 
@@ -150,16 +150,16 @@ export const FullscreenReportViewer = ({
   const currentBar = filteredBars[selectedBar];
   const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316'];
 
-  // Agrupar peças por conjunto para legenda
-  const conjuntoLegend = new Map<string, { color: string; count: number }>();
+  // Agrupar peças por fase para legenda
+  const faseLegend = new Map<string, { color: string; count: number }>();
   
   results.bars.forEach(bar => {
     bar.pieces.forEach((piece: any) => {
-      if (piece.conjunto && !conjuntoLegend.has(piece.conjunto)) {
-        conjuntoLegend.set(piece.conjunto, { 
+      if (piece.fase && !faseLegend.has(piece.fase)) {
+        faseLegend.set(piece.fase, { 
           color: piece.color, 
           count: results.bars.reduce((total, b) => 
-            total + b.pieces.filter((p: any) => p.conjunto === piece.conjunto).length, 0
+            total + b.pieces.filter((p: any) => p.fase === piece.fase).length, 0
           )
         });
       }
@@ -273,8 +273,8 @@ export const FullscreenReportViewer = ({
                 </div>
               </div>
 
-              {/* Conjuntos compactos */}
-              {conjuntoLegend.size > 0 && (
+              {/* Fases compactas */}
+              {faseLegend.size > 0 && (
                 <div className="mb-2">
                   <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
                     <Package className="w-4 h-4" />
@@ -305,7 +305,7 @@ export const FullscreenReportViewer = ({
             <div className="flex items-center gap-2">
               <Search className="w-4 h-4 text-gray-500" />
               <Input
-                placeholder="Buscar por TAG ou conjunto..."
+                placeholder="Buscar por TAG ou fase..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-64"
@@ -313,13 +313,13 @@ export const FullscreenReportViewer = ({
             </div>
             
             <select 
-              value={filterByConjunto} 
-              onChange={(e) => setFilterByConjunto(e.target.value)}
+              value={filterByFase} 
+              onChange={(e) => setFilterByFase(e.target.value)}
               className="px-3 py-2 border rounded-md"
             >
-              <option value="">Todos os conjuntos</option>
-              {Array.from(allConjuntos).map(conjunto => (
-                <option key={conjunto} value={conjunto}>{conjunto}</option>
+              <option value="">Todas as fases</option>
+              {Array.from(allFases).map(fase => (
+                <option key={fase} value={fase}>{fase}</option>
               ))}
             </select>
             
@@ -540,7 +540,7 @@ export const FullscreenReportViewer = ({
                             <th className="border border-gray-300 px-4 py-3 text-left">TAG</th>
                             <th className="border border-gray-300 px-4 py-3 text-left">Posição</th>
                             <th className="border border-gray-300 px-4 py-3 text-left">Comprimento</th>
-                            <th className="border border-gray-300 px-4 py-3 text-left">Conjunto</th>
+                            <th className="border border-gray-300 px-4 py-3 text-left">Fase</th>
                             <th className="border border-gray-300 px-4 py-3 text-left">Perfil</th>
                           </tr>
                         </thead>
@@ -589,10 +589,10 @@ export const FullscreenReportViewer = ({
                                   {piece.length}mm
                                 </td>
                                 <td className="border border-gray-300 px-4 py-3">
-                                  {piece.conjunto ? (
+                                  {piece.fase ? (
                                     <Badge variant="outline" className="bg-blue-50 text-blue-700">
                                       <Package className="w-3 h-3 mr-1" />
-                                      {piece.conjunto}
+                                      {piece.fase}
                                     </Badge>
                                   ) : (
                                     <span className="text-gray-400">Manual</span>

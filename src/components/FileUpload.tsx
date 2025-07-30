@@ -26,7 +26,7 @@ export const FileUpload = ({ onDataImported, currentPieces }: FileUploadProps) =
   const [previewData, setPreviewData] = useState<{
     obra?: string;
     totalPieces: number;
-    conjuntos: string[];
+    fases: string[];
     materiais: string[];
     perfis: string[];
     formatDetected?: string;
@@ -51,14 +51,14 @@ export const FileUpload = ({ onDataImported, currentPieces }: FileUploadProps) =
 
   const generatePreviewData = (pieces: CutPiece[]) => {
     const obra = (pieces[0] as any)?.obra || '';
-    const conjuntos = [...new Set(pieces.map((p: any) => p.conjunto).filter(Boolean))];
+    const fases = [...new Set(pieces.map((p: any) => p.fase).filter(Boolean))];
     const materiais = [...new Set(pieces.map((p: any) => p.material).filter(Boolean))];
     const perfis = [...new Set(pieces.map((p: any) => p.perfil).filter(Boolean))];
     
     setPreviewData({
       obra,
       totalPieces: pieces.length,
-      conjuntos,
+      fases,
       materiais,
       perfis
     });
@@ -158,7 +158,7 @@ export const FileUpload = ({ onDataImported, currentPieces }: FileUploadProps) =
                 <p><strong>Formato Usado:</strong> Tabular Simplificado</p>
               </div>
               <div>
-                <p><strong>Conjuntos:</strong> {previewData.conjuntos.join(', ')}</p>
+                <p><strong>Fases:</strong> {previewData.fases.join(', ')}</p>
                 <p><strong>Materiais:</strong> {previewData.materiais.join(', ')}</p>
               </div>
             </div>

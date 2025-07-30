@@ -31,7 +31,7 @@ interface AdvancedOptimizationResult extends OptimizationResult {
       color: string;
       label: string;
       tag?: string;
-      conjunto?: string;
+      fase?: string;
       perfil?: string;
       peso?: number;
       posicao?: string;
@@ -132,7 +132,7 @@ export const useAdvancedLinearOptimization = () => {
           expandedPieces.push({
             length: piece.length,
             tag: (piece as any).tag || `P${index + 1}`,
-            conjunto: (piece as any).conjunto,
+            fase: (piece as any).fase,
             perfil: (piece as any).perfil,
             peso: (piece as any).peso,
             posicao: (piece as any).posicao,
@@ -203,7 +203,7 @@ export const useAdvancedLinearOptimization = () => {
           color: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'][piece.originalIndex % 5],
           label: piece.tag || `${piece.length}mm`,
           tag: piece.tag,
-          conjunto: piece.conjunto,
+          fase: piece.fase,
           perfil: piece.perfil,
           peso: piece.peso,
           posicao: piece.posicao
@@ -229,7 +229,7 @@ export const useAdvancedLinearOptimization = () => {
             color: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'][piece.originalIndex % 5],
             label: piece.tag || `${piece.length}mm`,
             tag: piece.tag,
-            conjunto: piece.conjunto,
+            fase: piece.fase,
             perfil: piece.perfil,
             peso: piece.peso,
             posicao: piece.posicao

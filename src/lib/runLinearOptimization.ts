@@ -5,7 +5,7 @@ interface PieceInput {
   length: number;
   quantity: number;
   tag?: string;
-  conjunto?: string;
+  fase?: string;
   perfil?: string;
   peso?: number;
   posicao?: string;
@@ -16,7 +16,7 @@ interface BarPiece {
   color: string;
   label: string;
   tag?: string;
-  conjunto?: string;
+  fase?: string;
   perfil?: string;
   peso?: number;
   posicao?: string;
@@ -72,7 +72,7 @@ export function runLinearOptimization(
           color: colors[index % colors.length],
           label: piece.tag ? String(piece.tag) : `${piece.length}mm`,
           tag: piece.tag,
-          conjunto: piece.conjunto,
+          fase: piece.fase,
           perfil: piece.perfil,
           peso: piece.peso,
           posicao: piece.posicao,
@@ -93,7 +93,7 @@ export function runLinearOptimization(
             color: colors[index % colors.length],
             label: piece.tag ? String(piece.tag) : `${piece.length}mm`,
             tag: piece.tag,
-            conjunto: piece.conjunto,
+            fase: piece.fase,
             perfil: piece.perfil,
             peso: piece.peso,
             posicao: piece.posicao,
@@ -208,7 +208,7 @@ export function runLinearOptimizationWithLeftovers(
           color: colors[Math.floor(Math.random() * colors.length)],
           label: piece.tag ? String(piece.tag) : `${piece.length}mm`,
           tag: piece.tag,
-          conjunto: piece.conjunto,
+          fase: piece.fase,
           perfil: piece.perfil,
           peso: piece.peso,
           posicao: piece.posicao,
@@ -235,7 +235,7 @@ export function runLinearOptimizationWithLeftovers(
           color: colors[Math.floor(Math.random() * colors.length)],
           label: piece.tag ? String(piece.tag) : `${piece.length}mm`,
           tag: piece.tag,
-          conjunto: piece.conjunto,
+          fase: piece.fase,
           perfil: piece.perfil,
           peso: piece.peso,
           posicao: piece.posicao,
@@ -257,7 +257,7 @@ export function runLinearOptimizationWithLeftovers(
             color: colors[Math.floor(Math.random() * colors.length)],
             label: piece.tag ? String(piece.tag) : `${piece.length}mm`,
             tag: piece.tag,
-            conjunto: piece.conjunto,
+            fase: piece.fase,
             perfil: piece.perfil,
             peso: piece.peso,
             posicao: piece.posicao,

@@ -59,14 +59,14 @@ export const ReportVisualization = ({ results, barLength, project }: ReportVisua
                   </div>
                 </div>
                 
-                {/* Mostrar conjuntos na barra */}
+                {/* Mostrar fases na barra */}
                 {(() => {
-                  const conjuntosNaBarra = new Set((bar.pieces as any[])
-                    .filter(p => p.conjunto)
-                    .map(p => p.conjunto));
-                  return conjuntosNaBarra.size > 0 && (
+                  const fasesNaBarra = new Set((bar.pieces as any[])
+                    .filter(p => p.fase)
+                    .map(p => p.fase));
+                  return fasesNaBarra.size > 0 && (
                     <span className="text-sm text-gray-600 mb-2 block">
-                      Conjuntos: {Array.from(conjuntosNaBarra).join(', ')}
+                      Fases: {Array.from(fasesNaBarra).join(', ')}
                     </span>
                   );
                 })()}

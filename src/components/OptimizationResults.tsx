@@ -172,7 +172,7 @@ export const OptimizationResults = ({
           // Posição
           piece.tag || 'Entrada Manual',
           // TAG
-          piece.conjunto || '-', // Campo FASE
+          piece.fase || '-', // Campo FASE
           piece.quantidade || '1',
           // Quantidade
           piece.length.toString(),

@@ -479,9 +479,9 @@ export type Database = {
       projeto_pecas: {
         Row: {
           comprimento_mm: number
-          conjunto: string | null
           created_at: string
           descricao_perfil_raw: string | null
+          fase: string | null
           id: string
           perfil_id: string | null
           perfil_nao_encontrado: boolean
@@ -494,9 +494,9 @@ export type Database = {
         }
         Insert: {
           comprimento_mm: number
-          conjunto?: string | null
           created_at?: string
           descricao_perfil_raw?: string | null
+          fase?: string | null
           id?: string
           perfil_id?: string | null
           perfil_nao_encontrado?: boolean
@@ -509,9 +509,9 @@ export type Database = {
         }
         Update: {
           comprimento_mm?: number
-          conjunto?: string | null
           created_at?: string
           descricao_perfil_raw?: string | null
+          fase?: string | null
           id?: string
           perfil_id?: string | null
           perfil_nao_encontrado?: boolean
