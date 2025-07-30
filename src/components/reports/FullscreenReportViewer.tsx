@@ -276,25 +276,25 @@ export const FullscreenReportViewer = ({
               {/* Fases compactas */}
               {faseLegend.size > 0 && (
                 <div className="mb-2">
-                  <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                    <Package className="w-4 h-4" />
-                    Conjuntos
-                  </h5>
-                  <div className="flex flex-wrap gap-2">
-                    {Array.from(conjuntoLegend.entries()).slice(0, 8).map(([conjunto, data]) => (
-                      <div key={conjunto} className="flex items-center gap-1 bg-white px-2 py-1 rounded border">
-                        <div 
-                          className="w-3 h-3 rounded border" 
-                          style={{ backgroundColor: data.color }}
-                        />
-                        <span className="text-xs text-gray-700">{conjunto}</span>
-                        <Badge variant="outline" className="text-xs h-4 px-1">{data.count}</Badge>
-                      </div>
-                    ))}
-                    {conjuntoLegend.size > 8 && (
-                      <span className="text-xs text-gray-500 self-center">+{conjuntoLegend.size - 8} mais...</span>
-                    )}
-                  </div>
+                   <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                     <Package className="w-4 h-4" />
+                     Fases
+                   </h5>
+                   <div className="flex flex-wrap gap-2">
+                     {Array.from(faseLegend.entries()).slice(0, 8).map(([fase, data]) => (
+                       <div key={fase} className="flex items-center gap-1 bg-white px-2 py-1 rounded border">
+                         <div 
+                           className="w-3 h-3 rounded border" 
+                           style={{ backgroundColor: data.color }}
+                         />
+                         <span className="text-xs text-gray-700">{fase}</span>
+                         <Badge variant="outline" className="text-xs h-4 px-1">{data.count}</Badge>
+                       </div>
+                     ))}
+                     {faseLegend.size > 8 && (
+                       <span className="text-xs text-gray-500 self-center">+{faseLegend.size - 8} mais...</span>
+                     )}
+                   </div>
                 </div>
               )}
             </div>
