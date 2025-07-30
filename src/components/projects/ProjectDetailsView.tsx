@@ -138,7 +138,45 @@ export const ProjectDetailsView = ({
     setImporting(true);
   };
 
-  const handleFileProcessed = async (imported: any[]) => {
+  const handleFileProcessed = async (imported: any[], mode: 'update' | 'new' = 'new') => {
+    if (mode === 'update') {
+      // Modo atualização: usar o novo serviço para encontrar e atualizar peças existentes
+      try {
+        const comparison = await projetoPecaService.findExistingPieces(project.id, imported);
+        
+        // Atualizar peças existentes apenas com a fase
+        if (comparison.matches.length > 0) {
+          const updateResult = await projetoPecaService.updateExistingWithPhase(comparison.matches);
+          
+          if (updateResult.updated.length > 0) {
+            toast.success(`${updateResult.updated.length} peça(s) atualizadas com nova fase`);
+          }
+        }
+        
+        // Cadastrar peças completamente novas
+        if (comparison.new.length > 0) {
+          const { allPieces } = await projetoPecaService.validateAndProcessPieces(comparison.new, project.id);
+          const resp = await projetoPecaService.createBatch(allPieces);
+          
+          if (resp.success && resp.data) {
+            toast.success(`${resp.data.length} nova(s) peça(s) cadastradas`);
+          }
+        }
+        
+        await loadProjectData();
+        setActiveTab('pieces');
+        setShowUpload(false);
+        setImporting(false);
+        return;
+      } catch (error) {
+        console.error('Erro no modo atualização:', error);
+        toast.error('Erro ao atualizar peças existentes');
+        setImporting(false);
+        return;
+      }
+    }
+    
+    // Modo normal (novo)
     const { allPieces, invalidPieces } =
       await projetoPecaService.validateAndProcessPieces(imported, project.id);
 
@@ -494,6 +532,7 @@ export const ProjectDetailsView = ({
                       onOpenChange={setShowUpload}
                       onProcessStart={handleImportStart}
                       onFileProcessed={handleFileProcessed}
+                      projectId={project.id}
                     />
                   </>
                 )}
