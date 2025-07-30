@@ -216,6 +216,216 @@ export class ProjetoPecaService {
       return { success: false, data: null, error: error.message };
     }
   }
+
+  async findExistingPieces(projectId: string, newPieces: any[]): Promise<{
+    existing: ProjetoPeca[];
+    inOptimizations: { peca: ProjetoPeca; optimization: any }[];
+    new: any[];
+    matches: { newPiece: any; existingPiece: ProjetoPeca; matchType: 'posicao' | 'tag' | 'comprimento' }[];
+  }> {
+    try {
+      console.log(`🔍 Iniciando comparação de peças para projeto ${projectId}`);
+      
+      // Buscar peças existentes do projeto
+      const existingResponse = await this.getByProjectId(projectId);
+      if (!existingResponse.success || !existingResponse.data) {
+        console.log('❌ Erro ao buscar peças existentes:', existingResponse.error);
+        return { existing: [], inOptimizations: [], new: newPieces, matches: [] };
+      }
+
+      const existingPieces = existingResponse.data;
+      console.log(`📦 Encontradas ${existingPieces.length} peças existentes no projeto`);
+
+      // Buscar otimizações do projeto
+      const { projetoOtimizacaoService } = await import('../index');
+      const optimizationsResponse = await projetoOtimizacaoService.getByProjectId(projectId);
+      const optimizations = optimizationsResponse.success ? optimizationsResponse.data || [] : [];
+      console.log(`⚙️ Encontradas ${optimizations.length} otimizações do projeto`);
+
+      // Criar mapas para busca rápida
+      const posicaoMap = new Map<string, ProjetoPeca>();
+      const tagMap = new Map<string, ProjetoPeca>();
+      const comprimentoMap = new Map<string, ProjetoPeca[]>();
+
+      existingPieces.forEach(peca => {
+        // Indexar por posição
+        if (peca.posicao) {
+          posicaoMap.set(peca.posicao.toLowerCase().trim(), peca);
+        }
+
+        // Indexar por tag
+        if (peca.tag) {
+          tagMap.set(peca.tag.toLowerCase().trim(), peca);
+        }
+
+        // Indexar por comprimento
+        const comprimentoKey = `${peca.comprimento_mm}_${peca.descricao_perfil_raw || ''}`;
+        if (!comprimentoMap.has(comprimentoKey)) {
+          comprimentoMap.set(comprimentoKey, []);
+        }
+        comprimentoMap.get(comprimentoKey)!.push(peca);
+      });
+
+      // Identificar peças que estão em otimizações
+      const optimizedPiecesIds = new Set<string>();
+      optimizations.forEach(opt => {
+        if (opt.pecas_selecionadas && Array.isArray(opt.pecas_selecionadas)) {
+          opt.pecas_selecionadas.forEach(id => optimizedPiecesIds.add(id));
+        }
+      });
+
+      const inOptimizations: { peca: ProjetoPeca; optimization: any }[] = [];
+      existingPieces.forEach(peca => {
+        if (optimizedPiecesIds.has(peca.id)) {
+          const optimization = optimizations.find(opt => 
+            opt.pecas_selecionadas?.includes(peca.id)
+          );
+          if (optimization) {
+            inOptimizations.push({ peca, optimization });
+          }
+        }
+      });
+
+      console.log(`🔧 ${inOptimizations.length} peças estão em otimizações ativas`);
+
+      // Comparar peças novas com existentes
+      const matches: { newPiece: any; existingPiece: ProjetoPeca; matchType: 'posicao' | 'tag' | 'comprimento' }[] = [];
+      const matchedNewPieces = new Set<number>();
+      const matchedExistingPieces = new Set<string>();
+
+      newPieces.forEach((newPiece, index) => {
+        let match: ProjetoPeca | null = null;
+        let matchType: 'posicao' | 'tag' | 'comprimento' | null = null;
+
+        // 1. Prioridade: Comparar por posição
+        const posicao = newPiece.posicao || newPiece.tag || `PEÇA-${index + 1}`;
+        if (posicao && posicaoMap.has(posicao.toLowerCase().trim())) {
+          match = posicaoMap.get(posicao.toLowerCase().trim())!;
+          matchType = 'posicao';
+          console.log(`✅ Match por posição: ${posicao} -> ${match.posicao}`);
+        }
+
+        // 2. Segundo: Comparar por tag (se ambos tiverem)
+        if (!match && newPiece.tag && tagMap.has(newPiece.tag.toLowerCase().trim())) {
+          match = tagMap.get(newPiece.tag.toLowerCase().trim())!;
+          matchType = 'tag';
+          console.log(`✅ Match por tag: ${newPiece.tag} -> ${match.tag}`);
+        }
+
+        // 3. Terceiro: Comparar por comprimento + descrição do perfil
+        if (!match) {
+          const comprimento = newPiece.length || newPiece.comprimento || newPiece.comprimento_mm;
+          const perfil = newPiece.profile || newPiece.perfil || newPiece.descricao;
+          
+          if (comprimento && perfil) {
+            const comprimentoKey = `${comprimento}_${perfil}`;
+            const candidatos = comprimentoMap.get(comprimentoKey);
+            
+            if (candidatos && candidatos.length > 0) {
+              // Pegar o primeiro candidato que ainda não foi matched
+              match = candidatos.find(c => !matchedExistingPieces.has(c.id)) || null;
+              if (match) {
+                matchType = 'comprimento';
+                console.log(`✅ Match por comprimento+perfil: ${comprimento}mm ${perfil} -> ${match.posicao}`);
+              }
+            }
+          }
+        }
+
+        if (match && matchType) {
+          matches.push({ newPiece, existingPiece: match, matchType });
+          matchedNewPieces.add(index);
+          matchedExistingPieces.add(match.id);
+        }
+      });
+
+      // Separar peças novas (que não tiveram match)
+      const newUnmatchedPieces = newPieces.filter((_, index) => !matchedNewPieces.has(index));
+
+      console.log(`📊 Resultado da comparação:`);
+      console.log(`   - ${matches.length} peças com correspondência encontrada`);
+      console.log(`   - ${newUnmatchedPieces.length} peças completamente novas`);
+      console.log(`   - ${inOptimizations.length} peças em otimizações ativas`);
+
+      return {
+        existing: existingPieces,
+        inOptimizations,
+        new: newUnmatchedPieces,
+        matches
+      };
+
+    } catch (error: any) {
+      console.error('Erro inesperado ao comparar peças:', error);
+      return { existing: [], inOptimizations: [], new: newPieces, matches: [] };
+    }
+  }
+
+  async updateExistingWithPhase(matches: { newPiece: any; existingPiece: ProjetoPeca; matchType: string }[]): Promise<{
+    updated: ProjetoPeca[];
+    errors: any[];
+  }> {
+    try {
+      console.log(`🔄 Iniciando atualização de ${matches.length} peças com nova fase`);
+      
+      const updated: ProjetoPeca[] = [];
+      const errors: any[] = [];
+
+      for (const match of matches) {
+        try {
+          const { newPiece, existingPiece } = match;
+          
+          // Extrair fase da peça nova
+          const novaFase = newPiece.fase || newPiece.conjunto || newPiece.set || newPiece.tag;
+          
+          if (!novaFase) {
+            console.log(`⚠️ Peça ${existingPiece.posicao} não tem fase definida, pulando...`);
+            continue;
+          }
+
+          // Verificar se a fase realmente mudou
+          if (existingPiece.fase === novaFase) {
+            console.log(`ℹ️ Peça ${existingPiece.posicao} já tem a fase ${novaFase}, pulando...`);
+            continue;
+          }
+
+          console.log(`🔄 Atualizando peça ${existingPiece.posicao}: fase "${existingPiece.fase || 'sem fase'}" -> "${novaFase}"`);
+
+          // Atualizar APENAS o campo fase, preservando todos os outros dados
+          const updateResponse = await this.update(existingPiece.id, {
+            fase: novaFase
+          });
+
+          if (updateResponse.success && updateResponse.data) {
+            updated.push(updateResponse.data);
+            console.log(`✅ Peça ${existingPiece.posicao} atualizada com sucesso`);
+          } else {
+            console.error(`❌ Erro ao atualizar peça ${existingPiece.posicao}:`, updateResponse.error);
+            errors.push({
+              peca: existingPiece,
+              error: updateResponse.error
+            });
+          }
+
+        } catch (error: any) {
+          console.error(`❌ Erro inesperado ao atualizar peça ${match.existingPiece.posicao}:`, error);
+          errors.push({
+            peca: match.existingPiece,
+            error: error.message
+          });
+        }
+      }
+
+      console.log(`📊 Resultado da atualização:`);
+      console.log(`   - ✅ ${updated.length} peças atualizadas com sucesso`);
+      console.log(`   - ❌ ${errors.length} erros encontrados`);
+
+      return { updated, errors };
+
+    } catch (error: any) {
+      console.error('Erro inesperado no processo de atualização:', error);
+      return { updated: [], errors: [{ error: error.message }] };
+    }
+  }
 }
 
 export const projetoPecaService = new ProjetoPecaService();
