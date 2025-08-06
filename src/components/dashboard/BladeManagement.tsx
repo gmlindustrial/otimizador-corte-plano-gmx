@@ -145,7 +145,7 @@ export const BladeManagement = ({
   // Load filtered data
   useEffect(() => {
     const loadFilteredData = async () => {
-      if (!selectedProject && !selectedOptimization) {
+      if ((!selectedProject || selectedProject === "all") && (!selectedOptimization || selectedOptimization === "all")) {
         setFilteredData([]);
         setFilteredStats({});
         return;
@@ -163,11 +163,11 @@ export const BladeManagement = ({
             operadores(nome)
           `);
 
-        if (selectedProject) {
+        if (selectedProject && selectedProject !== "all") {
           query = query.eq('projeto_id', selectedProject);
         }
 
-        if (selectedOptimization) {
+        if (selectedOptimization && selectedOptimization !== "all") {
           query = query.eq('otimizacao_id', selectedOptimization);
         }
 
@@ -223,8 +223,8 @@ export const BladeManagement = ({
   }, [selectedProject, selectedOptimization]);
 
   const clearFilters = () => {
-    setSelectedProject('');
-    setSelectedOptimization('');
+    setSelectedProject('all');
+    setSelectedOptimization('all');
     setFilteredData([]);
     setFilteredStats({});
   };
@@ -676,7 +676,7 @@ export const BladeManagement = ({
                         <SelectValue placeholder="Todos os projetos" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Todos os projetos</SelectItem>
+                        <SelectItem value="all">Todos os projetos</SelectItem>
                         {projects.map((project) => (
                           <SelectItem key={project.id} value={project.id}>
                             {project.nome}
@@ -691,13 +691,13 @@ export const BladeManagement = ({
                     <Select 
                       value={selectedOptimization} 
                       onValueChange={setSelectedOptimization}
-                      disabled={!selectedProject}
+                      disabled={!selectedProject || selectedProject === "all"}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Todas as listas" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Todas as listas</SelectItem>
+                        <SelectItem value="all">Todas as listas</SelectItem>
                         {optimizations.map((opt) => (
                           <SelectItem key={opt.id} value={opt.id}>
                             {opt.nome}
@@ -711,7 +711,7 @@ export const BladeManagement = ({
                     <Button 
                       variant="outline" 
                       onClick={clearFilters}
-                      disabled={!selectedProject && !selectedOptimization}
+                      disabled={(!selectedProject || selectedProject === "all") && (!selectedOptimization || selectedOptimization === "all")}
                     >
                       Limpar Filtros
                     </Button>
