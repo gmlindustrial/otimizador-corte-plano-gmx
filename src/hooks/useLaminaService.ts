@@ -147,7 +147,7 @@ export const useLaminaService = () => {
   };
 
   const registrarCorteCompleto = async (data: {
-    lamina_id: string;
+    serra_id: string;
     projeto_id: string;
     otimizacao_id?: string;
     peca_id?: string;

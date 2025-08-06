@@ -4,16 +4,16 @@ import type { Lamina, LaminaEstatisticas, LaminaSubstituicao, LaminaStatusHistor
 import type { ServiceResponse, ListResponse } from '../base/types';
 
 export class LaminaService extends BaseService<Lamina> {
-  protected tableName = 'laminas';
+  protected tableName = 'serras';
   
   constructor() {
-    super('laminas');
+    super('serras');
   }
 
   async getAtivadas(): Promise<ListResponse<Lamina>> {
     try {
       const { data, error } = await this.supabase
-        .from('laminas')
+        .from('serras')
         .select('*')
         .eq('status', 'ativada')
         .order('codigo', { ascending: true });
@@ -21,7 +21,7 @@ export class LaminaService extends BaseService<Lamina> {
       if (error) throw error;
 
       return {
-        data: data || [],
+        data: (data || []) as Lamina[],
         error: null,
         success: true,
         total: data?.length || 0
@@ -41,7 +41,7 @@ export class LaminaService extends BaseService<Lamina> {
     try {
       // Buscar dados da lâmina
       const { data: lamina, error: laminaError } = await this.supabase
-        .from('laminas')
+        .from('serras')
         .select('*')
         .eq('id', laminaId)
         .single();
@@ -50,31 +50,31 @@ export class LaminaService extends BaseService<Lamina> {
 
       // Buscar uso de cortes
       const { data: usoCortes, error: usoError } = await this.supabase
-        .from('lamina_uso_cortes')
+        .from('serra_uso_cortes')
         .select(`
           *,
           projetos!inner(nome),
           projeto_otimizacoes(nome_lista)
         `)
-        .eq('lamina_id', laminaId)
+        .eq('serra_id', laminaId)
         .order('data_corte', { ascending: false });
 
       if (usoError) throw usoError;
 
       // Buscar histórico de status
       const { data: statusHistorico, error: statusError } = await this.supabase
-        .from('lamina_status_historico')
+        .from('serra_status_historico')
         .select('*')
-        .eq('lamina_id', laminaId)
+        .eq('serra_id', laminaId)
         .order('data_mudanca', { ascending: false });
 
       if (statusError) throw statusError;
 
       // Buscar substituições
       const { data: substituicoes, error: substituicoesError } = await this.supabase
-        .from('lamina_substituicoes')
+        .from('serra_substituicoes')
         .select('*')
-        .or(`lamina_anterior_id.eq.${laminaId},lamina_nova_id.eq.${laminaId}`)
+        .or(`serra_anterior_id.eq.${laminaId},serra_nova_id.eq.${laminaId}`)
         .order('data_substituicao', { ascending: false });
 
       if (substituicoesError) throw substituicoesError;
@@ -172,7 +172,7 @@ export class LaminaService extends BaseService<Lamina> {
       }
 
       const estatisticas: LaminaEstatisticas = {
-        lamina,
+        lamina: lamina as Lamina,
         total_pecas_cortadas: totalPecasCortadas,
         projetos_utilizados: projetosUnicos.size,
         primeiro_uso: primeiroUso,
@@ -210,7 +210,7 @@ export class LaminaService extends BaseService<Lamina> {
     try {
       // Primeiro, desativar todas as lâminas ativas
       await this.supabase
-        .from('laminas')
+        .from('serras')
         .update({ 
           status: 'desativada',
           updated_at: new Date().toISOString() 
@@ -219,7 +219,7 @@ export class LaminaService extends BaseService<Lamina> {
 
       // Ativar a lâmina selecionada
       const { data: lamina, error } = await this.supabase
-        .from('laminas')
+        .from('serras')
         .update({ 
           status: 'ativada',
           updated_at: new Date().toISOString() 
@@ -232,9 +232,9 @@ export class LaminaService extends BaseService<Lamina> {
 
       // Registrar no histórico
       await this.supabase
-        .from('lamina_status_historico')
+        .from('serra_status_historico')
         .insert([{
-          lamina_id: laminaId,
+          serra_id: laminaId,
           status_anterior: 'desativada',
           status_novo: 'ativada',
           data_mudanca: new Date().toISOString(),
@@ -245,7 +245,7 @@ export class LaminaService extends BaseService<Lamina> {
       ErrorHandler.handleSuccess('Lâmina ativada com sucesso');
 
       return {
-        data: lamina,
+        data: lamina as Lamina,
         error: null,
         success: true
       };
@@ -262,7 +262,7 @@ export class LaminaService extends BaseService<Lamina> {
   async desativar(laminaId: string, operadorId?: string, motivo?: string): Promise<ServiceResponse<Lamina>> {
     try {
       const { data: lamina, error } = await this.supabase
-        .from('laminas')
+        .from('serras')
         .update({ 
           status: 'desativada',
           updated_at: new Date().toISOString() 
@@ -275,9 +275,9 @@ export class LaminaService extends BaseService<Lamina> {
 
       // Registrar no histórico
       await this.supabase
-        .from('lamina_status_historico')
+        .from('serra_status_historico')
         .insert([{
-          lamina_id: laminaId,
+          serra_id: laminaId,
           status_anterior: 'ativada',
           status_novo: 'desativada',
           data_mudanca: new Date().toISOString(),
@@ -288,7 +288,7 @@ export class LaminaService extends BaseService<Lamina> {
       ErrorHandler.handleSuccess('Lâmina desativada com sucesso');
 
       return {
-        data: lamina,
+        data: lamina as Lamina,
         error: null,
         success: true
       };
@@ -305,7 +305,7 @@ export class LaminaService extends BaseService<Lamina> {
   async descartar(laminaId: string, motivo: string, operadorId?: string): Promise<ServiceResponse<Lamina>> {
     try {
       const { data: lamina, error } = await this.supabase
-        .from('laminas')
+        .from('serras')
         .update({ 
           status: 'descartada',
           updated_at: new Date().toISOString() 
@@ -318,9 +318,9 @@ export class LaminaService extends BaseService<Lamina> {
 
       // Registrar no histórico
       await this.supabase
-        .from('lamina_status_historico')
+        .from('serra_status_historico')
         .insert([{
-          lamina_id: laminaId,
+          serra_id: laminaId,
           status_anterior: lamina.status,
           status_novo: 'descartada',
           data_mudanca: new Date().toISOString(),
@@ -330,10 +330,10 @@ export class LaminaService extends BaseService<Lamina> {
 
       // Registrar como substituição por ela mesma (descarte)
       await this.supabase
-        .from('lamina_substituicoes')
+        .from('serra_substituicoes')
         .insert([{
-          lamina_anterior_id: laminaId,
-          lamina_nova_id: laminaId,
+          serra_anterior_id: laminaId,
+          serra_nova_id: laminaId,
           data_substituicao: new Date().toISOString(),
           motivo,
           operador_id: operadorId,
@@ -343,7 +343,7 @@ export class LaminaService extends BaseService<Lamina> {
       ErrorHandler.handleSuccess('Lâmina descartada com sucesso');
 
       return {
-        data: lamina,
+        data: lamina as Lamina,
         error: null,
         success: true
       };

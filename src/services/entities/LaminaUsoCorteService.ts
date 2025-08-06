@@ -4,16 +4,16 @@ import type { LaminaUsoCorte, LaminaUsoDetalhado } from '../interfaces/lamina';
 import type { ServiceResponse, ListResponse } from '../base/types';
 
 export class LaminaUsoCorteService extends BaseService<LaminaUsoCorte> {
-  protected tableName = 'lamina_uso_cortes';
+  protected tableName = 'serra_uso_cortes';
   
   constructor() {
-    super('lamina_uso_cortes');
+    super('serra_uso_cortes');
   }
 
   async registrarCorte(data: Omit<LaminaUsoCorte, 'id' | 'created_at'>): Promise<ServiceResponse<LaminaUsoCorte>> {
     try {
       const { data: resultado, error } = await this.supabase
-        .from('lamina_uso_cortes')
+        .from('serra_uso_cortes')
         .insert([data])
         .select()
         .single();
@@ -38,14 +38,14 @@ export class LaminaUsoCorteService extends BaseService<LaminaUsoCorte> {
   async getHistoricoDetalhado(laminaId: string): Promise<ListResponse<LaminaUsoDetalhado>> {
     try {
       const { data, error } = await this.supabase
-        .from('lamina_uso_cortes')
+        .from('serra_uso_cortes')
         .select(`
           *,
           projetos!inner(nome),
           operadores(nome),
           projeto_otimizacoes(nome_lista)
         `)
-        .eq('lamina_id', laminaId)
+        .eq('serra_id', laminaId)
         .order('data_corte', { ascending: false });
 
       if (error) throw error;
@@ -75,7 +75,7 @@ export class LaminaUsoCorteService extends BaseService<LaminaUsoCorte> {
   }
 
   async registrarCorteCompleto(data: {
-    lamina_id: string;
+    serra_id: string;
     projeto_id: string;
     otimizacao_id?: string;
     peca_id?: string;
@@ -88,7 +88,7 @@ export class LaminaUsoCorteService extends BaseService<LaminaUsoCorte> {
   }): Promise<ServiceResponse<LaminaUsoCorte>> {
     try {
       const { data: usoCorte, error } = await this.supabase
-        .from('lamina_uso_cortes')
+        .from('serra_uso_cortes')
         .insert([{
           ...data,
           data_corte: new Date().toISOString()
@@ -118,10 +118,10 @@ export class LaminaUsoCorteService extends BaseService<LaminaUsoCorte> {
   async getUsoPorProjeto(projetoId: string): Promise<ListResponse<LaminaUsoDetalhado>> {
     try {
       const { data, error } = await this.supabase
-        .from('lamina_uso_cortes')
+        .from('serra_uso_cortes')
         .select(`
           *,
-          laminas!inner(codigo),
+          serras!inner(codigo),
           operadores(nome),
           projeto_pecas(posicao),
           projeto_otimizacoes(nome_lista)
@@ -133,7 +133,7 @@ export class LaminaUsoCorteService extends BaseService<LaminaUsoCorte> {
 
       const uso = data?.map(item => ({
         ...item,
-        lamina_codigo: item.laminas?.codigo,
+        serra_codigo: item.serras?.codigo,
         operador_nome: item.operadores?.nome,
         peca_posicao: item.projeto_pecas?.posicao,
         otimizacao_nome: item.projeto_otimizacoes?.nome_lista
@@ -159,11 +159,11 @@ export class LaminaUsoCorteService extends BaseService<LaminaUsoCorte> {
   async getEstatisticasPorPeriodo(dataInicio: string, dataFim: string): Promise<ServiceResponse<any>> {
     try {
       const { data, error } = await this.supabase
-        .from('lamina_uso_cortes')
+        .from('serra_uso_cortes')
         .select(`
-          lamina_id,
+          serra_id,
           quantidade_cortada,
-          laminas!inner(codigo)
+          serras!inner(codigo)
         `)
         .gte('data_corte', dataInicio)
         .lte('data_corte', dataFim);
@@ -172,11 +172,11 @@ export class LaminaUsoCorteService extends BaseService<LaminaUsoCorte> {
 
       // Agrupar por lâmina
       const estatisticas = data?.reduce((acc, item) => {
-        const laminaId = item.lamina_id;
+        const laminaId = item.serra_id;
         if (!acc[laminaId]) {
           acc[laminaId] = {
-            lamina_id: laminaId,
-            lamina_codigo: item.laminas?.codigo,
+            serra_id: laminaId,
+            serra_codigo: item.serras?.codigo,
             total_pecas: 0,
             total_cortes: 0
           };

@@ -3,14 +3,14 @@ import type { BaseEntity } from "../base/types";
 export interface Lamina extends BaseEntity {
   codigo: string;
   data_instalacao: string;
-  status: 'ativada' | 'desativada' | 'descartada';
+  status: 'ativada' | 'desativada' | 'descartada' | 'substituida';
   observacoes?: string;
   updated_at?: string;
 }
 
 export interface LaminaSubstituicao extends BaseEntity {
-  lamina_anterior_id: string;
-  lamina_nova_id: string;
+  serra_anterior_id: string;
+  serra_nova_id: string;
   data_substituicao: string;
   motivo: string;
   operador_id?: string;
@@ -18,7 +18,7 @@ export interface LaminaSubstituicao extends BaseEntity {
 }
 
 export interface LaminaUsoCorte extends BaseEntity {
-  lamina_id: string;
+  serra_id: string;
   projeto_id: string;
   otimizacao_id?: string;
   peca_id?: string;
@@ -32,7 +32,7 @@ export interface LaminaUsoCorte extends BaseEntity {
 }
 
 export interface LaminaStatusHistorico extends BaseEntity {
-  lamina_id: string;
+  serra_id: string;
   status_anterior?: string;
   status_novo: string;
   data_mudanca: string;
