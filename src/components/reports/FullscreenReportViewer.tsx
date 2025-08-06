@@ -42,7 +42,7 @@ export const FullscreenReportViewer = ({
   const [showOnlyPending, setShowOnlyPending] = useState<boolean>(false);
   const [checkedPieces, setCheckedPieces] = useState<Set<string>>(new Set());
   const [viewMode, setViewMode] = useState<'overview' | 'detailed'>('detailed');
-  const [showLegend, setShowLegend] = useState<boolean>(true);
+  // const [showLegend, setShowLegend] = useState<boolean>(true); // TODO: Reativar legenda no futuro
 
   useEffect(() => {
     if (!isOpen) return;
@@ -200,7 +200,8 @@ export const FullscreenReportViewer = ({
   const currentBar = filteredBars[selectedBar];
   const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316'];
 
-  // Agrupar peças por fase para legenda
+  // TODO: Reativar no futuro - Agrupar peças por fase para legenda
+  /* 
   const faseLegend = new Map<string, { color: string; count: number }>();
   
   results.bars.forEach(bar => {
@@ -215,6 +216,7 @@ export const FullscreenReportViewer = ({
       }
     });
   });
+  */
 
   if (!isOpen) return null;
 
@@ -274,7 +276,8 @@ export const FullscreenReportViewer = ({
                 <ZoomIn className="w-4 h-4" />
               </Button>
               
-              {/* Toggle Legenda */}
+              {/* TODO: Reativar Toggle Legenda no futuro */}
+              {/* 
               <Button 
                 variant={showLegend ? 'default' : 'outline'} 
                 size="sm"
@@ -283,6 +286,7 @@ export const FullscreenReportViewer = ({
                 <Square className="w-4 h-4 mr-1" />
                 Legenda
               </Button>
+              */}
               
               {/* Imprimir */}
               <Button variant="outline" size="sm" onClick={() => window.print()}>
@@ -296,87 +300,18 @@ export const FullscreenReportViewer = ({
             </div>
           </div>
 
-          {/* Legenda de Identificação */}
+          {/* TODO: Reativar Legenda de Identificação no futuro */}
+          {/* 
           {showLegend && (
             <div className="p-4 border-b bg-blue-50 flex-shrink-0">
               <h4 className="font-semibold mb-3 text-gray-900 flex items-center gap-2">
                 <Square className="w-4 h-4" />
                 Legenda de Identificação
               </h4>
-              
-              {/* Código de Cores das Barras */}
-              <div className="mb-3">
-                <h5 className="text-sm font-medium text-gray-700 mb-2">Código de Cores das Barras</h5>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3 p-3 bg-white rounded-lg border">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-4 rounded border bg-green-500" />
-                    <span className="text-sm text-gray-700 font-medium">Verde: Barra de sobra utilizada</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-4 rounded border bg-blue-500" />
-                    <span className="text-sm text-gray-700 font-medium">Azul: Barra nova</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-4 rounded border bg-orange-500" />
-                    <span className="text-sm text-gray-700 font-medium">Laranja: Sobra parcialmente utilizada</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Indicadores de Tipo de Barra */}
-              <div className="mb-3">
-                <h5 className="text-sm font-medium text-gray-700 mb-2">Indicadores de Tipo</h5>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3 p-3 bg-white rounded-lg border">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="default" className="bg-green-100 text-green-800">
-                      <Recycle className="w-3 h-3 mr-1" />
-                      SOBRA
-                    </Badge>
-                    <span className="text-sm text-gray-700">Material reutilizado</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className="bg-blue-50 text-blue-700">
-                      NOVA
-                    </Badge>
-                    <span className="text-sm text-gray-700">Material novo</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-blue-600" />
-                    <span className="text-sm text-gray-700">Localização no estoque</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <DollarSign className="w-4 h-4 text-green-600" />
-                    <span className="text-sm text-gray-700">Economia gerada</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Fases compactas */}
-              {faseLegend.size > 0 && (
-                <div className="mb-2">
-                   <h5 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                     <Package className="w-4 h-4" />
-                     Fases
-                   </h5>
-                   <div className="flex flex-wrap gap-2">
-                     {Array.from(faseLegend.entries()).slice(0, 8).map(([fase, data]) => (
-                       <div key={fase} className="flex items-center gap-1 bg-white px-2 py-1 rounded border">
-                         <div 
-                           className="w-3 h-3 rounded border" 
-                           style={{ backgroundColor: data.color }}
-                         />
-                         <span className="text-xs text-gray-700">{fase}</span>
-                         <Badge variant="outline" className="text-xs h-4 px-1">{data.count}</Badge>
-                       </div>
-                     ))}
-                     {faseLegend.size > 8 && (
-                       <span className="text-xs text-gray-500 self-center">+{faseLegend.size - 8} mais...</span>
-                     )}
-                   </div>
-                </div>
-              )}
+              ...toda a legenda aqui...
             </div>
           )}
+          */}
 
           {/* Alerta sobre lâminas */}
           {laminasAtivadas.length === 0 && (
