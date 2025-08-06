@@ -11,6 +11,7 @@ import { ReportsManager } from "@/components/reports/ReportsManager";
 import { LinearCuttingTab } from "@/components/optimization/LinearCuttingTab";
 import { SheetCuttingTab } from "@/components/optimization/SheetCuttingTab";
 import { ProjectManagementTab } from "@/components/projects/ProjectManagementTab";
+import { Laminas } from "./Laminas";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   BarChart3,
@@ -22,6 +23,7 @@ import {
   FileText,
   Shield,
   Folder,
+  Scissors,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import AdminUsuarios from "./AdminUsuarios";
@@ -254,7 +256,7 @@ const Index = () => {
           <TabsList
             className={cn(
               "grid w-full mb-6",
-              isAdmin ? "grid-cols-7" : "grid-cols-6"
+              isAdmin ? "grid-cols-8" : "grid-cols-7"
             )}
           >
             <TabsTrigger value="dashboard" className="flex items-center gap-2">
@@ -277,6 +279,10 @@ const Index = () => {
               <Settings className="w-4 h-4" />
               Configurações
             </TabsTrigger>
+            <TabsTrigger value="laminas" className="flex items-center gap-2">
+              <Scissors className="w-4 h-4" />
+              Lâminas
+            </TabsTrigger>
             {isAdmin && (
               <TabsTrigger value="admin" className="flex items-center gap-2">
                 <Shield className="w-4 h-4" />
@@ -284,6 +290,10 @@ const Index = () => {
               </TabsTrigger>
             )}
           </TabsList>
+
+          <TabsContent value="laminas">
+            <Laminas />
+          </TabsContent>
 
           <TabsContent value="dashboard">
             <Dashboard history={optimizationHistory} />

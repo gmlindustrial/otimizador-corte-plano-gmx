@@ -8,9 +8,8 @@ import { ClienteManagement } from "./ClienteManagement";
 import { PerfilMaterialManagement } from "./PerfilMaterialManagement";
 import { OperadorManagement } from "./OperadorManagement";
 import { InspetorManagement } from "./InspetorManagement";
-import { SerraManagementTab } from "./SerraManagementTab";
 
-type ManagementTab = "obras" | "clientes" | "perfis" | "operadores" | "inspetores" | "serras" | null;
+type ManagementTab = "obras" | "clientes" | "perfis" | "operadores" | "inspetores" | null;
 
 interface ManagementTabsProps {
   onBack?: () => void;
@@ -119,26 +118,6 @@ export const ManagementTabs = ({ onBack }: ManagementTabsProps) => {
     );
   }
 
-  if (activeTab === "serras") {
-    return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => setActiveTab(null)}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar
-          </Button>
-          {onBack && (
-            <Button variant="ghost" onClick={onBack}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Configurações
-            </Button>
-          )}
-        </div>
-        <SerraManagementTab />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       {onBack && (
@@ -214,17 +193,6 @@ export const ManagementTabs = ({ onBack }: ManagementTabsProps) => {
               <div className="text-center">
                 <div className="text-lg font-semibold">Gerenciar Inspetores QA</div>
                 <div className="text-sm opacity-90">Visualizar, criar, editar e excluir inspetores</div>
-              </div>
-            </Button>
-
-            <Button
-              onClick={() => setActiveTab("serras")}
-              className="h-32 flex flex-col items-center gap-4 bg-gray-600 hover:bg-gray-700 text-white"
-            >
-              <Wrench className="w-12 h-12" />
-              <div className="text-center">
-                <div className="text-lg font-semibold">Gerenciar Serras</div>
-                <div className="text-sm opacity-90">Controlar vida útil e uso das serras</div>
               </div>
             </Button>
           </div>

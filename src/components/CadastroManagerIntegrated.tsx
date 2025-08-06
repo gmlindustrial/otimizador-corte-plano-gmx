@@ -8,9 +8,8 @@ import { ClienteManagement } from "./management/ClienteManagement";
 import { PerfilMaterialManagement } from "./management/PerfilMaterialManagement";
 import { OperadorManagement } from "./management/OperadorManagement";
 import { InspetorManagement } from "./management/InspetorManagement";
-import { SerraManagementTab } from "./management/SerraManagementTab";
 
-type ManagementTab = "obras" | "clientes" | "perfis" | "operadores" | "inspetores" | "serras" | null;
+type ManagementTab = "obras" | "clientes" | "perfis" | "operadores" | "inspetores" | null;
 
 interface CadastroManagerIntegratedProps {
   onUpdateData?: () => void;
@@ -79,18 +78,7 @@ export const CadastroManagerIntegrated = ({
         <InspetorManagement />
       </div>
     );
-  }
 
-  if (activeTab === "serras") {
-    return (
-      <div className="space-y-4">
-        <Button variant="outline" onClick={() => setActiveTab(null)}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
-          Voltar
-        </Button>
-        <SerraManagementTab />
-      </div>
-    );
   }
 
   return (
@@ -161,17 +149,6 @@ export const CadastroManagerIntegrated = ({
             <div className="text-center">
               <div className="text-lg font-semibold">Gerenciar Inspetores QA</div>
               <div className="text-sm opacity-90">Visualizar, criar, editar e excluir inspetores</div>
-            </div>
-          </Button>
-
-          <Button
-            onClick={() => setActiveTab("serras")}
-            className="h-32 flex flex-col items-center gap-4 bg-cyan-600 hover:bg-cyan-700 text-white"
-          >
-            <Scissors className="w-12 h-12" />
-            <div className="text-center">
-              <div className="text-lg font-semibold">Gerenciar Serras/Lâminas</div>
-              <div className="text-sm opacity-90">Visualizar, criar e substituir serras</div>
             </div>
           </Button>
         </div>
