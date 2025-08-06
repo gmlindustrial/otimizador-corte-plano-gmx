@@ -14,7 +14,7 @@ import { operadorService } from '@/services/entities/OperadorService';
 import type { Serra } from '@/services/interfaces/serra';
 
 export const SerraManagement = () => {
-  const { serras, serrasAtivas, loading, createSerra, updateSerra, substituirSerra, getEstatisticas } = useSerraService();
+  const { serras, serrasAtivas, loading, createSerra, updateSerra, substituirSerra, reativarSerra, getEstatisticas } = useSerraService();
   const [operadores, setOperadores] = React.useState<any[]>([]);
 
   React.useEffect(() => {
@@ -97,10 +97,32 @@ export const SerraManagement = () => {
     const variants = {
       ativa: 'default',
       substituida: 'secondary',
-      manutencao: 'destructive'
+      manutencao: 'destructive',
+      cega: 'destructive',
+      quebrada: 'destructive'
     } as const;
 
-    return <Badge variant={variants[status]}>{status.toUpperCase()}</Badge>;
+    const labels = {
+      ativa: 'ATIVA',
+      substituida: 'SUBSTITUÍDA',
+      manutencao: 'MANUTENÇÃO',
+      cega: 'CEGA',
+      quebrada: 'QUEBRADA'
+    } as const;
+
+    return <Badge variant={variants[status]}>{labels[status]}</Badge>;
+  };
+
+  const handleReativar = async (serra: Serra) => {
+    if (serra.status === 'cega' || serra.status === 'quebrada') {
+      alert('Esta serra não pode ser reativada. Serras cegas ou quebradas não podem ser reutilizadas.');
+      return;
+    }
+    
+    const resultado = await reativarSerra(serra.id);
+    if (resultado) {
+      alert('Serra reativada com sucesso!');
+    }
   };
 
   return (
@@ -204,11 +226,11 @@ export const SerraManagement = () => {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Substituídas</CardTitle>
+            <CardTitle className="text-sm font-medium">Cegas/Quebradas</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {serras.filter(s => s.status === 'substituida').length}
+              {serras.filter(s => s.status === 'cega' || s.status === 'quebrada').length}
             </div>
           </CardContent>
         </Card>
@@ -257,6 +279,15 @@ export const SerraManagement = () => {
                           }}
                         >
                           <RefreshCw className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {serra.status === 'substituida' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleReativar(serra)}
+                        >
+                          <Settings className="h-4 w-4" />
                         </Button>
                       )}
                     </div>

@@ -100,6 +100,15 @@ export class SerraService extends BaseService<Serra> {
 
   async substituir(serraAnteriorId: string, novaSerraData: Omit<Serra, 'id' | 'created_at' | 'updated_at'>, motivo: string, operadorId?: string): Promise<ServiceResponse<{ serra: Serra; substituicao: any }>> {
     try {
+      // Buscar serra anterior para verificar status
+      const { data: serraAnterior, error: serraError } = await this.supabase
+        .from('serras')
+        .select('*')
+        .eq('id', serraAnteriorId)
+        .single();
+
+      if (serraError) throw serraError;
+
       // Criar nova serra
       const { data: novaSerra, error: novaSerraError } = await this.supabase
         .from('serras')
@@ -109,10 +118,18 @@ export class SerraService extends BaseService<Serra> {
 
       if (novaSerraError) throw novaSerraError;
 
-      // Marcar serra anterior como substituída
+      // Determinar novo status da serra anterior baseado no motivo
+      let novoStatus: Serra['status'] = 'substituida';
+      if (motivo.toLowerCase().includes('cega')) {
+        novoStatus = 'cega';
+      } else if (motivo.toLowerCase().includes('quebrada') || motivo.toLowerCase().includes('quebrou')) {
+        novoStatus = 'quebrada';
+      }
+
+      // Marcar serra anterior com status apropriado
       const { error: updateError } = await this.supabase
         .from('serras')
-        .update({ status: 'substituida' })
+        .update({ status: novoStatus })
         .eq('id', serraAnteriorId);
 
       if (updateError) throw updateError;
@@ -131,7 +148,7 @@ export class SerraService extends BaseService<Serra> {
 
       if (substError) throw substError;
 
-      ErrorHandler.handleSuccess('Serra substituída com sucesso');
+      ErrorHandler.handleSuccess(`Serra substituída com sucesso. Status da serra anterior: ${novoStatus}`);
 
       return {
         data: { serra: novaSerra as Serra, substituicao },
@@ -140,6 +157,53 @@ export class SerraService extends BaseService<Serra> {
       };
     } catch (error) {
       const errorMessage = ErrorHandler.handle(error, 'Erro ao substituir serra');
+      return {
+        data: null,
+        error: errorMessage,
+        success: false
+      };
+    }
+  }
+
+  async reativar(serraId: string): Promise<ServiceResponse<Serra>> {
+    try {
+      // Buscar serra para verificar se pode ser reativada
+      const { data: serra, error: serraError } = await this.supabase
+        .from('serras')
+        .select('*')
+        .eq('id', serraId)
+        .single();
+
+      if (serraError) throw serraError;
+
+      // Verificar se a serra pode ser reativada
+      if (serra.status === 'cega' || serra.status === 'quebrada') {
+        throw new Error(`Serra não pode ser reativada. Status: ${serra.status}. Serras cegas ou quebradas não podem ser reutilizadas.`);
+      }
+
+      if (serra.status === 'ativa') {
+        throw new Error('Serra já está ativa');
+      }
+
+      // Reativar serra
+      const { data: serraAtualizada, error: updateError } = await this.supabase
+        .from('serras')
+        .update({ status: 'ativa' })
+        .eq('id', serraId)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      ErrorHandler.handleSuccess('Serra reativada com sucesso');
+
+      return {
+        data: serraAtualizada as Serra,
+        error: null,
+        success: true
+      };
+    } catch (error) {
+      const errorMessage = ErrorHandler.handle(error, 'Erro ao reativar serra');
       return {
         data: null,
         error: errorMessage,

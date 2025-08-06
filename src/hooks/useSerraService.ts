@@ -116,6 +116,59 @@ export const useSerraService = () => {
     }
   }, [fetchSerras, fetchSerrasAtivas]);
 
+  const reativarSerra = useCallback(async (serraId: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await serraService.reativar(serraId);
+      if (response.success) {
+        await fetchSerras();
+        await fetchSerrasAtivas();
+        return response.data;
+      } else {
+        setError(response.error);
+        return null;
+      }
+    } catch (err) {
+      setError('Erro ao reativar serra');
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchSerras, fetchSerrasAtivas]);
+
+  const registrarCorteCompleto = useCallback(async (data: {
+    serra_id: string;
+    projeto_id: string;
+    otimizacao_id?: string;
+    peca_id?: string;
+    quantidade_cortada: number;
+    operador_id?: string;
+    observacoes?: string;
+    peca_posicao?: string;
+    peca_tag?: string;
+    perfil_id?: string;
+  }) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await serraUsoCorteService.registrarCorteCompleto(data);
+      if (response.success) {
+        return response.data;
+      } else {
+        setError(response.error);
+        return null;
+      }
+    } catch (err) {
+      setError('Erro ao registrar corte completo');
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const getEstatisticas = useCallback(async (serraId: string): Promise<SerraEstatisticas | null> => {
     setLoading(true);
     setError(null);
@@ -169,8 +222,10 @@ export const useSerraService = () => {
     createSerra,
     updateSerra,
     substituirSerra,
+    reativarSerra,
     getEstatisticas,
     registrarCorte,
+    registrarCorteCompleto,
     refetch: fetchSerras,
     refetchAtivas: fetchSerrasAtivas
   };

@@ -645,6 +645,9 @@ export type Database = {
           operador_id: string | null
           otimizacao_id: string | null
           peca_id: string | null
+          peca_posicao: string | null
+          peca_tag: string | null
+          perfil_id: string | null
           projeto_id: string
           quantidade_cortada: number
           serra_id: string
@@ -657,6 +660,9 @@ export type Database = {
           operador_id?: string | null
           otimizacao_id?: string | null
           peca_id?: string | null
+          peca_posicao?: string | null
+          peca_tag?: string | null
+          perfil_id?: string | null
           projeto_id: string
           quantidade_cortada?: number
           serra_id: string
@@ -669,6 +675,9 @@ export type Database = {
           operador_id?: string | null
           otimizacao_id?: string | null
           peca_id?: string | null
+          peca_posicao?: string | null
+          peca_tag?: string | null
+          perfil_id?: string | null
           projeto_id?: string
           quantidade_cortada?: number
           serra_id?: string

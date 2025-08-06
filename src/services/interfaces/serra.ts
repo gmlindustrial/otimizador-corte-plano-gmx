@@ -3,7 +3,7 @@ import type { BaseEntity } from "../base/types";
 export interface Serra extends BaseEntity {
   codigo: string;
   data_instalacao: string;
-  status: 'ativa' | 'substituida' | 'manutencao';
+  status: 'ativa' | 'substituida' | 'manutencao' | 'cega' | 'quebrada';
   observacoes?: string;
   updated_at?: string;
 }
@@ -26,6 +26,9 @@ export interface SerraUsoCorte extends BaseEntity {
   operador_id?: string;
   data_corte: string;
   observacoes?: string;
+  peca_posicao?: string;
+  peca_tag?: string;
+  perfil_id?: string;
 }
 
 export interface SerraEstatisticas {
@@ -40,6 +43,13 @@ export interface SerraEstatisticas {
 export interface SerraUsoDetalhado extends SerraUsoCorte {
   projeto_nome?: string;
   operador_nome?: string;
-  peca_posicao?: string;
   otimizacao_nome?: string;
+  perfil_descricao?: string;
+  perfil_tipo?: string;
+}
+
+export interface SerraUsoCompleto extends SerraUsoDetalhado {
+  total_pecas_projeto: number;
+  peso_total_cortado?: number;
+  eficiencia_corte?: number;
 }

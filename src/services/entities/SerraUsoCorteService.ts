@@ -43,7 +43,6 @@ export class SerraUsoCorteService extends BaseService<SerraUsoCorte> {
           *,
           projetos!inner(nome),
           operadores(nome),
-          projeto_pecas(posicao),
           projeto_otimizacoes(nome_lista)
         `)
         .eq('serra_id', serraId)
@@ -55,7 +54,6 @@ export class SerraUsoCorteService extends BaseService<SerraUsoCorte> {
         ...item,
         projeto_nome: item.projetos?.nome,
         operador_nome: item.operadores?.nome,
-        peca_posicao: item.projeto_pecas?.posicao,
         otimizacao_nome: item.projeto_otimizacoes?.nome_lista
       })) || [];
 
@@ -72,6 +70,47 @@ export class SerraUsoCorteService extends BaseService<SerraUsoCorte> {
         error: errorMessage,
         success: false,
         total: 0
+      };
+    }
+  }
+
+  async registrarCorteCompleto(data: {
+    serra_id: string;
+    projeto_id: string;
+    otimizacao_id?: string;
+    peca_id?: string;
+    quantidade_cortada: number;
+    operador_id?: string;
+    observacoes?: string;
+    peca_posicao?: string;
+    peca_tag?: string;
+    perfil_id?: string;
+  }): Promise<ServiceResponse<SerraUsoCorte>> {
+    try {
+      const { data: usoCorte, error } = await this.supabase
+        .from('serra_uso_cortes')
+        .insert([{
+          ...data,
+          data_corte: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      ErrorHandler.handleSuccess(`Uso da serra registrado: ${data.quantidade_cortada} peças cortadas`);
+
+      return {
+        data: usoCorte as SerraUsoCorte,
+        error: null,
+        success: true
+      };
+    } catch (error) {
+      const errorMessage = ErrorHandler.handle(error, 'Erro ao registrar uso da serra');
+      return {
+        data: null,
+        error: errorMessage,
+        success: false
       };
     }
   }
