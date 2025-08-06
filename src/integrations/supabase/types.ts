@@ -581,6 +581,166 @@ export type Database = {
           },
         ]
       }
+      serra_substituicoes: {
+        Row: {
+          created_at: string
+          data_substituicao: string
+          id: string
+          motivo: string
+          observacoes: string | null
+          operador_id: string | null
+          serra_anterior_id: string
+          serra_nova_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_substituicao?: string
+          id?: string
+          motivo: string
+          observacoes?: string | null
+          operador_id?: string | null
+          serra_anterior_id: string
+          serra_nova_id: string
+        }
+        Update: {
+          created_at?: string
+          data_substituicao?: string
+          id?: string
+          motivo?: string
+          observacoes?: string | null
+          operador_id?: string | null
+          serra_anterior_id?: string
+          serra_nova_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "serra_substituicoes_operador_id_fkey"
+            columns: ["operador_id"]
+            isOneToOne: false
+            referencedRelation: "operadores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "serra_substituicoes_serra_anterior_id_fkey"
+            columns: ["serra_anterior_id"]
+            isOneToOne: false
+            referencedRelation: "serras"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "serra_substituicoes_serra_nova_id_fkey"
+            columns: ["serra_nova_id"]
+            isOneToOne: false
+            referencedRelation: "serras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      serra_uso_cortes: {
+        Row: {
+          created_at: string
+          data_corte: string
+          id: string
+          observacoes: string | null
+          operador_id: string | null
+          otimizacao_id: string | null
+          peca_id: string | null
+          projeto_id: string
+          quantidade_cortada: number
+          serra_id: string
+        }
+        Insert: {
+          created_at?: string
+          data_corte?: string
+          id?: string
+          observacoes?: string | null
+          operador_id?: string | null
+          otimizacao_id?: string | null
+          peca_id?: string | null
+          projeto_id: string
+          quantidade_cortada?: number
+          serra_id: string
+        }
+        Update: {
+          created_at?: string
+          data_corte?: string
+          id?: string
+          observacoes?: string | null
+          operador_id?: string | null
+          otimizacao_id?: string | null
+          peca_id?: string | null
+          projeto_id?: string
+          quantidade_cortada?: number
+          serra_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "serra_uso_cortes_operador_id_fkey"
+            columns: ["operador_id"]
+            isOneToOne: false
+            referencedRelation: "operadores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "serra_uso_cortes_otimizacao_id_fkey"
+            columns: ["otimizacao_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_otimizacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "serra_uso_cortes_peca_id_fkey"
+            columns: ["peca_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_pecas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "serra_uso_cortes_projeto_id_fkey"
+            columns: ["projeto_id"]
+            isOneToOne: false
+            referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "serra_uso_cortes_serra_id_fkey"
+            columns: ["serra_id"]
+            isOneToOne: false
+            referencedRelation: "serras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      serras: {
+        Row: {
+          codigo: string
+          created_at: string
+          data_instalacao: string
+          id: string
+          observacoes: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          codigo: string
+          created_at?: string
+          data_instalacao?: string
+          id?: string
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          codigo?: string
+          created_at?: string
+          data_instalacao?: string
+          id?: string
+          observacoes?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sheet_optimization_history: {
         Row: {
           algorithm: string
