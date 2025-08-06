@@ -6,7 +6,9 @@ import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Scissors, AlertTriangle, CheckCircle, Download, Send, Power, PowerOff, Trash2, Filter, BarChart3 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Scissors, AlertTriangle, CheckCircle, Download, Send, Power, PowerOff, Trash2, Filter, BarChart3, Search, TrendingUp, Users, Activity } from 'lucide-react';
 import { useLaminaService } from '@/hooks/useLaminaService';
 import { useToast } from '@/hooks/use-toast';
 import { LaminaEstatisticas } from '@/services/interfaces/lamina';
@@ -31,22 +33,72 @@ export const BladeManagement = ({
   const [selectedBladeId, setSelectedBladeId] = useState<string>('');
   const [bladeStats, setBladeStats] = useState<LaminaEstatisticas | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [bladeCuts, setBladeCuts] = useState<any[]>([]);
+  const [loadingCuts, setLoadingCuts] = useState(false);
+  const [overviewStats, setOverviewStats] = useState<any>({});
 
-  // Filter states
+  // Analysis tab filter states
   const [selectedProject, setSelectedProject] = useState<string>('');
   const [selectedOptimization, setSelectedOptimization] = useState<string>('');
+  const [analysisBladeFilter, setAnalysisBladeFilter] = useState<string>('all');
   const [projects, setProjects] = useState<any[]>([]);
   const [optimizations, setOptimizations] = useState<any[]>([]);
   const [filteredData, setFilteredData] = useState<any[]>([]);
   const [filteredStats, setFilteredStats] = useState<any>({});
   const [loadingFilters, setLoadingFilters] = useState(false);
 
-  // Auto-select the first active blade
+  // Load overview statistics
   useEffect(() => {
-    if (laminasAtivadas.length > 0 && !selectedBladeId) {
-      setSelectedBladeId(laminasAtivadas[0].id);
+    const loadOverviewStats = async () => {
+      if (!laminas.length) return;
+      
+      try {
+        const { data: cutsData, error } = await supabase
+          .from('serra_uso_cortes')
+          .select(`
+            serra_id,
+            quantidade_cortada,
+            data_corte,
+            serras!inner(codigo, status)
+          `);
+
+        if (error) throw error;
+
+        const today = new Date().toISOString().split('T')[0];
+        const cutsToday = cutsData?.filter(cut => 
+          cut.data_corte.startsWith(today)
+        ).reduce((sum, cut) => sum + cut.quantidade_cortada, 0) || 0;
+
+        const totalCuts = cutsData?.reduce((sum, cut) => sum + cut.quantidade_cortada, 0) || 0;
+        const activeBlades = laminas.filter(l => l.status === 'ativada').length;
+        const totalBlades = laminas.length;
+
+        setOverviewStats({
+          totalBlades,
+          activeBlades,
+          inactiveBlades: totalBlades - activeBlades,
+          cutsToday,
+          totalCuts,
+          averageCutsPerBlade: totalBlades > 0 ? Math.round(totalCuts / totalBlades) : 0
+        });
+      } catch (error) {
+        console.error('Error loading overview stats:', error);
+      }
+    };
+
+    loadOverviewStats();
+  }, [laminas]);
+
+  // Auto-select the first blade for individual management
+  useEffect(() => {
+    if (laminas.length > 0 && !selectedBladeId) {
+      setSelectedBladeId(laminas[0].id);
     }
-  }, [laminasAtivadas, selectedBladeId]);
+  }, [laminas, selectedBladeId]);
 
   // Load statistics when blade is selected
   useEffect(() => {
@@ -67,6 +119,37 @@ export const BladeManagement = ({
           });
         })
         .finally(() => setLoadingStats(false));
+    }
+  }, [selectedBladeId]);
+
+  // Load cuts for selected blade
+  useEffect(() => {
+    if (selectedBladeId) {
+      setLoadingCuts(true);
+      const loadBladeCuts = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('serra_uso_cortes')
+            .select(`
+              *,
+              projetos!inner(nome),
+              projeto_otimizacoes(nome_lista),
+              operadores(nome),
+              perfis_materiais(descricao_perfil)
+            `)
+            .eq('serra_id', selectedBladeId)
+            .order('data_corte', { ascending: false });
+
+          if (error) throw error;
+          setBladeCuts(data || []);
+        } catch (error) {
+          console.error('Error loading blade cuts:', error);
+        } finally {
+          setLoadingCuts(false);
+        }
+      };
+
+      loadBladeCuts();
     }
   }, [selectedBladeId]);
 
@@ -171,6 +254,10 @@ export const BladeManagement = ({
           query = query.eq('otimizacao_id', selectedOptimization);
         }
 
+        if (analysisBladeFilter && analysisBladeFilter !== "all") {
+          query = query.eq('serra_id', analysisBladeFilter);
+        }
+
         const { data, error } = await query.order('data_corte', { ascending: false });
 
         if (error) throw error;
@@ -220,14 +307,23 @@ export const BladeManagement = ({
     };
 
     loadFilteredData();
-  }, [selectedProject, selectedOptimization]);
+  }, [selectedProject, selectedOptimization, analysisBladeFilter]);
 
   const clearFilters = () => {
     setSelectedProject('all');
     setSelectedOptimization('all');
+    setAnalysisBladeFilter('all');
     setFilteredData([]);
     setFilteredStats({});
   };
+
+  // Filter blades based on search and status
+  const filteredBlades = laminas.filter(blade => {
+    const matchesSearch = searchTerm === '' || 
+      blade.codigo.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || blade.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   const currentBlade = laminas.find(blade => blade.id === selectedBladeId);
   
@@ -362,12 +458,53 @@ export const BladeManagement = ({
         </TabsList>
 
         <TabsContent value="management">
+          {/* Overview Statistics */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Scissors className="w-4 h-4 text-blue-600" />
+                  <span className="text-sm font-medium text-gray-600">Total de Lâminas</span>
+                </div>
+                <div className="text-2xl font-bold text-blue-600">{overviewStats.totalBlades || 0}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <CheckCircle className="w-4 h-4 text-green-600" />
+                  <span className="text-sm font-medium text-gray-600">Lâminas Ativas</span>
+                </div>
+                <div className="text-2xl font-bold text-green-600">{overviewStats.activeBlades || 0}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Activity className="w-4 h-4 text-orange-600" />
+                  <span className="text-sm font-medium text-gray-600">Cortes Hoje</span>
+                </div>
+                <div className="text-2xl font-bold text-orange-600">{overviewStats.cutsToday || 0}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="w-4 h-4 text-purple-600" />
+                  <span className="text-sm font-medium text-gray-600">Total de Cortes</span>
+                </div>
+                <div className="text-2xl font-bold text-purple-600">{overviewStats.totalCuts || 0}</div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Blade Management */}
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <Scissors className="w-5 h-5" />
-                  Gestão de Lâmina
+                  Gestão de Lâminas
                 </CardTitle>
                 <div className="flex gap-2">
                   <Button size="sm" variant="outline" onClick={() => onExport('blade-report')}>
@@ -385,91 +522,142 @@ export const BladeManagement = ({
                 </div>
               </div>
 
-              {/* Blade Selector */}
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mt-4">
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <label className="text-sm font-medium whitespace-nowrap">Lâmina:</label>
-                  <Select value={selectedBladeId} onValueChange={setSelectedBladeId}>
-                    <SelectTrigger className="w-full sm:w-[300px]">
-                      <SelectValue placeholder="Selecione uma lâmina" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {laminas.length === 0 ? (
-                        <SelectItem value="no-blades" disabled>Nenhuma lâmina cadastrada</SelectItem>
-                      ) : (
-                        laminas
-                          .sort((a, b) => {
-                            // Active blades first, then by code
-                            if (a.status === 'ativada' && b.status !== 'ativada') return -1;
-                            if (a.status !== 'ativada' && b.status === 'ativada') return 1;
-                            return a.codigo.localeCompare(b.codigo);
-                          })
-                          .map((blade) => (
-                            <SelectItem key={blade.id} value={blade.id}>
-                              <div className="flex items-center gap-2 w-full">
-                                <span>{blade.codigo}</span>
-                                <Badge className={getStatusColor(blade.status)} variant="outline">
-                                  {getStatusText(blade.status)}
-                                </Badge>
-                              </div>
-                            </SelectItem>
-                          ))
-                      )}
-                    </SelectContent>
-                  </Select>
+              {/* Search and Filters */}
+              <div className="flex flex-col sm:flex-row gap-4 mt-4">
+                <div className="flex items-center gap-2 flex-1">
+                  <Search className="w-4 h-4 text-gray-400" />
+                  <Input
+                    placeholder="Buscar por código da lâmina..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="flex-1"
+                  />
                 </div>
-
-                {currentBlade && (
-                  <div className="flex gap-2">
-                    {currentBlade.status === 'ativada' ? (
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleDeactivateBlade(currentBlade.id)}
-                        disabled={loading}
-                      >
-                        <PowerOff className="w-4 h-4 mr-1" />
-                        Desativar
-                      </Button>
-                    ) : (
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleActivateBlade(currentBlade.id)}
-                        disabled={loading}
-                      >
-                        <Power className="w-4 h-4 mr-1" />
-                        Ativar
-                      </Button>
-                    )}
-                    {currentBlade.status !== 'descartada' && (
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleDiscardBlade(currentBlade.id)}
-                        disabled={loading}
-                      >
-                        <Trash2 className="w-4 h-4 mr-1" />
-                        Descartar
-                      </Button>
-                    )}
-                  </div>
-                )}
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-48">
+                    <SelectValue placeholder="Filtrar por status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os Status</SelectItem>
+                    <SelectItem value="ativada">Ativada</SelectItem>
+                    <SelectItem value="desativada">Desativada</SelectItem>
+                    <SelectItem value="descartada">Descartada</SelectItem>
+                    <SelectItem value="substituida">Substituída</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </CardHeader>
             <CardContent>
-              {loading || loadingStats ? (
+              {/* Blade List */}
+              {loading ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                    <p className="text-sm text-gray-600">Carregando dados da lâmina...</p>
+                    <p className="text-sm text-gray-600">Carregando lâminas...</p>
                   </div>
                 </div>
-              ) : !currentBlade ? (
+              ) : filteredBlades.length === 0 ? (
                 <div className="text-center py-8">
-                  <p className="text-gray-600">Selecione uma lâmina para visualizar suas informações.</p>
+                  <p className="text-gray-600">
+                    {laminas.length === 0 
+                      ? "Nenhuma lâmina cadastrada no sistema."
+                      : "Nenhuma lâmina encontrada com os filtros aplicados."
+                    }
+                  </p>
                 </div>
               ) : (
+                <div className="space-y-4">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Código</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Data Instalação</TableHead>
+                        <TableHead>Cortes Hoje</TableHead>
+                        <TableHead>Total Cortes</TableHead>
+                        <TableHead>Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredBlades.map((blade) => {
+                        // Calculate today's cuts for this blade
+                        const today = new Date().toISOString().split('T')[0];
+                        const todayCuts = overviewStats.cutsToday || 0; // Using overview stats for performance
+
+                        return (
+                          <TableRow 
+                            key={blade.id}
+                            className={selectedBladeId === blade.id ? "bg-blue-50" : ""}
+                          >
+                            <TableCell>
+                              <Button
+                                variant="ghost"
+                                onClick={() => setSelectedBladeId(blade.id)}
+                                className="text-left p-0 h-auto font-medium text-blue-600 hover:text-blue-800"
+                              >
+                                {blade.codigo}
+                              </Button>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={getStatusColor(blade.status)} variant="outline">
+                                {getStatusText(blade.status)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {new Date(blade.data_instalacao).toLocaleDateString('pt-BR')}
+                            </TableCell>
+                             <TableCell>
+                               {selectedBladeId === blade.id ? cutsToday : '-'}
+                             </TableCell>
+                            <TableCell>
+                              {bladeStats && selectedBladeId === blade.id 
+                                ? bladeStats.total_pecas_cortadas 
+                                : '-'
+                              }
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex gap-1">
+                                {blade.status === 'ativada' ? (
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => handleDeactivateBlade(blade.id)}
+                                    disabled={loading}
+                                  >
+                                    <PowerOff className="w-3 h-3" />
+                                  </Button>
+                                ) : (
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => handleActivateBlade(blade.id)}
+                                    disabled={loading}
+                                  >
+                                    <Power className="w-3 h-3" />
+                                  </Button>
+                                )}
+                                {blade.status !== 'descartada' && (
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline"
+                                    onClick={() => handleDiscardBlade(blade.id)}
+                                    disabled={loading}
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </Button>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+
+              {/* Selected Blade Details */}
+              {selectedBladeId && !loading && (
                 <>
                   {/* Status da Lâmina */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -668,7 +856,7 @@ export const BladeManagement = ({
                   Filtros de Análise
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
                     <label className="text-sm font-medium">Projeto:</label>
                     <Select value={selectedProject} onValueChange={setSelectedProject}>
@@ -707,11 +895,28 @@ export const BladeManagement = ({
                     </Select>
                   </div>
 
+                  <div>
+                    <label className="text-sm font-medium">Lâmina:</label>
+                    <Select value={analysisBladeFilter} onValueChange={setAnalysisBladeFilter}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Todas as lâminas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todas as lâminas</SelectItem>
+                        {laminas.map((blade) => (
+                          <SelectItem key={blade.id} value={blade.id}>
+                            {blade.codigo} - {getStatusText(blade.status)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div className="flex items-end">
                     <Button 
                       variant="outline" 
                       onClick={clearFilters}
-                      disabled={(!selectedProject || selectedProject === "all") && (!selectedOptimization || selectedOptimization === "all")}
+                      disabled={(!selectedProject || selectedProject === "all") && (!selectedOptimization || selectedOptimization === "all") && (!analysisBladeFilter || analysisBladeFilter === "all")}
                     >
                       Limpar Filtros
                     </Button>
