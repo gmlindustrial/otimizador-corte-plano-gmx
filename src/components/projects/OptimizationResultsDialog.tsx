@@ -29,7 +29,7 @@ export const OptimizationResultsDialog = ({ open, onOpenChange, results, barLeng
             Visualize o plano de corte otimizado e as estatísticas detalhadas do projeto.
           </DialogDescription>
         </DialogHeader>
-        <OptimizationResults results={results} barLength={barLength} project={project} pieces={[]} onResultsChange={handleResultsChange} listName={listName} />
+        <OptimizationResults results={results} barLength={barLength} project={project} pieces={[]} onResultsChange={handleResultsChange} listName={listName} optimizationId={optimizationId} />
       </DialogContent>
     </Dialog>
   );

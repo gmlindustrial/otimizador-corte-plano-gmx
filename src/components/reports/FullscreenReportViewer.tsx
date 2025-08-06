@@ -23,6 +23,7 @@ interface FullscreenReportViewerProps {
   barLength: number;
   project: Project | null;
   onResultsChange?: (results: OptimizationResult) => void;
+  optimizationId?: string;
 }
 
 export const FullscreenReportViewer = ({
@@ -31,7 +32,8 @@ export const FullscreenReportViewer = ({
   results,
   barLength,
   project,
-  onResultsChange
+  onResultsChange,
+  optimizationId
 }: FullscreenReportViewerProps) => {
   const [selectedBar, setSelectedBar] = useState<number>(0);
   const { logPieceAction } = useAuditLogger();
@@ -210,6 +212,7 @@ export const FullscreenReportViewer = ({
           await registrarCorteCompleto({
             serra_id: selectedLamina,
             projeto_id: project.id || '',
+            otimizacao_id: optimizationId,
             quantidade_cortada: piece.quantidade || 1,
             peca_posicao: piece.posicao || 'Manual',
             peca_tag: piece.tag,

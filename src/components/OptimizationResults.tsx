@@ -18,6 +18,7 @@ interface OptimizationResultsProps {
   onResultsChange?: (results: OptimizationResult) => void;
   listName?: string;
   pecasComEmenda?: PecaComEmenda[];
+  optimizationId?: string;
 }
 
 // Interface estendida para suportar informações de sustentabilidade
@@ -37,7 +38,8 @@ export const OptimizationResults = ({
   pieces,
   onResultsChange,
   listName,
-  pecasComEmenda = []
+  pecasComEmenda = [],
+  optimizationId
 }: OptimizationResultsProps) => {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
@@ -462,6 +464,6 @@ export const OptimizationResults = ({
       </div>
 
       {/* Fullscreen Viewer */}
-      <FullscreenReportViewer isOpen={showFullscreen} onClose={() => setShowFullscreen(false)} results={results} barLength={barLength} project={project} onResultsChange={onResultsChange} />
+      <FullscreenReportViewer isOpen={showFullscreen} onClose={() => setShowFullscreen(false)} results={results} barLength={barLength} project={project} onResultsChange={onResultsChange} optimizationId={optimizationId} />
     </>;
 };
