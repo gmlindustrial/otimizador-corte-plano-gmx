@@ -10,6 +10,62 @@ export class LaminaService extends BaseService<Lamina> {
     super('serras');
   }
 
+  async create(request: { data: Omit<Lamina, 'id' | 'created_at'> }): Promise<ServiceResponse<Lamina>> {
+    try {
+      const { data } = request;
+      
+      // Se a nova lâmina está sendo criada como ativada, desativar todas as outras primeiro
+      if (data.status === 'ativada') {
+        await this.supabase
+          .from('serras')
+          .update({ 
+            status: 'desativada',
+            updated_at: new Date().toISOString() 
+          })
+          .eq('status', 'ativada');
+      }
+
+      // Criar a nova lâmina
+      const { data: novaLamina, error } = await this.supabase
+        .from('serras')
+        .insert([data])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Se foi criada como ativada, registrar no histórico
+      if (data.status === 'ativada') {
+        await this.supabase
+          .from('serra_status_historico')
+          .insert([{
+            serra_id: novaLamina.id,
+            status_anterior: null,
+            status_novo: 'ativada',
+            data_mudanca: new Date().toISOString(),
+            motivo: 'Lâmina criada como ativada'
+          }]);
+
+        ErrorHandler.handleSuccess('Lâmina criada e ativada com sucesso');
+      } else {
+        ErrorHandler.handleSuccess('Lâmina criada com sucesso');
+      }
+
+      return {
+        data: novaLamina as Lamina,
+        error: null,
+        success: true
+      };
+    } catch (error) {
+      const errorMessage = ErrorHandler.handle(error, 'Erro ao criar lâmina');
+      return {
+        data: null,
+        error: errorMessage,
+        success: false
+      };
+    }
+  }
+
   async getAtivadas(): Promise<ListResponse<Lamina>> {
     try {
       const { data, error } = await this.supabase
