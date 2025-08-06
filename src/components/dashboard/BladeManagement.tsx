@@ -58,7 +58,7 @@ export const BladeManagement = ({
         })
         .finally(() => setLoadingStats(false));
     }
-  }, [selectedBladeId, getEstatisticas, toast]);
+  }, [selectedBladeId]); // Removed getEstatisticas and toast from dependencies
 
   const currentBlade = laminas.find(blade => blade.id === selectedBladeId);
   
