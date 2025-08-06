@@ -219,7 +219,7 @@ export const BladeManagement = ({
                 </SelectTrigger>
                 <SelectContent>
                   {laminas.length === 0 ? (
-                    <SelectItem value="" disabled>Nenhuma lâmina cadastrada</SelectItem>
+                    <SelectItem value="no-blades" disabled>Nenhuma lâmina cadastrada</SelectItem>
                   ) : (
                     laminas
                       .sort((a, b) => {
@@ -235,19 +235,6 @@ export const BladeManagement = ({
                             <Badge className={getStatusColor(blade.status)} variant="outline">
                               {getStatusText(blade.status)}
                             </Badge>
-                            {blade.status === 'desativada' && (
-                              <Button 
-                                size="sm" 
-                                variant="ghost" 
-                                className="h-6 px-2 text-xs"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleActivateBlade(blade.id);
-                                }}
-                              >
-                                Ativar
-                              </Button>
-                            )}
                           </div>
                         </SelectItem>
                       ))
