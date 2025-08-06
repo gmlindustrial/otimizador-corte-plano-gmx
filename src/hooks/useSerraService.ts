@@ -5,7 +5,7 @@ import type { Serra, SerraEstatisticas, SerraUsoCorte } from '@/services/interfa
 
 export const useSerraService = () => {
   const [serras, setSerras] = useState<Serra[]>([]);
-  const [serrasAtivas, setSerrasAtivas] = useState<Serra[]>([]);
+  const [serrasAtivadas, setSerrasAtivadas] = useState<Serra[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,19 +27,19 @@ export const useSerraService = () => {
     }
   }, []);
 
-  const fetchSerrasAtivas = useCallback(async () => {
+  const fetchSerrasAtivadas = useCallback(async () => {
     setLoading(true);
     setError(null);
     
     try {
-      const response = await serraService.getAtivas();
+      const response = await serraService.getAtivadas();
       if (response.success) {
-        setSerrasAtivas(response.data);
+        setSerrasAtivadas(response.data);
       } else {
         setError(response.error);
       }
     } catch (err) {
-      setError('Erro ao carregar serras ativas');
+      setError('Erro ao carregar serras ativadas');
     } finally {
       setLoading(false);
     }
@@ -53,19 +53,20 @@ export const useSerraService = () => {
       const response = await serraService.create({ data: serra });
       if (response.success) {
         await fetchSerras();
-        await fetchSerrasAtivas();
-        return response.data;
+        await fetchSerrasAtivadas();
+        return { success: true, data: response.data };
       } else {
         setError(response.error);
-        return null;
+        return { success: false, error: response.error };
       }
     } catch (err) {
-      setError('Erro ao criar serra');
-      return null;
+      const error = 'Erro ao criar serra';
+      setError(error);
+      return { success: false, error };
     } finally {
       setLoading(false);
     }
-  }, [fetchSerras, fetchSerrasAtivas]);
+  }, [fetchSerras, fetchSerrasAtivadas]);
 
   const updateSerra = useCallback(async (id: string, serra: Partial<Serra>) => {
     setLoading(true);
@@ -75,68 +76,89 @@ export const useSerraService = () => {
       const response = await serraService.update({ id, data: serra });
       if (response.success) {
         await fetchSerras();
-        await fetchSerrasAtivas();
-        return response.data;
+        await fetchSerrasAtivadas();
+        return { success: true, data: response.data };
       } else {
         setError(response.error);
-        return null;
+        return { success: false, error: response.error };
       }
     } catch (err) {
-      setError('Erro ao atualizar serra');
-      return null;
+      const error = 'Erro ao atualizar serra';
+      setError(error);
+      return { success: false, error };
     } finally {
       setLoading(false);
     }
-  }, [fetchSerras, fetchSerrasAtivas]);
+  }, [fetchSerras, fetchSerrasAtivadas]);
 
-  const substituirSerra = useCallback(async (
-    serraAnteriorId: string, 
-    novaSerraData: Omit<Serra, 'id' | 'created_at' | 'updated_at'>, 
-    motivo: string, 
-    operadorId?: string
-  ) => {
+  const ativarSerra = useCallback(async (serraId: string) => {
     setLoading(true);
     setError(null);
     
     try {
-      const response = await serraService.substituir(serraAnteriorId, novaSerraData, motivo, operadorId);
+      const response = await serraService.ativar(serraId);
       if (response.success) {
         await fetchSerras();
-        await fetchSerrasAtivas();
-        return response.data;
+        await fetchSerrasAtivadas();
+        return response;
       } else {
         setError(response.error);
-        return null;
+        return response;
       }
     } catch (err) {
-      setError('Erro ao substituir serra');
-      return null;
+      const error = 'Erro ao ativar serra';
+      setError(error);
+      return { success: false, error, data: null };
     } finally {
       setLoading(false);
     }
-  }, [fetchSerras, fetchSerrasAtivas]);
+  }, [fetchSerras, fetchSerrasAtivadas]);
 
-  const reativarSerra = useCallback(async (serraId: string) => {
+  const desativarSerra = useCallback(async (serraId: string) => {
     setLoading(true);
     setError(null);
     
     try {
-      const response = await serraService.reativar(serraId);
+      const response = await serraService.desativar(serraId);
       if (response.success) {
         await fetchSerras();
-        await fetchSerrasAtivas();
-        return response.data;
+        await fetchSerrasAtivadas();
+        return response;
       } else {
         setError(response.error);
-        return null;
+        return response;
       }
     } catch (err) {
-      setError('Erro ao reativar serra');
-      return null;
+      const error = 'Erro ao desativar serra';
+      setError(error);
+      return { success: false, error, data: null };
     } finally {
       setLoading(false);
     }
-  }, [fetchSerras, fetchSerrasAtivas]);
+  }, [fetchSerras, fetchSerrasAtivadas]);
+
+  const descartarSerra = useCallback(async (serraId: string, motivo: string, operadorId?: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await serraService.descartar(serraId, motivo, operadorId);
+      if (response.success) {
+        await fetchSerras();
+        await fetchSerrasAtivadas();
+        return response;
+      } else {
+        setError(response.error);
+        return response;
+      }
+    } catch (err) {
+      const error = 'Erro ao descartar serra';
+      setError(error);
+      return { success: false, error, data: null };
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchSerras, fetchSerrasAtivadas]);
 
   const registrarCorteCompleto = useCallback(async (data: {
     serra_id: string;
@@ -211,22 +233,23 @@ export const useSerraService = () => {
 
   useEffect(() => {
     fetchSerras();
-    fetchSerrasAtivas();
-  }, [fetchSerras, fetchSerrasAtivas]);
+    fetchSerrasAtivadas();
+  }, [fetchSerras, fetchSerrasAtivadas]);
 
   return {
     serras,
-    serrasAtivas,
+    serrasAtivadas,
     loading,
     error,
     createSerra,
     updateSerra,
-    substituirSerra,
-    reativarSerra,
+    ativarSerra,
+    desativarSerra,
+    descartarSerra,
     getEstatisticas,
     registrarCorte,
     registrarCorteCompleto,
     refetch: fetchSerras,
-    refetchAtivas: fetchSerrasAtivas
+    refetchAtivadas: fetchSerrasAtivadas
   };
 };

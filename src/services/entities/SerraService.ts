@@ -10,12 +10,12 @@ export class SerraService extends BaseService<Serra> {
     super('serras');
   }
 
-  async getAtivas(): Promise<ListResponse<Serra>> {
+  async getAtivadas(): Promise<ListResponse<Serra>> {
     try {
       const { data, error } = await this.supabase
         .from('serras')
         .select('*')
-        .eq('status', 'ativa')
+        .eq('status', 'ativada')
         .order('codigo');
 
       if (error) throw error;
@@ -27,7 +27,7 @@ export class SerraService extends BaseService<Serra> {
         total: data?.length || 0
       };
     } catch (error) {
-      const errorMessage = ErrorHandler.handle(error, 'Erro ao buscar serras ativas');
+      const errorMessage = ErrorHandler.handle(error, 'Erro ao buscar serras ativadas');
       return {
         data: [],
         error: errorMessage,
@@ -98,76 +98,9 @@ export class SerraService extends BaseService<Serra> {
     }
   }
 
-  async substituir(serraAnteriorId: string, novaSerraData: Omit<Serra, 'id' | 'created_at' | 'updated_at'>, motivo: string, operadorId?: string): Promise<ServiceResponse<{ serra: Serra; substituicao: any }>> {
+  async ativar(serraId: string): Promise<ServiceResponse<Serra>> {
     try {
-      // Buscar serra anterior para verificar status
-      const { data: serraAnterior, error: serraError } = await this.supabase
-        .from('serras')
-        .select('*')
-        .eq('id', serraAnteriorId)
-        .single();
-
-      if (serraError) throw serraError;
-
-      // Criar nova serra
-      const { data: novaSerra, error: novaSerraError } = await this.supabase
-        .from('serras')
-        .insert([novaSerraData])
-        .select()
-        .single();
-
-      if (novaSerraError) throw novaSerraError;
-
-      // Determinar novo status da serra anterior baseado no motivo
-      let novoStatus: Serra['status'] = 'substituida';
-      if (motivo.toLowerCase().includes('cega')) {
-        novoStatus = 'cega';
-      } else if (motivo.toLowerCase().includes('quebrada') || motivo.toLowerCase().includes('quebrou')) {
-        novoStatus = 'quebrada';
-      }
-
-      // Marcar serra anterior com status apropriado
-      const { error: updateError } = await this.supabase
-        .from('serras')
-        .update({ status: novoStatus })
-        .eq('id', serraAnteriorId);
-
-      if (updateError) throw updateError;
-
-      // Registrar substituição
-      const { data: substituicao, error: substError } = await this.supabase
-        .from('serra_substituicoes')
-        .insert([{
-          serra_anterior_id: serraAnteriorId,
-          serra_nova_id: novaSerra.id,
-          motivo,
-          operador_id: operadorId
-        }])
-        .select()
-        .single();
-
-      if (substError) throw substError;
-
-      ErrorHandler.handleSuccess(`Serra substituída com sucesso. Status da serra anterior: ${novoStatus}`);
-
-      return {
-        data: { serra: novaSerra as Serra, substituicao },
-        error: null,
-        success: true
-      };
-    } catch (error) {
-      const errorMessage = ErrorHandler.handle(error, 'Erro ao substituir serra');
-      return {
-        data: null,
-        error: errorMessage,
-        success: false
-      };
-    }
-  }
-
-  async reativar(serraId: string): Promise<ServiceResponse<Serra>> {
-    try {
-      // Buscar serra para verificar se pode ser reativada
+      // Verificar se a serra existe e pode ser ativada
       const { data: serra, error: serraError } = await this.supabase
         .from('serras')
         .select('*')
@@ -176,34 +109,123 @@ export class SerraService extends BaseService<Serra> {
 
       if (serraError) throw serraError;
 
-      // Verificar se a serra pode ser reativada
-      if (serra.status === 'cega' || serra.status === 'quebrada') {
-        throw new Error(`Serra não pode ser reativada. Status: ${serra.status}. Serras cegas ou quebradas não podem ser reutilizadas.`);
+      if (serra.status === 'descartada') {
+        throw new Error('Serras descartadas não podem ser ativadas');
       }
 
-      if (serra.status === 'ativa') {
-        throw new Error('Serra já está ativa');
+      if (serra.status === 'ativada') {
+        throw new Error('Serra já está ativada');
       }
 
-      // Reativar serra
-      const { data: serraAtualizada, error: updateError } = await this.supabase
+      // Desativar todas as outras serras primeiro
+      const { error: desativarError } = await this.supabase
         .from('serras')
-        .update({ status: 'ativa' })
+        .update({ status: 'desativada' })
+        .eq('status', 'ativada');
+
+      if (desativarError) throw desativarError;
+
+      // Ativar a serra selecionada
+      const { data: serraAtivada, error: ativarError } = await this.supabase
+        .from('serras')
+        .update({ status: 'ativada' })
+        .eq('id', serraId)
+        .select()
+        .single();
+
+      if (ativarError) throw ativarError;
+
+      ErrorHandler.handleSuccess('Serra ativada com sucesso. Outras serras foram automaticamente desativadas.');
+
+      return {
+        data: serraAtivada as Serra,
+        error: null,
+        success: true
+      };
+    } catch (error) {
+      const errorMessage = ErrorHandler.handle(error, 'Erro ao ativar serra');
+      return {
+        data: null,
+        error: errorMessage,
+        success: false
+      };
+    }
+  }
+
+  async desativar(serraId: string): Promise<ServiceResponse<Serra>> {
+    try {
+      const { data: serraDesativada, error } = await this.supabase
+        .from('serras')
+        .update({ status: 'desativada' })
+        .eq('id', serraId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      ErrorHandler.handleSuccess('Serra desativada com sucesso');
+
+      return {
+        data: serraDesativada as Serra,
+        error: null,
+        success: true
+      };
+    } catch (error) {
+      const errorMessage = ErrorHandler.handle(error, 'Erro ao desativar serra');
+      return {
+        data: null,
+        error: errorMessage,
+        success: false
+      };
+    }
+  }
+
+  async descartar(serraId: string, motivo: string, operadorId?: string): Promise<ServiceResponse<Serra>> {
+    try {
+      // Verificar se a serra existe
+      const { data: serra, error: serraError } = await this.supabase
+        .from('serras')
+        .select('*')
+        .eq('id', serraId)
+        .single();
+
+      if (serraError) throw serraError;
+
+      if (serra.status === 'descartada') {
+        throw new Error('Serra já está descartada');
+      }
+
+      // Registrar substituição como descarte
+      const { error: substError } = await this.supabase
+        .from('serra_substituicoes')
+        .insert([{
+          serra_anterior_id: serraId,
+          serra_nova_id: serraId, // Mesmo ID para indicar descarte
+          motivo,
+          operador_id: operadorId
+        }]);
+
+      if (substError) throw substError;
+
+      // Descartar serra
+      const { data: serraDescartada, error: updateError } = await this.supabase
+        .from('serras')
+        .update({ status: 'descartada' })
         .eq('id', serraId)
         .select()
         .single();
 
       if (updateError) throw updateError;
 
-      ErrorHandler.handleSuccess('Serra reativada com sucesso');
+      ErrorHandler.handleSuccess('Serra descartada com sucesso');
 
       return {
-        data: serraAtualizada as Serra,
+        data: serraDescartada as Serra,
         error: null,
         success: true
       };
     } catch (error) {
-      const errorMessage = ErrorHandler.handle(error, 'Erro ao reativar serra');
+      const errorMessage = ErrorHandler.handle(error, 'Erro ao descartar serra');
       return {
         data: null,
         error: errorMessage,

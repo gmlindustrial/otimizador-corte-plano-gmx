@@ -3,7 +3,7 @@ import type { BaseEntity } from "../base/types";
 export interface Serra extends BaseEntity {
   codigo: string;
   data_instalacao: string;
-  status: 'ativa' | 'substituida' | 'manutencao' | 'cega' | 'quebrada';
+  status: 'ativada' | 'desativada' | 'descartada';
   observacoes?: string;
   updated_at?: string;
 }
