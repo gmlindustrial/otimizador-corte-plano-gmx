@@ -16,29 +16,33 @@ import { operadorService } from '@/services';
 import type { Lamina, LaminaEstatisticas } from '@/services/interfaces/lamina';
 import type { Operador } from '@/services/interfaces';
 import { toast } from '@/hooks/use-toast';
-
 export const LaminaManagement = () => {
-  const { 
-    laminas, 
-    loading, 
-    error, 
-    createLamina, 
-    ativarLamina, 
-    desativarLamina, 
+  const {
+    laminas,
+    loading,
+    error,
+    createLamina,
+    ativarLamina,
+    desativarLamina,
     descartarLamina,
     getEstatisticas,
-    refetch 
+    refetch
   } = useLaminaService();
-
   const [operadores, setOperadores] = useState<Operador[]>([]);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
   const [isStatsDialogOpen, setIsStatsDialogOpen] = useState(false);
   const [selectedLamina, setSelectedLamina] = useState<Lamina | null>(null);
-  const [formData, setFormData] = useState({ codigo: '', status: 'ativada', observacoes: '' });
-  const [discardData, setDiscardData] = useState({ motivo: '', operadorId: '' });
+  const [formData, setFormData] = useState({
+    codigo: '',
+    status: 'ativada',
+    observacoes: ''
+  });
+  const [discardData, setDiscardData] = useState({
+    motivo: '',
+    operadorId: ''
+  });
   const [stats, setStats] = useState<LaminaEstatisticas | null>(null);
-
   useEffect(() => {
     const fetchOperadores = async () => {
       const response = await operadorService.getAll();
@@ -48,7 +52,6 @@ export const LaminaManagement = () => {
     };
     fetchOperadores();
   }, []);
-
   const handleCreateLamina = async () => {
     const response = await createLamina({
       codigo: formData.codigo,
@@ -56,81 +59,77 @@ export const LaminaManagement = () => {
       data_instalacao: new Date().toISOString(),
       observacoes: formData.observacoes || undefined
     });
-
     if (response.success) {
       setIsCreateDialogOpen(false);
-      setFormData({ codigo: '', status: 'ativada', observacoes: '' });
+      setFormData({
+        codigo: '',
+        status: 'ativada',
+        observacoes: ''
+      });
       toast({
         title: "Sucesso",
-        description: "Lâmina criada com sucesso!",
+        description: "Lâmina criada com sucesso!"
       });
     } else {
       toast({
         title: "Erro",
         description: response.error || "Erro ao criar lâmina",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const handleAtivar = async (lamina: Lamina) => {
     const response = await ativarLamina(lamina.id);
     if (response.success) {
       toast({
         title: "Sucesso",
-        description: "Lâmina ativada com sucesso!",
+        description: "Lâmina ativada com sucesso!"
       });
     } else {
       toast({
         title: "Erro",
         description: response.error || "Erro ao ativar lâmina",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const handleDesativar = async (lamina: Lamina) => {
     const response = await desativarLamina(lamina.id);
     if (response.success) {
       toast({
         title: "Sucesso",
-        description: "Lâmina desativada com sucesso!",
+        description: "Lâmina desativada com sucesso!"
       });
     } else {
       toast({
         title: "Erro",
         description: response.error || "Erro ao desativar lâmina",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const handleDescartar = async () => {
     if (!selectedLamina || !discardData.motivo) return;
-
-    const response = await descartarLamina(
-      selectedLamina.id, 
-      discardData.motivo, 
-      discardData.operadorId || undefined
-    );
-
+    const response = await descartarLamina(selectedLamina.id, discardData.motivo, discardData.operadorId || undefined);
     if (response.success) {
       setIsDiscardDialogOpen(false);
       setSelectedLamina(null);
-      setDiscardData({ motivo: '', operadorId: '' });
+      setDiscardData({
+        motivo: '',
+        operadorId: ''
+      });
       toast({
         title: "Sucesso",
-        description: "Lâmina descartada com sucesso!",
+        description: "Lâmina descartada com sucesso!"
       });
     } else {
       toast({
         title: "Erro",
         description: response.error || "Erro ao descartar lâmina",
-        variant: "destructive",
+        variant: "destructive"
       });
     }
   };
-
   const handleViewStats = async (lamina: Lamina) => {
     const statistics = await getEstatisticas(lamina.id);
     if (statistics) {
@@ -139,7 +138,6 @@ export const LaminaManagement = () => {
       setIsStatsDialogOpen(true);
     }
   };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'ativada':
@@ -154,23 +152,17 @@ export const LaminaManagement = () => {
         return <Badge variant="outline">{status}</Badge>;
     }
   };
-
   const totalLaminas = laminas.length;
   const laminasAtivadas = laminas.filter(s => s.status === 'ativada').length;
   const laminasDesativadas = laminas.filter(s => s.status === 'desativada').length;
   const laminasDescartadas = laminas.filter(s => s.status === 'descartada').length;
-
   if (error) {
-    return (
-      <div className="p-6 text-center">
+    return <div className="p-6 text-center">
         <p className="text-destructive">Erro: {error}</p>
         <Button onClick={refetch} className="mt-4">Tentar Novamente</Button>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="space-y-6 p-6">
+  return <div className="space-y-6 p-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Controle de Lâminas</h1>
@@ -193,16 +185,17 @@ export const LaminaManagement = () => {
             <div className="space-y-4">
               <div>
                 <Label htmlFor="codigo">Código da Lâmina</Label>
-                <Input
-                  id="codigo"
-                  value={formData.codigo}
-                  onChange={(e) => setFormData({ ...formData, codigo: e.target.value })}
-                  placeholder="Ex: LAMINA-001"
-                />
+                <Input id="codigo" value={formData.codigo} onChange={e => setFormData({
+                ...formData,
+                codigo: e.target.value
+              })} placeholder="Ex: LAMINA-001" />
               </div>
               <div>
                 <Label htmlFor="status">Status Inicial</Label>
-                <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                <Select value={formData.status} onValueChange={value => setFormData({
+                ...formData,
+                status: value
+              })}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -214,12 +207,10 @@ export const LaminaManagement = () => {
               </div>
               <div>
                 <Label htmlFor="observacoes">Observações</Label>
-                <Textarea
-                  id="observacoes"
-                  value={formData.observacoes}
-                  onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                  placeholder="Informações adicionais sobre a lâmina..."
-                />
+                <Textarea id="observacoes" value={formData.observacoes} onChange={e => setFormData({
+                ...formData,
+                observacoes: e.target.value
+              })} placeholder="Informações adicionais sobre a lâmina..." />
               </div>
             </div>
             <DialogFooter>
@@ -290,17 +281,11 @@ export const LaminaManagement = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
-                <TableRow>
+              {loading ? <TableRow>
                   <TableCell colSpan={5} className="text-center">Carregando...</TableCell>
-                </TableRow>
-              ) : laminas.length === 0 ? (
-                <TableRow>
+                </TableRow> : laminas.length === 0 ? <TableRow>
                   <TableCell colSpan={5} className="text-center">Nenhuma lâmina cadastrada</TableCell>
-                </TableRow>
-              ) : (
-                laminas.map((lamina) => (
-                  <TableRow key={lamina.id}>
+                </TableRow> : laminas.map(lamina => <TableRow key={lamina.id}>
                     <TableCell className="font-medium">{lamina.codigo}</TableCell>
                     <TableCell>{getStatusBadge(lamina.status)}</TableCell>
                     <TableCell>
@@ -321,42 +306,29 @@ export const LaminaManagement = () => {
                             <Eye className="mr-2 h-4 w-4" />
                             Ver Estatísticas
                           </DropdownMenuItem>
-                          {lamina.status === 'desativada' && (
-                            <DropdownMenuItem onClick={() => handleAtivar(lamina)}>
+                          {lamina.status === 'desativada' && <DropdownMenuItem onClick={() => handleAtivar(lamina)}>
                               <Play className="mr-2 h-4 w-4" />
                               Ativar
-                            </DropdownMenuItem>
-                          )}
-                          {lamina.status === 'ativada' && (
-                            <DropdownMenuItem onClick={() => handleDesativar(lamina)}>
+                            </DropdownMenuItem>}
+                          {lamina.status === 'ativada' && <DropdownMenuItem onClick={() => handleDesativar(lamina)}>
                               <Pause className="mr-2 h-4 w-4" />
                               Desativar
-                            </DropdownMenuItem>
-                          )}
-                          {lamina.status === 'substituida' && (
-                            <DropdownMenuItem onClick={() => handleAtivar(lamina)}>
+                            </DropdownMenuItem>}
+                          {lamina.status === 'substituida' && <DropdownMenuItem onClick={() => handleAtivar(lamina)}>
                               <RotateCcw className="mr-2 h-4 w-4" />
                               Reativar
-                            </DropdownMenuItem>
-                          )}
-                          {(lamina.status === 'ativada' || lamina.status === 'desativada') && (
-                            <DropdownMenuItem
-                              onClick={() => {
-                                setSelectedLamina(lamina);
-                                setIsDiscardDialogOpen(true);
-                              }}
-                              className="text-destructive"
-                            >
+                            </DropdownMenuItem>}
+                          {(lamina.status === 'ativada' || lamina.status === 'desativada') && <DropdownMenuItem onClick={() => {
+                      setSelectedLamina(lamina);
+                      setIsDiscardDialogOpen(true);
+                    }} className="text-destructive">
                               <Trash2 className="mr-2 h-4 w-4" />
                               Descartar
-                            </DropdownMenuItem>
-                          )}
+                            </DropdownMenuItem>}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
-                  </TableRow>
-                ))
-              )}
+                  </TableRow>)}
             </TableBody>
           </Table>
         </CardContent>
@@ -375,39 +347,31 @@ export const LaminaManagement = () => {
           <div className="space-y-4">
             <div>
               <Label htmlFor="motivo">Motivo do Descarte *</Label>
-              <Textarea
-                id="motivo"
-                value={discardData.motivo}
-                onChange={(e) => setDiscardData({ ...discardData, motivo: e.target.value })}
-                placeholder="Lâmina cega, quebrada, desgaste excessivo..."
-              />
+              <Textarea id="motivo" value={discardData.motivo} onChange={e => setDiscardData({
+              ...discardData,
+              motivo: e.target.value
+            })} placeholder="Lâmina cega, quebrada, desgaste excessivo..." />
             </div>
             <div>
               <Label htmlFor="operador">Responsável (Opcional)</Label>
-              <Select 
-                value={discardData.operadorId} 
-                onValueChange={(value) => setDiscardData({ ...discardData, operadorId: value })}
-              >
+              <Select value={discardData.operadorId} onValueChange={value => setDiscardData({
+              ...discardData,
+              operadorId: value
+            })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione um operador" />
                 </SelectTrigger>
                 <SelectContent>
-                  {operadores.map((operador) => (
-                    <SelectItem key={operador.id} value={operador.id}>
+                  {operadores.map(operador => <SelectItem key={operador.id} value={operador.id}>
                       {operador.nome}
-                    </SelectItem>
-                  ))}
+                    </SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDescartar}
-              disabled={!discardData.motivo}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogAction onClick={handleDescartar} disabled={!discardData.motivo} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
               Confirmar Descarte
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -424,8 +388,7 @@ export const LaminaManagement = () => {
             </DialogDescription>
           </DialogHeader>
           
-          {stats && (
-            <div className="space-y-6">
+          {stats && <div className="space-y-6">
               {/* Métricas Temporais */}
               <div>
                 <h3 className="text-lg font-semibold mb-3">Métricas Temporais</h3>
@@ -455,20 +418,15 @@ export const LaminaManagement = () => {
                     <div className="text-2xl font-bold text-green-600">{stats.projetos_utilizados}</div>
                     <div className="text-sm text-muted-foreground">Projetos Utilizados</div>
                   </div>
-                  <div className="text-center p-4 border rounded">
-                    <div className="text-2xl font-bold text-purple-600">{stats.substituicoes.length}</div>
-                    <div className="text-sm text-muted-foreground">Substituições</div>
-                  </div>
+                  
                 </div>
               </div>
 
               {/* Detalhamento de Projetos */}
-              {stats.projetos_detalhados.length > 0 && (
-                <div>
+              {stats.projetos_detalhados.length > 0 && <div>
                   <h3 className="text-lg font-semibold mb-3">Projetos Detalhados</h3>
                   <div className="space-y-3">
-                    {stats.projetos_detalhados.map((projeto, index) => (
-                      <div key={index} className="border rounded p-3">
+                    {stats.projetos_detalhados.map((projeto, index) => <div key={index} className="border rounded p-3">
                         <div className="flex justify-between items-center mb-2">
                           <h4 className="font-medium">{projeto.projeto_nome}</h4>
                           <Badge variant="outline">{projeto.total_pecas_projeto} peças</Badge>
@@ -477,19 +435,15 @@ export const LaminaManagement = () => {
                           <p>Período: {new Date(projeto.data_primeiro_uso).toLocaleDateString('pt-BR')} - {new Date(projeto.data_ultimo_uso).toLocaleDateString('pt-BR')}</p>
                           <p>Listas de Otimização: {projeto.listas_otimizacao.length}</p>
                         </div>
-                      </div>
-                    ))}
+                      </div>)}
                   </div>
-                </div>
-              )}
+                </div>}
 
               {/* Histórico de Status */}
-              {stats.historico_status.length > 0 && (
-                <div>
+              {stats.historico_status.length > 0 && <div>
                   <h3 className="text-lg font-semibold mb-3">Histórico de Status</h3>
                   <div className="space-y-2 max-h-40 overflow-y-auto">
-                    {stats.historico_status.map((historico, index) => (
-                      <div key={index} className="flex justify-between items-center p-2 border rounded">
+                    {stats.historico_status.map((historico, index) => <div key={index} className="flex justify-between items-center p-2 border rounded">
                         <div>
                           <span className="font-medium">{historico.status_anterior || 'N/A'} → {historico.status_novo}</span>
                           {historico.motivo && <span className="text-sm text-muted-foreground ml-2">({historico.motivo})</span>}
@@ -497,37 +451,27 @@ export const LaminaManagement = () => {
                         <span className="text-sm text-muted-foreground">
                           {new Date(historico.data_mudanca).toLocaleDateString('pt-BR')}
                         </span>
-                      </div>
-                    ))}
+                      </div>)}
                   </div>
-                </div>
-              )}
+                </div>}
 
               {/* Histórico de Substituições */}
-              {stats.substituicoes.length > 0 && (
-                <div>
+              {stats.substituicoes.length > 0 && <div>
                   <h3 className="text-lg font-semibold mb-3">Histórico de Substituições</h3>
                   <div className="space-y-2">
-                    {stats.substituicoes.map((substituicao, index) => (
-                      <div key={index} className="p-2 border rounded">
+                    {stats.substituicoes.map((substituicao, index) => <div key={index} className="p-2 border rounded">
                         <div className="flex justify-between items-center">
                           <span className="font-medium">{substituicao.motivo}</span>
                           <span className="text-sm text-muted-foreground">
                             {new Date(substituicao.data_substituicao).toLocaleDateString('pt-BR')}
                           </span>
                         </div>
-                        {substituicao.observacoes && (
-                          <p className="text-sm text-muted-foreground mt-1">{substituicao.observacoes}</p>
-                        )}
-                      </div>
-                    ))}
+                        {substituicao.observacoes && <p className="text-sm text-muted-foreground mt-1">{substituicao.observacoes}</p>}
+                      </div>)}
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                </div>}
+            </div>}
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 };
