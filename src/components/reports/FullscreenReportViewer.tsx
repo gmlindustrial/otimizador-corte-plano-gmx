@@ -276,73 +276,68 @@ export const FullscreenReportViewer = ({
                 {filteredBars.length} barras | {results.efficiency.toFixed(1)}% eficiência
               </Badge>
               
-              {/* Seleção de Lâmina Melhorada */}
-              <div className="flex items-center gap-2">
-                <Scissors className="w-4 h-4 text-gray-600" />
-                <Select value={selectedLamina} onValueChange={setSelectedLamina}>
-                  <SelectTrigger className="w-64">
-                    <SelectValue placeholder="Selecionar lâmina" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sortedLaminas.map((lamina) => (
-                      <SelectItem key={lamina.id} value={lamina.id}>
-                        <div className="flex items-center justify-between w-full">
-                          <div className="flex items-center gap-2">
-                            <span>Lâmina {lamina.codigo}</span>
-                            {lamina.status === 'ativada' && (
-                              <Badge variant="default" className="bg-green-100 text-green-800 text-xs">
-                                ATIVA
-                              </Badge>
-                            )}
-                            {lamina.status === 'desativada' && (
-                              <Badge variant="outline" className="bg-gray-100 text-gray-600 text-xs">
-                                DESATIVADA
-                              </Badge>
-                            )}
-                            {lamina.status === 'descartada' && (
-                              <Badge variant="destructive" className="bg-red-100 text-red-800 text-xs">
-                                DESCARTADA
-                              </Badge>
-                            )}
-                          </div>
-                          {lamina.status === 'desativada' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="ml-2 h-6 px-2 text-xs"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleActivateLamina(lamina.id);
-                              }}
-                            >
-                              <Power className="w-3 h-3 mr-1" />
-                              Ativar
-                            </Button>
-                          )}
-                        </div>
-                      </SelectItem>
-                    ))}
-                    {sortedLaminas.length === 0 && (
-                      <SelectItem value="" disabled>
-                        Nenhuma lâmina encontrada
-                      </SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
-                
-                {selectedLamina && sortedLaminas.find(l => l.id === selectedLamina) && (
-                  <Badge 
-                    variant={sortedLaminas.find(l => l.id === selectedLamina)?.status === 'ativada' ? 'default' : 'outline'}
-                    className={
-                      sortedLaminas.find(l => l.id === selectedLamina)?.status === 'ativada'
-                        ? "bg-green-100 text-green-800"
-                        : "bg-gray-100 text-gray-600"
-                    }
-                  >
-                    {sortedLaminas.find(l => l.id === selectedLamina)?.status === 'ativada' ? 'Ativa' : 'Desativada'}
-                  </Badge>
-                )}
+              {/* Seleção de Lâmina Redesenhada */}
+              <div className="flex items-center gap-3">
+                <Scissors className="w-4 h-4 text-muted-foreground" />
+                <div className="flex items-center gap-2">
+                  <Select value={selectedLamina} onValueChange={setSelectedLamina}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Selecionar lâmina" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background border shadow-lg z-50">
+                      {sortedLaminas.map((lamina) => (
+                        <SelectItem key={lamina.id} value={lamina.id} className="hover:bg-accent">
+                          Lâmina {lamina.codigo}
+                        </SelectItem>
+                      ))}
+                      {sortedLaminas.length === 0 && (
+                        <SelectItem value="" disabled>
+                          Nenhuma lâmina encontrada
+                        </SelectItem>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  
+                  {/* Badge de Status Externa */}
+                  {selectedLamina && (() => {
+                    const lamina = sortedLaminas.find(l => l.id === selectedLamina);
+                    if (!lamina) return null;
+                    
+                    return (
+                      <Badge 
+                        variant={lamina.status === 'ativada' ? 'default' : lamina.status === 'descartada' ? 'destructive' : 'outline'}
+                        className={
+                          lamina.status === 'ativada' 
+                            ? "bg-green-100 text-green-800 border-green-200" 
+                            : lamina.status === 'descartada'
+                            ? "bg-red-100 text-red-800 border-red-200"
+                            : "bg-gray-100 text-gray-600 border-gray-200"
+                        }
+                      >
+                        {lamina.status === 'ativada' ? 'Ativa' : lamina.status === 'descartada' ? 'Descartada' : 'Desativada'}
+                      </Badge>
+                    );
+                  })()}
+                  
+                  {/* Botão de Ativar Externa */}
+                  {selectedLamina && (() => {
+                    const lamina = sortedLaminas.find(l => l.id === selectedLamina);
+                    if (!lamina || lamina.status !== 'desativada') return null;
+                    
+                    return (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 px-3 text-xs border-green-200 hover:bg-green-50"
+                        onClick={() => handleActivateLamina(lamina.id)}
+                        disabled={laminaLoading}
+                      >
+                        <Power className="w-3 h-3 mr-1" />
+                        Ativar
+                      </Button>
+                    );
+                  })()}
+                </div>
               </div>
             </div>
             
