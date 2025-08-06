@@ -387,7 +387,15 @@ export const BladeManagement = ({
                               {projeto.projeto_nome}
                             </td>
                             <td className="border border-gray-300 px-3 py-2">
-                              {projeto.listas_otimizacao.length}
+                              <div className="space-y-1">
+                                {projeto.listas_otimizacao.map((lista, idx) => (
+                                  <div key={idx} className="text-xs">
+                                    <span className="font-medium">{lista.nome_lista}</span>
+                                    <span className="text-gray-500 ml-1">({lista.quantidade_cortada} peças)</span>
+                                    <span className="text-gray-400 ml-1">{new Date(lista.data_corte).toLocaleDateString()}</span>
+                                  </div>
+                                ))}
+                              </div>
                             </td>
                             <td className="border border-gray-300 px-3 py-2 font-semibold">
                               {projeto.total_pecas_projeto}
