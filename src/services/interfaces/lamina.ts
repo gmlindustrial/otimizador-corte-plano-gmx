@@ -1,6 +1,6 @@
 import type { BaseEntity } from "../base/types";
 
-export interface Serra extends BaseEntity {
+export interface Lamina extends BaseEntity {
   codigo: string;
   data_instalacao: string;
   status: 'ativada' | 'desativada' | 'descartada';
@@ -8,17 +8,17 @@ export interface Serra extends BaseEntity {
   updated_at?: string;
 }
 
-export interface SerraSubstituicao extends BaseEntity {
-  serra_anterior_id: string;
-  serra_nova_id: string;
+export interface LaminaSubstituicao extends BaseEntity {
+  lamina_anterior_id: string;
+  lamina_nova_id: string;
   data_substituicao: string;
   motivo: string;
   operador_id?: string;
   observacoes?: string;
 }
 
-export interface SerraUsoCorte extends BaseEntity {
-  serra_id: string;
+export interface LaminaUsoCorte extends BaseEntity {
+  lamina_id: string;
   projeto_id: string;
   otimizacao_id?: string;
   peca_id?: string;
@@ -31,8 +31,8 @@ export interface SerraUsoCorte extends BaseEntity {
   perfil_id?: string;
 }
 
-export interface SerraStatusHistorico extends BaseEntity {
-  serra_id: string;
+export interface LaminaStatusHistorico extends BaseEntity {
+  lamina_id: string;
   status_anterior?: string;
   status_novo: string;
   data_mudanca: string;
@@ -57,14 +57,14 @@ export interface ListaDetalhada {
   data_corte: string;
 }
 
-export interface SerraEstatisticas {
-  serra: Serra;
+export interface LaminaEstatisticas {
+  lamina: Lamina;
   total_pecas_cortadas: number;
   projetos_utilizados: number;
   primeiro_uso?: string;
   ultimo_uso?: string;
-  substituicoes: SerraSubstituicao[];
-  historico_status: SerraStatusHistorico[];
+  substituicoes: LaminaSubstituicao[];
+  historico_status: LaminaStatusHistorico[];
   projetos_detalhados: ProjetoDetalhado[];
   metricas_tempo: {
     data_criacao: string;
@@ -77,7 +77,7 @@ export interface SerraEstatisticas {
   };
 }
 
-export interface SerraUsoDetalhado extends SerraUsoCorte {
+export interface LaminaUsoDetalhado extends LaminaUsoCorte {
   projeto_nome?: string;
   operador_nome?: string;
   otimizacao_nome?: string;
@@ -85,7 +85,7 @@ export interface SerraUsoDetalhado extends SerraUsoCorte {
   perfil_tipo?: string;
 }
 
-export interface SerraUsoCompleto extends SerraUsoDetalhado {
+export interface LaminaUsoCompleto extends LaminaUsoDetalhado {
   total_pecas_projeto: number;
   peso_total_cortado?: number;
   eficiencia_corte?: number;

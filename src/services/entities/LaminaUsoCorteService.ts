@@ -1,19 +1,19 @@
 import { BaseService } from '../base/BaseService';
 import { ErrorHandler } from '../base/ErrorHandler';
-import type { SerraUsoCorte, SerraUsoDetalhado } from '../interfaces/serra';
+import type { LaminaUsoCorte, LaminaUsoDetalhado } from '../interfaces/lamina';
 import type { ServiceResponse, ListResponse } from '../base/types';
 
-export class SerraUsoCorteService extends BaseService<SerraUsoCorte> {
-  protected tableName = 'serra_uso_cortes';
+export class LaminaUsoCorteService extends BaseService<LaminaUsoCorte> {
+  protected tableName = 'lamina_uso_cortes';
   
   constructor() {
-    super('serra_uso_cortes');
+    super('lamina_uso_cortes');
   }
 
-  async registrarCorte(data: Omit<SerraUsoCorte, 'id' | 'created_at'>): Promise<ServiceResponse<SerraUsoCorte>> {
+  async registrarCorte(data: Omit<LaminaUsoCorte, 'id' | 'created_at'>): Promise<ServiceResponse<LaminaUsoCorte>> {
     try {
       const { data: resultado, error } = await this.supabase
-        .from('serra_uso_cortes')
+        .from('lamina_uso_cortes')
         .insert([data])
         .select()
         .single();
@@ -26,7 +26,7 @@ export class SerraUsoCorteService extends BaseService<SerraUsoCorte> {
         success: true
       };
     } catch (error) {
-      const errorMessage = ErrorHandler.handle(error, 'Erro ao registrar uso da serra');
+      const errorMessage = ErrorHandler.handle(error, 'Erro ao registrar uso da lâmina');
       return {
         data: null,
         error: errorMessage,
@@ -35,17 +35,17 @@ export class SerraUsoCorteService extends BaseService<SerraUsoCorte> {
     }
   }
 
-  async getHistoricoDetalhado(serraId: string): Promise<ListResponse<SerraUsoDetalhado>> {
+  async getHistoricoDetalhado(laminaId: string): Promise<ListResponse<LaminaUsoDetalhado>> {
     try {
       const { data, error } = await this.supabase
-        .from('serra_uso_cortes')
+        .from('lamina_uso_cortes')
         .select(`
           *,
           projetos!inner(nome),
           operadores(nome),
           projeto_otimizacoes(nome_lista)
         `)
-        .eq('serra_id', serraId)
+        .eq('lamina_id', laminaId)
         .order('data_corte', { ascending: false });
 
       if (error) throw error;
@@ -64,7 +64,7 @@ export class SerraUsoCorteService extends BaseService<SerraUsoCorte> {
         total: historico.length
       };
     } catch (error) {
-      const errorMessage = ErrorHandler.handle(error, 'Erro ao buscar histórico detalhado da serra');
+      const errorMessage = ErrorHandler.handle(error, 'Erro ao buscar histórico detalhado da lâmina');
       return {
         data: [],
         error: errorMessage,
@@ -75,7 +75,7 @@ export class SerraUsoCorteService extends BaseService<SerraUsoCorte> {
   }
 
   async registrarCorteCompleto(data: {
-    serra_id: string;
+    lamina_id: string;
     projeto_id: string;
     otimizacao_id?: string;
     peca_id?: string;
@@ -85,10 +85,10 @@ export class SerraUsoCorteService extends BaseService<SerraUsoCorte> {
     peca_posicao?: string;
     peca_tag?: string;
     perfil_id?: string;
-  }): Promise<ServiceResponse<SerraUsoCorte>> {
+  }): Promise<ServiceResponse<LaminaUsoCorte>> {
     try {
       const { data: usoCorte, error } = await this.supabase
-        .from('serra_uso_cortes')
+        .from('lamina_uso_cortes')
         .insert([{
           ...data,
           data_corte: new Date().toISOString()
@@ -98,15 +98,15 @@ export class SerraUsoCorteService extends BaseService<SerraUsoCorte> {
 
       if (error) throw error;
 
-      ErrorHandler.handleSuccess(`Uso da serra registrado: ${data.quantidade_cortada} peças cortadas`);
+      ErrorHandler.handleSuccess(`Uso da lâmina registrado: ${data.quantidade_cortada} peças cortadas`);
 
       return {
-        data: usoCorte as SerraUsoCorte,
+        data: usoCorte as LaminaUsoCorte,
         error: null,
         success: true
       };
     } catch (error) {
-      const errorMessage = ErrorHandler.handle(error, 'Erro ao registrar uso da serra');
+      const errorMessage = ErrorHandler.handle(error, 'Erro ao registrar uso da lâmina');
       return {
         data: null,
         error: errorMessage,
@@ -115,13 +115,13 @@ export class SerraUsoCorteService extends BaseService<SerraUsoCorte> {
     }
   }
 
-  async getUsoPorProjeto(projetoId: string): Promise<ListResponse<SerraUsoDetalhado>> {
+  async getUsoPorProjeto(projetoId: string): Promise<ListResponse<LaminaUsoDetalhado>> {
     try {
       const { data, error } = await this.supabase
-        .from('serra_uso_cortes')
+        .from('lamina_uso_cortes')
         .select(`
           *,
-          serras!inner(codigo),
+          laminas!inner(codigo),
           operadores(nome),
           projeto_pecas(posicao),
           projeto_otimizacoes(nome_lista)
@@ -133,7 +133,7 @@ export class SerraUsoCorteService extends BaseService<SerraUsoCorte> {
 
       const uso = data?.map(item => ({
         ...item,
-        serra_codigo: item.serras?.codigo,
+        lamina_codigo: item.laminas?.codigo,
         operador_nome: item.operadores?.nome,
         peca_posicao: item.projeto_pecas?.posicao,
         otimizacao_nome: item.projeto_otimizacoes?.nome_lista
@@ -146,7 +146,7 @@ export class SerraUsoCorteService extends BaseService<SerraUsoCorte> {
         total: uso.length
       };
     } catch (error) {
-      const errorMessage = ErrorHandler.handle(error, 'Erro ao buscar uso de serras no projeto');
+      const errorMessage = ErrorHandler.handle(error, 'Erro ao buscar uso de lâminas no projeto');
       return {
         data: [],
         error: errorMessage,
@@ -159,30 +159,30 @@ export class SerraUsoCorteService extends BaseService<SerraUsoCorte> {
   async getEstatisticasPorPeriodo(dataInicio: string, dataFim: string): Promise<ServiceResponse<any>> {
     try {
       const { data, error } = await this.supabase
-        .from('serra_uso_cortes')
+        .from('lamina_uso_cortes')
         .select(`
-          serra_id,
+          lamina_id,
           quantidade_cortada,
-          serras!inner(codigo)
+          laminas!inner(codigo)
         `)
         .gte('data_corte', dataInicio)
         .lte('data_corte', dataFim);
 
       if (error) throw error;
 
-      // Agrupar por serra
+      // Agrupar por lâmina
       const estatisticas = data?.reduce((acc, item) => {
-        const serraId = item.serra_id;
-        if (!acc[serraId]) {
-          acc[serraId] = {
-            serra_id: serraId,
-            serra_codigo: item.serras?.codigo,
+        const laminaId = item.lamina_id;
+        if (!acc[laminaId]) {
+          acc[laminaId] = {
+            lamina_id: laminaId,
+            lamina_codigo: item.laminas?.codigo,
             total_pecas: 0,
             total_cortes: 0
           };
         }
-        acc[serraId].total_pecas += item.quantidade_cortada;
-        acc[serraId].total_cortes += 1;
+        acc[laminaId].total_pecas += item.quantidade_cortada;
+        acc[laminaId].total_cortes += 1;
         return acc;
       }, {} as Record<string, any>);
 
@@ -202,4 +202,4 @@ export class SerraUsoCorteService extends BaseService<SerraUsoCorte> {
   }
 }
 
-export const serraUsoCorteService = new SerraUsoCorteService();
+export const laminaUsoCorteService = new LaminaUsoCorteService();

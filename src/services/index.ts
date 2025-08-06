@@ -16,10 +16,10 @@ export * from './entities/EstoqueSobrasService';
 export * from './entities/HistoricoOtimizacaoService';
 export * from './entities/ProjectHistoryService';
 
-// Serra services
-export * from './entities/SerraService';
-export * from './entities/SerraUsoCorteService';
-export * from './interfaces/serra';
+// Lamina services
+export * from './entities/LaminaService';
+export * from './entities/LaminaUsoCorteService';
+export * from './interfaces/lamina';
 
 // Instâncias dos services para uso direto
 export { obraService } from './entities/ObraService';
@@ -33,8 +33,8 @@ export { historicoOtimizacaoService } from './entities/HistoricoOtimizacaoServic
 export { usuarioService } from './entities/UsuarioService';
 export { projetoOtimizacaoService } from './entities/ProjetoOtimizacaoService';
 export { projectHistoryService } from './entities/ProjectHistoryService';
-export { serraService } from './entities/SerraService';
-export { serraUsoCorteService } from './entities/SerraUsoCorteService';
+export { laminaService } from './entities/LaminaService';
+export { laminaUsoCorteService } from './entities/LaminaUsoCorteService';
 
 // PDF Service
 export { PDFReportService } from './PDFReportService';
