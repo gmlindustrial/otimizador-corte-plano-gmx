@@ -383,58 +383,166 @@ export const SerraManagement = () => {
 
       {/* Dialog de Estatísticas */}
       <Dialog open={showEstatisticasDialog} onOpenChange={setShowEstatisticasDialog}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Estatísticas - {selectedSerra?.codigo}</DialogTitle>
+            <DialogTitle>Estatísticas Detalhadas da Serra {selectedSerra?.codigo}</DialogTitle>
           </DialogHeader>
+          
           {estatisticas && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-2xl font-bold">{estatisticas.total_pecas_cortadas}</div>
-                    <p className="text-xs text-muted-foreground">Peças Cortadas</p>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="text-2xl font-bold">{estatisticas.projetos_utilizados}</div>
-                    <p className="text-xs text-muted-foreground">Projetos Utilizados</p>
-                  </CardContent>
-                </Card>
-              </div>
-              
-              {estatisticas.primeiro_uso && (
-                <div>
-                  <Label>Primeiro Uso</Label>
-                  <p>{new Date(estatisticas.primeiro_uso).toLocaleDateString('pt-BR')}</p>
-                </div>
-              )}
-              
-              {estatisticas.ultimo_uso && (
-                <div>
-                  <Label>Último Uso</Label>
-                  <p>{new Date(estatisticas.ultimo_uso).toLocaleDateString('pt-BR')}</p>
-                </div>
-              )}
-
-              {estatisticas.substituicoes.length > 0 && (
-                <div>
-                  <Label>Histórico de Substituições/Descartes</Label>
-                  <div className="mt-2 space-y-2">
-                    {estatisticas.substituicoes.map((subst: any) => (
-                      <div key={subst.id} className="border rounded p-2">
-                        <p className="text-sm">
-                          <strong>Data:</strong> {new Date(subst.data_substituicao).toLocaleDateString('pt-BR')}
-                        </p>
-                        <p className="text-sm">
-                          <strong>Motivo:</strong> {subst.motivo}
-                        </p>
-                      </div>
-                    ))}
+            <div className="space-y-6">
+              {/* Métricas de Tempo */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Histórico Temporal</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <p><strong>Data de criação:</strong> {new Date(estatisticas.metricas_tempo.data_criacao).toLocaleDateString()}</p>
+                      <p><strong>Primeira ativação:</strong> {estatisticas.metricas_tempo.data_primeira_ativacao ? new Date(estatisticas.metricas_tempo.data_primeira_ativacao).toLocaleDateString() : 'N/A'}</p>
+                      <p><strong>Última ativação:</strong> {estatisticas.metricas_tempo.data_ultima_ativacao ? new Date(estatisticas.metricas_tempo.data_ultima_ativacao).toLocaleDateString() : 'N/A'}</p>
+                    </div>
+                    <div className="space-y-2">
+                      <p><strong>Última desativação:</strong> {estatisticas.metricas_tempo.data_ultima_desativacao ? new Date(estatisticas.metricas_tempo.data_ultima_desativacao).toLocaleDateString() : 'N/A'}</p>
+                      <p><strong>Data de descarte:</strong> {estatisticas.metricas_tempo.data_descarte ? new Date(estatisticas.metricas_tempo.data_descarte).toLocaleDateString() : 'N/A'}</p>
+                      <p><strong>Tempo ativo:</strong> {estatisticas.metricas_tempo.tempo_total_ativo_dias ? `${estatisticas.metricas_tempo.tempo_total_ativo_dias} dias` : 'N/A'}</p>
+                    </div>
                   </div>
-                </div>
-              )}
+                </CardContent>
+              </Card>
+
+              {/* Uso Geral */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Uso Geral</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-primary">{estatisticas.total_pecas_cortadas}</p>
+                      <p className="text-sm text-muted-foreground">Peças cortadas</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-primary">{estatisticas.projetos_utilizados}</p>
+                      <p className="text-sm text-muted-foreground">Projetos</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-semibold">{estatisticas.primeiro_uso ? new Date(estatisticas.primeiro_uso).toLocaleDateString() : 'N/A'}</p>
+                      <p className="text-sm text-muted-foreground">Primeiro uso</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-semibold">{estatisticas.ultimo_uso ? new Date(estatisticas.ultimo_uso).toLocaleDateString() : 'N/A'}</p>
+                      <p className="text-sm text-muted-foreground">Último uso</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Projetos Detalhados */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Projetos Utilizados</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {estatisticas.projetos_detalhados.length > 0 ? (
+                    <div className="space-y-4">
+                      {estatisticas.projetos_detalhados.map((projeto, index) => (
+                        <div key={index} className="border rounded-lg p-4">
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <h4 className="font-semibold">{projeto.projeto_nome}</h4>
+                              <p className="text-sm text-muted-foreground">
+                                {projeto.total_pecas_projeto} peças cortadas
+                              </p>
+                            </div>
+                            <div className="text-right text-sm text-muted-foreground">
+                              <p>Primeiro uso: {new Date(projeto.data_primeiro_uso).toLocaleDateString()}</p>
+                              <p>Último uso: {new Date(projeto.data_ultimo_uso).toLocaleDateString()}</p>
+                            </div>
+                          </div>
+                          
+                          {projeto.listas_otimizacao.length > 0 && (
+                            <div>
+                              <h5 className="font-medium mb-2">Listas de Otimização:</h5>
+                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+                                {projeto.listas_otimizacao.map((lista, listaIndex) => (
+                                  <div key={listaIndex} className="bg-muted p-2 rounded text-sm">
+                                    <p className="font-medium">{lista.nome_lista}</p>
+                                    <p className="text-muted-foreground">{lista.quantidade_cortada} peças</p>
+                                    <p className="text-xs text-muted-foreground">{new Date(lista.data_corte).toLocaleDateString()}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p>Nenhum projeto registrado</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Histórico de Status */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Histórico de Mudanças de Status</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {estatisticas.historico_status.length > 0 ? (
+                    <div className="space-y-2">
+                      {estatisticas.historico_status.map((historico, index) => (
+                        <div key={index} className="flex justify-between items-center p-3 border rounded">
+                          <div>
+                            <p className="font-medium">
+                              {historico.status_anterior ? `${historico.status_anterior} → ` : ''}
+                              <span className={`px-2 py-1 rounded text-xs ${
+                                historico.status_novo === 'ativada' ? 'bg-green-100 text-green-800' :
+                                historico.status_novo === 'desativada' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-red-100 text-red-800'
+                              }`}>
+                                {historico.status_novo}
+                              </span>
+                            </p>
+                            {historico.motivo && (
+                              <p className="text-sm text-muted-foreground mt-1">{historico.motivo}</p>
+                            )}
+                          </div>
+                          <div className="text-right text-sm text-muted-foreground">
+                            <p>{new Date(historico.data_mudanca).toLocaleDateString()}</p>
+                            <p>{new Date(historico.data_mudanca).toLocaleTimeString()}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p>Nenhuma mudança de status registrada</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Histórico de Substituições */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Histórico de Substituições</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {estatisticas.substituicoes.length > 0 ? (
+                    <div className="space-y-2">
+                      {estatisticas.substituicoes.map((sub, index) => (
+                        <div key={index} className="p-3 border rounded">
+                          <p><strong>Motivo:</strong> {sub.motivo}</p>
+                          <p><strong>Data:</strong> {new Date(sub.data_substituicao).toLocaleDateString()}</p>
+                          {sub.observacoes && <p><strong>Observações:</strong> {sub.observacoes}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p>Nenhuma substituição registrada</p>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           )}
         </DialogContent>

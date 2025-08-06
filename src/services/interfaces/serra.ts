@@ -31,6 +31,32 @@ export interface SerraUsoCorte extends BaseEntity {
   perfil_id?: string;
 }
 
+export interface SerraStatusHistorico extends BaseEntity {
+  serra_id: string;
+  status_anterior?: string;
+  status_novo: string;
+  data_mudanca: string;
+  motivo?: string;
+  operador_id?: string;
+  observacoes?: string;
+}
+
+export interface ProjetoDetalhado {
+  projeto_id: string;
+  projeto_nome: string;
+  listas_otimizacao: ListaDetalhada[];
+  total_pecas_projeto: number;
+  data_primeiro_uso: string;
+  data_ultimo_uso: string;
+}
+
+export interface ListaDetalhada {
+  otimizacao_id: string;
+  nome_lista: string;
+  quantidade_cortada: number;
+  data_corte: string;
+}
+
 export interface SerraEstatisticas {
   serra: Serra;
   total_pecas_cortadas: number;
@@ -38,6 +64,17 @@ export interface SerraEstatisticas {
   primeiro_uso?: string;
   ultimo_uso?: string;
   substituicoes: SerraSubstituicao[];
+  historico_status: SerraStatusHistorico[];
+  projetos_detalhados: ProjetoDetalhado[];
+  metricas_tempo: {
+    data_criacao: string;
+    data_primeira_ativacao?: string;
+    data_ultima_ativacao?: string;
+    data_ultima_desativacao?: string;
+    data_descarte?: string;
+    tempo_total_ativo_dias?: number;
+    tempo_total_inativo_dias?: number;
+  };
 }
 
 export interface SerraUsoDetalhado extends SerraUsoCorte {
