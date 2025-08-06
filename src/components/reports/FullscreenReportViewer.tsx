@@ -6,9 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { 
   X, ZoomIn, ZoomOut, Search, Filter, ChevronLeft, ChevronRight, 
-  Package, Tag, Wrench, Printer, Check, Square, Recycle, MapPin, DollarSign, Scissors, AlertTriangle
+  Package, Tag, Wrench, Printer, Check, Square, Recycle, MapPin, DollarSign, Scissors, AlertTriangle, Power
 } from 'lucide-react';
 import type { OptimizationResult, Project } from '@/pages/Index';
 import { useAuditLogger } from '@/hooks/useAuditLogger';
@@ -34,8 +35,10 @@ export const FullscreenReportViewer = ({
 }: FullscreenReportViewerProps) => {
   const [selectedBar, setSelectedBar] = useState<number>(0);
   const { logPieceAction } = useAuditLogger();
-  const { laminasAtivadas, registrarCorteCompleto, loading: laminaLoading } = useLaminaService();
+  const { laminas, laminasAtivadas, registrarCorteCompleto, ativarLamina, loading: laminaLoading } = useLaminaService();
   const [selectedLamina, setSelectedLamina] = useState<string>('');
+  const [activationDialogOpen, setActivationDialogOpen] = useState<boolean>(false);
+  const [laminaToActivate, setLaminaToActivate] = useState<string>('');
   const [svgZoomLevel, setSvgZoomLevel] = useState<number>(1);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [filterByFase, setFilterByFase] = useState<string>('');
@@ -63,6 +66,39 @@ export const FullscreenReportViewer = ({
       setSelectedLamina(laminasAtivadas[0].id);
     }
   }, [isOpen, laminasAtivadas, selectedLamina]);
+
+  // Função para ativar lâmina
+  const handleActivateLamina = async (laminaId: string) => {
+    setLaminaToActivate(laminaId);
+    setActivationDialogOpen(true);
+  };
+
+  const confirmActivation = async () => {
+    try {
+      await ativarLamina(laminaToActivate);
+      setSelectedLamina(laminaToActivate);
+      toast({
+        title: "Lâmina ativada",
+        description: "A lâmina foi ativada com sucesso.",
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao ativar",
+        description: "Não foi possível ativar a lâmina.",
+        variant: "destructive",
+      });
+    } finally {
+      setActivationDialogOpen(false);
+      setLaminaToActivate('');
+    }
+  };
+
+  // Ordenar lâminas: ativas primeiro, depois desativadas
+  const sortedLaminas = [...laminas].sort((a, b) => {
+    if (a.status === 'ativada' && b.status !== 'ativada') return -1;
+    if (a.status !== 'ativada' && b.status === 'ativada') return 1;
+    return a.codigo.localeCompare(b.codigo);
+  });
 
   // Extrair fases únicas
   const allFases = new Set<string>();
@@ -237,30 +273,71 @@ export const FullscreenReportViewer = ({
                 {filteredBars.length} barras | {results.efficiency.toFixed(1)}% eficiência
               </Badge>
               
-              {/* Seleção de Lâmina */}
+              {/* Seleção de Lâmina Melhorada */}
               <div className="flex items-center gap-2">
                 <Scissors className="w-4 h-4 text-gray-600" />
                 <Select value={selectedLamina} onValueChange={setSelectedLamina}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Selecionar lâmina ativa" />
+                  <SelectTrigger className="w-64">
+                    <SelectValue placeholder="Selecionar lâmina" />
                   </SelectTrigger>
                   <SelectContent>
-                    {laminasAtivadas.map((lamina) => (
+                    {sortedLaminas.map((lamina) => (
                       <SelectItem key={lamina.id} value={lamina.id}>
-                        Lâmina {lamina.codigo}
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center gap-2">
+                            <span>Lâmina {lamina.codigo}</span>
+                            {lamina.status === 'ativada' && (
+                              <Badge variant="default" className="bg-green-100 text-green-800 text-xs">
+                                ATIVA
+                              </Badge>
+                            )}
+                            {lamina.status === 'desativada' && (
+                              <Badge variant="outline" className="bg-gray-100 text-gray-600 text-xs">
+                                DESATIVADA
+                              </Badge>
+                            )}
+                            {lamina.status === 'descartada' && (
+                              <Badge variant="destructive" className="bg-red-100 text-red-800 text-xs">
+                                DESCARTADA
+                              </Badge>
+                            )}
+                          </div>
+                          {lamina.status === 'desativada' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="ml-2 h-6 px-2 text-xs"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleActivateLamina(lamina.id);
+                              }}
+                            >
+                              <Power className="w-3 h-3 mr-1" />
+                              Ativar
+                            </Button>
+                          )}
+                        </div>
                       </SelectItem>
                     ))}
-                    {laminasAtivadas.length === 0 && (
+                    {sortedLaminas.length === 0 && (
                       <SelectItem value="" disabled>
-                        Nenhuma lâmina ativa
+                        Nenhuma lâmina encontrada
                       </SelectItem>
                     )}
                   </SelectContent>
                 </Select>
                 
-                {selectedLamina && (
-                  <Badge variant="default" className="bg-green-100 text-green-800">
-                    Ativa
+                {selectedLamina && sortedLaminas.find(l => l.id === selectedLamina) && (
+                  <Badge 
+                    variant={sortedLaminas.find(l => l.id === selectedLamina)?.status === 'ativada' ? 'default' : 'outline'}
+                    className={
+                      sortedLaminas.find(l => l.id === selectedLamina)?.status === 'ativada'
+                        ? "bg-green-100 text-green-800"
+                        : "bg-gray-100 text-gray-600"
+                    }
+                  >
+                    {sortedLaminas.find(l => l.id === selectedLamina)?.status === 'ativada' ? 'Ativa' : 'Desativada'}
                   </Badge>
                 )}
               </div>
@@ -314,12 +391,22 @@ export const FullscreenReportViewer = ({
           */}
 
           {/* Alerta sobre lâminas */}
-          {laminasAtivadas.length === 0 && (
+          {laminasAtivadas.length === 0 && laminas.length > 0 && (
             <div className="p-4 border-b">
               <Alert>
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
-                  Nenhuma lâmina ativa encontrada. Você pode marcar peças como cortadas, mas elas não serão registradas no sistema de lâminas até que uma lâmina seja ativada.
+                  Nenhuma lâmina ativa encontrada. Selecione uma lâmina desativada e ative-a para registrar cortes no sistema.
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
+          {laminas.length === 0 && (
+            <div className="p-4 border-b">
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  Nenhuma lâmina cadastrada no sistema. Vá até a tela de Lâminas para cadastrar uma nova lâmina.
                 </AlertDescription>
               </Alert>
             </div>
@@ -683,6 +770,24 @@ export const FullscreenReportViewer = ({
             </div>
           </div>
         </div>
+
+        {/* Dialog de Confirmação de Ativação */}
+        <AlertDialog open={activationDialogOpen} onOpenChange={setActivationDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Ativar Lâmina</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja ativar esta lâmina? Todas as outras lâminas ativas serão automaticamente desativadas.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={confirmActivation}>
+                Ativar Lâmina
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
   );
