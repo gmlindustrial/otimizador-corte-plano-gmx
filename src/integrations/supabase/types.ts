@@ -581,6 +581,57 @@ export type Database = {
           },
         ]
       }
+      serra_status_historico: {
+        Row: {
+          created_at: string
+          data_mudanca: string
+          id: string
+          motivo: string | null
+          observacoes: string | null
+          operador_id: string | null
+          serra_id: string
+          status_anterior: string | null
+          status_novo: string
+        }
+        Insert: {
+          created_at?: string
+          data_mudanca?: string
+          id?: string
+          motivo?: string | null
+          observacoes?: string | null
+          operador_id?: string | null
+          serra_id: string
+          status_anterior?: string | null
+          status_novo: string
+        }
+        Update: {
+          created_at?: string
+          data_mudanca?: string
+          id?: string
+          motivo?: string | null
+          observacoes?: string | null
+          operador_id?: string | null
+          serra_id?: string
+          status_anterior?: string | null
+          status_novo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "serra_status_historico_operador_id_fkey"
+            columns: ["operador_id"]
+            isOneToOne: false
+            referencedRelation: "operadores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "serra_status_historico_serra_id_fkey"
+            columns: ["serra_id"]
+            isOneToOne: false
+            referencedRelation: "serras"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       serra_substituicoes: {
         Row: {
           created_at: string
