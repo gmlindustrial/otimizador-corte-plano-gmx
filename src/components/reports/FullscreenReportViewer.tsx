@@ -4,12 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   X, ZoomIn, ZoomOut, Search, Filter, ChevronLeft, ChevronRight, 
-  Package, Tag, Wrench, Printer, Check, Square, Recycle, MapPin, DollarSign
+  Package, Tag, Wrench, Printer, Check, Square, Recycle, MapPin, DollarSign, Scissors, AlertTriangle
 } from 'lucide-react';
 import type { OptimizationResult, Project } from '@/pages/Index';
 import { useAuditLogger } from '@/hooks/useAuditLogger';
+import { useLaminaService } from '@/hooks/useLaminaService';
+import { toast } from '@/hooks/use-toast';
 
 interface FullscreenReportViewerProps {
   isOpen: boolean;
@@ -30,6 +34,8 @@ export const FullscreenReportViewer = ({
 }: FullscreenReportViewerProps) => {
   const [selectedBar, setSelectedBar] = useState<number>(0);
   const { logPieceAction } = useAuditLogger();
+  const { laminasAtivadas, registrarCorteCompleto, loading: laminaLoading } = useLaminaService();
+  const [selectedLamina, setSelectedLamina] = useState<string>('');
   const [svgZoomLevel, setSvgZoomLevel] = useState<number>(1);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [filterByFase, setFilterByFase] = useState<string>('');
@@ -50,6 +56,13 @@ export const FullscreenReportViewer = ({
     });
     setCheckedPieces(initial);
   }, [isOpen, results]);
+
+  // Auto-selecionar lâmina ativa quando abrir o modal
+  useEffect(() => {
+    if (isOpen && laminasAtivadas.length > 0 && !selectedLamina) {
+      setSelectedLamina(laminasAtivadas[0].id);
+    }
+  }, [isOpen, laminasAtivadas, selectedLamina]);
 
   // Extrair fases únicas
   const allFases = new Set<string>();
@@ -118,6 +131,16 @@ export const FullscreenReportViewer = ({
       checked = true;
     }
 
+    // Verificar se há lâmina selecionada antes de marcar como cortada
+    if (checked && !selectedLamina) {
+      toast({
+        title: "Selecione uma lâmina",
+        description: "É necessário selecionar uma lâmina ativa antes de marcar peças como cortadas.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     piece.cortada = checked;
     setCheckedPieces(newChecked);
     onResultsChange?.(results);
@@ -144,6 +167,33 @@ export const FullscreenReportViewer = ({
           statusAtual: checked ? 'cortada' : 'pendente'
         }
       );
+
+      // Registrar corte no sistema de lâminas se foi marcada como cortada
+      if (checked && selectedLamina) {
+        try {
+          await registrarCorteCompleto({
+            serra_id: selectedLamina,
+            projeto_id: project.id || '',
+            quantidade_cortada: piece.quantidade || 1,
+            peca_posicao: piece.posicao || 'Manual',
+            peca_tag: piece.tag,
+            perfil_id: piece.perfilId,
+            observacoes: `Lista ${barIndex + 1} - Comprimento: ${piece.length}mm`
+          });
+          
+          toast({
+            title: "Corte registrado",
+            description: `Peça ${piece.tag || piece.length}mm registrada na lâmina.`,
+          });
+        } catch (error) {
+          console.error('Erro ao registrar corte na lâmina:', error);
+          toast({
+            title: "Erro no registro",
+            description: "Falha ao registrar corte na lâmina. Verifique os logs.",
+            variant: "destructive",
+          });
+        }
+      }
     }
   };
 
@@ -184,6 +234,34 @@ export const FullscreenReportViewer = ({
               <Badge variant="outline">
                 {filteredBars.length} barras | {results.efficiency.toFixed(1)}% eficiência
               </Badge>
+              
+              {/* Seleção de Lâmina */}
+              <div className="flex items-center gap-2">
+                <Scissors className="w-4 h-4 text-gray-600" />
+                <Select value={selectedLamina} onValueChange={setSelectedLamina}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Selecionar lâmina ativa" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {laminasAtivadas.map((lamina) => (
+                      <SelectItem key={lamina.id} value={lamina.id}>
+                        Lâmina {lamina.codigo}
+                      </SelectItem>
+                    ))}
+                    {laminasAtivadas.length === 0 && (
+                      <SelectItem value="" disabled>
+                        Nenhuma lâmina ativa
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+                
+                {selectedLamina && (
+                  <Badge variant="default" className="bg-green-100 text-green-800">
+                    Ativa
+                  </Badge>
+                )}
+              </div>
             </div>
             
             <div className="flex items-center gap-2">
@@ -297,6 +375,18 @@ export const FullscreenReportViewer = ({
                    </div>
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Alerta sobre lâminas */}
+          {laminasAtivadas.length === 0 && (
+            <div className="p-4 border-b">
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  Nenhuma lâmina ativa encontrada. Você pode marcar peças como cortadas, mas elas não serão registradas no sistema de lâminas até que uma lâmina seja ativada.
+                </AlertDescription>
+              </Alert>
             </div>
           )}
 
