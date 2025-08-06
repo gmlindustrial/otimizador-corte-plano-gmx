@@ -12,6 +12,7 @@ import type {
 
 export abstract class BaseService<T extends BaseEntity> {
   protected tableName: string;
+  protected supabase = supabase;
 
   constructor(tableName: string) {
     this.tableName = tableName;
@@ -19,12 +20,7 @@ export abstract class BaseService<T extends BaseEntity> {
 
   async getAll(options?: QueryOptions): Promise<ListResponse<T>> {
     try {
-      let query = supabase.from("estoque_sobras").select(`
-    *,
-    perfis_materiais (
-      *
-    )
-  `);
+      let query = supabase.from(this.tableName as any).select('*');
 
       if (options?.orderBy) {
         query = query.order(options.orderBy, {

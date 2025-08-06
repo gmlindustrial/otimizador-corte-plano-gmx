@@ -9,6 +9,7 @@ export const useProjectHistoryLogger = () => {
     projectId: string,
     pecaTag: string,
     optimizationName: string,
+    serraId?: string,
     details?: Record<string, any>
   ) => {
     if (!user?.nome) return;
@@ -19,7 +20,7 @@ export const useProjectHistoryLogger = () => {
         pecaTag,
         optimizationName,
         user.nome,
-        details
+        { ...details, serraId }
       );
     } catch (error) {
       console.error('Erro ao registrar peça cortada:', error);
