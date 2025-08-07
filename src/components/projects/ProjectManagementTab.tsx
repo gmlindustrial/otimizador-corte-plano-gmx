@@ -119,15 +119,29 @@ export const ProjectManagementTab = ({
       const stockResp = await estoqueSobrasService.getAll();
       const sobras = stockResp.success && stockResp.data ? stockResp.data : [];
 
-      const perfilIdsUsados = piecesForAlgo
-        .map((p) => p.perfil)
-        .filter(Boolean);
+      const usedPerfilIds = Array.from(new Set(
+        selectedPieces.map((p) => p.perfil_id).filter(Boolean)
+      )) as string[];
 
-      const sobrasFiltradas = sobras.filter((sobra) =>
-        perfilIdsUsados.includes(sobra.perfis_materiais.descricao_perfil)
+      const sobrasFiltradas = (sobras as any[]).filter(
+        (sobra: any) => usedPerfilIds.includes(sobra.id_perfis_materiais)
       );
 
-      console.log(sobrasFiltradas);
+      const sobrasForAlgo = sobrasFiltradas.map((s: any) => ({
+        id: s.id,
+        comprimento: s.comprimento,
+        quantidade: s.quantidade,
+        id_perfis_materiais: s.id_perfis_materiais,
+        perfis_materiais: {
+          id: s.id_perfis_materiais,
+          descricao_perfil: '',
+          kg_por_metro: 0,
+          tipo_perfil: '',
+          created_at: new Date().toISOString(),
+        },
+      }));
+
+      console.log('Sobras utilizadas na otimização:', sobrasForAlgo);
 
       const resultWithLeftovers = runLinearOptimizationWithLeftovers(
         piecesForAlgo,
