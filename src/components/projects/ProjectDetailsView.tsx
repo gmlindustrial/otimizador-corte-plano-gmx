@@ -21,7 +21,8 @@ import {
   User,
   Package,
   Calculator,
-  Settings
+  Settings,
+  Scissors
 } from 'lucide-react';
 import { projetoPecaService } from '@/services/entities/ProjetoPecaService';
 import { projetoOtimizacaoService } from '@/services/entities/ProjetoOtimizacaoService';
@@ -301,6 +302,25 @@ export const ProjectDetailsView = ({
     return acc;
   }, {} as Record<string, any>);
 
+  // Estatísticas do Projeto
+  const totalPiecesCount = pieces.reduce((sum, p) => sum + (p.quantidade || 0), 0);
+
+  const optimizedPieceIds = new Set<string>(
+    optimizations.flatMap(o => Array.isArray(o.pecas_selecionadas) ? o.pecas_selecionadas : [])
+  );
+  const optimizedPiecesCount = pieces.reduce(
+    (sum, p) => sum + (optimizedPieceIds.has(p.id) ? (p.quantidade || 0) : 0),
+    0
+  );
+
+  const cutPiecesCount = optimizations.reduce((acc, opt) => {
+    const bars = opt?.resultados?.bars || [];
+    return acc + bars.reduce((sum: number, b: any) => {
+      const pcs = b?.pieces || [];
+      return sum + pcs.filter((piece: any) => piece?.cortada === true || piece?.status === 'cortado').length;
+    }, 0);
+  }, 0);
+
   if (loading) {
     return (
       <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
@@ -407,6 +427,42 @@ export const ProjectDetailsView = ({
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-amber-600 uppercase tracking-wide">Criado em</p>
                     <p className="text-lg font-semibold text-gray-800">{format(new Date(project.created_at), 'dd/MM/yyyy')}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6">
+              <div className="group p-6 bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl border border-violet-100 hover:shadow-lg transition-all duration-300">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-violet-100 rounded-xl group-hover:bg-violet-200 transition-colors">
+                    <Package className="w-6 h-6 text-violet-600" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-violet-600 uppercase tracking-wide">Total de Peças</p>
+                    <p className="text-lg font-semibold text-gray-800">{totalPiecesCount}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="group p-6 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-xl border border-cyan-100 hover:shadow-lg transition-all duration-300">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-cyan-100 rounded-xl group-hover:bg-cyan-200 transition-colors">
+                    <Calculator className="w-6 h-6 text-cyan-600" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-cyan-600 uppercase tracking-wide">Peças Otimizadas</p>
+                    <p className="text-lg font-semibold text-gray-800">{optimizedPiecesCount}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="group p-6 bg-gradient-to-br from-pink-50 to-rose-50 rounded-xl border border-pink-100 hover:shadow-lg transition-all duration-300">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-pink-100 rounded-xl group-hover:bg-pink-200 transition-colors">
+                    <Scissors className="w-6 h-6 text-pink-600" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-pink-600 uppercase tracking-wide">Peças Cortadas</p>
+                    <p className="text-lg font-semibold text-gray-800">{cutPiecesCount}</p>
                   </div>
                 </div>
               </div>
