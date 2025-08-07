@@ -305,14 +305,13 @@ export const ProjectDetailsView = ({
   // Estatísticas do Projeto
   const totalPiecesCount = pieces.reduce((sum, p) => sum + (p.quantidade || 0), 0);
 
-  const optimizedPieceIds = new Set<string>(
-    optimizations.flatMap(o => Array.isArray(o.pecas_selecionadas) ? o.pecas_selecionadas : [])
-  );
-  const optimizedPiecesCount = pieces.reduce(
-    (sum, p) => sum + (optimizedPieceIds.has(p.id) ? (p.quantidade || 0) : 0),
-    0
-  );
-
+const optimizedPiecesCount = optimizations.reduce((acc, opt) => {
+  const bars = opt?.resultados?.bars || [];
+  return acc + bars.reduce((sum: number, bar: any) => {
+    const pcs = Array.isArray(bar?.pieces) ? bar.pieces : [];
+    return sum + pcs.length;
+  }, 0);
+}, 0);
   const cutPiecesCount = optimizations.reduce((acc, opt) => {
     const bars = opt?.resultados?.bars || [];
     return acc + bars.reduce((sum: number, b: any) => {
