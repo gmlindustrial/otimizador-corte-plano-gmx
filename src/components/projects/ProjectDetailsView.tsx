@@ -1,19 +1,19 @@
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger
-} from '@/components/ui/accordion';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  ArrowLeft, 
-  Edit, 
-  Trash2, 
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  ArrowLeft,
+  Edit,
+  Trash2,
   Plus,
   Upload,
   Calendar,
@@ -22,22 +22,27 @@ import {
   Package,
   Calculator,
   Settings,
-  Scissors
-} from 'lucide-react';
-import { projetoPecaService } from '@/services/entities/ProjetoPecaService';
-import { projetoOtimizacaoService } from '@/services/entities/ProjetoOtimizacaoService';
-import { OptimizationCreateDialog } from './OptimizationCreateDialog';
-import { OptimizationResultsDialog } from './OptimizationResultsDialog';
-import { format } from 'date-fns';
-import { toast } from 'sonner';
-import type { ProjetoPeca, ProjetoOtimizacao, ProjectPieceValidation, PerfilMaterial } from '@/types/project';
-import { PieceRegistrationForm } from './PieceRegistrationForm';
-import { FileUploadDialog } from './FileUploadDialog';
-import { ProjectValidationAlert } from './ProjectValidationAlert';
-import { ProjectDuplicateManager } from './ProjectDuplicateManager';
-import { DeleteConfirmDialog } from '../management/DeleteConfirmDialog';
-import type { Project } from '@/pages/Index';
-import { ProjectHistoryTab } from './ProjectHistoryTab';
+  Scissors,
+} from "lucide-react";
+import { projetoPecaService } from "@/services/entities/ProjetoPecaService";
+import { projetoOtimizacaoService } from "@/services/entities/ProjetoOtimizacaoService";
+import { OptimizationCreateDialog } from "./OptimizationCreateDialog";
+import { OptimizationResultsDialog } from "./OptimizationResultsDialog";
+import { format } from "date-fns";
+import { toast } from "sonner";
+import type {
+  ProjetoPeca,
+  ProjetoOtimizacao,
+  ProjectPieceValidation,
+  PerfilMaterial,
+} from "@/types/project";
+import { PieceRegistrationForm } from "./PieceRegistrationForm";
+import { FileUploadDialog } from "./FileUploadDialog";
+import { ProjectValidationAlert } from "./ProjectValidationAlert";
+import { ProjectDuplicateManager } from "./ProjectDuplicateManager";
+import { DeleteConfirmDialog } from "../management/DeleteConfirmDialog";
+import type { Project } from "@/pages/Index";
+import { ProjectHistoryTab } from "./ProjectHistoryTab";
 
 interface Projeto {
   id: string;
@@ -63,44 +68,53 @@ interface ProjectDetailsViewProps {
   onNavigateToProfileManagement?: () => void;
 }
 
-export const ProjectDetailsView = ({ 
-  project, 
-  onBack, 
-  onEdit, 
+export const ProjectDetailsView = ({
+  project,
+  onBack,
+  onEdit,
   onDelete,
   onCreateOptimization,
-  onNavigateToProfileManagement
+  onNavigateToProfileManagement,
 }: ProjectDetailsViewProps) => {
   const [pieces, setPieces] = useState<ProjetoPeca[]>([]);
   const [optimizations, setOptimizations] = useState<ProjetoOtimizacao[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUpload, setShowUpload] = useState(false);
   const [validations, setValidations] = useState<ProjectPieceValidation[]>([]);
-  const [activeTab, setActiveTab] = useState<'pieces' | 'register' | 'optimizations' | 'history'>('pieces');
+  const [activeTab, setActiveTab] = useState<
+    "pieces" | "register" | "optimizations" | "history"
+  >("pieces");
   const [importing, setImporting] = useState(false);
-  const [duplicateItems, setDuplicateItems] = useState<{ existing: ProjetoPeca; imported: ProjetoPeca }[]>([]);
+  const [duplicateItems, setDuplicateItems] = useState<
+    { existing: ProjetoPeca; imported: ProjetoPeca }[]
+  >([]);
   const [selectedPieces, setSelectedPieces] = useState<Set<string>>(new Set());
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showOptimizationDialog, setShowOptimizationDialog] = useState(false);
-  const [viewResults, setViewResults] = useState<{ res: any; bar: number; id: string; nome_lista: string } | null>(null);
+  const [viewResults, setViewResults] = useState<{
+    res: any;
+    bar: number;
+    id: string;
+    nome_lista: string;
+  } | null>(null);
 
   const mapProjetoToProject = (p: Projeto): Project => ({
     id: p.id,
     name: p.nome,
     projectNumber: p.numero_projeto,
-    client: (p as any).clientes?.nome || '',
-    obra: (p as any).obras?.nome || '',
+    client: (p as any).clientes?.nome || "",
+    obra: (p as any).obras?.nome || "",
     enviarSobrasEstoque: false,
     date: p.created_at,
-    tipoMaterial: '',
-    lista: '',
-    revisao: '',
-    turno: '',
-    operador: '',
-    aprovadorQA: '',
+    tipoMaterial: "",
+    lista: "",
+    revisao: "",
+    turno: "",
+    operador: "",
+    aprovadorQA: "",
     validacaoQA: false,
-    qrCode: ''
+    qrCode: "",
   });
 
   const projectForExport = mapProjetoToProject(project);
@@ -113,26 +127,30 @@ export const ProjectDetailsView = ({
     setLoading(true);
     try {
       // Carregar peças
-      const piecesResponse = await projetoPecaService.getByProjectId(project.id);
+      const piecesResponse = await projetoPecaService.getByProjectId(
+        project.id
+      );
       if (piecesResponse.success && piecesResponse.data) {
         setPieces(piecesResponse.data);
       }
 
-      const optResponse = await projetoOtimizacaoService.getByProjectId(project.id);
+      const optResponse = await projetoOtimizacaoService.getByProjectId(
+        project.id
+      );
       if (optResponse.success && optResponse.data) {
         setOptimizations(optResponse.data);
       }
     } catch (error) {
-      console.error('Erro ao carregar dados do projeto:', error);
-      toast.error('Erro ao carregar dados do projeto');
+      console.error("Erro ao carregar dados do projeto:", error);
+      toast.error("Erro ao carregar dados do projeto");
     } finally {
       setLoading(false);
     }
   };
 
   const handlePieceAdded = (piece: ProjetoPeca) => {
-    setPieces(prev => [...prev, piece]);
-    setActiveTab('pieces');
+    setPieces((prev) => [...prev, piece]);
+    setActiveTab("pieces");
   };
 
   const handleImportStart = () => {
@@ -144,9 +162,12 @@ export const ProjectDetailsView = ({
       await projetoPecaService.validateAndProcessPieces(imported, project.id);
 
     // Verificar duplicatas baseado em posição
-    const duplicates = allPieces.filter((vp) =>
-      pieces.some((p) => p.posicao === vp.posicao)
-    ).map((vp) => ({ existing: pieces.find(p => p.posicao === vp.posicao)!, imported: vp }));
+    const duplicates = allPieces
+      .filter((vp) => pieces.some((p) => p.posicao === vp.posicao))
+      .map((vp) => ({
+        existing: pieces.find((p) => p.posicao === vp.posicao)!,
+        imported: vp,
+      }));
 
     const uniquePieces = allPieces.filter(
       (vp) => !pieces.some((p) => p.posicao === vp.posicao)
@@ -156,36 +177,44 @@ export const ProjectDetailsView = ({
       // Salvar TODAS as peças únicas (com e sem perfil)
       const resp = await projetoPecaService.createBatch(uniquePieces);
       if (resp.success && resp.data) {
-        const withProfile = resp.data.filter(p => !p.perfil_nao_encontrado).length;
-        const withoutProfile = resp.data.filter(p => p.perfil_nao_encontrado).length;
-        
+        const withProfile = resp.data.filter(
+          (p) => !p.perfil_nao_encontrado
+        ).length;
+        const withoutProfile = resp.data.filter(
+          (p) => p.perfil_nao_encontrado
+        ).length;
+
         if (withProfile > 0 && withoutProfile > 0) {
-          toast.success(`${withProfile} peça(s) cadastradas com perfil, ${withoutProfile} precisam ser revisadas`);
+          toast.success(
+            `${withProfile} peça(s) cadastradas com perfil, ${withoutProfile} precisam ser revisadas`
+          );
         } else if (withProfile > 0) {
           toast.success(`${withProfile} peça(s) cadastradas`);
         } else {
-          toast.warning(`${withoutProfile} peça(s) cadastradas mas precisam ser revisadas`);
+          toast.warning(
+            `${withoutProfile} peça(s) cadastradas mas precisam ser revisadas`
+          );
         }
-        
+
         await loadProjectData();
       } else {
-        toast.error('Erro ao cadastrar peças');
+        toast.error("Erro ao cadastrar peças");
       }
     }
 
     if (duplicates.length > 0) {
       setDuplicateItems(duplicates);
-      setActiveTab('register');
+      setActiveTab("register");
     }
 
     if (invalidPieces.length > 0) {
       setValidations(invalidPieces);
-      toast.info('Algumas peças precisam ter seus perfis definidos');
+      toast.info("Algumas peças precisam ter seus perfis definidos");
       if (duplicates.length === 0) {
-        setActiveTab('pieces'); // Ir para a aba de peças para mostrar as peças salvas
+        setActiveTab("pieces"); // Ir para a aba de peças para mostrar as peças salvas
       }
     } else {
-      setActiveTab('pieces');
+      setActiveTab("pieces");
     }
 
     // Fechar diálogo após processamento
@@ -193,25 +222,34 @@ export const ProjectDetailsView = ({
     setImporting(false);
   };
 
-  const handleResolveValidation = async (validation: ProjectPieceValidation, perfil: PerfilMaterial) => {
+  const handleResolveValidation = async (
+    validation: ProjectPieceValidation,
+    perfil: PerfilMaterial
+  ) => {
     // Buscar a peça existente na lista para atualizar
-    const existingPiece = pieces.find(p => p.posicao === validation.peca.posicao);
-    
+    const existingPiece = pieces.find(
+      (p) => p.posicao === validation.peca.posicao
+    );
+
     if (existingPiece) {
       // Atualizar peça existente
       const resp = await projetoPecaService.update(existingPiece.id, {
         perfil_id: perfil.id,
         peso_por_metro: perfil.kg_por_metro,
-        perfil_nao_encontrado: false
+        perfil_nao_encontrado: false,
       });
-      
+
       if (resp.success && resp.data) {
         // Atualizar na lista local
-        setPieces(prev => prev.map(p => p.id === existingPiece.id ? resp.data : p));
-        setValidations(prev => prev.filter(v => v.peca.posicao !== validation.peca.posicao));
+        setPieces((prev) =>
+          prev.map((p) => (p.id === existingPiece.id ? resp.data : p))
+        );
+        setValidations((prev) =>
+          prev.filter((v) => v.peca.posicao !== validation.peca.posicao)
+        );
         toast.success(`Perfil definido para peça ${validation.peca.posicao}`);
       } else {
-        toast.error('Erro ao atualizar peça');
+        toast.error("Erro ao atualizar peça");
       }
     } else {
       // Criar nova peça (fallback)
@@ -219,14 +257,14 @@ export const ProjectDetailsView = ({
         ...validation.peca,
         perfil_id: perfil.id,
         peso_por_metro: perfil.kg_por_metro,
-        perfil_nao_encontrado: false
+        perfil_nao_encontrado: false,
       });
       if (resp.success && resp.data) {
-        setPieces(prev => [...prev, resp.data]);
-        setValidations(prev => prev.filter(v => v !== validation));
-        toast.success('Peça validada e cadastrada');
+        setPieces((prev) => [...prev, resp.data]);
+        setValidations((prev) => prev.filter((v) => v !== validation));
+        toast.success("Peça validada e cadastrada");
       } else {
-        toast.error('Erro ao cadastrar peça');
+        toast.error("Erro ao cadastrar peça");
       }
     }
   };
@@ -238,15 +276,15 @@ export const ProjectDetailsView = ({
         toast.success(`${resp.data.length} peça(s) adicionadas`);
         await loadProjectData();
       } else {
-        toast.error('Erro ao cadastrar peças');
+        toast.error("Erro ao cadastrar peças");
       }
     }
     setDuplicateItems([]);
-    setActiveTab('pieces');
+    setActiveTab("pieces");
   };
 
   const togglePieceSelection = (id: string) => {
-    setSelectedPieces(prev => {
+    setSelectedPieces((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(id)) newSet.delete(id);
       else newSet.add(id);
@@ -255,10 +293,10 @@ export const ProjectDetailsView = ({
   };
 
   const toggleProfileSelection = (key: string, pieces: ProjetoPeca[]) => {
-    const allSelected = pieces.every(p => selectedPieces.has(p.id));
-    setSelectedPieces(prev => {
+    const allSelected = pieces.every((p) => selectedPieces.has(p.id));
+    setSelectedPieces((prev) => {
       const newSet = new Set(prev);
-      pieces.forEach(p => {
+      pieces.forEach((p) => {
         if (allSelected) newSet.delete(p.id);
         else newSet.add(p.id);
       });
@@ -274,9 +312,9 @@ export const ProjectDetailsView = ({
       }
       setSelectedPieces(new Set());
       await loadProjectData();
-      toast.success('Peças excluídas');
+      toast.success("Peças excluídas");
     } catch (err) {
-      toast.error('Erro ao excluir peças');
+      toast.error("Erro ao excluir peças");
     } finally {
       setDeleting(false);
       setConfirmDelete(false);
@@ -284,40 +322,56 @@ export const ProjectDetailsView = ({
   };
 
   const groupedPieces = pieces.reduce((acc, piece) => {
-    const key = piece.perfil_id || 'sem_perfil';
+    const key = piece.perfil_id || "sem_perfil";
     if (!acc[key]) {
       acc[key] = {
         perfil: piece.perfil,
         pieces: [],
         totalQuantity: 0,
         totalLength: 0,
-        totalWeight: 0
+        totalWeight: 0,
       };
     }
     acc[key].pieces.push(piece);
     acc[key].totalQuantity += piece.quantidade;
     acc[key].totalLength += piece.comprimento_mm * piece.quantidade;
     acc[key].totalWeight +=
-      (piece.peso_por_metro || 0) * piece.comprimento_mm * piece.quantidade / 1000;
+      ((piece.peso_por_metro || 0) * piece.comprimento_mm * piece.quantidade) /
+      1000;
     return acc;
   }, {} as Record<string, any>);
 
   // Estatísticas do Projeto
-  const totalPiecesCount = pieces.reduce((sum, p) => sum + (p.quantidade || 0), 0);
+  const totalPiecesCount = pieces.reduce(
+    (sum, p) => sum + (p.quantidade || 0),
+    0
+  );
 
-const optimizedPiecesCount = optimizations.reduce((acc, opt) => {
-  const bars = opt?.resultados?.bars || [];
-  return acc + bars.reduce((sum: number, bar: any) => {
-    const pcs = Array.isArray(bar?.pieces) ? bar.pieces : [];
-    return sum + pcs.length;
+  const optimizedPiecesCount = optimizations.reduce((acc, opt) => {
+    const bars = opt?.resultados?.bars || [];
+    return (
+      acc +
+      bars.reduce((sum: number, bar: any) => {
+        const pcs = Array.isArray(bar?.pieces) ? bar.pieces : [];
+        return sum + pcs.length;
+      }, 0)
+    );
   }, 0);
-}, 0);
   const cutPiecesCount = optimizations.reduce((acc, opt) => {
     const bars = opt?.resultados?.bars || [];
-    return acc + bars.reduce((sum: number, b: any) => {
-      const pcs = b?.pieces || [];
-      return sum + pcs.filter((piece: any) => piece?.cortada === true || piece?.status === 'cortado').length;
-    }, 0);
+    return (
+      acc +
+      bars.reduce((sum: number, b: any) => {
+        const pcs = b?.pieces || [];
+        return (
+          sum +
+          pcs.filter(
+            (piece: any) =>
+              piece?.cortada === true || piece?.status === "cortado"
+          ).length
+        );
+      }, 0)
+    );
   }, 0);
 
   if (loading) {
@@ -348,7 +402,9 @@ const optimizedPiecesCount = optimizations.reduce((acc, opt) => {
                   Voltar
                 </Button>
                 <div className="space-y-2">
-                  <CardTitle className="text-2xl font-bold tracking-tight">{project.nome}</CardTitle>
+                  <CardTitle className="text-2xl font-bold tracking-tight">
+                    {project.nome}
+                  </CardTitle>
                   <div className="flex flex-wrap items-center gap-2 text-sm text-white/90">
                     <span className="px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm">
                       {project.numero_projeto}
@@ -402,8 +458,12 @@ const optimizedPiecesCount = optimizations.reduce((acc, opt) => {
                     <User className="w-6 h-6 text-blue-600" />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-blue-600 uppercase tracking-wide">Cliente</p>
-                    <p className="text-lg font-semibold text-gray-800">{project.clientes?.nome || 'Não definido'}</p>
+                    <p className="text-sm font-medium text-blue-600 uppercase tracking-wide">
+                      Cliente
+                    </p>
+                    <p className="text-lg font-semibold text-gray-800">
+                      {project.clientes?.nome || "Não definido"}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -413,8 +473,12 @@ const optimizedPiecesCount = optimizations.reduce((acc, opt) => {
                     <Building className="w-6 h-6 text-emerald-600" />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-emerald-600 uppercase tracking-wide">Obra</p>
-                    <p className="text-lg font-semibold text-gray-800">{project.obras?.nome || 'Não definida'}</p>
+                    <p className="text-sm font-medium text-emerald-600 uppercase tracking-wide">
+                      Obra
+                    </p>
+                    <p className="text-lg font-semibold text-gray-800">
+                      {project.obras?.nome || "Não definida"}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -424,8 +488,12 @@ const optimizedPiecesCount = optimizations.reduce((acc, opt) => {
                     <Calendar className="w-6 h-6 text-amber-600" />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-amber-600 uppercase tracking-wide">Criado em</p>
-                    <p className="text-lg font-semibold text-gray-800">{format(new Date(project.created_at), 'dd/MM/yyyy')}</p>
+                    <p className="text-sm font-medium text-amber-600 uppercase tracking-wide">
+                      Criado em
+                    </p>
+                    <p className="text-lg font-semibold text-gray-800">
+                      {format(new Date(project.created_at), "dd/MM/yyyy")}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -438,8 +506,12 @@ const optimizedPiecesCount = optimizations.reduce((acc, opt) => {
                     <Package className="w-6 h-6 text-violet-600" />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-violet-600 uppercase tracking-wide">Total de Peças</p>
-                    <p className="text-lg font-semibold text-gray-800">{totalPiecesCount}</p>
+                    <p className="text-sm font-medium text-violet-600 uppercase tracking-wide">
+                      Total de Peças
+                    </p>
+                    <p className="text-lg font-semibold text-gray-800">
+                      {totalPiecesCount + optimizedPiecesCount}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -449,8 +521,12 @@ const optimizedPiecesCount = optimizations.reduce((acc, opt) => {
                     <Calculator className="w-6 h-6 text-cyan-600" />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-cyan-600 uppercase tracking-wide">Peças Otimizadas</p>
-                    <p className="text-lg font-semibold text-gray-800">{optimizedPiecesCount}</p>
+                    <p className="text-sm font-medium text-cyan-600 uppercase tracking-wide">
+                      Peças Otimizadas
+                    </p>
+                    <p className="text-lg font-semibold text-gray-800">
+                      {optimizedPiecesCount}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -460,8 +536,12 @@ const optimizedPiecesCount = optimizations.reduce((acc, opt) => {
                     <Scissors className="w-6 h-6 text-pink-600" />
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-pink-600 uppercase tracking-wide">Peças Cortadas</p>
-                    <p className="text-lg font-semibold text-gray-800">{cutPiecesCount}</p>
+                    <p className="text-sm font-medium text-pink-600 uppercase tracking-wide">
+                      Peças Cortadas
+                    </p>
+                    <p className="text-lg font-semibold text-gray-800">
+                      {cutPiecesCount}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -470,26 +550,49 @@ const optimizedPiecesCount = optimizations.reduce((acc, opt) => {
         </Card>
 
         {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'pieces' | 'optimizations' | 'register' | 'history')} className="space-y-8">
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) =>
+            setActiveTab(
+              value as "pieces" | "optimizations" | "register" | "history"
+            )
+          }
+          className="space-y-8"
+        >
           <TabsList className="grid w-full grid-cols-4 bg-white/80 backdrop-blur-sm p-2 rounded-xl shadow-lg border-0">
-            <TabsTrigger value="pieces" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg transition-all duration-300">
+            <TabsTrigger
+              value="pieces"
+              className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg transition-all duration-300"
+            >
               <Package className="w-4 h-4" />
-              Peças ({pieces.length})
-              {pieces.filter(p => p.perfil_nao_encontrado).length > 0 && (
-                <Badge variant="destructive" className="text-xs px-1 py-0 h-4 min-w-4 bg-orange-500 hover:bg-orange-600">
-                  {pieces.filter(p => p.perfil_nao_encontrado).length}
+              Peças ({totalPiecesCount})
+              {pieces.filter((p) => p.perfil_nao_encontrado).length > 0 && (
+                <Badge
+                  variant="destructive"
+                  className="text-xs px-1 py-0 h-4 min-w-4 bg-orange-500 hover:bg-orange-600"
+                >
+                  {pieces.filter((p) => p.perfil_nao_encontrado).length}
                 </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="register" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg transition-all duration-300">
+            <TabsTrigger
+              value="register"
+              className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg transition-all duration-300"
+            >
               <Plus className="w-4 h-4" />
               Cadastrar Peça
             </TabsTrigger>
-            <TabsTrigger value="optimizations" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg transition-all duration-300">
+            <TabsTrigger
+              value="optimizations"
+              className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg transition-all duration-300"
+            >
               <Calculator className="w-4 h-4" />
               Otimizações ({optimizations.length})
             </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg transition-all duration-300">
+            <TabsTrigger
+              value="history"
+              className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg transition-all duration-300"
+            >
               <Calendar className="w-4 h-4" />
               Histórico
             </TabsTrigger>
@@ -510,7 +613,9 @@ const optimizedPiecesCount = optimizations.reduce((acc, opt) => {
                   <div className="flex items-center justify-center py-12">
                     <div className="flex flex-col items-center gap-4">
                       <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-                      <p className="text-gray-600 font-medium">Extraindo peças do arquivo...</p>
+                      <p className="text-gray-600 font-medium">
+                        Extraindo peças do arquivo...
+                      </p>
                     </div>
                   </div>
                 ) : duplicateItems.length > 0 ? (
@@ -527,16 +632,18 @@ const optimizedPiecesCount = optimizations.reduce((acc, opt) => {
                     />
                     {validations.length > 0 && (
                       <div className="mt-6">
-                        <ProjectValidationAlert 
-                          validations={validations} 
+                        <ProjectValidationAlert
+                          validations={validations}
                           onResolve={handleResolveValidation}
-                          onNavigateToProfileManagement={onNavigateToProfileManagement}
+                          onNavigateToProfileManagement={
+                            onNavigateToProfileManagement
+                          }
                         />
                       </div>
                     )}
                     <div className="flex justify-end pt-4">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         onClick={() => setShowUpload(true)}
                         className="hover:bg-indigo-50 hover:border-indigo-300 transition-all duration-300"
                       >
@@ -579,7 +686,9 @@ const optimizedPiecesCount = optimizations.reduce((acc, opt) => {
                     )}
                     <Button
                       onClick={() => setShowOptimizationDialog(true)}
-                      disabled={pieces.length === 0 || selectedPieces.size === 0}
+                      disabled={
+                        pieces.length === 0 || selectedPieces.size === 0
+                      }
                       className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all duration-300"
                     >
                       <Plus className="w-4 h-4 mr-2" />
@@ -594,36 +703,56 @@ const optimizedPiecesCount = optimizations.reduce((acc, opt) => {
                     <div className="p-4 bg-gray-100 rounded-full w-fit mx-auto mb-4">
                       <Package className="w-8 h-8 text-gray-400" />
                     </div>
-                    <p className="text-gray-500 text-lg">Nenhuma peça cadastrada neste projeto.</p>
+                    <p className="text-gray-500 text-lg">
+                      Nenhuma peça cadastrada neste projeto.
+                    </p>
                   </div>
                 ) : (
                   <Accordion type="multiple" className="space-y-4">
                     {Object.entries(groupedPieces).map(([key, group]) => {
-                      const allSelected = group.pieces.every((p: ProjetoPeca) => selectedPieces.has(p.id));
+                      const allSelected = group.pieces.every((p: ProjetoPeca) =>
+                        selectedPieces.has(p.id)
+                      );
                       return (
-                        <AccordionItem key={key} value={key} className="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+                        <AccordionItem
+                          key={key}
+                          value={key}
+                          className="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
+                        >
                           <AccordionTrigger className="hover:no-underline px-6 py-4 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-indigo-50 hover:to-purple-50 transition-all duration-300">
                             <div className="flex items-center gap-4 flex-1">
                               <Checkbox
                                 checked={allSelected}
-                                onCheckedChange={() => toggleProfileSelection(key, group.pieces)}
+                                onCheckedChange={() =>
+                                  toggleProfileSelection(key, group.pieces)
+                                }
                                 onClick={(e) => e.stopPropagation()}
                                 className="scale-110"
                               />
                               <div className="flex-1">
                                 <span className="font-semibold text-gray-800 text-lg">
-                                  {group.perfil?.descricao_perfil || 'Perfil não definido'}
+                                  {group.perfil?.descricao_perfil ||
+                                    "Perfil não definido"}
                                 </span>
                               </div>
                               <div className="flex gap-3">
-                                <Badge variant="secondary" className="bg-indigo-100 text-indigo-800 px-3 py-1">
+                                <Badge
+                                  variant="secondary"
+                                  className="bg-indigo-100 text-indigo-800 px-3 py-1"
+                                >
                                   {group.totalQuantity} peças
                                 </Badge>
-                                <Badge variant="outline" className="border-purple-200 text-purple-700 px-3 py-1">
+                                <Badge
+                                  variant="outline"
+                                  className="border-purple-200 text-purple-700 px-3 py-1"
+                                >
                                   {(group.totalLength / 1000).toFixed(2)}m
                                 </Badge>
                                 {group.totalWeight > 0 && (
-                                  <Badge variant="outline" className="border-emerald-200 text-emerald-700 px-3 py-1">
+                                  <Badge
+                                    variant="outline"
+                                    className="border-emerald-200 text-emerald-700 px-3 py-1"
+                                  >
                                     {group.totalWeight.toFixed(2)}kg
                                   </Badge>
                                 )}
@@ -635,89 +764,119 @@ const optimizedPiecesCount = optimizations.reduce((acc, opt) => {
                               {group.pieces.map((piece: ProjetoPeca) => {
                                 const selected = selectedPieces.has(piece.id);
                                 const peso = piece.peso_por_metro
-                                  ? (piece.peso_por_metro * piece.comprimento_mm) / 1000
+                                  ? (piece.peso_por_metro *
+                                      piece.comprimento_mm) /
+                                    1000
                                   : null;
                                 return (
-                                   <div key={piece.id} className={`flex items-center justify-between p-4 rounded-xl border hover:shadow-sm transition-all duration-300 ${
-                                     piece.perfil_nao_encontrado 
-                                       ? 'bg-gradient-to-r from-orange-50 to-yellow-50 border-orange-200' 
-                                       : 'bg-gradient-to-r from-gray-50 to-white border-gray-100'
-                                   }`}>
+                                  <div
+                                    key={piece.id}
+                                    className={`flex items-center justify-between p-4 rounded-xl border hover:shadow-sm transition-all duration-300 ${
+                                      piece.perfil_nao_encontrado
+                                        ? "bg-gradient-to-r from-orange-50 to-yellow-50 border-orange-200"
+                                        : "bg-gradient-to-r from-gray-50 to-white border-gray-100"
+                                    }`}
+                                  >
                                     <div className="flex items-start gap-4">
                                       <Checkbox
                                         checked={selected}
-                                        onCheckedChange={() => togglePieceSelection(piece.id)}
+                                        onCheckedChange={() =>
+                                          togglePieceSelection(piece.id)
+                                        }
                                         className="mt-1 scale-110"
                                       />
                                       <div className="space-y-2">
-                                        
-                                         {piece.perfil ? (
-                                           <div className="flex items-center gap-2">
-                                             <span className="text-sm font-semibold text-gray-600">Perfil:</span>
-                                             <span className="text-sm text-gray-800 bg-blue-50 px-2 py-1 rounded">
-                                               {piece.perfil.descricao_perfil}
-                                             </span>
-                                           </div>
-                                         ) : (
-                                           <div className="flex items-center gap-2">
-                                             <span className="text-sm font-semibold text-orange-600">⚠️ Perfil:</span>
-                                             <span className="text-sm text-orange-800 bg-orange-50 px-2 py-1 rounded border border-orange-200">
-                                               {piece.descricao_perfil_raw || 'Não definido'}
-                                             </span>
-                                             <Button
-                                               size="sm"
-                                               variant="outline"
-                                               onClick={() => {
-                                                 const validation: ProjectPieceValidation = {
-                                                   peca: piece,
-                                                   isValid: false,
-                                                   suggestions: []
-                                                 };
-                                                 setValidations(prev => {
-                                                   const exists = prev.some(v => v.peca.posicao === piece.posicao);
-                                                   if (!exists) {
-                                                     return [...prev, validation];
-                                                   }
-                                                   return prev;
-                                                 });
-                                                 setActiveTab('register');
-                                               }}
-                                               className="ml-2 text-xs px-2 py-1 h-6 bg-orange-100 text-orange-700 border-orange-300 hover:bg-orange-200"
-                                             >
-                                               Definir Perfil
-                                             </Button>
-                                           </div>
-                                         )}
+                                        {piece.perfil ? (
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-sm font-semibold text-gray-600">
+                                              Perfil:
+                                            </span>
+                                            <span className="text-sm text-gray-800 bg-blue-50 px-2 py-1 rounded">
+                                              {piece.perfil.descricao_perfil}
+                                            </span>
+                                          </div>
+                                        ) : (
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-sm font-semibold text-orange-600">
+                                              ⚠️ Perfil:
+                                            </span>
+                                            <span className="text-sm text-orange-800 bg-orange-50 px-2 py-1 rounded border border-orange-200">
+                                              {piece.descricao_perfil_raw ||
+                                                "Não definido"}
+                                            </span>
+                                            <Button
+                                              size="sm"
+                                              variant="outline"
+                                              onClick={() => {
+                                                const validation: ProjectPieceValidation =
+                                                  {
+                                                    peca: piece,
+                                                    isValid: false,
+                                                    suggestions: [],
+                                                  };
+                                                setValidations((prev) => {
+                                                  const exists = prev.some(
+                                                    (v) =>
+                                                      v.peca.posicao ===
+                                                      piece.posicao
+                                                  );
+                                                  if (!exists) {
+                                                    return [
+                                                      ...prev,
+                                                      validation,
+                                                    ];
+                                                  }
+                                                  return prev;
+                                                });
+                                                setActiveTab("register");
+                                              }}
+                                              className="ml-2 text-xs px-2 py-1 h-6 bg-orange-100 text-orange-700 border-orange-300 hover:bg-orange-200"
+                                            >
+                                              Definir Perfil
+                                            </Button>
+                                          </div>
+                                        )}
                                         <div className="flex items-center gap-2">
-                                          <span className="text-sm font-semibold text-gray-600">Posição:</span>
+                                          <span className="text-sm font-semibold text-gray-600">
+                                            Posição:
+                                          </span>
                                           <span className="text-sm text-gray-800 font-mono bg-gray-100 px-2 py-1 rounded">
                                             {piece.posicao}
                                           </span>
                                         </div>
-                                         {piece.tag && (
-                                           <div className="flex items-center gap-2">
-                                             <span className="text-sm font-semibold text-gray-600">TAG:</span>
-                                             <span className="text-sm bg-indigo-100 text-indigo-800 px-2 py-1 rounded font-medium">
-                                               {piece.tag}
-                                             </span>
-                                           </div>
-                                         )}
+                                        {piece.tag && (
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-sm font-semibold text-gray-600">
+                                              TAG:
+                                            </span>
+                                            <span className="text-sm bg-indigo-100 text-indigo-800 px-2 py-1 rounded font-medium">
+                                              {piece.tag}
+                                            </span>
+                                          </div>
+                                        )}
                                         <div className="flex items-center gap-4">
                                           <div className="flex items-center gap-2">
-                                            <span className="text-sm font-semibold text-gray-600">Comprimento:</span>
+                                            <span className="text-sm font-semibold text-gray-600">
+                                              Comprimento:
+                                            </span>
                                             <span className="text-sm text-gray-800 bg-emerald-50 px-2 py-1 rounded">
-                                              {piece.comprimento_mm}mm × {piece.quantidade}
+                                              {piece.comprimento_mm}mm ×{" "}
+                                              {piece.quantidade}
                                             </span>
                                           </div>
                                           <div className="flex items-center gap-2">
-                                            <span className="text-sm font-semibold text-gray-600">Qtd:</span>
+                                            <span className="text-sm font-semibold text-gray-600">
+                                              Qtd:
+                                            </span>
                                             <span className="text-sm text-gray-800 bg-blue-50 px-2 py-1 rounded">
                                               {piece.quantidade}
                                             </span>
                                           </div>
                                           {peso !== null && (
                                             <div className="flex items-center gap-2">
-                                              <span className="text-sm font-semibold text-gray-600">Peso:</span>
+                                              <span className="text-sm font-semibold text-gray-600">
+                                                Peso:
+                                              </span>
                                               <span className="text-sm text-gray-800 bg-amber-50 px-2 py-1 rounded">
                                                 {peso.toFixed(2)}kg
                                               </span>
@@ -768,28 +927,40 @@ const optimizedPiecesCount = optimizations.reduce((acc, opt) => {
                     <div className="p-4 bg-gray-100 rounded-full w-fit mx-auto mb-4">
                       <Calculator className="w-8 h-8 text-gray-400" />
                     </div>
-                    <p className="text-gray-500 text-lg">Nenhuma otimização realizada para este projeto.</p>
+                    <p className="text-gray-500 text-lg">
+                      Nenhuma otimização realizada para este projeto.
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {optimizations.map((optimization) => {
-                      const totalPieces = optimization.resultados?.bars?.reduce(
-                        (sum: number, b: any) => sum + b.pieces.length,
-                        0
-                      ) || 0;
-                      const cutPieces = optimization.resultados?.bars?.reduce(
-                        (sum: number, b: any) =>
-                          sum + b.pieces.filter((p: any) => p.cortada).length,
-                        0
-                      ) || 0;
-                      const percent = totalPieces > 0 ? Math.round((cutPieces / totalPieces) * 100) : 0;
+                      const totalPieces =
+                        optimization.resultados?.bars?.reduce(
+                          (sum: number, b: any) => sum + b.pieces.length,
+                          0
+                        ) || 0;
+                      const cutPieces =
+                        optimization.resultados?.bars?.reduce(
+                          (sum: number, b: any) =>
+                            sum + b.pieces.filter((p: any) => p.cortada).length,
+                          0
+                        ) || 0;
+                      const percent =
+                        totalPieces > 0
+                          ? Math.round((cutPieces / totalPieces) * 100)
+                          : 0;
 
                       return (
-                        <Card key={optimization.id} className="border border-gray-200 hover:shadow-lg transition-all duration-300 rounded-xl overflow-hidden">
+                        <Card
+                          key={optimization.id}
+                          className="border border-gray-200 hover:shadow-lg transition-all duration-300 rounded-xl overflow-hidden"
+                        >
                           <CardContent className="p-6">
                             <div className="flex items-center justify-between">
                               <div className="space-y-3">
-                                <h4 className="text-lg font-semibold text-gray-800">{optimization.nome_lista}</h4>
+                                <h4 className="text-lg font-semibold text-gray-800">
+                                  {optimization.nome_lista}
+                                </h4>
                                 <div className="flex gap-4">
                                   <span className="text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium">
                                     Barra: {optimization.tamanho_barra}mm
@@ -799,7 +970,10 @@ const optimizedPiecesCount = optimizations.reduce((acc, opt) => {
                                   </span>
                                 </div>
                                 <p className="text-sm text-gray-500">
-                                  {format(new Date(optimization.created_at), 'dd/MM/yyyy HH:mm')}
+                                  {format(
+                                    new Date(optimization.created_at),
+                                    "dd/MM/yyyy HH:mm"
+                                  )}
                                 </p>
                               </div>
                               <Button
@@ -809,7 +983,7 @@ const optimizedPiecesCount = optimizations.reduce((acc, opt) => {
                                     res: optimization.resultados,
                                     bar: optimization.tamanho_barra,
                                     id: optimization.id,
-                                    nome_lista: optimization.nome_lista
+                                    nome_lista: optimization.nome_lista,
                                   })
                                 }
                                 className="hover:bg-indigo-50 hover:border-indigo-300 transition-all duration-300"
@@ -828,7 +1002,7 @@ const optimizedPiecesCount = optimizations.reduce((acc, opt) => {
           </TabsContent>
 
           <TabsContent value="history">
-            <ProjectHistoryTab 
+            <ProjectHistoryTab
               projectId={project.id}
               projectName={project.nome}
             />
@@ -840,16 +1014,16 @@ const optimizedPiecesCount = optimizations.reduce((acc, opt) => {
           onOpenChange={setShowOptimizationDialog}
           onCreate={(name, bar) =>
             onCreateOptimization(
-              pieces.filter(p => selectedPieces.has(p.id)),
+              pieces.filter((p) => selectedPieces.has(p.id)),
               name,
               bar
             ).then(() => {
               setShowOptimizationDialog(false);
-              setActiveTab('optimizations');
+              setActiveTab("optimizations");
               void loadProjectData();
             })
           }
-          selectedPieces={pieces.filter(p => selectedPieces.has(p.id))}
+          selectedPieces={pieces.filter((p) => selectedPieces.has(p.id))}
           projectId={project?.id}
           onNavigateToProfileManagement={onNavigateToProfileManagement}
         />
