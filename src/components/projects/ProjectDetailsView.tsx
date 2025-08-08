@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Accordion,
@@ -23,6 +24,7 @@ import {
   Calculator,
   Settings,
   Scissors,
+  Clock,
 } from "lucide-react";
 import { projetoPecaService } from "@/services/entities/ProjetoPecaService";
 import { projetoOtimizacaoService } from "@/services/entities/ProjetoOtimizacaoService";
@@ -374,6 +376,13 @@ export const ProjectDetailsView = ({
     );
   }, 0);
 
+  const totalAllPieces = totalPiecesCount + optimizedPiecesCount;
+  const optimizedPctOfTotal = totalAllPieces > 0 ? (optimizedPiecesCount / totalAllPieces) * 100 : 0;
+  const cutPctOfTotal = totalAllPieces > 0 ? (cutPiecesCount / totalAllPieces) * 100 : 0;
+  const cutPctOfOptimized = optimizedPiecesCount > 0 ? (cutPiecesCount / optimizedPiecesCount) * 100 : 0;
+  const awaitingCutCount = Math.max(optimizedPiecesCount - cutPiecesCount, 0);
+  const awaitingPctOfOptimized = optimizedPiecesCount > 0 ? (awaitingCutCount / optimizedPiecesCount) * 100 : 0;
+
   if (loading) {
     return (
       <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
@@ -499,19 +508,23 @@ export const ProjectDetailsView = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mt-6">
               <div className="group p-6 bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl border border-violet-100 hover:shadow-lg transition-all duration-300">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-violet-100 rounded-xl group-hover:bg-violet-200 transition-colors">
                     <Package className="w-6 h-6 text-violet-600" />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1 w-full">
                     <p className="text-sm font-medium text-violet-600 uppercase tracking-wide">
                       Total de Peças
                     </p>
                     <p className="text-lg font-semibold text-gray-800">
-                      {totalPiecesCount + optimizedPiecesCount}
+                      {totalAllPieces}
                     </p>
+                    <div className="mt-3 space-y-1">
+                      <div className="text-xs text-gray-600">100% do total</div>
+                      <Progress value={100} />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -520,13 +533,17 @@ export const ProjectDetailsView = ({
                   <div className="p-3 bg-cyan-100 rounded-xl group-hover:bg-cyan-200 transition-colors">
                     <Calculator className="w-6 h-6 text-cyan-600" />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1 w-full">
                     <p className="text-sm font-medium text-cyan-600 uppercase tracking-wide">
                       Peças Otimizadas
                     </p>
                     <p className="text-lg font-semibold text-gray-800">
                       {optimizedPiecesCount}
                     </p>
+                    <div className="mt-3 space-y-1">
+                      <div className="text-xs text-gray-600">{Math.round(optimizedPctOfTotal)}% do total</div>
+                      <Progress value={optimizedPctOfTotal} />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -535,13 +552,42 @@ export const ProjectDetailsView = ({
                   <div className="p-3 bg-pink-100 rounded-xl group-hover:bg-pink-200 transition-colors">
                     <Scissors className="w-6 h-6 text-pink-600" />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1 w-full">
                     <p className="text-sm font-medium text-pink-600 uppercase tracking-wide">
                       Peças Cortadas
                     </p>
                     <p className="text-lg font-semibold text-gray-800">
                       {cutPiecesCount}
                     </p>
+                    <div className="mt-3 space-y-2">
+                      <div>
+                        <div className="text-xs text-gray-600 mb-1">Do total: {Math.round(cutPctOfTotal)}%</div>
+                        <Progress value={cutPctOfTotal} />
+                      </div>
+                      <div>
+                        <div className="text-xs text-gray-600 mb-1">Das otimizadas: {Math.round(cutPctOfOptimized)}%</div>
+                        <Progress value={cutPctOfOptimized} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="group p-6 bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl border border-amber-100 hover:shadow-lg transition-all duration-300">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-amber-100 rounded-xl group-hover:bg-amber-200 transition-colors">
+                    <Clock className="w-6 h-6 text-amber-600" />
+                  </div>
+                  <div className="space-y-1 w-full">
+                    <p className="text-sm font-medium text-amber-600 uppercase tracking-wide">
+                      Peças Aguardando Corte
+                    </p>
+                    <p className="text-lg font-semibold text-gray-800">
+                      {awaitingCutCount}
+                    </p>
+                    <div className="mt-3 space-y-1">
+                      <div className="text-xs text-gray-600">Das otimizadas: {Math.round(awaitingPctOfOptimized)}%</div>
+                      <Progress value={awaitingPctOfOptimized} />
+                    </div>
                   </div>
                 </div>
               </div>
