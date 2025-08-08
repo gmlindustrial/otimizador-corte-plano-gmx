@@ -123,9 +123,11 @@ export const ProjectManagementTab = ({
         selectedPieces.map((p) => p.perfil_id).filter(Boolean)
       )) as string[];
 
-      const sobrasFiltradas = (sobras as any[]).filter(
-        (sobra: any) => usedPerfilIds.includes(sobra.id_perfis_materiais)
-      );
+      const singlePerfilId = usedPerfilIds.length === 1 ? usedPerfilIds[0] : null;
+
+      const sobrasFiltradas = singlePerfilId
+        ? (sobras as any[]).filter((sobra: any) => sobra.id_perfis_materiais === singlePerfilId)
+        : [];
 
       const sobrasForAlgo = sobrasFiltradas.map((s: any) => ({
         id: s.id,
@@ -146,7 +148,7 @@ export const ProjectManagementTab = ({
       const resultWithLeftovers = runLinearOptimizationWithLeftovers(
         piecesForAlgo,
         barLength,
-        sobrasFiltradas
+        sobrasForAlgo
       );
 
       const created = await projetoOtimizacaoService.create({
@@ -154,6 +156,7 @@ export const ProjectManagementTab = ({
           projeto_id: selectedProject.id,
           nome_lista: name,
           tamanho_barra: barLength,
+          perfil_id: singlePerfilId || undefined,
           pecas_selecionadas: selectedPieces.map((p) => p.id) as any,
           resultados: resultWithLeftovers as any,
         },
@@ -163,7 +166,6 @@ export const ProjectManagementTab = ({
         for (const [id, qtyStr] of Object.entries(
           resultWithLeftovers.leftoverUsage
         )) {
-          // Validar se a sobra ainda existe e se a quantidade é válida
           const qty = parseInt(qtyStr, 10);
           const sobra = sobras.find((s) => s.id === id);
           if (sobra && qty > 0 && qty <= sobra.quantidade) {
@@ -195,14 +197,18 @@ export const ProjectManagementTab = ({
           resultWithLeftovers,
           mostCommonPerfilId
         );
+
+        // Remover peças somente após a criação bem-sucedida
+        await Promise.all(
+          selectedPieces.map((p) => projetoPecaService.delete(p.id))
+        );
+
+        toast.success("Otimização criada com sucesso");
+      } else {
+        console.error("Falha ao criar otimização:", created.error);
+        toast.error(`Erro ao criar otimização: ${created.error || 'desconhecido'}`);
       }
 
-      // remove optimized pieces from project
-      await Promise.all(
-        selectedPieces.map((p) => projetoPecaService.delete(p.id))
-      );
-
-      toast.success("Otimização criada com sucesso");
     } catch (err) {
       console.error("Erro ao criar otimização:", err);
       toast.error("Erro ao criar otimização");
