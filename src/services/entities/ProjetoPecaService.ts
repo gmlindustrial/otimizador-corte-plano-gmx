@@ -102,7 +102,8 @@ export class ProjetoPecaService {
         // PRIORIZAR peso do perfil cadastrado no Supabase
         peso_por_metro: perfil?.kg_por_metro || 1.0,
         peso: piece.peso, // Peso total da peça extraído do arquivo
-        perfil_nao_encontrado: !perfil
+        perfil_nao_encontrado: !perfil,
+        status: 'aguardando_otimizacao'
       };
 
       // SEMPRE adicionar à lista de peças para salvar
@@ -213,6 +214,96 @@ export class ProjetoPecaService {
       return { success: true, data: Object.values(grouped), error: null };
     } catch (error: any) {
       console.error('Erro inesperado ao agrupar peças por perfil:', error);
+      return { success: false, data: null, error: error.message };
+    }
+  }
+
+  async getByStatus(projectId: string, status: ProjetoPeca['status']) {
+    try {
+      const { data, error } = await supabase
+        .from('projeto_pecas')
+        .select(`
+          *,
+          perfil:perfis_materiais(*)
+        `)
+        .eq('projeto_id', projectId)
+        .eq('status', status)
+        .order('posicao', { ascending: true });
+
+      if (error) {
+        console.error('Erro ao buscar peças por status:', error);
+        return { success: false, data: null, error: error.message };
+      }
+
+      return { success: true, data, error: null };
+    } catch (error: any) {
+      console.error('Erro inesperado ao buscar peças por status:', error);
+      return { success: false, data: null, error: error.message };
+    }
+  }
+
+  async updateStatus(pieceIds: string[], status: ProjetoPeca['status'], optimizationId?: string) {
+    try {
+      const updateData: any = { status };
+      if (optimizationId) {
+        updateData.projeto_otimizacao_id = optimizationId;
+      }
+
+      const { data, error } = await supabase
+        .from('projeto_pecas')
+        .update(updateData)
+        .in('id', pieceIds)
+        .select();
+
+      if (error) {
+        console.error('Erro ao atualizar status das peças:', error);
+        return { success: false, data: null, error: error.message };
+      }
+
+      return { success: true, data, error: null };
+    } catch (error: any) {
+      console.error('Erro inesperado ao atualizar status das peças:', error);
+      return { success: false, data: null, error: error.message };
+    }
+  }
+
+  async getStatistics(projectId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('projeto_pecas')
+        .select('status, quantidade')
+        .eq('projeto_id', projectId);
+
+      if (error) {
+        console.error('Erro ao buscar estatísticas:', error);
+        return { success: false, data: null, error: error.message };
+      }
+
+      const stats = {
+        total: 0,
+        aguardandoOtimizacao: 0,
+        otimizadas: 0,
+        cortadas: 0
+      };
+
+      data?.forEach(peca => {
+        stats.total += peca.quantidade;
+        switch (peca.status) {
+          case 'aguardando_otimizacao':
+            stats.aguardandoOtimizacao += peca.quantidade;
+            break;
+          case 'otimizada':
+            stats.otimizadas += peca.quantidade;
+            break;
+          case 'cortada':
+            stats.cortadas += peca.quantidade;
+            break;
+        }
+      });
+
+      return { success: true, data: stats, error: null };
+    } catch (error: any) {
+      console.error('Erro inesperado ao buscar estatísticas:', error);
       return { success: false, data: null, error: error.message };
     }
   }

@@ -19,6 +19,8 @@ export interface ProjetoPeca {
   peso_por_metro?: number;
   peso?: number; // Peso real extraído do arquivo CAD (kg)
   perfil_nao_encontrado: boolean;
+  status: 'aguardando_otimizacao' | 'otimizada' | 'cortada';
+  projeto_otimizacao_id?: string;
   created_at: string;
   perfil?: PerfilMaterial;
 }

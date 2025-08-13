@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { projetoPecaService } from "@/services/entities/ProjetoPecaService";
 import { projetoOtimizacaoService } from "@/services/entities/ProjetoOtimizacaoService";
+import { useQuery } from "@tanstack/react-query";
 import { OptimizationCreateDialog } from "./OptimizationCreateDialog";
 import { OptimizationResultsDialog } from "./OptimizationResultsDialog";
 import { format } from "date-fns";
@@ -45,6 +46,7 @@ import { ProjectDuplicateManager } from "./ProjectDuplicateManager";
 import { DeleteConfirmDialog } from "../management/DeleteConfirmDialog";
 import type { Project } from "@/pages/Index";
 import { ProjectHistoryTab } from "./ProjectHistoryTab";
+import { OptimizationReverseDialog } from "./OptimizationReverseDialog";
 
 interface Projeto {
   id: string;
@@ -100,6 +102,10 @@ export const ProjectDetailsView = ({
     id: string;
     nome_lista: string;
   } | null>(null);
+  const [reverseOptimization, setReverseOptimization] = useState<{
+    id: string;
+    nome_lista: string;
+  } | null>(null);
 
   const mapProjetoToProject = (p: Projeto): Project => ({
     id: p.id,
@@ -120,6 +126,22 @@ export const ProjectDetailsView = ({
   });
 
   const projectForExport = mapProjetoToProject(project);
+
+  // Buscar estatísticas do projeto usando o novo sistema de status
+  const { data: projectStats } = useQuery({
+    queryKey: ['project-statistics', project?.id],
+    queryFn: async () => {
+      if (!project?.id) return null;
+      
+      const response = await projetoPecaService.getStatistics(project.id);
+      if (!response.success) {
+        throw new Error(response.error || 'Erro ao buscar estatísticas');
+      }
+      
+      return response.data;
+    },
+    enabled: !!project?.id
+  });
 
   useEffect(() => {
     loadProjectData();
@@ -509,6 +531,7 @@ export const ProjectDetailsView = ({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mt-6">
+              {/* Total de Peças */}
               <div className="group p-6 bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl border border-violet-100 hover:shadow-lg transition-all duration-300">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-violet-100 rounded-xl group-hover:bg-violet-200 transition-colors">
@@ -519,7 +542,7 @@ export const ProjectDetailsView = ({
                       Total de Peças
                     </p>
                     <p className="text-lg font-semibold text-gray-800">
-                      {totalAllPieces}
+                      {projectStats?.total || 0}
                     </p>
                     <div className="mt-3 space-y-1">
                       <div className="text-xs text-gray-600">100% do total</div>
@@ -528,6 +551,33 @@ export const ProjectDetailsView = ({
                   </div>
                 </div>
               </div>
+
+              {/* Peças Aguardando Otimização */}
+              <div className="group p-6 bg-gradient-to-br from-yellow-50 to-amber-50 rounded-xl border border-yellow-100 hover:shadow-lg transition-all duration-300">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 bg-yellow-100 rounded-xl group-hover:bg-yellow-200 transition-colors">
+                    <Clock className="w-6 h-6 text-yellow-600" />
+                  </div>
+                  <div className="space-y-1 w-full">
+                    <p className="text-sm font-medium text-yellow-600 uppercase tracking-wide">
+                      Aguardando Otimização
+                    </p>
+                    <p className="text-lg font-semibold text-gray-800">
+                      {projectStats?.aguardandoOtimizacao || 0}
+                    </p>
+                    <div className="mt-3 space-y-1">
+                      <div className="text-xs text-gray-600">
+                        {projectStats?.total > 0 ? ((projectStats.aguardandoOtimizacao / projectStats.total) * 100).toFixed(1) : 0}% do total
+                      </div>
+                      <Progress 
+                        value={projectStats?.total > 0 ? (projectStats.aguardandoOtimizacao / projectStats.total) * 100 : 0} 
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Peças Otimizadas (Aguardando Corte) */}
               <div className="group p-6 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-xl border border-cyan-100 hover:shadow-lg transition-all duration-300">
                 <div className="flex items-center gap-4">
                   <div className="p-3 bg-cyan-100 rounded-xl group-hover:bg-cyan-200 transition-colors">
@@ -535,58 +585,55 @@ export const ProjectDetailsView = ({
                   </div>
                   <div className="space-y-1 w-full">
                     <p className="text-sm font-medium text-cyan-600 uppercase tracking-wide">
-                      Peças Otimizadas
+                      Aguardando Corte
                     </p>
                     <p className="text-lg font-semibold text-gray-800">
-                      {optimizedPiecesCount}
+                      {projectStats?.otimizadas || 0}
                     </p>
                     <div className="mt-3 space-y-1">
-                      <div className="text-xs text-gray-600">{Math.round(optimizedPctOfTotal)}% do total</div>
-                      <Progress value={optimizedPctOfTotal} />
+                      <div className="text-xs text-gray-600">
+                        {projectStats?.total > 0 ? ((projectStats.otimizadas / projectStats.total) * 100).toFixed(1) : 0}% do total
+                      </div>
+                      <Progress 
+                        value={projectStats?.total > 0 ? (projectStats.otimizadas / projectStats.total) * 100 : 0} 
+                      />
                     </div>
                   </div>
                 </div>
               </div>
-              <div className="group p-6 bg-gradient-to-br from-pink-50 to-rose-50 rounded-xl border border-pink-100 hover:shadow-lg transition-all duration-300">
+
+              {/* Peças Cortadas */}
+              <div className="group p-6 bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl border border-emerald-100 hover:shadow-lg transition-all duration-300">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-pink-100 rounded-xl group-hover:bg-pink-200 transition-colors">
-                    <Scissors className="w-6 h-6 text-pink-600" />
+                  <div className="p-3 bg-emerald-100 rounded-xl group-hover:bg-emerald-200 transition-colors">
+                    <Scissors className="w-6 h-6 text-emerald-600" />
                   </div>
                   <div className="space-y-1 w-full">
-                    <p className="text-sm font-medium text-pink-600 uppercase tracking-wide">
+                    <p className="text-sm font-medium text-emerald-600 uppercase tracking-wide">
                       Peças Cortadas
                     </p>
                     <p className="text-lg font-semibold text-gray-800">
-                      {cutPiecesCount}
+                      {projectStats?.cortadas || 0}
                     </p>
                     <div className="mt-3 space-y-2">
                       <div>
-                        <div className="text-xs text-gray-600 mb-1">Do total: {Math.round(cutPctOfTotal)}%</div>
-                        <Progress value={cutPctOfTotal} />
+                        <div className="text-xs text-gray-600 mb-1">
+                          Do total: {projectStats?.total > 0 ? ((projectStats.cortadas / projectStats.total) * 100).toFixed(1) : 0}%
+                        </div>
+                        <Progress 
+                          value={projectStats?.total > 0 ? (projectStats.cortadas / projectStats.total) * 100 : 0} 
+                        />
                       </div>
-                      <div>
-                        <div className="text-xs text-gray-600 mb-1">Das otimizadas: {Math.round(cutPctOfOptimized)}%</div>
-                        <Progress value={cutPctOfOptimized} />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="group p-6 bg-gradient-to-br from-amber-50 to-yellow-50 rounded-xl border border-amber-100 hover:shadow-lg transition-all duration-300">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-amber-100 rounded-xl group-hover:bg-amber-200 transition-colors">
-                    <Clock className="w-6 h-6 text-amber-600" />
-                  </div>
-                  <div className="space-y-1 w-full">
-                    <p className="text-sm font-medium text-amber-600 uppercase tracking-wide">
-                      Peças Aguardando Corte
-                    </p>
-                    <p className="text-lg font-semibold text-gray-800">
-                      {awaitingCutCount}
-                    </p>
-                    <div className="mt-3 space-y-1">
-                      <div className="text-xs text-gray-600">Das otimizadas: {Math.round(awaitingPctOfOptimized)}%</div>
-                      <Progress value={awaitingPctOfOptimized} />
+                      {projectStats?.otimizadas > 0 && (
+                        <div>
+                          <div className="text-xs text-gray-600 mb-1">
+                            Das otimizadas: {((projectStats.cortadas / projectStats.otimizadas) * 100).toFixed(1)}%
+                          </div>
+                          <Progress 
+                            value={(projectStats.cortadas / projectStats.otimizadas) * 100} 
+                          />
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1022,20 +1069,34 @@ export const ProjectDetailsView = ({
                                   )}
                                 </p>
                               </div>
-                              <Button
-                                variant="outline"
-                                onClick={() =>
-                                  setViewResults({
-                                    res: optimization.resultados,
-                                    bar: optimization.tamanho_barra,
-                                    id: optimization.id,
-                                    nome_lista: optimization.nome_lista,
-                                  })
-                                }
-                                className="hover:bg-indigo-50 hover:border-indigo-300 transition-all duration-300"
-                              >
-                                Visualizar Resultados
-                              </Button>
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  onClick={() =>
+                                    setViewResults({
+                                      res: optimization.resultados,
+                                      bar: optimization.tamanho_barra,
+                                      id: optimization.id,
+                                      nome_lista: optimization.nome_lista,
+                                    })
+                                  }
+                                  className="hover:bg-indigo-50 hover:border-indigo-300 transition-all duration-300"
+                                >
+                                  Visualizar Resultados
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  onClick={() =>
+                                    setReverseOptimization({
+                                      id: optimization.id,
+                                      nome_lista: optimization.nome_lista,
+                                    })
+                                  }
+                                  className="text-orange-600 hover:bg-orange-50 hover:border-orange-300 transition-all duration-300"
+                                >
+                                  Reverter
+                                </Button>
+                              </div>
                             </div>
                           </CardContent>
                         </Card>
@@ -1089,6 +1150,15 @@ export const ProjectDetailsView = ({
           title="Excluir Peças"
           description={`Tem certeza que deseja excluir ${selectedPieces.size} peça(s)? Esta ação não pode ser desfeita.`}
           loading={deleting}
+        />
+        <OptimizationReverseDialog
+          open={!!reverseOptimization}
+          onOpenChange={() => setReverseOptimization(null)}
+          optimization={reverseOptimization}
+          onReversed={() => {
+            loadProjectData();
+            setReverseOptimization(null);
+          }}
         />
       </div>
     </div>

@@ -47,7 +47,8 @@ export const PieceRegistrationForm = ({ projectId, onPieceAdded }: PieceRegistra
         comprimento_mm: parseInt(formData.comprimento_mm),
         quantidade: parseInt(formData.quantidade),
         peso_por_metro: perfil?.kg_por_metro,
-        perfil_nao_encontrado: !perfil
+        perfil_nao_encontrado: !perfil,
+        status: 'aguardando_otimizacao' as const
       };
 
       const response = await projetoPecaService.create(newPiece);

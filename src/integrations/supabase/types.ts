@@ -489,7 +489,9 @@ export type Database = {
           peso_por_metro: number | null
           posicao: string
           projeto_id: string
+          projeto_otimizacao_id: string | null
           quantidade: number
+          status: string
           tag: string | null
         }
         Insert: {
@@ -504,7 +506,9 @@ export type Database = {
           peso_por_metro?: number | null
           posicao: string
           projeto_id: string
+          projeto_otimizacao_id?: string | null
           quantidade?: number
+          status?: string
           tag?: string | null
         }
         Update: {
@@ -519,7 +523,9 @@ export type Database = {
           peso_por_metro?: number | null
           posicao?: string
           projeto_id?: string
+          projeto_otimizacao_id?: string | null
           quantidade?: number
+          status?: string
           tag?: string | null
         }
         Relationships: [
@@ -535,6 +541,13 @@ export type Database = {
             columns: ["projeto_id"]
             isOneToOne: false
             referencedRelation: "projetos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "projeto_pecas_projeto_otimizacao_id_fkey"
+            columns: ["projeto_otimizacao_id"]
+            isOneToOne: false
+            referencedRelation: "projeto_otimizacoes"
             referencedColumns: ["id"]
           },
         ]

@@ -198,10 +198,16 @@ export const ProjectManagementTab = ({
           mostCommonPerfilId
         );
 
-        // Remover peças somente após a criação bem-sucedida
-        await Promise.all(
-          selectedPieces.map((p) => projetoPecaService.delete(p.id))
+        // ATUALIZAR STATUS das peças para 'otimizada' (não deletar)
+        const updateStatusResponse = await projetoPecaService.updateStatus(
+          selectedPieces.map(p => p.id),
+          'otimizada',
+          created.data.id
         );
+
+        if (!updateStatusResponse.success) {
+          throw new Error(updateStatusResponse.error || "Erro ao atualizar status das peças");
+        }
 
         toast.success("Otimização criada com sucesso");
       } else {
