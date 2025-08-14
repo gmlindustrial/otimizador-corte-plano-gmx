@@ -95,7 +95,7 @@ export const ProductionStep = ({
               } />
             </SelectTrigger>
             <SelectContent>
-              {materialsToShow.map((tipo) => (
+              {materialsToShow.filter(tipo => tipo.id && tipo.id.trim() !== '').map((tipo) => (
                 <SelectItem key={tipo.id} value={tipo.id}>
                   {tipo.tipo} - {tipo.descricao || 'Sem descrição'}
                 </SelectItem>

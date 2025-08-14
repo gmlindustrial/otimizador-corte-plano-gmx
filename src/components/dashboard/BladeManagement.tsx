@@ -865,7 +865,7 @@ export const BladeManagement = ({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Todos os projetos</SelectItem>
-                        {projects.map((project) => (
+                        {projects.filter(project => project.id && project.id.trim() !== '').map((project) => (
                           <SelectItem key={project.id} value={project.id}>
                             {project.nome}
                           </SelectItem>
@@ -886,7 +886,7 @@ export const BladeManagement = ({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Todas as listas</SelectItem>
-                        {optimizations.map((opt) => (
+                        {optimizations.filter(opt => opt.id && opt.id.trim() !== '').map((opt) => (
                           <SelectItem key={opt.id} value={opt.id}>
                             {opt.nome}
                           </SelectItem>
@@ -903,7 +903,7 @@ export const BladeManagement = ({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="all">Todas as lâminas</SelectItem>
-                        {laminas.map((blade) => (
+                        {laminas.filter(blade => blade.id && blade.id.trim() !== '').map((blade) => (
                           <SelectItem key={blade.id} value={blade.id}>
                             {blade.codigo} - {getStatusText(blade.status)}
                           </SelectItem>

@@ -285,13 +285,13 @@ export const FullscreenReportViewer = ({
                       <SelectValue placeholder="Selecionar lâmina" />
                     </SelectTrigger>
                     <SelectContent className="bg-background border shadow-lg z-50">
-                      {sortedLaminas.map((lamina) => (
+                      {sortedLaminas.filter(lamina => lamina.id && lamina.id.trim() !== '').map((lamina) => (
                         <SelectItem key={lamina.id} value={lamina.id} className="hover:bg-accent">
                           Lâmina {lamina.codigo}
                         </SelectItem>
                       ))}
                       {sortedLaminas.length === 0 && (
-                        <SelectItem value="" disabled>
+                        <SelectItem value="none" disabled>
                           Nenhuma lâmina encontrada
                         </SelectItem>
                       )}
