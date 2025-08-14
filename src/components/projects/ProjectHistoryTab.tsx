@@ -188,7 +188,7 @@ const ProjectHistoryTab: React.FC<ProjectHistoryTabProps> = ({ projectId, projec
           </div>
           
           <div className="flex gap-2">
-            <Select value={filters.action_type || 'all'} onValueChange={(value) => handleFilterChange('actionType', value === 'all' ? '' : value)}>
+            <Select value={filters.action_type && filters.action_type.trim() !== '' ? filters.action_type : 'all'} onValueChange={(value) => handleFilterChange('actionType', value === 'all' ? '' : value)}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Todas as ações" />
               </SelectTrigger>
@@ -201,7 +201,7 @@ const ProjectHistoryTab: React.FC<ProjectHistoryTabProps> = ({ projectId, projec
               </SelectContent>
             </Select>
 
-            <Select value={filters.entity_type || 'all'} onValueChange={(value) => handleFilterChange('entityType', value === 'all' ? '' : value)}>
+            <Select value={filters.entity_type && filters.entity_type.trim() !== '' ? filters.entity_type : 'all'} onValueChange={(value) => handleFilterChange('entityType', value === 'all' ? '' : value)}>
               <SelectTrigger className="w-[130px]">
                 <SelectValue placeholder="Todas entidades" />
               </SelectTrigger>

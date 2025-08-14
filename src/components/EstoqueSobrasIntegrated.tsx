@@ -55,7 +55,7 @@ export const EstoqueSobrasIntegrated = () => {
           {/* Filtro por Perfil */}
           <div className="space-y-2">
             <Label>Filtrar por Perfil</Label>
-            <Select value={filtroPerfilId || 'all'} onValueChange={(value) => setFiltroPerfilId(value === 'all' ? '' : value)}>
+            <Select value={filtroPerfilId && filtroPerfilId.trim() !== '' ? filtroPerfilId : 'all'} onValueChange={(value) => setFiltroPerfilId(value === 'all' ? '' : value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Todos os perfis" />
               </SelectTrigger>
