@@ -182,7 +182,7 @@ export const ProjectDetailsView = ({
   };
 
   const handleFileProcessed = async (imported: any[]) => {
-    const { allPieces, invalidPieces } =
+    const { allPieces, invalidPieces, stats } =
       await projetoPecaService.validateAndProcessPieces(imported, project.id);
 
     // Verificar duplicatas baseado em posição
@@ -208,22 +208,31 @@ export const ProjectDetailsView = ({
           (p) => p.perfil_nao_encontrado
         ).length;
 
+        // Incluir informação sobre peças descartadas por comprimento inválido
+        let message = '';
         if (withProfile > 0 && withoutProfile > 0) {
-          toast.success(
-            `${withProfile} peça(s) cadastradas com perfil, ${withoutProfile} precisam ser revisadas`
-          );
+          message = `${withProfile} peça(s) cadastradas com perfil, ${withoutProfile} precisam ser revisadas`;
         } else if (withProfile > 0) {
-          toast.success(`${withProfile} peça(s) cadastradas`);
+          message = `${withProfile} peça(s) cadastradas`;
+        } else if (withoutProfile > 0) {
+          message = `${withoutProfile} peça(s) cadastradas mas precisam ser revisadas`;
+        }
+
+        if (stats.invalidLength > 0) {
+          message += `. ${stats.invalidLength} peça(s) descartadas por comprimento inválido`;
+          toast.warning(message);
+        } else if (withProfile > 0) {
+          toast.success(message);
         } else {
-          toast.warning(
-            `${withoutProfile} peça(s) cadastradas mas precisam ser revisadas`
-          );
+          toast.warning(message);
         }
 
         await loadProjectData();
       } else {
         toast.error("Erro ao cadastrar peças");
       }
+    } else if (stats.invalidLength > 0) {
+      toast.error(`${stats.invalidLength} peça(s) descartadas por comprimento inválido. Nenhuma peça foi importada.`);
     }
 
     if (duplicates.length > 0) {

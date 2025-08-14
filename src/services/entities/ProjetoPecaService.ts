@@ -78,14 +78,25 @@ export class ProjetoPecaService {
       total: number;
       withProfile: number;
       withoutProfile: number;
+      invalidLength: number;
       pages: number[];
       conjuntos: string[];
     };
   }> {
     const allPieces: ProjetoPeca[] = [];
     const invalidPieces: ProjectPieceValidation[] = [];
+    let invalidLengthCount = 0;
 
     for (const piece of pieces) {
+      // Validar comprimento antes de processar
+      const comprimento = piece.length || piece.comprimento || piece.comprimento_mm || 0;
+      
+      if (!comprimento || comprimento <= 0) {
+        console.log(`❌ Peça descartada por comprimento inválido: ${piece.posicao || piece.tag} - comprimento: ${comprimento}`);
+        invalidLengthCount++;
+        continue; // Pular esta peça
+      }
+
       // Tentar encontrar perfil correspondente usando descrição normalizada
       const perfilDescription = piece.profile || piece.perfil || piece.descricao;
       const perfil = await perfilService.findBestMatch(perfilDescription);
@@ -97,7 +108,7 @@ export class ProjetoPecaService {
         fase: piece.fase || piece.conjunto, // Campo FASE
         perfil_id: perfil?.id,
         descricao_perfil_raw: perfilDescription,
-        comprimento_mm: piece.length || piece.comprimento || piece.comprimento_mm,
+        comprimento_mm: comprimento,
         quantidade: piece.quantity || piece.quantidade || 1,
         // PRIORIZAR peso do perfil cadastrado no Supabase
         peso_por_metro: perfil?.kg_por_metro || 1.0,
@@ -106,7 +117,7 @@ export class ProjetoPecaService {
         status: 'aguardando_otimizacao'
       };
 
-      // SEMPRE adicionar à lista de peças para salvar
+      // SEMPRE adicionar à lista de peças para salvar (só peças com comprimento válido chegam aqui)
       allPieces.push(peca as ProjetoPeca);
 
       if (perfil) {
@@ -131,6 +142,7 @@ export class ProjetoPecaService {
       total: pieces.length,
       withProfile: allPieces.filter(p => !p.perfil_nao_encontrado).length,
       withoutProfile: allPieces.filter(p => p.perfil_nao_encontrado).length,
+      invalidLength: invalidLengthCount,
       pages: [...new Set(pieces.map(p => p.page).filter(Boolean))],
       conjuntos: [...new Set(pieces.map(p => p.tag || p.conjunto || p.set).filter(Boolean))]
     };
@@ -138,6 +150,7 @@ export class ProjetoPecaService {
     console.log('📊 Estatísticas do processamento:', stats);
     console.log(`📦 Total de peças para salvar: ${allPieces.length}`);
     console.log(`⚠️ Peças sem perfil (precisam ser resolvidas): ${invalidPieces.length}`);
+    console.log(`❌ Peças descartadas por comprimento inválido: ${invalidLengthCount}`);
 
     return { allPieces, invalidPieces, stats };
   }

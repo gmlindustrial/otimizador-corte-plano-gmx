@@ -267,7 +267,10 @@ export class FileParsingService {
   private static extractLengthFromDescription(descricao: string): number {
     console.log(`🔧 Extraindo comprimento de: "${descricao}"`);
     
-    if (!descricao) return 0;
+    if (!descricao) {
+      console.log(`❌ Descrição vazia`);
+      return 0;
+    }
     
     // Encontrar posições dos X's
     const xPositions: number[] = [];
@@ -278,19 +281,36 @@ export class FileParsingService {
     }
     
     let comprimento = 0;
+    
+    // Primeiro: tentar extrair após o segundo X
     if (xPositions.length >= 2) {
-      // Extrair tudo após o segundo X
       const afterSecondX = descricao.substring(xPositions[1] + 1);
       const lengthMatch = afterSecondX.match(/(\d+)/);
       if (lengthMatch) {
         comprimento = parseInt(lengthMatch[1]);
       }
-    } else {
-      // Fallback: buscar qualquer número grande na string
+    }
+    
+    // Fallback 1: buscar qualquer número de 4+ dígitos
+    if (comprimento === 0) {
+      const lengthMatch = descricao.match(/(\d{4,})/);
+      if (lengthMatch) {
+        comprimento = parseInt(lengthMatch[1]);
+      }
+    }
+    
+    // Fallback 2: buscar qualquer número de 3+ dígitos
+    if (comprimento === 0) {
       const lengthMatch = descricao.match(/(\d{3,})/);
       if (lengthMatch) {
         comprimento = parseInt(lengthMatch[1]);
       }
+    }
+    
+    // Validar se o comprimento faz sentido (entre 100mm e 50000mm)
+    if (comprimento > 0 && (comprimento < 100 || comprimento > 50000)) {
+      console.log(`⚠️ Comprimento fora do range válido: ${comprimento}mm`);
+      comprimento = 0;
     }
     
     console.log(`🔧 Comprimento extraído: ${comprimento}mm`);
