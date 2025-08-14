@@ -129,7 +129,7 @@ export const ProductionStep = ({
                 <SelectValue placeholder="Selecione o operador" />
               </SelectTrigger>
               <SelectContent>
-                {operadores.map((op) => (
+                {operadores.filter(op => op.id && op.id.trim() !== '').map((op) => (
                   <SelectItem key={op.id} value={op.id}>
                     {op.nome}
                   </SelectItem>

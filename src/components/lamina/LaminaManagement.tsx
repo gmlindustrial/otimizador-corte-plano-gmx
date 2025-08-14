@@ -362,7 +362,7 @@ export const LaminaManagement = () => {
                   <SelectValue placeholder="Selecione um operador" />
                 </SelectTrigger>
                 <SelectContent>
-                  {operadores.map(operador => <SelectItem key={operador.id} value={operador.id}>
+                  {operadores.filter(operador => operador.id && operador.id.trim() !== '').map(operador => <SelectItem key={operador.id} value={operador.id}>
                       {operador.nome}
                     </SelectItem>)}
                 </SelectContent>

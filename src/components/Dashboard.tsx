@@ -95,7 +95,7 @@ export const Dashboard = ({ history }: DashboardProps) => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os Operadores</SelectItem>
-                {operadores.map(op => (
+                {operadores.filter(op => op.id && op.id.trim() !== '' && op.nome && op.nome.trim() !== '').map(op => (
                   <SelectItem key={op.id} value={op.nome}>{op.nome}</SelectItem>
                 ))}
               </SelectContent>
