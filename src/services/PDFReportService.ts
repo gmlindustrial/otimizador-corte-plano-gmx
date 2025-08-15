@@ -159,7 +159,7 @@ export class PDFReportService {
         currentY + 5
       );
       doc.text(
-        `Eficiência: ${results.efficiency.toFixed(1)}%`,
+        `Eficiência: ${(results.efficiency || 0).toFixed(1)}%`,
         20,
         currentY + 10
       );
@@ -168,7 +168,7 @@ export class PDFReportService {
       doc.text(`Peso Cortado: ${cutWeight.toFixed(1)}kg`, 100, currentY + 15);
       doc.text(`Peças Cortadas: ${cutPieces}`, 20, currentY + 20);
       doc.text(
-        `Desperdício: ${(results.totalWaste / 1000).toFixed(2)}m`,
+        `Desperdício: ${((results.totalWaste || 0) / 1000).toFixed(2)}m`,
         100,
         currentY + 20
       );
@@ -312,7 +312,7 @@ export class PDFReportService {
         // Economia para sobras
         if (bar.type === "leftover" && bar.economySaved) {
           doc.text(
-            `Economia: R$ ${bar.economySaved.toFixed(2)}`,
+            `Economia: R$ ${(bar.economySaved || 0).toFixed(2)}`,
             130,
             currentY
           );
@@ -602,7 +602,7 @@ export class PDFReportService {
             currentY += rowHeight;
           }
 
-          const peso = piece.peso.toFixed(2);
+          const peso = (piece.peso || 0).toFixed(2);
 
           // Verificar se há emendas para essa peça - removido await para manter performance
           // const emendasData = await this.getEmendasData(project.id);
@@ -684,12 +684,12 @@ export class PDFReportService {
     doc.setFont("helvetica", "normal");
     doc.text(`Total de Chapas: ${results.totalSheets}`, 20, currentY);
     doc.text(
-      `Eficiência Média: ${results.averageEfficiency.toFixed(1)}%`,
+      `Eficiência Média: ${(results.averageEfficiency || 0).toFixed(1)}%`,
       20,
       currentY + 5
     );
     doc.text(
-      `Peso Total: ${results.totalWeight.toFixed(1)} kg`,
+      `Peso Total: ${(results.totalWeight || 0).toFixed(1)} kg`,
       20,
       currentY + 10
     );
@@ -715,8 +715,8 @@ export class PDFReportService {
 
       doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
-      doc.text(`Eficiência: ${sheet.efficiency.toFixed(1)}%`, 20, currentY);
-      doc.text(`Peso: ${sheet.weight.toFixed(1)} kg`, 20, currentY + 5);
+      doc.text(`Eficiência: ${(sheet.efficiency || 0).toFixed(1)}%`, 20, currentY);
+      doc.text(`Peso: ${(sheet.weight || 0).toFixed(1)} kg`, 20, currentY + 5);
       doc.text(`Peças: ${sheet.pieces.length}`, 20, currentY + 10);
       currentY += 20;
 
