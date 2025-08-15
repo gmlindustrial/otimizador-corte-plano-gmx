@@ -38,7 +38,7 @@ export const PieceRegistrationForm = ({ projectId, onPieceAdded }: PieceRegistra
       // Buscar perfil correspondente
       const perfil = await perfilService.findBestMatch(formData.descricao_perfil);
       
-      const newPiece = {
+      const newPiece: Omit<ProjetoPeca, 'id' | 'created_at'> = {
         projeto_id: projectId,
         posicao: formData.posicao,
         tag: formData.tag || undefined,
@@ -48,7 +48,8 @@ export const PieceRegistrationForm = ({ projectId, onPieceAdded }: PieceRegistra
         quantidade: parseInt(formData.quantidade),
         peso_por_metro: perfil?.kg_por_metro,
         perfil_nao_encontrado: !perfil,
-        status: 'aguardando_otimizacao' as const
+        status: 'aguardando_otimizacao' as const,
+        corte: false
       };
 
       const response = await projetoPecaService.create(newPiece);

@@ -114,7 +114,8 @@ export class ProjetoPecaService {
         peso_por_metro: perfil?.kg_por_metro || 1.0,
         peso: piece.peso, // Peso total da peça extraído do arquivo
         perfil_nao_encontrado: !perfil,
-        status: 'aguardando_otimizacao'
+        status: 'aguardando_otimizacao',
+        corte: false
       };
 
       // SEMPRE adicionar à lista de peças para salvar (só peças com comprimento válido chegam aqui)

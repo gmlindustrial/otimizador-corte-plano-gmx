@@ -206,7 +206,7 @@ export const FullscreenReportViewer = ({
         }
       );
 
-      // Registrar corte no sistema de lâminas se foi marcada como cortada
+      // Registrar corte no sistema de lâminas e marcar no banco se foi marcada como cortada
       if (checked && selectedLamina) {
         try {
           await registrarCorteCompleto({
@@ -219,6 +219,13 @@ export const FullscreenReportViewer = ({
             perfil_id: piece.perfilId,
             observacoes: `Lista ${barIndex + 1} - Comprimento: ${piece.length}mm`
           });
+
+          // Atualizar coluna corte no banco de dados
+          if (piece.id) {
+            await import('@/services/entities/ProjetoPecaService').then(({ projetoPecaService }) => {
+              return projetoPecaService.markAsCut([piece.id]);
+            });
+          }
           
           toast({
             title: "Corte registrado",
@@ -231,6 +238,15 @@ export const FullscreenReportViewer = ({
             description: "Falha ao registrar corte na lâmina. Verifique os logs.",
             variant: "destructive",
           });
+        }
+      } else if (!checked && piece.id) {
+        // Desmarcar peça como cortada no banco
+        try {
+          await import('@/services/entities/ProjetoPecaService').then(({ projetoPecaService }) => {
+            return projetoPecaService.unmarkAsCut([piece.id]);
+          });
+        } catch (error) {
+          console.error('Erro ao desmarcar peça como cortada:', error);
         }
       }
     }
