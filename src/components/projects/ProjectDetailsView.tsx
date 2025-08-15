@@ -150,9 +150,10 @@ export const ProjectDetailsView = ({
   const loadProjectData = async () => {
     setLoading(true);
     try {
-      // Carregar peças
-      const piecesResponse = await projetoPecaService.getByProjectId(
-        project.id
+      // Carregar peças que estão aguardando otimização
+      const piecesResponse = await projetoPecaService.getByStatus(
+        project.id,
+        'aguardando_otimizacao'
       );
       if (piecesResponse.success && piecesResponse.data) {
         setPieces(piecesResponse.data);

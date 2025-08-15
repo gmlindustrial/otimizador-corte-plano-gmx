@@ -620,7 +620,7 @@ export class PDFReportService {
             `${barIndex + 1}`,
             barType,
             tagText,
-            piece.conjunto || "-", // Campo FASE
+            piece.fase || "-", // Campo FASE
             piece.posicao || "-",
             `${piece.quantidade || 1}`,
             `${piece.length || 0}mm`,

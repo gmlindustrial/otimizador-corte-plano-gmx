@@ -284,7 +284,7 @@ export class ProjetoPecaService {
     try {
       const { data, error } = await supabase
         .from('projeto_pecas')
-        .select('status, quantidade')
+        .select('status, quantidade, corte')
         .eq('projeto_id', projectId);
 
       if (error) {
@@ -301,22 +301,68 @@ export class ProjetoPecaService {
 
       data?.forEach(peca => {
         stats.total += peca.quantidade;
-        switch (peca.status) {
-          case 'aguardando_otimizacao':
-            stats.aguardandoOtimizacao += peca.quantidade;
-            break;
-          case 'otimizada':
-            stats.otimizadas += peca.quantidade;
-            break;
-          case 'cortada':
-            stats.cortadas += peca.quantidade;
-            break;
+        
+        // Usar a coluna 'corte' para determinar peças cortadas
+        if (peca.corte === true) {
+          stats.cortadas += peca.quantidade;
+        } else {
+          // Para peças não cortadas, usar o status
+          switch (peca.status) {
+            case 'aguardando_otimizacao':
+              stats.aguardandoOtimizacao += peca.quantidade;
+              break;
+            case 'otimizada':
+              stats.otimizadas += peca.quantidade;
+              break;
+          }
         }
       });
 
       return { success: true, data: stats, error: null };
     } catch (error: any) {
       console.error('Erro inesperado ao buscar estatísticas:', error);
+      return { success: false, data: null, error: error.message };
+    }
+  }
+
+  // Novo método para marcar peças como cortadas
+  async markAsCut(pieceIds: string[]) {
+    try {
+      const { data, error } = await supabase
+        .from('projeto_pecas')
+        .update({ corte: true })
+        .in('id', pieceIds)
+        .select();
+
+      if (error) {
+        console.error('Erro ao marcar peças como cortadas:', error);
+        return { success: false, data: null, error: error.message };
+      }
+
+      return { success: true, data, error: null };
+    } catch (error: any) {
+      console.error('Erro inesperado ao marcar peças como cortadas:', error);
+      return { success: false, data: null, error: error.message };
+    }
+  }
+
+  // Método para desmarcar peças como cortadas
+  async unmarkAsCut(pieceIds: string[]) {
+    try {
+      const { data, error } = await supabase
+        .from('projeto_pecas')
+        .update({ corte: false })
+        .in('id', pieceIds)
+        .select();
+
+      if (error) {
+        console.error('Erro ao desmarcar peças como cortadas:', error);
+        return { success: false, data: null, error: error.message };
+      }
+
+      return { success: true, data, error: null };
+    } catch (error: any) {
+      console.error('Erro inesperado ao desmarcar peças como cortadas:', error);
       return { success: false, data: null, error: error.message };
     }
   }
