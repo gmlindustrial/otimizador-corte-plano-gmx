@@ -15,6 +15,7 @@ import type { OptimizationResult, Project } from '@/pages/Index';
 import { useAuditLogger } from '@/hooks/useAuditLogger';
 import { useLaminaService } from '@/hooks/useLaminaService';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface FullscreenReportViewerProps {
   isOpen: boolean;
@@ -182,6 +183,22 @@ export const FullscreenReportViewer = ({
     piece.cortada = checked;
     setCheckedPieces(newChecked);
     onResultsChange?.(results);
+
+    // Sincronizar a coluna corte na tabela projeto_pecas
+    if (piece.id) {
+      try {
+        const { error } = await supabase
+          .from('projeto_pecas')
+          .update({ corte: checked })
+          .eq('id', piece.id);
+
+        if (error) {
+          console.error('Erro ao atualizar coluna corte:', error);
+        }
+      } catch (error) {
+        console.error('Erro ao sincronizar corte na base de dados:', error);
+      }
+    }
 
     // Log da ação no histórico com descrição detalhada
     if (project) {
