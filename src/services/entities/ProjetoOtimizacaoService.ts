@@ -69,40 +69,47 @@ export class ProjetoOtimizacaoService extends BaseService<ProjetoOtimizacao> {
         return { success: true, data: null, error: null };
       }
 
-      const cutPieceIds: string[] = [];
+      // Primeiro, resetar todas as peças desta otimização como não cortadas
+      const { error: resetError } = await supabase
+        .from('projeto_pecas')
+        .update({ corte: false })
+        .eq('projeto_otimizacao_id', optimizationId);
+
+      if (resetError) throw resetError;
+
+      const cutPieces: Array<{ tag: string, posicao: string }> = [];
       
-      // Extrair IDs de peças marcadas como cortadas dos resultados
+      // Extrair tag e posição de peças marcadas como cortadas dos resultados
       results.bars.forEach((bar: any) => {
         if (bar.pieces) {
           bar.pieces.forEach((piece: any) => {
-            if (piece.cortada === true && piece.id) {
-              cutPieceIds.push(piece.id);
+            if (piece.cortada === true && piece.tag && piece.posicao) {
+              cutPieces.push({
+                tag: piece.tag,
+                posicao: piece.posicao
+              });
             }
           });
         }
       });
 
-      if (cutPieceIds.length > 0) {
-        // Atualizar a coluna corte para true nas peças identificadas
+      let syncedCount = 0;
+
+      // Atualizar peças cortadas usando tag e posição
+      for (const piece of cutPieces) {
         const { error: updateError } = await supabase
           .from('projeto_pecas')
           .update({ corte: true })
-          .in('id', cutPieceIds)
-          .eq('projeto_id', optimization.projeto_id);
+          .eq('projeto_otimizacao_id', optimizationId)
+          .eq('tag', piece.tag)
+          .eq('posicao', piece.posicao);
 
-        if (updateError) throw updateError;
-
-        // Também atualizar peças que não estão na lista como não cortadas
-        const { error: resetError } = await supabase
-          .from('projeto_pecas')
-          .update({ corte: false })
-          .not('id', 'in', `(${cutPieceIds.map(() => '?').join(',')})`)
-          .eq('projeto_otimizacao_id', optimizationId);
-
-        if (resetError) throw resetError;
+        if (!updateError) {
+          syncedCount++;
+        }
       }
 
-      return { success: true, data: { syncedPieces: cutPieceIds.length }, error: null };
+      return { success: true, data: { syncedPieces: syncedCount }, error: null };
     } catch (error: any) {
       console.error('Erro ao sincronizar peças cortadas:', error);
       return { success: false, data: null, error: error.message };
