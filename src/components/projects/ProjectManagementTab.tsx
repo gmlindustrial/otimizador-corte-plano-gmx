@@ -111,6 +111,7 @@ export const ProjectManagementTab = ({
         quantity: p.quantidade,
         tag: p.tag || undefined,
         posicao: p.posicao,
+        fase: p.fase || undefined,
         perfil:
           p.perfil?.descricao_perfil || p.descricao_perfil_raw || undefined,
         peso: p.peso || undefined,
