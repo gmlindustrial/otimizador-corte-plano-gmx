@@ -16,6 +16,7 @@ import { useAuditLogger } from '@/hooks/useAuditLogger';
 import { useLaminaService } from '@/hooks/useLaminaService';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface FullscreenReportViewerProps {
   isOpen: boolean;
@@ -39,6 +40,7 @@ export const FullscreenReportViewer = ({
   const [selectedBar, setSelectedBar] = useState<number>(0);
   const { logPieceAction } = useAuditLogger();
   const { laminas, laminasAtivadas, registrarCorteCompleto, ativarLamina, loading: laminaLoading } = useLaminaService();
+  const queryClient = useQueryClient();
   const [selectedLamina, setSelectedLamina] = useState<string>('');
   const [activationDialogOpen, setActivationDialogOpen] = useState<boolean>(false);
   const [laminaToActivate, setLaminaToActivate] = useState<string>('');
@@ -265,6 +267,13 @@ export const FullscreenReportViewer = ({
         } catch (error) {
           console.error('Erro ao desmarcar peça como cortada:', error);
         }
+      }
+
+      // Invalidar cache das estatísticas do projeto para atualizar contadores
+      if (project?.id) {
+        await queryClient.invalidateQueries({
+          queryKey: ['project-statistics', project.id]
+        });
       }
     }
   };
