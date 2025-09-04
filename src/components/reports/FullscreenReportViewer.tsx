@@ -17,6 +17,7 @@ import { useLaminaService } from '@/hooks/useLaminaService';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { projetoOtimizacaoService } from '@/services/entities/ProjetoOtimizacaoService';
 
 interface FullscreenReportViewerProps {
   isOpen: boolean;
@@ -186,51 +187,33 @@ export const FullscreenReportViewer = ({
     setCheckedPieces(newChecked);
     onResultsChange?.(results);
 
-    // Atualizar os resultados da otimização no banco
+    // Sincronização robusta usando o service existente
     if (optimizationId) {
       try {
-        await supabase
-          .from('projeto_otimizacoes')
-          .update({ resultados: JSON.stringify(results) as any })
-          .eq('id', optimizationId);
-      } catch (error) {
-        console.error('Erro ao atualizar resultados da otimização:', error);
-      }
-    }
+        // Atualizar os resultados da otimização no banco
+        await projetoOtimizacaoService.update({ 
+          id: optimizationId, 
+          data: { resultados: results } 
+        });
 
-    // Sincronizar a coluna corte na tabela projeto_pecas
-    // Primeiro tentar pelo ID direto, depois pela tag se não encontrar
-    let updateSuccess = false;
-    
-    if (piece.id) {
-      try {
-        const { error } = await supabase
-          .from('projeto_pecas')
-          .update({ corte: checked })
-          .eq('id', piece.id);
-
-        if (!error) {
-          updateSuccess = true;
+        // Sincronizar todas as peças cortadas do JSON com a tabela projeto_pecas
+        const syncResult = await projetoOtimizacaoService.syncCutPiecesFromResults(optimizationId);
+        
+        if (!syncResult.success) {
+          console.error('Erro na sincronização:', syncResult.error);
+          toast({
+            title: "Erro na sincronização",
+            description: syncResult.error || "Erro desconhecido ao sincronizar peças",
+            variant: "destructive",
+          });
         }
       } catch (error) {
-        console.error('Erro ao atualizar por ID:', error);
-      }
-    }
-
-    // Se não conseguiu atualizar por ID e tem tag, tentar pela tag
-    if (!updateSuccess && piece.tag && project?.id) {
-      try {
-        const { error } = await supabase
-          .from('projeto_pecas')
-          .update({ corte: checked })
-          .eq('projeto_id', project.id)
-          .eq('tag', piece.tag);
-
-        if (!error) {
-          updateSuccess = true;
-        }
-      } catch (error) {
-        console.error('Erro ao atualizar por tag:', error);
+        console.error('Erro ao atualizar/sincronizar:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao sincronizar as alterações",
+          variant: "destructive",
+        });
       }
     }
 
