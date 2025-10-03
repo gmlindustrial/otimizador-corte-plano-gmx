@@ -187,37 +187,67 @@ export const FullscreenReportViewer = ({
       return;
     }
 
-    piece.cortada = checked;
     setCheckedPieces(newChecked);
-    onResultsChange?.(results);
 
-    // Sincronização robusta usando o service existente
+    // Sincronização robusta: criar cópia profunda e atualizar no banco
     if (optimizationId) {
       try {
-        // Atualizar os resultados da otimização no banco
-        await projetoOtimizacaoService.update({ 
+        // Criar cópia profunda dos resultados para garantir imutabilidade
+        const updatedResults = JSON.parse(JSON.stringify(results));
+        
+        // Encontrar e atualizar a peça específica no JSON
+        const [, barIdx, , pieceIdx] = uniqueId.match(/bar(\d+)-piece(\d+)/) || [];
+        if (barIdx !== undefined && pieceIdx !== undefined) {
+          const barIndexNum = parseInt(barIdx);
+          const pieceIndexNum = parseInt(pieceIdx);
+          
+          if (updatedResults.bars[barIndexNum]?.pieces[pieceIndexNum]) {
+            updatedResults.bars[barIndexNum].pieces[pieceIndexNum].cortada = checked;
+          }
+        }
+
+        // Atualizar os resultados da otimização no banco com o JSON modificado
+        const updateResult = await projetoOtimizacaoService.update({ 
           id: optimizationId, 
-          data: { resultados: results } 
+          data: { resultados: updatedResults } 
         });
+
+        if (!updateResult.success) {
+          throw new Error(updateResult.error || 'Erro ao atualizar resultados');
+        }
+
+        // Atualizar o estado local apenas após salvar com sucesso
+        piece.cortada = checked;
+        onResultsChange?.(updatedResults);
 
         // Sincronizar todas as peças cortadas do JSON com a tabela projeto_pecas
         const syncResult = await projetoOtimizacaoService.syncCutPiecesFromResults(optimizationId);
         
         if (!syncResult.success) {
           console.error('Erro na sincronização:', syncResult.error);
-          toast({
-            title: "Erro na sincronização",
-            description: syncResult.error || "Erro desconhecido ao sincronizar peças",
-            variant: "destructive",
-          });
         }
+
+        toast({
+          title: checked ? "Peça marcada como cortada" : "Peça desmarcada",
+          description: `TAG ${piece.tag || piece.length} - Posição ${piece.posicao || 'Manual'}`,
+        });
       } catch (error) {
         console.error('Erro ao atualizar/sincronizar:', error);
+        
+        // Reverter mudanças locais em caso de erro
+        if (newChecked.has(uniqueId)) {
+          newChecked.delete(uniqueId);
+        } else {
+          newChecked.add(uniqueId);
+        }
+        setCheckedPieces(newChecked);
+        
         toast({
-          title: "Erro",
-          description: "Erro ao sincronizar as alterações",
+          title: "Erro ao salvar",
+          description: "Não foi possível salvar a marcação. Tente novamente.",
           variant: "destructive",
         });
+        return;
       }
     }
 
