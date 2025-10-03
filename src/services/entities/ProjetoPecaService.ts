@@ -283,14 +283,27 @@ export class ProjetoPecaService {
 
   async getStatistics(projectId: string) {
     try {
-      const { data, error } = await supabase
+      // Buscar peças aguardando otimização
+      const { data: pecasAguardando, error: pecasError } = await supabase
         .from('projeto_pecas')
-        .select('status, quantidade, corte')
+        .select('quantidade')
+        .eq('projeto_id', projectId)
+        .eq('status', 'aguardando_otimizacao');
+
+      if (pecasError) {
+        console.error('Erro ao buscar peças aguardando:', pecasError);
+        return { success: false, data: null, error: pecasError.message };
+      }
+
+      // Buscar otimizações do projeto
+      const { data: otimizacoes, error: optError } = await supabase
+        .from('projeto_otimizacoes')
+        .select('resultados')
         .eq('projeto_id', projectId);
 
-      if (error) {
-        console.error('Erro ao buscar estatísticas:', error);
-        return { success: false, data: null, error: error.message };
+      if (optError) {
+        console.error('Erro ao buscar otimizações:', optError);
+        return { success: false, data: null, error: optError.message };
       }
 
       const stats = {
@@ -300,24 +313,31 @@ export class ProjetoPecaService {
         cortadas: 0
       };
 
-      data?.forEach(peca => {
-        stats.total += peca.quantidade;
+      // Contar peças aguardando otimização
+      stats.aguardandoOtimizacao = pecasAguardando?.reduce((sum, p) => sum + (p.quantidade || 0), 0) || 0;
+
+      // Processar otimizações e contar peças do JSON
+      otimizacoes?.forEach(opt => {
+        const resultados = opt?.resultados as any;
+        const bars = resultados?.bars || [];
         
-        // Usar a coluna 'corte' para determinar peças cortadas
-        if (peca.corte === true) {
-          stats.cortadas += peca.quantidade;
-        } else {
-          // Para peças não cortadas, usar o status
-          switch (peca.status) {
-            case 'aguardando_otimizacao':
-              stats.aguardandoOtimizacao += peca.quantidade;
-              break;
-            case 'otimizada':
-              stats.otimizadas += peca.quantidade;
-              break;
-          }
-        }
+        bars.forEach((bar: any) => {
+          const pieces = bar?.pieces || [];
+          
+          pieces.forEach((piece: any) => {
+            // Verificar se a peça está cortada no JSON
+            if (piece.cortada === true) {
+              stats.cortadas += 1;
+            } else {
+              // Peça otimizada mas ainda não cortada
+              stats.otimizadas += 1;
+            }
+          });
+        });
       });
+
+      // Total = aguardando + otimizadas + cortadas
+      stats.total = stats.aguardandoOtimizacao + stats.otimizadas + stats.cortadas;
 
       return { success: true, data: stats, error: null };
     } catch (error: any) {
