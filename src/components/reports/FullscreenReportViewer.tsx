@@ -56,10 +56,11 @@ export const FullscreenReportViewer = ({
   useEffect(() => {
     if (!isOpen) return;
     const initial = new Set<string>();
-    results.bars.forEach((bar, bIdx) => {
-      bar.pieces.forEach((piece: any) => {
+    results.bars.forEach((bar, barIdx) => {
+      bar.pieces.forEach((piece: any, pieceIdx: number) => {
         if (piece.cortada) {
-          initial.add(`${piece.tag || piece.length}-${piece.posicao || 'Manual'}`);
+          // ID único: barIndex-pieceIndex para evitar duplicação
+          initial.add(`bar${barIdx}-piece${pieceIdx}`);
         }
       });
     });
@@ -118,15 +119,17 @@ export const FullscreenReportViewer = ({
   const filteredBars = results.bars.map((bar, barIndex) => ({
     ...bar,
     barIndex,
-    pieces: bar.pieces.filter((piece: any) => {
+    pieces: bar.pieces.map((piece: any, pieceIndex: number) => ({
+      ...piece,
+      uniqueId: `bar${barIndex}-piece${pieceIndex}` // Adicionar ID único
+    })).filter((piece: any) => {
       const matchesSearch = !searchTerm || 
         (piece.tag && piece.tag.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (piece.fase && piece.fase.toLowerCase().includes(searchTerm.toLowerCase()));
       
       const matchesFase = !filterByFase || piece.fase === filterByFase;
       
-      const pieceId = `${piece.tag || piece.length}-${piece.posicao || 'Manual'}`;
-      const matchesPending = !showOnlyPending || !checkedPieces.has(pieceId);
+      const matchesPending = !showOnlyPending || !checkedPieces.has(piece.uniqueId);
       
       return matchesSearch && matchesFase && matchesPending;
     })
@@ -161,15 +164,16 @@ export const FullscreenReportViewer = ({
   }, [isOpen, onClose, filteredBars.length]);
 
   const togglePieceCheck = async (barIndex: number, piece: any) => {
-    const pieceId = `${piece.tag || piece.length}-${piece.posicao || 'Manual'}`;
+    // Usar ID único para evitar duplicação
+    const uniqueId = piece.uniqueId;
     const newChecked = new Set(checkedPieces);
 
     let checked: boolean;
-    if (newChecked.has(pieceId)) {
-      newChecked.delete(pieceId);
+    if (newChecked.has(uniqueId)) {
+      newChecked.delete(uniqueId);
       checked = false;
     } else {
-      newChecked.add(pieceId);
+      newChecked.add(uniqueId);
       checked = true;
     }
 
@@ -225,7 +229,7 @@ export const FullscreenReportViewer = ({
 
       await logPieceAction(
         checked ? 'MARCAR_CORTADA' : 'DESMARCAR_CORTADA',
-        pieceId,
+        uniqueId,
         project.projectNumber || project.name || 'Projeto',
         {
           descricaoCustomizada: descricaoDetalhada,
@@ -600,8 +604,7 @@ export const FullscreenReportViewer = ({
                           let currentX = 0;
                           return currentBar.pieces.map((piece: any, pieceIndex) => {
                             const segmentWidth = piece.length / 10;
-                            const pieceId = `${piece.tag || piece.length}-${piece.posicao || 'Manual'}`;
-                            const isChecked = checkedPieces.has(pieceId);
+                            const isChecked = checkedPieces.has(piece.uniqueId);
                             
                             // Cor baseada no tipo de barra
                             const segmentColor = (currentBar as any).type === 'leftover' ? '#10B981' : piece.color || colors[pieceIndex % colors.length];
@@ -713,8 +716,7 @@ export const FullscreenReportViewer = ({
                         </thead>
                         <tbody>
                           {currentBar.pieces.map((piece: any, pieceIndex) => {
-                            const pieceId = `${piece.tag || piece.length}-${piece.posicao || 'Manual'}`;
-                            const isChecked = checkedPieces.has(pieceId);
+                            const isChecked = checkedPieces.has(piece.uniqueId);
                             
                             return (
                               <tr key={pieceIndex} className={`hover:bg-gray-50 ${isChecked ? 'bg-green-50' : ''}`}>
