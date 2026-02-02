@@ -338,16 +338,20 @@ export class FileParsingService {
   }
 
   static async parseExcel(file: File): Promise<CutPiece[]> {
-    // Simulação de parsing Excel - em produção usaria biblioteca como xlsx
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        // Implementação simplificada - assumindo formato CSV-like
-        const content = e.target?.result as string;
-        resolve(this.parseCSV(content));
-      };
-      reader.readAsText(file);
-    });
+    const { XlsxTemplateService } = await import('@/services/XlsxTemplateService');
+    const parsed = await XlsxTemplateService.parseXlsx(file);
+
+    return parsed.map((p) => ({
+      id: p.id,
+      length: p.length,
+      quantity: p.quantity,
+      posicao: p.posicao,
+      tag: p.tag,
+      fase: p.fase,
+      perfil: p.perfil,
+      material: p.material,
+      peso: p.peso,
+    }));
   }
 
   static parseTXT(content: string): CutPiece[] {

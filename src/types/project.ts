@@ -18,6 +18,7 @@ export interface ProjetoPeca {
   quantidade: number;
   peso_por_metro?: number;
   peso?: number; // Peso real extraído do arquivo CAD (kg)
+  material?: string; // Material da peça (ex: A572-50, A36)
   perfil_nao_encontrado: boolean;
   status: 'aguardando_otimizacao' | 'otimizada' | 'cortada';
   corte: boolean; // Nova coluna para validar quando uma peça for cortada

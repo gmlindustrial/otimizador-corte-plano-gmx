@@ -25,6 +25,7 @@ import {
   Settings,
   Scissors,
   Clock,
+  Download,
 } from "lucide-react";
 import { projetoPecaService } from "@/services/entities/ProjetoPecaService";
 import { projetoOtimizacaoService } from "@/services/entities/ProjetoOtimizacaoService";
@@ -47,6 +48,8 @@ import { DeleteConfirmDialog } from "../management/DeleteConfirmDialog";
 import type { Project } from "@/pages/Index";
 import { ProjectHistoryTab } from "./ProjectHistoryTab";
 import { OptimizationReverseDialog } from "./OptimizationReverseDialog";
+import { XlsxTemplateService } from "@/services/XlsxTemplateService";
+import { perfilService } from "@/services/entities/PerfilService";
 
 interface Projeto {
   id: string;
@@ -301,6 +304,57 @@ export const ProjectDetailsView = ({
         toast.error("Erro ao cadastrar peça");
       }
     }
+  };
+
+  const handleCreateAndResolve = async (
+    descricaoRaw: string,
+    perfilData: { tipo_perfil: string; descricao_perfil: string; kg_por_metro: number }
+  ) => {
+    // 1. Criar perfil no banco
+    const resp = await perfilService.create(perfilData);
+    if (!resp.success || !resp.data) {
+      toast.error("Erro ao cadastrar perfil");
+      return;
+    }
+    const novoPerfil: PerfilMaterial = resp.data;
+
+    // 2. Encontrar TODAS as peças do projeto com a mesma descricao_perfil_raw
+    const pecasParaAtualizar = pieces.filter(
+      (p) => p.perfil_nao_encontrado && p.descricao_perfil_raw === descricaoRaw
+    );
+
+    // 3. Atualizar cada peça no banco
+    for (const peca of pecasParaAtualizar) {
+      await projetoPecaService.update(peca.id, {
+        perfil_id: novoPerfil.id,
+        peso_por_metro: novoPerfil.kg_por_metro,
+        perfil_nao_encontrado: false,
+      });
+    }
+
+    // 4. Atualizar estado local
+    setPieces((prev) =>
+      prev.map((p) =>
+        pecasParaAtualizar.some((pa) => pa.id === p.id)
+          ? {
+              ...p,
+              perfil_id: novoPerfil.id,
+              perfil: novoPerfil,
+              peso_por_metro: novoPerfil.kg_por_metro,
+              perfil_nao_encontrado: false,
+            }
+          : p
+      )
+    );
+
+    // 5. Remover validations das peças resolvidas
+    setValidations((prev) =>
+      prev.filter((v) => v.peca.descricao_perfil_raw !== descricaoRaw)
+    );
+
+    toast.success(
+      `Perfil "${novoPerfil.descricao_perfil}" cadastrado e vinculado a ${pecasParaAtualizar.length} peça(s)`
+    );
   };
 
   const handleDuplicateResolved = async (selected: ProjetoPeca[]) => {
@@ -738,13 +792,30 @@ export const ProjectDetailsView = ({
                         <ProjectValidationAlert
                           validations={validations}
                           onResolve={handleResolveValidation}
+                          onCreateAndResolve={handleCreateAndResolve}
                           onNavigateToProfileManagement={
                             onNavigateToProfileManagement
                           }
                         />
                       </div>
                     )}
-                    <div className="flex justify-end pt-4">
+                    <div className="flex justify-end gap-3 pt-4">
+                      <Button
+                        variant="outline"
+                        onClick={async () => {
+                          try {
+                            await XlsxTemplateService.downloadTemplate();
+                            toast.success('Modelo de importação baixado com sucesso');
+                          } catch (error) {
+                            console.error('Erro ao baixar modelo:', error);
+                            toast.error('Erro ao baixar modelo de importação');
+                          }
+                        }}
+                        className="hover:bg-emerald-50 hover:border-emerald-300 transition-all duration-300"
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Baixar Modelo XLSX
+                      </Button>
                       <Button
                         variant="outline"
                         onClick={() => setShowUpload(true)}

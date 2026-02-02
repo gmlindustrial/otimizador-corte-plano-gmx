@@ -46,7 +46,8 @@ export interface CutPiece {
   id: string;
   tag?: string;
   posicao?: string;
-  conjunto?: string; // Campo FASE
+  fase?: string;
+  conjunto?: string; // Alias para fase (compatibilidade com import AutoCAD)
   perfil?: string;
   material?: string;
   peso?: number;

@@ -484,6 +484,7 @@ export type Database = {
           descricao_perfil_raw: string | null
           fase: string | null
           id: string
+          material: string | null
           perfil_id: string | null
           perfil_nao_encontrado: boolean
           peso: number | null
@@ -502,6 +503,7 @@ export type Database = {
           descricao_perfil_raw?: string | null
           fase?: string | null
           id?: string
+          material?: string | null
           perfil_id?: string | null
           perfil_nao_encontrado?: boolean
           peso?: number | null
@@ -520,6 +522,7 @@ export type Database = {
           descricao_perfil_raw?: string | null
           fase?: string | null
           id?: string
+          material?: string | null
           perfil_id?: string | null
           perfil_nao_encontrado?: boolean
           peso?: number | null

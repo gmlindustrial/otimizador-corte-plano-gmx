@@ -20,10 +20,11 @@ export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed, onProces
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
-      if (selectedFile.name.toLowerCase().endsWith('.txt')) {
+      const name = selectedFile.name.toLowerCase();
+      if (name.endsWith('.txt') || name.endsWith('.xlsx') || name.endsWith('.xls')) {
         setFile(selectedFile);
       } else {
-        toast.error('Apenas arquivos .txt são suportados');
+        toast.error('Apenas arquivos .txt e .xlsx são suportados');
       }
     }
   };
@@ -35,27 +36,29 @@ export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed, onProces
     onOpenChange(false);
     onProcessStart();
     try {
-      const text = await file.text();
-      const pieces = FileParsingService.parseAutoCADReport(text);
-      
+      const fileName = file.name.toLowerCase();
+      let pieces: any[];
+
+      if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+        pieces = await FileParsingService.parseExcel(file);
+      } else {
+        const text = await file.text();
+        pieces = FileParsingService.parseAutoCADReport(text);
+      }
+
       if (pieces.length > 0) {
-        // Mostrar estatísticas detalhadas
         const tags = [...new Set(pieces.map((p: any) => p.tag).filter(Boolean))];
         const posicoes = [...new Set(pieces.map((p: any) => p.posicao).filter(Boolean))];
-        const pages = [...new Set(pieces.map((p: any) => p.page).filter(Boolean))];
-        const obra = (pieces[0] as any)?.obra || 'Não identificada';
         const totalQuantidade = pieces.reduce((sum: number, p: any) => sum + (p.quantity || 1), 0);
-        
+
         console.log(`📋 Arquivo processado com sucesso:
-          - Obra: ${obra}
           - Peças únicas: ${pieces.length}
           - Quantidade total: ${totalQuantidade}
           - Tags: ${tags.slice(0, 5).join(', ')}${tags.length > 5 ? '...' : ''}
-          - Posições: ${posicoes.slice(0, 5).join(', ')}${posicoes.length > 5 ? '...' : ''}
-          - Páginas: ${pages.join(', ')}`);
-        
+          - Posições: ${posicoes.slice(0, 5).join(', ')}${posicoes.length > 5 ? '...' : ''}`);
+
         onFileProcessed(pieces);
-        toast.success(`${pieces.length} peças (${totalQuantidade} total) encontradas no arquivo AutoCAD`);
+        toast.success(`${pieces.length} peças (${totalQuantidade} total) encontradas no arquivo`);
         setFile(null);
       } else {
         toast.warning('Nenhuma peça foi encontrada no arquivo');
@@ -74,7 +77,7 @@ export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed, onProces
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Upload de Arquivo AutoCAD</DialogTitle>
+          <DialogTitle>Upload de Arquivo</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
@@ -88,10 +91,10 @@ export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed, onProces
               ) : (
                 <div className="flex flex-col items-center justify-center">
                   <Upload className="w-8 h-8 text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-600">Clique para selecionar arquivo .txt</p>
+                  <p className="text-sm text-gray-600">Clique para selecionar arquivo .txt ou .xlsx</p>
                 </div>
               )}
-              <input type="file" className="hidden" accept=".txt" onChange={handleFileSelect} />
+              <input type="file" className="hidden" accept=".txt,.xlsx,.xls" onChange={handleFileSelect} />
             </label>
           </div>
 

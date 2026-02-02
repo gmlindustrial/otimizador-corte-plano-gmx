@@ -113,6 +113,7 @@ export class ProjetoPecaService {
         // PRIORIZAR peso do perfil cadastrado no Supabase
         peso_por_metro: perfil?.kg_por_metro || 1.0,
         peso: piece.peso, // Peso total da peça extraído do arquivo
+        material: piece.material || '',
         perfil_nao_encontrado: !perfil,
         status: 'aguardando_otimizacao',
         corte: false
