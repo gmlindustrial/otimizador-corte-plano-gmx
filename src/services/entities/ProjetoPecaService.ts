@@ -51,9 +51,68 @@ export class ProjetoPecaService {
 
   async createBatch(pecas: Omit<ProjetoPeca, 'id' | 'created_at'>[]) {
     try {
+      if (pecas.length === 0) {
+        return { success: true, data: [], error: null };
+      }
+
+      // Gerar chave única para comparação (mesma lógica da constraint do banco)
+      const getKey = (p: { tag?: string | null; posicao: string; comprimento_mm: number; perfil_id?: string | null }) => {
+        const tag = p.tag ?? '';
+        const perfilId = p.perfil_id ?? '';
+        return `${tag}|${p.posicao}|${p.comprimento_mm}|${perfilId}`;
+      };
+
+      // Buscar peças existentes do projeto para verificar duplicatas
+      const projectId = pecas[0].projeto_id;
+      const { data: existingPieces } = await supabase
+        .from('projeto_pecas')
+        .select('tag, posicao, comprimento_mm, perfil_id')
+        .eq('projeto_id', projectId);
+
+      // Criar set de chaves existentes no banco
+      const existingKeys = new Set<string>();
+      if (existingPieces) {
+        existingPieces.forEach(p => existingKeys.add(getKey(p)));
+      }
+
+      // Filtrar peças removendo duplicatas do banco E duplicatas internas
+      const seenKeys = new Set<string>();
+      const newPieces: typeof pecas = [];
+      let skippedCount = 0;
+
+      for (const peca of pecas) {
+        const key = getKey(peca);
+
+        if (existingKeys.has(key)) {
+          console.log(`⏭️ Peça já existe no banco: ${peca.posicao} (${key})`);
+          skippedCount++;
+          continue;
+        }
+
+        if (seenKeys.has(key)) {
+          console.log(`⏭️ Peça duplicada no arquivo: ${peca.posicao} (${key})`);
+          skippedCount++;
+          continue;
+        }
+
+        seenKeys.add(key);
+        newPieces.push(peca);
+      }
+
+      if (skippedCount > 0) {
+        console.log(`⚠️ ${skippedCount} peça(s) ignorada(s) (duplicatas)`);
+      }
+
+      if (newPieces.length === 0) {
+        console.log('ℹ️ Todas as peças já existem ou são duplicatas');
+        return { success: true, data: [], error: null, skipped: skippedCount };
+      }
+
+      console.log(`📦 Inserindo ${newPieces.length} peça(s) novas...`);
+
       const { data, error } = await supabase
         .from('projeto_pecas')
-        .insert(pecas)
+        .insert(newPieces)
         .select(`
           *,
           perfil:perfis_materiais(*)
@@ -64,7 +123,7 @@ export class ProjetoPecaService {
         return { success: false, data: null, error: error.message };
       }
 
-      return { success: true, data, error: null };
+      return { success: true, data, error: null, skipped: skippedCount };
     } catch (error: any) {
       console.error('Erro inesperado ao criar peças em lote:', error);
       return { success: false, data: null, error: error.message };

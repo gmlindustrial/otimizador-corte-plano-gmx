@@ -4,6 +4,7 @@ import { BottomLeftFillOptimizer } from './BottomLeftFill';
 import { GeneticOptimizer } from './GeneticOptimizer';
 import { NoFitPolygonOptimizer } from './NoFitPolygon';
 import { SequenceOptimizer } from './SequenceOptimizer';
+import { MaxRectsPackerOptimizer } from './MaxRectsPacker';
 
 interface OptimizationStrategy {
   name: string;
@@ -18,7 +19,7 @@ interface AdvancedOptimizationConfig {
     cuttingTime: OptimizationStrategy;
     thermalDistortion: OptimizationStrategy;
   };
-  algorithm: 'BLF' | 'Genetic' | 'NFP' | 'Hybrid';
+  algorithm: 'BLF' | 'Genetic' | 'NFP' | 'Hybrid' | 'MaxRects';
   maxIterations: number;
   convergenceThreshold: number;
 }
@@ -54,7 +55,7 @@ export class MultiObjectiveOptimizer {
         cuttingTime: { name: 'Tempo Corte', weight: 0.2, enabled: true },
         thermalDistortion: { name: 'Distorção Térmica', weight: 0.1, enabled: false }
       },
-      algorithm: 'Hybrid',
+      algorithm: 'MaxRects',  // Usando MaxRects como padrão (mais eficiente)
       maxIterations: 50,
       convergenceThreshold: 0.001
     };
@@ -79,15 +80,19 @@ export class MultiObjectiveOptimizer {
       case 'BLF':
         bestResult = await this.optimizeWithBLF(pieces);
         break;
-        
+
       case 'Genetic':
         bestResult = await this.optimizeWithGenetic(pieces);
         break;
-        
+
       case 'NFP':
         bestResult = await this.optimizeWithNFP(pieces);
         break;
-        
+
+      case 'MaxRects':
+        bestResult = await this.optimizeWithMaxRects(pieces);
+        break;
+
       case 'Hybrid':
       default:
         bestResult = await this.optimizeHybrid(pieces);
@@ -118,6 +123,18 @@ export class MultiObjectiveOptimizer {
       gcode,
       optimizationMetrics
     };
+  }
+
+  private async optimizeWithMaxRects(pieces: SheetCutPiece[]): Promise<SheetOptimizationResult> {
+    console.log('Executando otimização MaxRects');
+    const maxRects = new MaxRectsPackerOptimizer(
+      this.sheetWidth,
+      this.sheetHeight,
+      this.kerf,
+      this.thickness,
+      this.material
+    );
+    return maxRects.optimize(pieces);
   }
 
   private async optimizeWithBLF(pieces: SheetCutPiece[]): Promise<SheetOptimizationResult> {
@@ -184,20 +201,26 @@ export class MultiObjectiveOptimizer {
   }
 
   private async optimizeHybrid(pieces: SheetCutPiece[]): Promise<SheetOptimizationResult> {
-    console.log('Executando otimização Híbrida (BLF + Genetic + NFP)');
-    
+    console.log('Executando otimização Híbrida (MaxRects + Genetic)');
+
     const results: SheetOptimizationResult[] = [];
-    
-    // Executar BLF
-    const blf = new BottomLeftFillOptimizer(this.sheetWidth, this.sheetHeight, this.kerf, this.thickness, this.material);
-    results.push(blf.optimize(pieces));
-    
+
+    // Executar MaxRects (substituindo BLF que era muito lento)
+    const maxRects = new MaxRectsPackerOptimizer(
+      this.sheetWidth,
+      this.sheetHeight,
+      this.kerf,
+      this.thickness,
+      this.material
+    );
+    results.push(maxRects.optimize(pieces));
+
     // Executar Genetic (apenas se muitas peças)
     if (pieces.length > 10) {
       const genetic = new GeneticOptimizer(this.sheetWidth, this.sheetHeight, this.kerf, this.thickness, this.material);
       results.push(genetic.optimize(pieces));
     }
-    
+
     // Selecionar melhor resultado baseado no score multi-objetivo
     return this.selectBestResult(results);
   }

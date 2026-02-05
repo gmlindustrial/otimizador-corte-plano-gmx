@@ -15,6 +15,8 @@ export interface SheetOptimizationHistory {
   total_sheets: number;
   total_weight: number;
   material_cost: number;
+  sheet_width?: number;   // Largura da chapa de estoque (mm)
+  sheet_height?: number;  // Altura da chapa de estoque (mm)
 }
 
 export class SheetHistoryService {
@@ -39,7 +41,9 @@ export class SheetHistoryService {
           efficiency: results.averageEfficiency,
           total_sheets: results.totalSheets,
           total_weight: results.totalWeight,
-          material_cost: results.materialCost
+          material_cost: results.materialCost,
+          sheet_width: project.sheetWidth,
+          sheet_height: project.sheetHeight
         })
         .select()
         .single();
@@ -382,6 +386,50 @@ export class SheetHistoryService {
         optimization2: null,
         comparison: null
       };
+    }
+  }
+
+  /**
+   * Reverte uma otimização de chapas
+   * 1. Reverte status das chapas para 'aguardando_otimizacao'
+   * 2. Remove vínculo projeto_otimizacao_chapa_id
+   * 3. Deleta a otimização do histórico
+   */
+  async reverseOptimization(optimizationId: string): Promise<{
+    success: boolean;
+    error: string | null;
+  }> {
+    try {
+      // 1. Reverter status das chapas vinculadas a esta otimização
+      const { error: updateError } = await supabase
+        .from('projeto_chapas')
+        .update({
+          status: 'aguardando_otimizacao',
+          projeto_otimizacao_chapa_id: null
+        })
+        .eq('projeto_otimizacao_chapa_id', optimizationId);
+
+      if (updateError) {
+        console.error('Erro ao reverter status das chapas:', updateError);
+        return { success: false, error: updateError.message };
+      }
+
+      // 2. Deletar a otimização do histórico
+      const { error: deleteError } = await supabase
+        .from('sheet_optimization_history')
+        .delete()
+        .eq('id', optimizationId);
+
+      if (deleteError) {
+        console.error('Erro ao deletar otimização:', deleteError);
+        return { success: false, error: deleteError.message };
+      }
+
+      console.log(`Otimização ${optimizationId} revertida com sucesso`);
+      return { success: true, error: null };
+    } catch (error: any) {
+      console.error('Erro ao reverter otimização:', error);
+      return { success: false, error: error.message };
     }
   }
 }

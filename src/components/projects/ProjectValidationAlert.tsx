@@ -228,11 +228,11 @@ export const ProjectValidationAlert = ({ validations, onResolve, onCreateAndReso
                                   />
                                 </div>
                                 <div>
-                                  <label className="text-xs text-gray-600 mb-1 block">Peso (kg/m)</label>
+                                  <label className="text-xs text-gray-600 mb-1 block">Peso por metro (kg/m)</label>
                                   <Input
                                     value={forms[group.descricaoRaw].kg_por_metro}
                                     onChange={(e) => updateForm(group.descricaoRaw, 'kg_por_metro', e.target.value)}
-                                    placeholder="35.9"
+                                    placeholder="Ex: 35.9"
                                     className="h-9 text-sm"
                                     type="text"
                                     inputMode="decimal"
@@ -246,12 +246,13 @@ export const ProjectValidationAlert = ({ validations, onResolve, onCreateAndReso
                                 <Button
                                   size="sm"
                                   disabled={
-                                    forms[group.descricaoRaw].saving ||
-                                    !forms[group.descricaoRaw].kg_por_metro ||
-                                    !forms[group.descricaoRaw].descricao_perfil
+                                    forms[group.descricaoRaw]?.saving ||
+                                    !(forms[group.descricaoRaw]?.kg_por_metro?.trim()) ||
+                                    !(forms[group.descricaoRaw]?.descricao_perfil?.trim()) ||
+                                    !(forms[group.descricaoRaw]?.tipo_perfil?.trim())
                                   }
                                   onClick={() => handleCreate(group)}
-                                  className="bg-blue-600 hover:bg-blue-700"
+                                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                                 >
                                   {forms[group.descricaoRaw].saving ? (
                                     <>

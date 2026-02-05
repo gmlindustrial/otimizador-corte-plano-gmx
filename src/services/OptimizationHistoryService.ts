@@ -20,10 +20,7 @@ export class OptimizationHistoryService {
         projetos (
           *,
           clientes (nome),
-          obras (nome),
-          operadores (nome),
-          inspetores_qa (nome),
-          materiais (tipo)
+          obras (nome)
         )
       `)
       .order('created_at', { ascending: false });
@@ -79,10 +76,7 @@ export class OptimizationHistoryService {
           projetos (
             *,
             clientes (nome),
-            obras (nome),
-            operadores (nome),
-            inspetores_qa (nome),
-            materiais (tipo)
+            obras (nome)
           )
         `)
         .single();
@@ -259,7 +253,7 @@ export class OptimizationHistoryService {
   private static convertFromDatabase(dbEntry: any): OptimizationHistoryEntry | null {
     try {
       const projeto = dbEntry.projetos;
-      
+
       return {
         id: dbEntry.id,
         project: {
@@ -270,10 +264,10 @@ export class OptimizationHistoryService {
           obra: projeto?.obras?.nome || 'Obra',
           lista: projeto?.lista || 'LISTA 01',
           revisao: projeto?.revisao || 'REV-00',
-          tipoMaterial: projeto?.materiais?.tipo || 'Material',
-          operador: projeto?.operadores?.nome || 'Operador',
+          tipoMaterial: projeto?.tipo_material || 'Material',
+          operador: projeto?.operador || 'Operador',
           turno: projeto?.turno || '1',
-          aprovadorQA: projeto?.inspetores_qa?.nome || 'QA',
+          aprovadorQA: projeto?.aprovador_qa || 'QA',
           validacaoQA: projeto?.validacao_qa || true,
           enviarSobrasEstoque: projeto?.enviar_sobras_estoque || false,
           qrCode: projeto?.qr_code || '',

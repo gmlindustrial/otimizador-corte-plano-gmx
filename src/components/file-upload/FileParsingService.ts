@@ -1,5 +1,39 @@
 import { CutPiece } from '@/pages/Index';
 
+// Tipo para peças de chapa importadas do Inventor
+export interface SheetInventorPiece {
+  id: string;
+  tag: string;           // Item número
+  posicao: string;       // Projeto Número
+  width: number;         // Largura em mm
+  height: number;        // Altura/comprimento em mm
+  thickness?: number;    // Espessura (se disponível)
+  quantity: number;
+  material: string;
+  descricao: string;     // Descrição original (ex: "Chapa 6,4")
+  fase?: string;
+  peso?: number;
+}
+
+// Resultado do parse do Inventor com separação de tipos
+export interface InventorParseResult {
+  linearPieces: CutPiece[];        // Peças para corte linear (1D)
+  sheetPieces: SheetInventorPiece[]; // Peças para corte 2D
+  stats: {
+    total: number;
+    linear: number;
+    sheet: number;
+    ignored: number;
+    details: {
+      soldado: number;
+      din: number;
+      semDimensao: number;
+      classeLote: number;
+      comprimentoInvalido: number;
+    };
+  };
+}
+
 export class FileParsingService {
   static parseCSV(content: string): CutPiece[] {
     const lines = content.split('\n').filter(line => line.trim());
@@ -396,5 +430,273 @@ export class FileParsingService {
         resolve(mockData);
       }, 1500);
     });
+  }
+
+  // Parser para arquivos do Autodesk Inventor (formato tabela markdown)
+  // Retorna APENAS peças lineares para manter compatibilidade com código existente
+  static parseInventorReport(content: string): CutPiece[] {
+    const result = this.parseInventorReportFull(content);
+    return result.linearPieces;
+  }
+
+  // Parser completo que retorna tanto peças lineares quanto chapas
+  static parseInventorReportFull(content: string): InventorParseResult {
+    console.log('🔄 Iniciando parsing completo de arquivo Inventor...');
+
+    const lines = content.split('\n');
+    const linearPieces: CutPiece[] = [];
+    const sheetPieces: SheetInventorPiece[] = [];
+    let currentProject = '';
+    let currentModule = '';
+    let skippedItems = {
+      soldado: 0,
+      din: 0,
+      semDimensao: 0,
+      classeLote: 0,
+      comprimentoInvalido: 0
+    };
+
+    for (const line of lines) {
+      // Extrair metadados do projeto
+      const projetoMatch = line.match(/^Projeto:\s*(.+)/);
+      if (projetoMatch) {
+        currentProject = projetoMatch[1].trim();
+        continue;
+      }
+
+      const moduloMatch = line.match(/^Módulo:\s*(.+)/);
+      if (moduloMatch) {
+        currentModule = moduloMatch[1].trim();
+        continue;
+      }
+
+      // Ignorar linhas que não são dados de tabela
+      if (!line.includes('|')) continue;
+      if (line.includes('----')) continue;
+      if (line.includes('Item | Módulo') || line.includes('| Item |')) continue;
+
+      // Parse da linha de dados (formato markdown table)
+      const cols = line.split('|').map(c => c.trim()).filter(c => c);
+      if (cols.length < 8) continue;
+
+      const [item, modulo, projetoNum, area, qtde, descricao, material, dimensao, pesoUnit, pesoTotal, obs] = cols;
+
+      // Validar se é uma linha de dados válida (item deve ser número)
+      if (!item || !/^\d+$/.test(item.trim())) continue;
+
+      // Filtros de exclusão
+      if (material?.toUpperCase() === 'SOLDADO') {
+        console.log(`⏭️ Ignorando SOLDADO: ${descricao}`);
+        skippedItems.soldado++;
+        continue;
+      }
+      if (descricao?.includes('DIN')) {
+        console.log(`⏭️ Ignorando parafuso/arruela DIN: ${descricao}`);
+        skippedItems.din++;
+        continue;
+      }
+      if (dimensao === '—' || !dimensao || dimensao.trim() === '') {
+        console.log(`⏭️ Ignorando sem dimensão: ${descricao}`);
+        skippedItems.semDimensao++;
+        continue;
+      }
+      if (material?.includes('C.L')) {
+        console.log(`⏭️ Ignorando C.L (parafuso): ${descricao}`);
+        skippedItems.classeLote++;
+        continue;
+      }
+
+      // Analisar dimensões para determinar tipo de peça
+      const dimensaoTrimmed = dimensao.trim();
+      // Normalizar separadores: × (multiplicação) e x (letra) para o mesmo separador
+      const dimensaoNormalizada = dimensaoTrimmed.replace(/[×x]/gi, '×');
+      const partes = dimensaoNormalizada.split('×').map(p => parseFloat(p.replace(',', '.').trim()));
+      const descricaoLower = (descricao || '').toLowerCase();
+
+      console.log(`🔍 Analisando peça: ${descricao} | Dimensão original: "${dimensaoTrimmed}" | Normalizada: "${dimensaoNormalizada}" | Partes: ${partes.length} [${partes.join(', ')}]`);
+
+      // Lógica de classificação:
+      // 1 valor = perfil linear (barra)
+      // 2 valores = chapa (largura × altura)
+      // 3 valores = depende da descrição:
+      //   - Se contém "chapa" = chapa (espessura × largura × comprimento)
+      //   - Senão = barra (usar maior valor como comprimento)
+
+      if (partes.length === 1) {
+        // 1 valor = perfil linear
+        const comprimento = partes[0];
+
+        // Validar comprimento
+        if (isNaN(comprimento) || comprimento < 100 || comprimento > 50000) {
+          console.log(`⏭️ Comprimento inválido: ${comprimento}mm para ${descricao}`);
+          skippedItems.comprimentoInvalido++;
+          continue;
+        }
+
+        // Normalizar descrição do perfil
+        const perfilNormalizado = this.normalizeInventorPerfil(descricao || '');
+
+        const piece: CutPiece = {
+          id: `inventor-${item}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          length: comprimento,
+          quantity: parseInt(qtde) || 1,
+          posicao: projetoNum || '',
+          tag: item,
+          fase: currentModule,
+          perfil: perfilNormalizado,
+          material: material || '',
+          peso: parseFloat(pesoUnit?.replace(',', '.')) || 0,
+        };
+
+        linearPieces.push(piece);
+        console.log(`✅ Peça LINEAR: ${descricao} - ${comprimento}mm - Qtd: ${piece.quantity}`);
+
+      } else if (partes.length === 2) {
+        // 2 valores = chapa (largura × altura)
+        const [width, height] = partes;
+
+        // Validar dimensões
+        if (isNaN(width) || isNaN(height) || width < 10 || height < 10) {
+          console.log(`⏭️ Dimensões inválidas: ${width}×${height}mm para ${descricao}`);
+          skippedItems.comprimentoInvalido++;
+          continue;
+        }
+
+        // Extrair espessura da descrição quando não vem nas dimensões
+        // Exemplos: "Chapa 6,4" → 6.4, "Chapa 12,7" → 12.7
+        let thickness: number | undefined;
+        const thicknessMatch = descricaoLower.match(/chapa\s+(\d+[,.]?\d*)/i);
+        if (thicknessMatch) {
+          thickness = parseFloat(thicknessMatch[1].replace(',', '.'));
+          console.log(`📏 Espessura extraída da descrição "${descricao}": ${thickness}mm`);
+        }
+
+        const sheetPiece: SheetInventorPiece = {
+          id: `inventor-sheet-${item}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          tag: item,
+          posicao: projetoNum || '',
+          width,
+          height,
+          thickness,
+          quantity: parseInt(qtde) || 1,
+          material: material || '',
+          descricao: descricao || '',
+          fase: currentModule,
+          peso: parseFloat(pesoUnit?.replace(',', '.')) || 0,
+        };
+
+        sheetPieces.push(sheetPiece);
+        console.log(`✅ Peça CHAPA (2D): ${descricao} - ${width}×${height}mm${thickness ? ` esp:${thickness}mm` : ''} - Qtd: ${sheetPiece.quantity}`);
+
+      } else if (partes.length === 3) {
+        // 3 valores - verificar se é chapa ou barra
+        const [v1, v2, v3] = partes;
+
+        if (descricaoLower.includes('chapa')) {
+          // É chapa: espessura × largura × comprimento
+          const thickness = v1;
+          const width = v2;
+          const height = v3;
+
+          // Validar dimensões
+          if (isNaN(width) || isNaN(height) || width < 10 || height < 10) {
+            console.log(`⏭️ Dimensões inválidas: ${width}×${height}mm para ${descricao}`);
+            skippedItems.comprimentoInvalido++;
+            continue;
+          }
+
+          const sheetPiece: SheetInventorPiece = {
+            id: `inventor-sheet-${item}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            tag: item,
+            posicao: projetoNum || '',
+            width,
+            height,
+            thickness,
+            quantity: parseInt(qtde) || 1,
+            material: material || '',
+            descricao: descricao || '',
+            fase: currentModule,
+            peso: parseFloat(pesoUnit?.replace(',', '.')) || 0,
+          };
+
+          sheetPieces.push(sheetPiece);
+          console.log(`✅ Peça CHAPA (3D): ${descricao} - esp:${thickness} ${width}×${height}mm - Qtd: ${sheetPiece.quantity}`);
+
+        } else {
+          // É barra: usar maior dimensão como comprimento
+          const comprimento = Math.max(v1, v2, v3);
+
+          // Validar comprimento
+          if (isNaN(comprimento) || comprimento < 100 || comprimento > 50000) {
+            console.log(`⏭️ Comprimento inválido: ${comprimento}mm para ${descricao}`);
+            skippedItems.comprimentoInvalido++;
+            continue;
+          }
+
+          // Normalizar descrição do perfil
+          const perfilNormalizado = this.normalizeInventorPerfil(descricao || '');
+
+          const piece: CutPiece = {
+            id: `inventor-${item}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            length: comprimento,
+            quantity: parseInt(qtde) || 1,
+            posicao: projetoNum || '',
+            tag: item,
+            fase: currentModule,
+            perfil: perfilNormalizado,
+            material: material || '',
+            peso: parseFloat(pesoUnit?.replace(',', '.')) || 0,
+          };
+
+          linearPieces.push(piece);
+          console.log(`✅ Peça BARRA (3D→linear): ${descricao} - ${comprimento}mm (maior de ${v1}×${v2}×${v3}) - Qtd: ${piece.quantity}`);
+        }
+      }
+    }
+
+    const totalIgnored = skippedItems.soldado + skippedItems.din + skippedItems.semDimensao +
+                         skippedItems.classeLote + skippedItems.comprimentoInvalido;
+
+    console.log(`📊 Resumo da importação Inventor:`);
+    console.log(`   ✅ Peças LINEARES: ${linearPieces.length}`);
+    console.log(`   ✅ Peças CHAPAS: ${sheetPieces.length}`);
+    console.log(`   ⏭️ Ignorados (SOLDADO): ${skippedItems.soldado}`);
+    console.log(`   ⏭️ Ignorados (DIN): ${skippedItems.din}`);
+    console.log(`   ⏭️ Ignorados (sem dimensão): ${skippedItems.semDimensao}`);
+    console.log(`   ⏭️ Ignorados (C.L): ${skippedItems.classeLote}`);
+    console.log(`   ⏭️ Ignorados (dimensões inválidas): ${skippedItems.comprimentoInvalido}`);
+
+    if (linearPieces.length === 0 && sheetPieces.length === 0) {
+      throw new Error('Nenhuma peça válida foi encontrada no arquivo Inventor. Verifique se o arquivo contém peças com dimensões válidas.');
+    }
+
+    return {
+      linearPieces,
+      sheetPieces,
+      stats: {
+        total: linearPieces.length + sheetPieces.length,
+        linear: linearPieces.length,
+        sheet: sheetPieces.length,
+        ignored: totalIgnored,
+        details: skippedItems
+      }
+    };
+  }
+
+  // Método para detectar se é arquivo Inventor
+  static isInventorFile(content: string): boolean {
+    return content.includes('Dimensão / Modelo') &&
+           content.includes('Peso Unit.') &&
+           content.includes('| Item |');
+  }
+
+  // Normalizar descrição de perfil do Inventor (padronizar x/× e espaços)
+  private static normalizeInventorPerfil(perfil: string): string {
+    if (!perfil) return '';
+
+    return perfil
+      .replace(/\s*[×x]\s*/gi, 'x')  // Padroniza × e x (com ou sem espaços) para "x"
+      .replace(/\s+/g, ' ')           // Remove espaços múltiplos
+      .trim();
   }
 }

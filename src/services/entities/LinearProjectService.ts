@@ -182,10 +182,7 @@ export class LinearProjectService extends BaseService<Projeto> {
         .select(`
           *,
           clientes:cliente_id(nome),
-          obras:obra_id(nome),
-          materiais:material_id(tipo),
-          operadores:operador_id(nome),
-          inspetores_qa:inspetor_id(nome)
+          obras:obra_id(nome)
         `)
         .not('dados_projeto', 'is', null)
         .eq('dados_projeto->>type', 'linear')

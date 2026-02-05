@@ -97,3 +97,47 @@ export interface OptimizationPiece {
   peso?: number;
   perfilId?: string;
 }
+
+// ===== INTERFACES PARA SISTEMA DE CHAPAS (2D) =====
+
+export interface ProjetoChapa {
+  id: string;
+  projeto_id: string;
+  tag: string;                           // Item numero do Inventor
+  posicao: string;                       // Projeto Numero
+  descricao?: string;                    // Descricao original (ex: "Chapa 6,4")
+  largura_mm: number;                    // Largura em mm
+  altura_mm: number;                     // Altura/comprimento em mm
+  espessura_mm?: number;                 // Espessura em mm
+  material_id?: string;                  // Referencia ao material cadastrado
+  material_descricao_raw?: string;       // Descricao original para matching
+  material_nao_encontrado: boolean;      // Flag para material nao encontrado
+  quantidade: number;
+  peso?: number;                         // Peso em kg
+  fase?: string;                         // Fase/modulo do projeto
+  status: 'aguardando_otimizacao' | 'otimizada' | 'cortada';
+  projeto_otimizacao_chapa_id?: string;  // Vinculo com otimizacao
+  created_at: string;
+  material?: {                           // Join com tabela materiais
+    id: string;
+    tipo: string;
+    descricao?: string;
+    comprimento_padrao: number;
+    tipo_corte: string;
+  };
+}
+
+export interface ProjetoChapaGroup {
+  espessura_mm: number;
+  material_id?: string;
+  material?: ProjetoChapa['material'];
+  chapas: ProjetoChapa[];
+  total_quantidade: number;
+  total_area_mm2: number;
+}
+
+export interface ProjetoChapaValidation {
+  chapa: ProjetoChapa;
+  isValid: boolean;
+  suggestions: ProjetoChapa['material'][];
+}

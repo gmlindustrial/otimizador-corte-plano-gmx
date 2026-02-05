@@ -1,0 +1,342 @@
+Projeto: MANGOTTEAUX – FORNO HTM01 – CALDEIRARIA
+Código: 109
+Módulo: 01
+Lista Principal: Projeto - MB-USB-HTM1-001-1001
+
+| Item | Módulo | Projeto Número       | Área  | Qtde | Descrição                | Material  | Dimensão / Modelo | Peso Unit. (kg) | Peso Total (kg) | Observação           |
+| ---- | ------ | -------------------- | ----- | ---- | ------------------------ | --------- | ----------------- | --------------- | --------------- | -------------------- |
+| 1    | 01     | MB-USB-HTM1-001-1001 | Geral | 1    | Caldeiraria Módulo 01    | SOLDADO   | —                 | 1747,2          | 1747,2          | MB-USB-HTM1-001-1002 |
+| 2    | 01     | MB-USB-HTM1-001-1001 | Geral | 2    | Perfil W150 x 18,0       | ASTM A572 | 3150              | 57,7            | 115,4           | MB-USB-HTM1-001-1013 |
+| 3    | 01     | MB-USB-HTM1-001-1001 | Geral | 1    | Quadro 01                | SOLDADO   | —                 | 209,7           | 209,7           | MB-USB-HTM1-001-1014 |
+| 4    | 01     | MB-USB-HTM1-001-1001 | Geral | 1    | Quadro 02                | SOLDADO   | —                 | 210,5           | 210,5           | MB-USB-HTM1-001-1015 |
+| 5    | 01     | MB-USB-HTM1-001-1001 | Geral | 10   | Suporte                  | SOLDADO   | —                 | 3,7             | 37,4            | MB-USB-HTM1-001-1016 |
+| 6    | 01     | MB-USB-HTM1-001-1001 | Geral | 1    | Quadro 03                | SOLDADO   | —                 | 118,5           | 118,5           | MB-USB-HTM1-001-1017 |
+| 7    | 01     | MB-USB-HTM1-001-1001 | Geral | 2    | Quadro Teto              | SOLDADO   | —                 | 52,4            | 104,9           | MB-USB-HTM1-001-1019 |
+| 8    | 01     | MB-USB-HTM1-001-1001 | Geral | 2    | Perfil U 6Pol. (3º Alma) | ASTM A572 | 1952              | 37,7            | 75,4            | MB-USB-HTM1-001-1020 |
+| 9    | 01     | MB-USB-HTM1-001-1001 | Geral | 1    | Travessa 01              | SOLDADO   | —                 | 61,9            | 61,9            | MB-USB-HTM1-001-1021 |
+| 10   | 01     | MB-USB-HTM1-001-1001 | Geral | 1    | Travessa 02              | SOLDADO   | —                 | 62,0            | 62,0            | MB-USB-HTM1-001-1022 |
+| 11   | 01     | MB-USB-HTM1-001-1001 | Geral | 1    | Perfil U 6Pol. (3º Alma) | ASTM A572 | 1677              | 32,4            | 32,4            | MB-USB-HTM1-001-1023 |
+| 12   | 01     | MB-USB-HTM1-001-1001 | Geral | 3    | Reforço Inferior Maior   | ASTM A572 | —                 | 26,3            | 78,8            | MB-USB-HTM1-001-1025 |
+| 13   | 01     | MB-USB-HTM1-001-1001 | Geral | 3    | Reforço Inferior Menor   | ASTM A572 | —                 | 17,8            | 53,4            | MB-USB-HTM1-001-1026 |
+| 14   | 01     | MB-USB-HTM1-001-1001 | Geral | 2    | Perfil U 6Pol. (3º Alma) | ASTM A572 | 1618              | 18,7            | 37,4            | —                    |
+| 15   | 01     | MB-USB-HTM1-001-1001 | Geral | 2    | Perfil U 6Pol. (3º Alma) | ASTM A572 | 1467              | 16,9            | 33,8            | —                    |
+| 16   | 01     | MB-USB-HTM1-001-1001 | Geral | 4    | Perfil U 6Pol. (3º Alma) | ASTM A572 | 2200              | 26,1            | 104,4           | —                    |
+| 17   | 01     | MB-USB-HTM1-001-1001 | Geral | 2    | Perfil U 6Pol. (3º Alma) | ASTM A572 | 2808              | 33,3            | 66,6            | —                    |
+| 18   | 01     | MB-USB-HTM1-001-1001 | Geral | 2    | Chapa 6,4                | ASTM A36  | 101,6 × 3140      | 15,9            | 31,8            | —                    |
+| 19   | 01     | MB-USB-HTM1-001-1001 | Geral | 16   | DIN 126 – 13,5           | AÇO       | —                 | 0,0             | 1,0             | —                    |
+| 20   | 01     | MB-USB-HTM1-001-1001 | Geral | 16   | DIN 934 – M12            | C.L 12    | —                 | 0,0             | 0,3             | —                    |
+| 21   | 01     | MB-USB-HTM1-001-1001 | Geral | 16   | DIN 933 – M12 × 35       | C.L 12.9  | —                 | 0,0             | 0,8             | —                    |
+| 22   | 01     | MB-USB-HTM1-001-1001 | Geral | 20   | DIN 126 – 17,5           | AÇO       | —                 | 0,0             | 0,2             | —                    |
+| 23   | 01     | MB-USB-HTM1-001-1001 | Geral | 30   | DIN 934 – M16            | C.L 12    | —                 | 0,0             | 1,0             | —                    |
+| 24   | 01     | MB-USB-HTM1-001-1001 | Geral | 31   | DIN 933 – M16 × 45       | C.L 12.9  | —                 | 0,1             | 3,3             | —                    |
+| 25   | 01     | MB-USB-HTM1-001-1001 | Geral | 11   | DIN 434 – 17,5           | AÇO       | —                 | 0,0             | 0,3             | —                    |
+
+
+Projeto: MANGOTTEAUX – FORNO HTM01 – CALDEIRARIA
+Código: 109
+Módulo: 01
+Lista Principal: Projeto - MB-USB-HTM1-001-1002
+
+| Item | Módulo | Projeto Número       | Área  | Qtde | Descrição                  | Material  | Dimensão / Modelo   | Peso Unit. (kg) | Peso Total (kg) | Observação           |
+| ---- | ------ | -------------------- | ----- | ---- | -------------------------- | --------- | ------------------- | --------------- | --------------- | -------------------- |
+| 1    | 01     | MB-USB-HTM1-001-1002 | Geral | 1    | Chapa                      | ASTM A36  | 6,4 × 2184 × 3000   | 276,6           | 276,6           | MB-USB-HTM1-001-1003 |
+| 2    | 01     | MB-USB-HTM1-001-1002 | Geral | 1    | Chapa                      | ASTM A36  | 6,4 × 489 × 2662    | 330,3           | 330,3           | —                    |
+| 3    | 01     | MB-USB-HTM1-001-1002 | Geral | 1    | Chapa                      | ASTM A36  | 6,4 × 308 × 2489    | 38,4            | 38,4            | —                    |
+| 4    | 01     | MB-USB-HTM1-001-1002 | Geral | 1    | Chapa                      | ASTM A36  | 6,4 × 1239,5 × 2489 | 140,0           | 140,0           | MB-USB-HTM1-001-1004 |
+| 5    | 01     | MB-USB-HTM1-001-1002 | Geral | 2    | Apoio                      | SOLDADO   | —                   | 21,5            | 43,0            | MB-USB-HTM1-001-1006 |
+| 6    | 01     | MB-USB-HTM1-001-1002 | Geral | 1    | Flange de Saída            | SOLDADO   | —                   | 163,1           | 163,1           | MB-USB-HTM1-001-1005 |
+| 7    | 01     | MB-USB-HTM1-001-1002 | Geral | 2    | Apoio Engrenagem           | SOLDADO   | —                   | 30,7            | 61,5            | MB-USB-HTM1-001-1007 |
+| 8    | 01     | MB-USB-HTM1-001-1002 | Geral | 2    | Apoio Recortado            | SOLDADO   | —                   | 21,3            | 42,5            | MB-USB-HTM1-001-1008 |
+| 9    | 01     | MB-USB-HTM1-001-1002 | Geral | 10   | Reforço Janela 01          | SOLDADO   | —                   | 1,8             | 17,7            | MB-USB-HTM1-001-1009 |
+| 10   | 01     | MB-USB-HTM1-001-1002 | Geral | 2    | Quadro 02                  | SOLDADO   | —                   | 3,4             | 6,9             | MB-USB-HTM1-001-1010 |
+| 11   | 01     | MB-USB-HTM1-001-1002 | Geral | 2    | Reforço Janela 03          | SOLDADO   | —                   | 1,9             | 3,8             | MB-USB-HTM1-001-1011 |
+| 12   | 01     | MB-USB-HTM1-001-1002 | Geral | 2    | Reforço Janela 04          | SOLDADO   | —                   | 3,2             | 6,4             | MB-USB-HTM1-001-1012 |
+| 13   | 01     | MB-USB-HTM1-001-1002 | Geral | 1    | Chapa                      | ASTM A36  | 6,4 × 2489 × 3092,5 | 237,2           | 237,2           | MB-USB-HTM1-001-1018 |
+| 14   | 01     | MB-USB-HTM1-001-1002 | Geral | 2    | Perfil L 76,2 × 76,2 × 9,5 | ASTM A572 | 3092                | 27,8            | 55,6            | —                    |
+| 15   | 01     | MB-USB-HTM1-001-1002 | Geral | 2    | Perfil L 76,2 × 76,2 × 9,5 | ASTM A572 | 2656                | 23,9            | 47,7            | —                    |
+| 16   | 01     | MB-USB-HTM1-001-1002 | Geral | 1    | Chapa                      | ASTM A36  | 6,4 × 2184 × 3099   | 276,6           | 276,6           | MB-USB-HTM1-001-1003 |
+
+
+
+Projeto: MANGOTTEAUX – FORNO HTM01 – CALDEIRARIA
+Código: 109
+Módulo: 01
+Lista Principal: Projeto - MB-USB-HTM1-001-1005
+
+| Item | Módulo | Projeto Número       | Área  | Qtde | Descrição | Material | Dimensão / Modelo | Peso Unit. (kg) | Peso Total (kg) | Observação |
+| ---- | ------ | -------------------- | ----- | ---- | --------- | -------- | ----------------- | --------------- | --------------- | ---------- |
+| 1    | 01     | MB-USB-HTM1-001-1005 | Geral | 1    | Chapa     | ASTM A36 | 6,4 × 766 × 2489  | 38,7            | 38,7            | —          |
+| 2    | 01     | MB-USB-HTM1-001-1005 | Geral | 2    | Chapa     | ASTM A36 | 12,7 × 89 × 711   | 6,2             | 12,5            | —          |
+| 3    | 01     | MB-USB-HTM1-001-1005 | Geral | 2    | Chapa     | ASTM A36 | 12,7 × 89 × 2121  | 18,7            | 37,3            | —          |
+| 4    | 01     | MB-USB-HTM1-001-1005 | Geral | 2    | Chapa     | ASTM A36 | 12,7 × 140 × 559  | 7,8             | 15,6            | —          |
+| 5    | 01     | MB-USB-HTM1-001-1005 | Geral | 2    | Chapa     | ASTM A36 | 12,7 × 140 × 2121 | 29,5            | 59,1            | —          |
+
+
+
+Projeto: MANGOTTEAUX – FORNO HTM01 – CALDEIRARIA
+Código: 109
+Módulo: 01
+Lista Principal: Projeto - MB-USB-HTM1-001-1006
+
+| Item | Módulo | Projeto Número       | Área  | Qtde | Descrição | Material | Dimensão / Modelo    | Peso Unit. (kg) | Peso Total (kg) | Observação |
+| ---- | ------ | -------------------- | ----- | ---- | --------- | -------- | -------------------- | --------------- | --------------- | ---------- |
+| 1    | 01     | MB-USB-HTM1-001-1006 | Geral | 1    | Chapa     | ASTM A36 | 12,7 × 262,7 × 312,7 | 8,2             | 8,2             | —          |
+| 2    | 01     | MB-USB-HTM1-001-1006 | Geral | 1    | Chapa     | ASTM A36 | 12,7 × 87,3 × 312,7  | 2,7             | 2,7             | —          |
+| 3    | 01     | MB-USB-HTM1-001-1006 | Geral | 2    | Chapa     | ASTM A36 | 12,7 × 250 × 250     | 5,3             | 10,6            | —          |
+
+
+
+Projeto: MANGOTTEAUX – FORNO HTM01 – CALDEIRARIA
+Código: 109
+Módulo: 01
+Lista Principal: Projeto - MB-USB-HTM1-001-1009 - 78 cj
+
+| Item | Módulo | Projeto Número       | Área  | Qtde | Descrição | Material | Dimensão / Modelo  | Peso Unit. (kg) | Peso Total (kg) | Observação |
+| ---- | ------ | -------------------- | ----- | ---- | --------- | -------- | ------------------ | --------------- | --------------- | ---------- |
+| 1    | 01     | MB-USB-HTM1-001-1007 | Geral | 2    | Chapa     | ASTM A36 | 9,5 × 124 × 552,5  | 5,1             | 10,2            | —          |
+| 2    | 01     | MB-USB-HTM1-001-1007 | Geral | 2    | Chapa     | ASTM A36 | 9,5 × 124 × 457,2  | 4,2             | 8,5             | —          |
+| 3    | 01     | MB-USB-HTM1-001-1007 | Geral | 2    | Chapa     | ASTM A36 | 9,5 × 71,4 × 680   | 3,6             | 7,1             | —          |
+| 4    | 01     | MB-USB-HTM1-001-1007 | Geral | 2    | Chapa     | ASTM A36 | 9,5 × 73,3 × 457,2 | 2,5             | 4,9             | —          |
+
+
+
+Projeto: MANGOTTEAUX – FORNO HTM01 – CALDEIRARIA
+Código: 109
+Módulo: 01
+Lista Principal: Projeto - MB-USB-HTM1-001-1010 - 04 cj
+
+| Item | Módulo | Projeto Número       | Área  | Qtde | Descrição | Material | Dimensão / Modelo  | Peso Unit. (kg) | Peso Total (kg) | Observação |
+| ---- | ------ | -------------------- | ----- | ---- | --------- | -------- | ------------------ | --------------- | --------------- | ---------- |
+| 1    | 01     | MB-USB-HTM1-001-1010 | Geral | 2    | Barra     | ASTM A36 | 25,4 × 9,5 × 507,8 | 1,0             | 1,9             | —          |
+| 2    | 01     | MB-USB-HTM1-001-1010 | Geral | 2    | Barra     | ASTM A36 | 25,4 × 9,5 × 419   | 0,8             | 1,6             | —          |
+
+
+Projeto: MANGOTTEAUX – FORNO HTM01 – CALDEIRARIA
+Código: 109
+Módulo: 01
+Lista Principal: Projeto - MB-USB-HTM1-001-1011 - 18 cj
+
+| Item | Módulo | Projeto Número       | Área  | Qtde | Descrição | Material | Dimensão / Modelo  | Peso Unit. (kg) | Peso Total (kg) | Observação |
+| ---- | ------ | -------------------- | ----- | ---- | --------- | -------- | ------------------ | --------------- | --------------- | ---------- |
+| 1    | 01     | MB-USB-HTM1-001-1011 | Geral | 2    | Barra     | ASTM A36 | 25,4 × 9,5 × 279,4 | 0,5             | 1,1             | —          |
+| 2    | 01     | MB-USB-HTM1-001-1011 | Geral | 2    | Barra     | ASTM A36 | 25,4 × 9,5 × 229   | 0,4             | 0,9             | —          |
+
+
+
+Projeto: MANGOTTEAUX – FORNO HTM01 – CALDEIRARIA
+Código: 109
+Módulo: 01
+Lista Principal: Projeto - MB-USB-HTM1-001-1012 - 20 cj
+
+| Item | Módulo | Projeto Número       | Área  | Qtde | Descrição | Material | Dimensão / Modelo  | Peso Unit. (kg) | Peso Total (kg) | Observação |
+| ---- | ------ | -------------------- | ----- | ---- | --------- | -------- | ------------------ | --------------- | --------------- | ---------- |
+| 1    | 01     | MB-USB-HTM1-001-1012 | Geral | 2    | Barra     | ASTM A36 | 25,4 × 9,5 × 449,6 | 0,9             | 1,7             | —          |
+| 2    | 01     | MB-USB-HTM1-001-1012 | Geral | 2    | Barra     | ASTM A36 | 25,4 × 9,5 × 410,4 | 0,8             | 1,6             | —          |
+
+
+Projeto: MANGOTTEAUX – FORNO HTM01 – CALDEIRARIA
+Código: 109
+Módulo: 01
+Lista Principal: Projeto - MB-USB-HTM1-001-1014 - 01 cj
+
+| Item | Módulo | Projeto Número       | Área  | Qtde | Descrição          | Material  | Dimensão / Modelo | Peso Unit. (kg) | Peso Total (kg) | Observação |
+| ---- | ------ | -------------------- | ----- | ---- | ------------------ | --------- | ----------------- | --------------- | --------------- | ---------- |
+| 1    | 01     | MB-USB-HTM1-001-1014 | Geral | 1    | Perfil W150 × 18,0 | ASTM A572 | 2890              | 51,6            | 51,6            | —          |
+| 2    | 01     | MB-USB-HTM1-001-1014 | Geral | 1    | Perfil W150 × 18,0 | ASTM A572 | 698               | 10,0            | 10,0            | —          |
+| 3    | 01     | MB-USB-HTM1-001-1014 | Geral | 1    | Perfil W150 × 18,0 | ASTM A572 | 2502              | 45,9            | 45,9            | —          |
+| 4    | 01     | MB-USB-HTM1-001-1014 | Geral | 1    | Perfil W150 × 18,0 | ASTM A572 | 2496              | 44,4            | 44,4            | —          |
+| 5    | 01     | MB-USB-HTM1-001-1014 | Geral | 1    | Perfil W150 × 18,0 | ASTM A572 | 2808              | 48,7            | 48,7            | —          |
+| 6    | 01     | MB-USB-HTM1-001-1014 | Geral | 1    | Perfil W150 × 18,0 | ASTM A572 | 498               | 9,1             | 9,1             | —          |
+
+
+
+
+Projeto: MANGOTTEAUX – FORNO HTM01 – CALDEIRARIA
+Código: 109
+Módulo: 01
+Lista Principal: Projeto - MB-USB-HTM1-001-1014 - 01 cj
+
+| Item | Módulo | Projeto Número       | Área  | Qtde | Descrição          | Material  | Dimensão / Modelo | Peso Unit. (kg) | Peso Total (kg) | Observação |
+| ---- | ------ | -------------------- | ----- | ---- | ------------------ | --------- | ----------------- | --------------- | --------------- | ---------- |
+| 1    | 01     | MB-USB-HTM1-001-1014 | Geral | 1    | Perfil W150 × 18,0 | ASTM A572 | 2890              | 51,6            | 51,6            | —          |
+| 2    | 01     | MB-USB-HTM1-001-1014 | Geral | 1    | Perfil W150 × 18,0 | ASTM A572 | 698               | 10,0            | 10,0            | —          |
+| 3    | 01     | MB-USB-HTM1-001-1014 | Geral | 1    | Perfil W150 × 18,0 | ASTM A572 | 2502              | 45,9            | 45,9            | —          |
+| 4    | 01     | MB-USB-HTM1-001-1014 | Geral | 1    | Perfil W150 × 18,0 | ASTM A572 | 2496              | 44,4            | 44,4            | —          |
+| 5    | 01     | MB-USB-HTM1-001-1014 | Geral | 1    | Perfil W150 × 18,0 | ASTM A572 | 2808              | 48,7            | 48,7            | —          |
+| 6    | 01     | MB-USB-HTM1-001-1014 | Geral | 1    | Perfil W150 × 18,0 | ASTM A572 | 498               | 9,1             | 9,1             | —          |
+
+
+
+Projeto: MANGOTTEAUX – FORNO HTM01 – CALDEIRARIA
+Código: 109
+Módulo: 01
+Lista Principal: Projeto - MB-USB-HTM1-001-1015 - 01 cj
+
+| Item | Módulo | Projeto Número       | Área  | Qtde | Descrição          | Material  | Dimensão / Modelo | Peso Unit. (kg) | Peso Total (kg) | Observação |
+| ---- | ------ | -------------------- | ----- | ---- | ------------------ | --------- | ----------------- | --------------- | --------------- | ---------- |
+| 1    | 01     | MB-USB-HTM1-001-1015 | Geral | 1    | Perfil W150 × 18,0 | ASTM A572 | 498               | 9,1             | 9,1             | —          |
+| 2    | 01     | MB-USB-HTM1-001-1015 | Geral | 1    | Perfil W150 × 18,0 | ASTM A572 | 698               | 10,0            | 10,0            | —          |
+| 3    | 01     | MB-USB-HTM1-001-1015 | Geral | 1    | Perfil W150 × 18,0 | ASTM A572 | 2808              | 48,7            | 48,7            | —          |
+| 4    | 01     | MB-USB-HTM1-001-1015 | Geral | 1    | Perfil W150 × 18,0 | ASTM A572 | 2502              | 45,9            | 45,9            | —          |
+| 5    | 01     | MB-USB-HTM1-001-1015 | Geral | 1    | Perfil W150 × 18,0 | ASTM A572 | 2890              | 51,5            | 51,5            | —          |
+| 6    | 01     | MB-USB-HTM1-001-1015 | Geral | 1    | Perfil W150 × 18,0 | ASTM A572 | 2496              | 44,3            | 44,3            | —          |
+| 7    | 01     | MB-USB-HTM1-001-1015 | Geral | 10   | Chapa              | ASTM A36  | 9,5 × 35 × 40     | 0,1             | 1,0             | —          |
+
+
+Projeto: MANGOTTEAUX – FORNO HTM01 – CALDEIRARIA
+Código: 109
+Módulo: 01
+Lista Principal: Projeto - MB-USB-HTM1-001-1016 - 78 cj
+
+| Item | Módulo | Projeto Número       | Área  | Qtde | Descrição | Material | Dimensão / Modelo | Peso Unit. (kg) | Peso Total (kg) | Observação |
+| ---- | ------ | -------------------- | ----- | ---- | --------- | -------- | ----------------- | --------------- | --------------- | ---------- |
+| 1    | 01     | MB-USB-HTM1-001-1016 | Geral | 2    | Chapa     | ASTM A36 | 6,4 × 150 × 206   | 1,0             | 2,0             | —          |
+| 2    | 01     | MB-USB-HTM1-001-1016 | Geral | 1    | Chapa     | ASTM A36 | 6,4 × 150 × 106   | 1,0             | 1,0             | —          |
+
+
+
+
+Projeto: MANGOTTEAUX – FORNO HTM01 – CALDEIRARIA
+Código: 109
+Módulo: 01
+Lista Principal: Projeto - MB-USB-HTM1-001-1017 - XX cj
+
+| Item | Módulo | Projeto Número       | Área  | Qtde | Descrição                | Material  | Dimensão / Modelo | Peso Unit. (kg) | Peso Total (kg) | Observação |
+| ---- | ------ | -------------------- | ----- | ---- | ------------------------ | --------- | ----------------- | --------------- | --------------- | ---------- |
+| 1    | 01     | MB-USB-HTM1-001-1017 | Geral | 1    | Perfil U 6Pol. (3º Alma) | ASTM A572 | 2502              | 29,6            | 29,6            | —          |
+| 2    | 01     | MB-USB-HTM1-001-1017 | Geral | 1    | Perfil U 6Pol. (3º Alma) | ASTM A572 | 2807              | 31,4            | 31,4            | —          |
+| 3    | 01     | MB-USB-HTM1-001-1017 | Geral | 1    | Perfil U 6Pol. (3º Alma) | ASTM A572 | 2495              | 28,6            | 28,6            | —          |
+| 4    | 01     | MB-USB-HTM1-001-1017 | Geral | 1    | Perfil U 6Pol. (3º Alma) | ASTM A572 | 2495              | 28,5            | 28,5            | —          |
+| 5    | 01     | MB-USB-HTM1-001-1017 | Geral | 5    | Chapa                    | ASTM A36  | 9,5 × 35 × 40     | 0,1             | 0,5             | —          |
+
+
+
+Projeto: MANGOTTEAUX – FORNO HTM01 – CALDEIRARIA
+Código: 109
+Módulo: 01
+Lista Principal: Projeto - MB-USB-HTM1-001-1019 - 01 cj
+
+| Item | Módulo | Projeto Número       | Área  | Qtde | Descrição | Material | Dimensão / Modelo | Peso Unit. (kg) | Peso Total (kg) | Observação |
+| ---- | ------ | -------------------- | ----- | ---- | --------- | -------- | ----------------- | --------------- | --------------- | ---------- |
+| 1    | 01     | MB-USB-HTM1-001-1019 | Geral | 2    | Chapa     | ASTM A36 | 6,4 × 94 × 713    | 3,3             | 6,7             | —          |
+| 2    | 01     | MB-USB-HTM1-001-1019 | Geral | 2    | Chapa     | ASTM A36 | 6,4 × 100 × 713   | 3,6             | 7,1             | —          |
+| 3    | 01     | MB-USB-HTM1-001-1019 | Geral | 2    | Chapa     | ASTM A36 | 6,4 × 94 × 2100   | 9,8             | 19,6            | —          |
+| 4    | 01     | MB-USB-HTM1-001-1019 | Geral | 2    | Chapa     | ASTM A36 | 6,4 × 100 × 1913  | 9,5             | 19,1            | —          |
+
+
+
+Projeto: MANGOTTEAUX – FORNO HTM01 – CALDEIRARIA
+Código: 109
+Módulo: 01
+Lista Principal: Projeto - MB-USB-HTM1-001-1021 - 01 cj
+
+| Item | Módulo | Projeto Número       | Área  | Qtde | Descrição                | Material  | Dimensão / Modelo | Peso Unit. (kg) | Peso Total (kg) | Observação |
+| ---- | ------ | -------------------- | ----- | ---- | ------------------------ | --------- | ----------------- | --------------- | --------------- | ---------- |
+| 1    | 01     | MB-USB-HTM1-001-1021 | Geral | 1    | Perfil U 6Pol. (3º Alma) | ASTM A572 | 1677              | 32,4            | 32,4            | —          |
+| 2    | 01     | MB-USB-HTM1-001-1021 | Geral | 1    | Perfil U 6Pol. (1º Alma) | ASTM A572 | 1520              | 29,5            | 29,5            | —          |
+
+
+Projeto: MANGOTTEAUX – FORNO HTM01 – CALDEIRARIA
+Código: 109
+Módulo: 01
+Lista Principal: Projeto - MB-USB-HTM1-001-1022 - 01 cj
+
+| Item | Módulo | Projeto Número       | Área  | Qtde | Descrição                | Material  | Dimensão / Modelo | Peso Unit. (kg) | Peso Total (kg) | Observação |
+| ---- | ------ | -------------------- | ----- | ---- | ------------------------ | --------- | ----------------- | --------------- | --------------- | ---------- |
+| 1    | 01     | MB-USB-HTM1-001-1022 | Geral | 1    | Perfil U 6Pol. (3º Alma) | ASTM A572 | 1677              | 32,5            | 32,5            | —          |
+| 2    | 01     | MB-USB-HTM1-001-1022 | Geral | 1    | Perfil U 6Pol. (1º Alma) | ASTM A572 | 1520              | 29,5            | 29,5            | —          |
+
+
+
+Projeto: MANGOTTEAUX – FORNO HTM01 – CALDEIRARIA
+Código: 109
+Módulo: 01
+Lista Principal: Projeto - MB-USB-HTM1-001-1024 - 10 cj
+
+
+| Item | Módulo | Projeto Número       | Área  | Qtde | Descrição                | Material | Dimensão / Modelo | Peso Unit. (kg) | Peso Total (kg) | Observação |
+| ---- | ------ | -------------------- | ----- | ---- | ------------------------ | -------- | ----------------- | --------------- | --------------- | ---------- |
+| 1    | 01     | MB-USB-HTM1-001-1024 | Geral | 1    | Chapa                    | ASTM A36 | 6,35 × 790 × 2190 | 86,2            | 86,2            | —          |
+| 2    | 01     | MB-USB-HTM1-001-1024 | Geral | 2    | Cantoneira L 63,5 × 63,5 | ASTM A36 | 2190              | 13,0            | 26,1            | —          |
+| 3    | 01     | MB-USB-HTM1-001-1024 | Geral | 2    | Cantoneira L 63,5 × 63,5 | ASTM A36 | 790               | 4,6             | 9,1             | —          |
+| 4    | 01     | MB-USB-HTM1-001-1024 | Geral | 2    | Cantoneira L 63,5 × 63,5 | Genérico | 777               | 0,6             | 1,1             | —          |
+
+
+_________________________________________________________________
+_________________________________________________________________
+
+
+
+Projeto: MANGOTTEAUX – FORNO HTM01 – CALDEIRARIA
+Código: 109
+Módulo: 02
+Lista Principal: Projeto - MB-USB-HTM1-001-2001 - 01 cj
+
+| Item | Módulo | Projeto Número       | Área  | Qtde | Descrição                | Material  | Dimensão / Modelo | Peso Unit. (kg) | Peso Total (kg) | Observação           |
+| ---- | ------ | -------------------- | ----- | ---- | ------------------------ | --------- | ----------------- | --------------- | --------------- | -------------------- |
+| 1    | 02     | MB-USB-HTM1-001-2001 | Geral | 1    | Caldeiraria Módulo 02    | SOLDADO   | —                 | 1442,8          | 1442,8          | MB-USB-HTM1-001-2002 |
+| 2    | 02     | MB-USB-HTM1-001-2001 | Geral | 16   | Suporte                  | SOLDADO   | —                 | 3,7             | 59,9            | MB-USB-HTM1-001-1016 |
+| 3    | 02     | MB-USB-HTM1-001-2001 | Geral | 2    | Quadro Teto              | SOLDADO   | —                 | 52,4            | 104,9           | MB-USB-HTM1-001-1019 |
+| 4    | 02     | MB-USB-HTM1-001-2001 | Geral | 2    | Perfil W150 × 18,0       | ASTM A572 | 3251              | 57,4            | 114,8           | MB-USB-HTM1-001-2005 |
+| 5    | 02     | MB-USB-HTM1-001-2001 | Geral | 1    | Chapa                    | ASTM A36  | 38,1 × 310 × 498  | 46,0            | 46,0            | MB-USB-HTM1-001-2006 |
+| 6    | 02     | MB-USB-HTM1-001-2001 | Geral | 1    | Chapa                    | ASTM A36  | 38,1 × 300 × 498  | 37,1            | 37,1            | MB-USB-HTM1-001-2007 |
+| 7    | 02     | MB-USB-HTM1-001-2001 | Geral | 2    | Perfil U 6Pol. (3º Alma) | ASTM A572 | 3251 (D/E)        | 63,0            | 126,1           | MB-USB-HTM1-001-2012 |
+| 8    | 02     | MB-USB-HTM1-001-2001 | Geral | 2    | Perfil U 6Pol. (3º Alma) | ASTM A572 | 3251 (D/E)        | 62,8            | 125,7           | MB-USB-HTM1-001-2013 |
+| 9    | 02     | MB-USB-HTM1-001-2001 | Geral | 1    | Quadro 03                | SOLDADO   | —                 | 118,4           | 118,4           | MB-USB-HTM1-001-2014 |
+| 10   | 02     | MB-USB               |       |      |                          |           |                   |                 |                 |                      |
+
+
+Projeto: MANGOTTEAUX – FORNO HTM01 – CALDEIRARIA
+Código: 109
+Módulo: 02
+Lista Principal: Projeto - MB-USB-HTM1-001-2002 - 01 cj
+
+| Item | Módulo | Projeto Número       | Área  | Qtde | Descrição                  | Material  | Dimensão / Modelo | Peso Unit. (kg) | Peso Total (kg) | Observação           |
+| ---- | ------ | -------------------- | ----- | ---- | -------------------------- | --------- | ----------------- | --------------- | --------------- | -------------------- |
+| 1    | 02     | MB-USB-HTM1-001-2002 | Geral | 2    | Chapa                      | ASTM A36  | 6,4 × 2184 × 3251 | 308,5           | 617,0           | MB-USB-HTM1-001-2003 |
+| 2    | 02     | MB-USB-HTM1-001-2002 | Geral | 1    | Chapa                      | ASTM A36  | 6,4 × 2489 × 3251 | 256,9           | 256,9           | MB-USB-HTM1-001-2004 |
+| 3    | 02     | MB-USB-HTM1-001-2002 | Geral | 16   | Reforço Janela 01          | SOLDADO   | —                 | 1,8             | 28,3            | MB-USB-HTM1-001-1009 |
+| 4    | 02     | MB-USB-HTM1-001-2002 | Geral | 4    | Reforço Janela 03          | SOLDADO   | —                 | 1,9             | 7,6             | MB-USB-HTM1-001-1011 |
+| 5    | 02     | MB-USB-HTM1-001-2002 | Geral | 4    | Reforço Janela 04          | SOLDADO   | —                 | 3,2             | 12,8            | MB-USB-HTM1-001-1012 |
+| 6    | 02     | MB-USB-HTM1-001-2002 | Geral | 1    | Chapa                      | ASTM A36  | 6,4 × 2489 × 3152 | 403,4           | 403,4           | —                    |
+| 7    | 02     | MB-USB-HTM1-001-2002 | Geral | 4    | Perfil L 76,2 × 76,2 × 9,5 | ASTM A572 | 3251              | 29,2            | 116,9           | —                    |
+
+
+
+Projeto: MANGOTTEAUX – FORNO HTM01 – CALDEIRARIA
+Código: 109
+Módulo: 02
+Lista Principal: Projeto - MB-USB-HTM1-001-2015 - 02 cj
+
+| Item | Módulo | Projeto Número       | Área  | Qtde | Descrição          | Material  | Dimensão / Modelo | Peso Unit. (kg) | Peso Total (kg) | Observação |
+| ---- | ------ | -------------------- | ----- | ---- | ------------------ | --------- | ----------------- | --------------- | --------------- | ---------- |
+| 1    | 02     | MB-USB-HTM1-001-2015 | Geral | 8    | Chapa              | ASTM A36  | 9,5 × 35 × 40     | 0,1             | 0,8             | —          |
+| 2    | 02     | MB-USB-HTM1-001-2015 | Geral | 1    | Perfil W150 × 18,0 | ASTM A572 | 2808              | 48,7            | 48,7            | —          |
+| 3    | 02     | MB-USB-HTM1-001-2015 | Geral | 1    | Perfil W150 × 18,0 | ASTM A572 | 2496              | 44,3            | 44,3            | —          |
+| 4    | 02     | MB-USB-HTM1-001-2015 | Geral | 1    | Perfil W150 × 18,0 | ASTM A572 | 2502              | 45,9            | 45,9            | —          |
+| 5    | 02     | MB-USB-HTM1-001-2015 | Geral | 1    | Perfil W150 × 18,0 | ASTM A572 | 2496              | 44,3            | 44,3            | —          |
+
+
+
+Projeto: MANGOTTEAUX – FORNO HTM01 – CALDEIRARIA
+Código: 109
+Módulo: 02
+Lista Principal: Projeto - MB-USB-HTM1-001-2016 - 01 cj
+
+| Item | Módulo | Projeto Número       | Área  | Qtde | Descrição                | Material  | Dimensão / Modelo | Peso Unit. (kg) | Peso Total (kg) | Observação |
+| ---- | ------ | -------------------- | ----- | ---- | ------------------------ | --------- | ----------------- | --------------- | --------------- | ---------- |
+| 1    | 02     | MB-USB-HTM1-001-2016 | Geral | 4    | Chapa                    | ASTM A36  | 9,5 × 35 × 40     | 1,0             | 4,0             | —          |
+| 2    | 02     | MB-USB-HTM1-001-2016 | Geral | 1    | Perfil U 6Pol. (3º Alma) | ASTM A572 | 2807              | 31,4            | 31,4            | —          |
+| 3    | 02     | MB-USB-HTM1-001-2016 | Geral | 1    | Perfil U 6Pol. (3º Alma) | ASTM A572 | 2502              | 29,6            | 29,6            | —          |
+| 4    | 02     | MB-USB-HTM1-001-2016 | Geral | 1    | Perfil U 6Pol. (3º Alma) | ASTM A572 | 2495              | 28,6            | 28,6            | —          |
+| 5    | 02     | MB-USB-HTM1-001-2016 | Geral | 1    | Perfil U 6Pol. (3º Alma) | ASTM A572 | 2495              | 28,5            | 28,5            | —          |
+
+
+
+
+
+
+
+
+
+

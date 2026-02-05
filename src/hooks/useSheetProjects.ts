@@ -175,10 +175,7 @@ export const useSheetProjects = () => {
           `
           *,
           clientes:cliente_id(nome),
-          obras:obra_id(nome),
-          materiais:material_id(tipo),
-          operadores:operador_id(nome),
-          inspetores_qa:inspetor_id(nome)
+          obras:obra_id(nome)
         `
         )
         .eq("dados_projeto->>type", "sheet")
