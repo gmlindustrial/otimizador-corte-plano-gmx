@@ -202,12 +202,15 @@ export class MaxRectsPackerOptimizer {
     let bestWidth = width;
     let bestHeight = height;
 
+    // CORRIGIDO: Usar sheetWidth + 1 como multiplicador para evitar overflow
+    // Garante que Y tem prioridade sobre X sem usar numero magico 100000
+    const yMultiplier = this.sheetWidth + 1;
+
     for (const rect of freeRects) {
       // Tentar sem rotação
       if (width <= rect.width && height <= rect.height) {
         // Bottom-Left: menor Y primeiro, depois menor X
-        // Multiplicador grande para garantir que Y tem prioridade sobre X
-        const bottomLeftScore = rect.y * 100000 + rect.x;
+        const bottomLeftScore = rect.y * yMultiplier + rect.x;
 
         if (bottomLeftScore < bestScore) {
           bestScore = bottomLeftScore;
@@ -220,7 +223,7 @@ export class MaxRectsPackerOptimizer {
 
       // Tentar com rotação
       if (allowRotation && height <= rect.width && width <= rect.height) {
-        const bottomLeftScore = rect.y * 100000 + rect.x;
+        const bottomLeftScore = rect.y * yMultiplier + rect.x;
 
         if (bottomLeftScore < bestScore) {
           bestScore = bottomLeftScore;

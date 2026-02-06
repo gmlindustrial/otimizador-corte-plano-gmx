@@ -57,9 +57,21 @@ export class NoFitPolygonOptimizer {
 
   optimizeWithAdvancedNFP(pieces: SheetCutPiece[]): Array<{ piece: SheetCutPiece; x: number; y: number; rotation: number; }> {
     const placedPieces: Array<{ piece: SheetCutPiece; x: number; y: number; rotation: number; }> = [];
-    
+
+    // CORRIGIDO: Expandir pecas por quantidade antes de otimizar
+    const expandedPieces: SheetCutPiece[] = [];
+    pieces.forEach(piece => {
+      for (let i = 0; i < piece.quantity; i++) {
+        expandedPieces.push({
+          ...piece,
+          id: `${piece.id}_${i}`,
+          quantity: 1
+        });
+      }
+    });
+
     // Ordenar peças por complexidade e área
-    const sortedPieces = [...pieces].sort((a, b) => {
+    const sortedPieces = [...expandedPieces].sort((a, b) => {
       const complexityA = this.getComplexityScore(a);
       const complexityB = this.getComplexityScore(b);
       
@@ -213,28 +225,26 @@ export class NoFitPolygonOptimizer {
   }
 
   private piecesOverlap(
-    position: Point, 
-    piece: SheetCutPiece, 
+    position: Point,
+    piece: SheetCutPiece,
     placedPiece: { piece: SheetCutPiece; x: number; y: number; }
   ): boolean {
-    const rect1 = {
-      x: position.x - this.kerf / 2,
-      y: position.y - this.kerf / 2,
-      width: piece.width + this.kerf,
-      height: piece.height + this.kerf
-    };
-    
-    const rect2 = {
-      x: placedPiece.x - this.kerf / 2,
-      y: placedPiece.y - this.kerf / 2,
-      width: placedPiece.piece.width + this.kerf,
-      height: placedPiece.piece.height + this.kerf
-    };
-    
-    return !(rect1.x + rect1.width <= rect2.x || 
-             rect2.x + rect2.width <= rect1.x || 
-             rect1.y + rect1.height <= rect2.y || 
-             rect2.y + rect2.height <= rect1.y);
+    // CORRIGIDO: Verificar distancia minima (kerf) entre bordas das pecas
+    // Nao subtrair kerf/2 das coordenadas para evitar coordenadas negativas
+
+    // Verificar se ha sobreposicao considerando kerf como distancia minima
+    const hasHorizontalOverlap = !(
+      position.x >= placedPiece.x + placedPiece.piece.width + this.kerf || // Nova peca a direita
+      position.x + piece.width + this.kerf <= placedPiece.x               // Nova peca a esquerda
+    );
+
+    const hasVerticalOverlap = !(
+      position.y >= placedPiece.y + placedPiece.piece.height + this.kerf || // Nova peca abaixo
+      position.y + piece.height + this.kerf <= placedPiece.y               // Nova peca acima
+    );
+
+    // Se ha sobreposicao em ambos os eixos, as pecas colidem
+    return hasHorizontalOverlap && hasVerticalOverlap;
   }
 }
 

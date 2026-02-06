@@ -4,6 +4,10 @@ import { useEstoqueSobras } from '@/hooks/useEstoqueSobras';
 
 // Expandir interface para incluir informações detalhadas das peças
 interface ExpandedPiece {
+  /** ID da peca no banco de dados - CRITICO para sincronizacao */
+  id?: string;
+  /** ID do perfil no banco */
+  perfilId?: string;
   length: number;
   originalIndex: number;
   originalPiece: CutPiece;
@@ -18,6 +22,10 @@ interface ExpandedPiece {
 }
 
 interface EnhancedBarPiece {
+  /** ID da peca no banco de dados - CRITICO para sincronizacao */
+  id?: string;
+  /** ID do perfil no banco */
+  perfilId?: string;
   length: number;
   color: string;
   label: string;
@@ -29,6 +37,8 @@ interface EnhancedBarPiece {
   peso?: number;
   obra?: string;
   posicao?: string;
+  /** Status de corte - padronizado como 'cortada' */
+  cortada?: boolean;
 }
 
 // Nova interface para barras otimizadas com informação de sobras
@@ -81,8 +91,11 @@ export const useLinearOptimization = () => {
     const sortedPieces: ExpandedPiece[] = [];
     pieces.forEach((piece, index) => {
       for (let i = 0; i < piece.quantity; i++) {
-        sortedPieces.push({ 
-          length: piece.length, 
+        sortedPieces.push({
+          // CRITICO: Preservar ID da peca para sincronizacao posterior
+          id: piece.id,
+          perfilId: (piece as any).perfilId || (piece as any).perfil_id,
+          length: piece.length,
           originalIndex: index,
           originalPiece: piece,
           // Preservar informações do AutoCAD se existirem
@@ -163,6 +176,9 @@ export const useLinearOptimization = () => {
         
         if (availableSpace >= spaceNeeded) {
           leftoverBar.pieces.push({
+            // CRITICO: Incluir ID para sincronizacao
+            id: piece.id,
+            perfilId: piece.perfilId,
             length: piece.length,
             color: colors[piece.originalIndex % colors.length],
             label: piece.tag || `${piece.length}mm`,
@@ -173,7 +189,8 @@ export const useLinearOptimization = () => {
             material: piece.material,
             peso: piece.peso,
             obra: piece.obra,
-            posicao: piece.posicao
+            posicao: piece.posicao,
+            cortada: false
           });
           
           leftoverBar.totalUsed += spaceNeeded;
@@ -211,6 +228,9 @@ export const useLinearOptimization = () => {
         
         if (availableSpace >= spaceNeeded) {
           bar.pieces.push({
+            // CRITICO: Incluir ID para sincronizacao
+            id: piece.id,
+            perfilId: piece.perfilId,
             length: piece.length,
             color: colors[piece.originalIndex % colors.length],
             label: piece.tag || `${piece.length}mm`,
@@ -220,7 +240,8 @@ export const useLinearOptimization = () => {
             material: piece.material,
             peso: piece.peso,
             obra: piece.obra,
-            posicao: piece.posicao
+            posicao: piece.posicao,
+            cortada: false
           });
           bar.totalUsed += spaceNeeded;
           bar.waste = barLength - bar.totalUsed;
@@ -236,6 +257,9 @@ export const useLinearOptimization = () => {
           type: 'new',
           originalLength: barLength,
           pieces: [{
+            // CRITICO: Incluir ID para sincronizacao
+            id: piece.id,
+            perfilId: piece.perfilId,
             length: piece.length,
             color: colors[piece.originalIndex % colors.length],
             label: piece.tag || `${piece.length}mm`,
@@ -245,7 +269,8 @@ export const useLinearOptimization = () => {
             material: piece.material,
             peso: piece.peso,
             obra: piece.obra,
-            posicao: piece.posicao
+            posicao: piece.posicao,
+            cortada: false
           }],
           waste: 0,
           totalUsed: piece.length

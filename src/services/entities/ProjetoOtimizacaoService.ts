@@ -77,16 +77,29 @@ export class ProjetoOtimizacaoService extends BaseService<ProjetoOtimizacao> {
 
       if (resetError) throw resetError;
 
-      const cutPieces: Array<{ tag: string, posicao: string }> = [];
-      
-      // Extrair tag e posição de peças marcadas como cortadas dos resultados
+      // Interface para chave de sincronizacao
+      interface CutPieceSyncKey {
+        id?: string;
+        tag?: string;
+        posicao?: string;
+        comprimento_mm?: number;
+        perfil_id?: string;
+      }
+
+      const cutPieces: CutPieceSyncKey[] = [];
+
+      // Extrair informacoes de pecas marcadas como cortadas dos resultados
+      // CORRIGIDO: Usar ID quando disponivel, senao usar chave composta
       results.bars.forEach((bar: any) => {
         if (bar.pieces) {
           bar.pieces.forEach((piece: any) => {
-            if (piece.cortada === true && piece.tag && piece.posicao) {
+            if (piece.cortada === true) {
               cutPieces.push({
+                id: piece.id, // PREFERENCIAL: usar ID diretamente
                 tag: piece.tag,
-                posicao: piece.posicao
+                posicao: piece.posicao,
+                comprimento_mm: piece.length,
+                perfil_id: piece.perfilId || piece.perfil_id
               });
             }
           });
@@ -95,14 +108,36 @@ export class ProjetoOtimizacaoService extends BaseService<ProjetoOtimizacao> {
 
       let syncedCount = 0;
 
-      // Atualizar peças cortadas usando tag e posição
+      // Atualizar peças cortadas usando a melhor chave disponivel
       for (const piece of cutPieces) {
-        const { error: updateError } = await supabase
+        let query = supabase
           .from('projeto_pecas')
-          .update({ corte: true })
-          .eq('projeto_otimizacao_id', optimizationId)
-          .eq('tag', piece.tag)
-          .eq('posicao', piece.posicao);
+          .update({ corte: true });
+
+        // PREFERENCIAL: Usar ID da peca se disponivel (mais preciso)
+        if (piece.id) {
+          query = query.eq('id', piece.id);
+        } else {
+          // FALLBACK: Usar chave composta para identificacao unica
+          query = query.eq('projeto_otimizacao_id', optimizationId);
+
+          if (piece.tag) {
+            query = query.eq('tag', piece.tag);
+          }
+          if (piece.posicao) {
+            query = query.eq('posicao', piece.posicao);
+          }
+          // CRITICO: Incluir comprimento para diferenciar pecas com mesma tag/posicao
+          if (piece.comprimento_mm) {
+            query = query.eq('comprimento_mm', piece.comprimento_mm);
+          }
+          // Incluir perfil se disponivel
+          if (piece.perfil_id) {
+            query = query.eq('perfil_id', piece.perfil_id);
+          }
+        }
+
+        const { error: updateError } = await query;
 
         if (!updateError) {
           syncedCount++;

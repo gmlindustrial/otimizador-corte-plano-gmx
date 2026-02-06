@@ -1,23 +1,24 @@
+import type {
+  LinearBar,
+  LinearBarPiece,
+  LinearOptimizationResult,
+  LinearEmendaInfo
+} from '@/types/linear';
+
 interface Piece {
+  id?: string;
   length: number;
   tag?: string;
   fase?: string;
   perfil?: string;
   peso?: number;
   posicao?: string;
+  perfilId?: string;
   originalIndex: number;
 }
 
-interface Bar {
-  id: string;
-  type: 'new' | 'leftover';
-  originalLength: number;
-  pieces: Piece[];
-  totalUsed: number;
-  waste: number;
-  estoque_id?: string;
-  score: number; // Para ordenação por qualidade do encaixe
-}
+// Re-exportar Bar como alias para LinearBar para compatibilidade
+type Bar = LinearBar;
 
 export class BestFitOptimizer {
   private cutLoss: number;
@@ -100,25 +101,40 @@ export class BestFitOptimizer {
     const normalResult = this.bestFitWithLeftoversFirst(normalPieces, barLength, leftovers);
 
     // Converter peças com emenda para barras especiais
-    const emendasBars: Bar[] = emendaResult.pecasComEmenda.map((peca, index) => ({
-      id: `emenda-${index}`,
-      type: 'new',
-      originalLength: peca.comprimentoOriginal,
-      pieces: [{
-        length: peca.comprimentoOriginal,
-        tag: peca.tag || `Emenda-${index}`,
-        fase: peca.fase,
-        perfil: peca.perfil,
-        peso: peca.peso,
-        posicao: peca.posicao,
-        originalIndex: index
-      }],
-      totalUsed: peca.comprimentoOriginal,
-      waste: 0,
-      score: 100, // Prioridade alta para emendas
-      temEmenda: true,
-      informacoesEmenda: peca
-    }));
+    // CORRIGIDO: Calcular waste corretamente considerando material real usado nos segmentos
+    const emendasBars: Bar[] = emendaResult.pecasComEmenda.map((peca, index) => {
+      // Calcular material total consumido pelos segmentos
+      const materialTotalSegmentos = peca.segmentos.reduce((sum, s) => sum + s.comprimento, 0);
+      // Perda de corte nas emendas (entre cada par de segmentos)
+      const cutLossEmendas = peca.emendas.length * this.cutLoss;
+      // Material efetivamente utilizado
+      const materialUtilizado = peca.comprimentoOriginal + cutLossEmendas;
+      // Desperdicio = material consumido - material utilizado
+      const wasteEmenda = Math.max(0, materialTotalSegmentos - materialUtilizado);
+
+      return {
+        id: `emenda-${index}`,
+        type: 'new' as const,
+        originalLength: materialTotalSegmentos, // Comprimento real de material consumido
+        pieces: [{
+          id: peca.id,
+          length: peca.comprimentoOriginal,
+          tag: peca.tag || `Emenda-${index}`,
+          fase: peca.fase,
+          perfil: peca.perfil,
+          peso: peca.peso,
+          posicao: peca.posicao,
+          perfilId: peca.perfilId,
+          originalIndex: index,
+          cortada: false
+        }],
+        totalUsed: materialUtilizado,
+        waste: wasteEmenda,
+        score: 100, // Prioridade alta para emendas
+        temEmenda: true,
+        informacoesEmenda: peca as LinearEmendaInfo
+      };
+    });
 
     // Combinar resultados
     const allBars = [...emendasBars, ...normalResult.bars];

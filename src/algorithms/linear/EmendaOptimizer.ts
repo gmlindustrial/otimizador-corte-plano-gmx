@@ -365,21 +365,38 @@ export class EmendaOptimizer {
 
   /**
    * Calcular economia estimada
+   * CORRIGIDO: Desconta perda de corte (cutloss) entre segmentos de emenda
    */
   private calcularEconomiaEstimada(pecasComEmenda: PecaComEmenda[]): number {
-    // Estimativa simples baseada no comprimento de sobras utilizadas
-    let totalSobrasUtilizadas = 0;
-    
+    // Perda de corte padrao em mm
+    const CUTLOSS_MM = 3;
+    // Custo medio por kg de aco
+    const CUSTO_POR_KG = 5.50;
+    // Peso medio por metro (kg/m)
+    const PESO_POR_METRO = 0.5;
+
+    let materialEfetivamenteAproveitado = 0;
+
     pecasComEmenda.forEach(peca => {
+      // Total de sobras utilizadas nesta peca
+      let totalSobrasNaPeca = 0;
       peca.segmentos.forEach(segmento => {
         if (segmento.origemTipo === 'sobra') {
-          totalSobrasUtilizadas += segmento.comprimento;
+          totalSobrasNaPeca += segmento.comprimento;
         }
       });
+
+      // Descontar perda de corte nas emendas
+      // Cada emenda consome cutloss adicional
+      const perdaCortePorEmendas = peca.emendas.length * CUTLOSS_MM;
+
+      // Material efetivamente aproveitado = sobras - perdas
+      const materialAproveitado = Math.max(0, totalSobrasNaPeca - perdaCortePorEmendas);
+      materialEfetivamenteAproveitado += materialAproveitado;
     });
 
-    // Assumindo custo médio de R$ 5,50/kg e 0.5kg/metro
-    return (totalSobrasUtilizadas / 1000) * 0.5 * 5.50;
+    // Calcular economia em R$: (mm / 1000) * kg/m * R$/kg
+    return (materialEfetivamenteAproveitado / 1000) * PESO_POR_METRO * CUSTO_POR_KG;
   }
 
   /**

@@ -143,28 +143,28 @@ export class BottomLeftFillOptimizer {
   }
 
   private canPlacePiece(x: number, y: number, width: number, height: number, existingPieces: SheetPlacedPiece[]): boolean {
-    // Verificar limites da chapa
-    if (x + width > this.sheetWidth || y + height > this.sheetHeight) {
+    // Verificar limites da chapa (peca + kerf deve caber)
+    if (x + width + this.kerf > this.sheetWidth || y + height + this.kerf > this.sheetHeight) {
       return false;
     }
 
-    // Verificar sobreposição com peças existentes (considerando kerf)
-    const newRect: Rectangle = { 
-      x: x - this.kerf/2, 
-      y: y - this.kerf/2, 
-      width: width + this.kerf, 
-      height: height + this.kerf 
-    };
-    
+    // Verificar distancia minima entre pecas (kerf)
+    // CORRIGIDO: Nao subtrair kerf/2 das coordenadas para evitar coordenadas negativas
+    // Em vez disso, verificar se ha distancia minima de kerf entre bordas
     for (const piece of existingPieces) {
-      const existingRect: Rectangle = { 
-        x: piece.x - this.kerf/2, 
-        y: piece.y - this.kerf/2, 
-        width: piece.width + this.kerf, 
-        height: piece.height + this.kerf 
-      };
-      
-      if (this.rectanglesOverlap(newRect, existingRect)) {
+      // Verificar se ha sobreposicao considerando kerf como distancia minima
+      const hasHorizontalOverlap = !(
+        x >= piece.x + piece.width + this.kerf || // Nova peca esta a direita
+        x + width + this.kerf <= piece.x          // Nova peca esta a esquerda
+      );
+
+      const hasVerticalOverlap = !(
+        y >= piece.y + piece.height + this.kerf || // Nova peca esta abaixo
+        y + height + this.kerf <= piece.y          // Nova peca esta acima
+      );
+
+      // Se ha sobreposicao em ambos os eixos, as pecas colidem
+      if (hasHorizontalOverlap && hasVerticalOverlap) {
         return false;
       }
     }
