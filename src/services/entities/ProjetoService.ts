@@ -100,11 +100,12 @@ export class ProjetoService extends BaseService<Projeto> {
 
   async getAllWithCounts() {
     try {
+      // Buscar projetos com relações básicas
       const { data, error } = await supabase
         .from('projetos' as any)
         .select(`
-          *, 
-          clientes (nome), 
+          *,
+          clientes (nome),
           obras (nome),
           projeto_pecas!left (id, quantidade),
           projeto_otimizacoes!left (id)
@@ -113,21 +114,42 @@ export class ProjetoService extends BaseService<Projeto> {
 
       if (error) throw error;
 
+      // Buscar contagem de otimizações de chapas separadamente (tabela sem FK)
+      const projectIds = (data || []).map((p: any) => p.id);
+      let sheetOptimizationCounts: Record<string, number> = {};
+
+      if (projectIds.length > 0) {
+        const { data: sheetOpts } = await supabase
+          .from('sheet_optimization_history')
+          .select('project_id')
+          .in('project_id', projectIds);
+
+        // Contar otimizações por projeto
+        (sheetOpts || []).forEach((opt: any) => {
+          sheetOptimizationCounts[opt.project_id] = (sheetOptimizationCounts[opt.project_id] || 0) + 1;
+        });
+      }
+
       const mapped = (data || []).map((p: any) => {
         const totalPecas = p.projeto_pecas?.length || 0;
         const totalQuantidadePecas = p.projeto_pecas?.reduce((sum: number, peca: any) => sum + (peca.quantidade || 0), 0) || 0;
-        const totalOtimizacoes = p.projeto_otimizacoes?.length || 0;
+        const totalOtimizacoesBarras = p.projeto_otimizacoes?.length || 0;
+        const totalOtimizacoesChapas = sheetOptimizationCounts[p.id] || 0;
+        const totalOtimizacoes = totalOtimizacoesBarras + totalOtimizacoesChapas;
 
         return {
           ...p,
           _count: {
             projeto_pecas: totalPecas,
-            projeto_otimizacoes: totalOtimizacoes
+            projeto_otimizacoes: totalOtimizacoesBarras,
+            sheet_optimization_history: totalOtimizacoesChapas
           },
           _stats: {
             total_pecas_individuais: totalPecas,
             total_quantidade_pecas: totalQuantidadePecas,
-            total_otimizacoes: totalOtimizacoes
+            total_otimizacoes: totalOtimizacoes,
+            total_otimizacoes_barras: totalOtimizacoesBarras,
+            total_otimizacoes_chapas: totalOtimizacoesChapas
           }
         };
       });

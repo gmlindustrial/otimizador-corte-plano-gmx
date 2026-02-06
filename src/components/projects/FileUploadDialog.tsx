@@ -27,7 +27,7 @@ export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed, onSheetP
   const acceptedExtensions: Record<ImportType, string> = {
     tekla: '.txt',
     excel: '.xlsx,.xls',
-    inventor: '.txt'
+    inventor: '.txt,.xlsx,.xls'
   };
 
   // Labels descritivos para cada tipo
@@ -41,8 +41,8 @@ export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed, onSheetP
       description: 'Use o modelo padrão para importação'
     },
     inventor: {
-      title: 'TXT Inventor',
-      description: 'Tabela markdown do Autodesk Inventor'
+      title: 'Inventor (TXT ou Excel)',
+      description: 'Tabela do Autodesk Inventor em TXT ou XLSX'
     }
   };
 
@@ -91,9 +91,18 @@ export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed, onSheetP
         const text = await file.text();
         pieces = FileParsingService.parseAutoCADReport(text);
       } else if (importType === 'inventor') {
-        const text = await file.text();
-        // Usar parser completo para obter peças lineares E chapas
-        const result = FileParsingService.parseInventorReportFull(text);
+        const fileName = file.name.toLowerCase();
+        let result;
+
+        if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+          // Parse Excel
+          result = await FileParsingService.parseInventorExcel(file);
+        } else {
+          // Parse TXT
+          const text = await file.text();
+          result = FileParsingService.parseInventorReportFull(text);
+        }
+
         pieces = result.linearPieces;
         sheetPieces = result.sheetPieces;
 

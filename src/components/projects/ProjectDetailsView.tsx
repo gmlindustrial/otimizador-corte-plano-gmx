@@ -715,6 +715,10 @@ export const ProjectDetailsView = ({
       setSelectedChapaGroup(null);
       await loadProjectChapas();
 
+      // 9. Recarregar histórico de otimizações de chapas
+      const sheetOptHistory = await sheetHistoryService.getProjectHistory(project.id);
+      setSheetOptimizations(sheetOptHistory);
+
     } catch (error) {
       console.error('Erro ao otimizar chapas:', error);
       toast.error(`Erro na otimização: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);

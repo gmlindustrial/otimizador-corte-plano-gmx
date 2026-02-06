@@ -29,11 +29,14 @@ interface Projeto {
   _count?: {
     projeto_pecas: number;
     projeto_otimizacoes: number;
+    sheet_optimization_history: number;
   };
   _stats?: {
     total_pecas_individuais: number;
     total_quantidade_pecas: number;
     total_otimizacoes: number;
+    total_otimizacoes_barras: number;
+    total_otimizacoes_chapas: number;
   };
 }
 
@@ -173,10 +176,24 @@ export const ProjectsList = ({
                 </div>
 
                 {/* Badges de Status */}
-                <div className="flex gap-2 mb-4">
-                  <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-700">
+                <div className="flex gap-2 mb-4 flex-wrap">
+                  <Badge
+                    variant="secondary"
+                    className="text-xs bg-orange-100 text-orange-700"
+                    title={`${project._stats?.total_otimizacoes_barras || 0} barras + ${project._stats?.total_otimizacoes_chapas || 0} chapas`}
+                  >
                     {project._stats?.total_otimizacoes || 0} otimizações
                   </Badge>
+                  {(project._stats?.total_otimizacoes_barras || 0) > 0 && (
+                    <Badge variant="outline" className="text-xs border-blue-200 text-blue-700">
+                      {project._stats?.total_otimizacoes_barras} barras
+                    </Badge>
+                  )}
+                  {(project._stats?.total_otimizacoes_chapas || 0) > 0 && (
+                    <Badge variant="outline" className="text-xs border-green-200 text-green-700">
+                      {project._stats?.total_otimizacoes_chapas} chapas
+                    </Badge>
+                  )}
                 </div>
 
                 {/* Actions */}

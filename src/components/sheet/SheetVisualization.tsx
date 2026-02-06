@@ -8,7 +8,7 @@ import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { SheetOptimizationResult, SheetProject } from '@/types/sheet';
-import { Eye, Download, ZoomIn, ZoomOut, RotateCcw, Maximize2, Minimize2, RotateCw } from 'lucide-react';
+import { Eye, Download, ZoomIn, ZoomOut, RotateCcw, Maximize2, Minimize2, RotateCw, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface SheetVisualizationProps {
   results: SheetOptimizationResult;
@@ -180,11 +180,11 @@ export const SheetVisualization = ({ results, project }: SheetVisualizationProps
     const alpha = viewSettings.transparency / 100;
     ctx.fillStyle = fillColor + Math.round(alpha * 255).toString(16).padStart(2, '0');
 
-    // Destacar se hover
+    // Destacar se hover (cor magenta/rosa para não confundir com peças)
     if (hoveredPiece === piece.tag) {
-      ctx.fillStyle = '#fbbf24';
-      ctx.shadowColor = '#f59e0b';
-      ctx.shadowBlur = 10;
+      ctx.fillStyle = '#ec4899';
+      ctx.shadowColor = '#db2777';
+      ctx.shadowBlur = 12;
     }
 
     // Preencher peça
@@ -192,7 +192,7 @@ export const SheetVisualization = ({ results, project }: SheetVisualizationProps
     ctx.shadowBlur = 0;
 
     // Contorno da peça
-    ctx.strokeStyle = hoveredPiece === piece.tag ? '#d97706' : '#374151';
+    ctx.strokeStyle = hoveredPiece === piece.tag ? '#be185d' : '#374151';
     ctx.lineWidth = hoveredPiece === piece.tag ? 2 : 1;
     ctx.strokeRect(x, y, width, height);
 
@@ -287,11 +287,11 @@ export const SheetVisualization = ({ results, project }: SheetVisualizationProps
     const alpha = viewSettings.transparency / 100;
     ctx.fillStyle = fillColor + Math.round(alpha * 255).toString(16).padStart(2, '0');
 
-    // Destacar se hover
+    // Destacar se hover (cor magenta/rosa para não confundir com peças)
     if (hoveredPiece === piece.tag) {
-      ctx.fillStyle = '#fbbf24';
-      ctx.shadowColor = '#f59e0b';
-      ctx.shadowBlur = 10;
+      ctx.fillStyle = '#ec4899';
+      ctx.shadowColor = '#db2777';
+      ctx.shadowBlur = 12;
     }
 
     // Preencher peça
@@ -299,7 +299,7 @@ export const SheetVisualization = ({ results, project }: SheetVisualizationProps
     ctx.shadowBlur = 0;
 
     // Contorno da peça
-    ctx.strokeStyle = hoveredPiece === piece.tag ? '#d97706' : '#374151';
+    ctx.strokeStyle = hoveredPiece === piece.tag ? '#be185d' : '#374151';
     ctx.lineWidth = hoveredPiece === piece.tag ? 2 : 1;
     ctx.strokeRect(x, y, width, height);
 
@@ -313,6 +313,9 @@ export const SheetVisualization = ({ results, project }: SheetVisualizationProps
       const tagText = viewSettings.showTags ? (piece.tag + (piece.rotation === 90 ? ' ↻' : '')) : '';
       const dimText = viewSettings.showDimensions ? `${piece.width}×${piece.height}` : '';
 
+      // Verificar se a peça é grande o suficiente para texto interno
+      const isSmallPiece = width < 50 || height < 35;
+
       // Se ambos estão habilitados, mostra em duas linhas
       if (viewSettings.showTags && viewSettings.showDimensions) {
         // Calcular tamanho do fundo
@@ -324,9 +327,8 @@ export const SheetVisualization = ({ results, project }: SheetVisualizationProps
         const maxTextWidth = Math.max(tagMetrics.width, dimMetrics.width) + 10;
         const totalHeight = fontSize + smallFontSize + 8;
 
-        // Só desenha se a peça for grande o suficiente
-        if (width > 30 && height > 25) {
-          // Fundo semi-transparente
+        if (!isSmallPiece) {
+          // Peça grande - texto interno
           ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
           ctx.fillRect(
             x + width / 2 - maxTextWidth / 2,
@@ -346,6 +348,47 @@ export const SheetVisualization = ({ results, project }: SheetVisualizationProps
           ctx.fillStyle = '#4b5563';
           ctx.font = `${smallFontSize}px Arial`;
           ctx.fillText(dimText, x + width / 2, y + height / 2 + fontSize / 2 + 2);
+        } else {
+          // Peça pequena - linha de chamada com label externo
+          const labelText = `${tagText} ${dimText}`;
+          ctx.font = `bold ${Math.max(9, 10 * zoom)}px Arial`;
+          const labelMetrics = ctx.measureText(labelText);
+          const labelWidth = labelMetrics.width + 8;
+          const labelHeight = 16;
+
+          // Posição do label: acima e à direita da peça
+          const labelX = x + width + 5;
+          const labelY = y - 5;
+
+          // Linha de chamada (da peça até o label)
+          ctx.strokeStyle = '#6b7280';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([2, 2]);
+          ctx.beginPath();
+          ctx.moveTo(x + width / 2, y + height / 2);
+          ctx.lineTo(x + width, y);
+          ctx.lineTo(labelX, labelY + labelHeight / 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Ponto na peça
+          ctx.fillStyle = '#374151';
+          ctx.beginPath();
+          ctx.arc(x + width / 2, y + height / 2, 3, 0, 2 * Math.PI);
+          ctx.fill();
+
+          // Fundo do label
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+          ctx.strokeStyle = '#9ca3af';
+          ctx.lineWidth = 1;
+          ctx.fillRect(labelX, labelY, labelWidth, labelHeight);
+          ctx.strokeRect(labelX, labelY, labelWidth, labelHeight);
+
+          // Texto do label
+          ctx.fillStyle = '#1f2937';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(labelText, labelX + 4, labelY + labelHeight / 2);
         }
       } else if (viewSettings.showTags) {
         // Só tag
@@ -354,7 +397,7 @@ export const SheetVisualization = ({ results, project }: SheetVisualizationProps
         const textWidth = textMetrics.width + 8;
         const textHeight = fontSize + 6;
 
-        if (width > 25 && height > 20) {
+        if (!isSmallPiece) {
           ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
           ctx.fillRect(
             x + width / 2 - textWidth / 2,
@@ -367,6 +410,37 @@ export const SheetVisualization = ({ results, project }: SheetVisualizationProps
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText(tagText, x + width / 2, y + height / 2);
+        } else {
+          // Linha de chamada para peça pequena
+          const labelX = x + width + 5;
+          const labelY = y - 5;
+          const labelHeight = 14;
+
+          ctx.strokeStyle = '#6b7280';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([2, 2]);
+          ctx.beginPath();
+          ctx.moveTo(x + width / 2, y + height / 2);
+          ctx.lineTo(x + width, y);
+          ctx.lineTo(labelX, labelY + labelHeight / 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          ctx.fillStyle = '#374151';
+          ctx.beginPath();
+          ctx.arc(x + width / 2, y + height / 2, 3, 0, 2 * Math.PI);
+          ctx.fill();
+
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+          ctx.strokeStyle = '#9ca3af';
+          ctx.lineWidth = 1;
+          ctx.fillRect(labelX, labelY, textWidth, labelHeight);
+          ctx.strokeRect(labelX, labelY, textWidth, labelHeight);
+
+          ctx.fillStyle = '#1f2937';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(tagText, labelX + 4, labelY + labelHeight / 2);
         }
       } else if (viewSettings.showDimensions) {
         // Só dimensões
@@ -375,7 +449,7 @@ export const SheetVisualization = ({ results, project }: SheetVisualizationProps
         const textWidth = textMetrics.width + 8;
         const textHeight = smallFontSize + 6;
 
-        if (width > 30 && height > 15) {
+        if (!isSmallPiece) {
           ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
           ctx.fillRect(
             x + width / 2 - textWidth / 2,
@@ -388,6 +462,37 @@ export const SheetVisualization = ({ results, project }: SheetVisualizationProps
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText(dimText, x + width / 2, y + height / 2);
+        } else {
+          // Linha de chamada para peça pequena
+          const labelX = x + width + 5;
+          const labelY = y - 5;
+          const labelHeight = 14;
+
+          ctx.strokeStyle = '#6b7280';
+          ctx.lineWidth = 1;
+          ctx.setLineDash([2, 2]);
+          ctx.beginPath();
+          ctx.moveTo(x + width / 2, y + height / 2);
+          ctx.lineTo(x + width, y);
+          ctx.lineTo(labelX, labelY + labelHeight / 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          ctx.fillStyle = '#374151';
+          ctx.beginPath();
+          ctx.arc(x + width / 2, y + height / 2, 3, 0, 2 * Math.PI);
+          ctx.fill();
+
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+          ctx.strokeStyle = '#9ca3af';
+          ctx.lineWidth = 1;
+          ctx.fillRect(labelX, labelY, textWidth, labelHeight);
+          ctx.strokeRect(labelX, labelY, textWidth, labelHeight);
+
+          ctx.fillStyle = '#4b5563';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(dimText, labelX + 4, labelY + labelHeight / 2);
         }
       }
     }
@@ -564,17 +669,29 @@ export const SheetVisualization = ({ results, project }: SheetVisualizationProps
       <CardContent className="p-6 space-y-4">
         {/* Controles Principais */}
         <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <Label className="text-sm font-medium">Chapa:</Label>
-              <div className="flex gap-1">
+          <div className="flex items-center gap-4 min-w-0 flex-1">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <Label className="text-sm font-medium whitespace-nowrap">Chapa:</Label>
+              {results.sheets.length > 1 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedSheet(prev => Math.max(0, prev - 1))}
+                  disabled={selectedSheet === 0}
+                  className="px-1 flex-shrink-0"
+                  title="Chapa anterior"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+              )}
+              <div className="flex gap-1 overflow-x-auto pb-1 max-w-[calc(100vw-450px)] scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100" style={{ scrollbarWidth: 'thin' }}>
                 {results.sheets.map((sheet, index) => (
                   <Button
                     key={index}
                     variant={selectedSheet === index ? "default" : "outline"}
                     size="sm"
                     onClick={() => setSelectedSheet(index)}
-                    className="min-w-[40px]"
+                    className="min-w-[40px] flex-shrink-0"
                   >
                     {index + 1}
                     <Badge variant="secondary" className="ml-1 text-xs">
@@ -583,6 +700,18 @@ export const SheetVisualization = ({ results, project }: SheetVisualizationProps
                   </Button>
                 ))}
               </div>
+              {results.sheets.length > 1 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedSheet(prev => Math.min(results.sheets.length - 1, prev + 1))}
+                  disabled={selectedSheet === results.sheets.length - 1}
+                  className="px-1 flex-shrink-0"
+                  title="Próxima chapa"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              )}
             </div>
           </div>
 
@@ -697,7 +826,7 @@ export const SheetVisualization = ({ results, project }: SheetVisualizationProps
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-medium">Chapa {selectedSheet + 1} - Detalhes</h4>
               {hoveredPiece && (
-                <Badge variant="outline" className="bg-yellow-100 text-yellow-800">
+                <Badge variant="outline" className="bg-pink-100 text-pink-800 border-pink-300">
                   Selecionada: {hoveredPiece}
                 </Badge>
               )}

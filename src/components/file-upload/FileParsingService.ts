@@ -699,4 +699,345 @@ export class FileParsingService {
       .replace(/\s+/g, ' ')           // Remove espaços múltiplos
       .trim();
   }
+
+  // Parser para arquivos Excel do Autodesk Inventor
+  static async parseInventorExcel(file: File): Promise<InventorParseResult> {
+    console.log('🔄 Iniciando parsing de arquivo Excel Inventor...');
+
+    const ExcelJS = (await import('exceljs')).default;
+    const workbook = new ExcelJS.Workbook();
+    const arrayBuffer = await file.arrayBuffer();
+    await workbook.xlsx.load(arrayBuffer);
+
+    const worksheet = workbook.getWorksheet(1);
+    if (!worksheet) {
+      throw new Error('A planilha está vazia ou não foi encontrada');
+    }
+
+    const linearPieces: CutPiece[] = [];
+    const sheetPieces: SheetInventorPiece[] = [];
+    let currentModule = '';
+    let skippedItems = {
+      soldado: 0,
+      din: 0,
+      semDimensao: 0,
+      classeLote: 0,
+      comprimentoInvalido: 0
+    };
+
+    // Encontrar a linha do header (que contém "Item" e "Dimensão")
+    let headerRowNumber = 1;
+    let columnMap: Record<string, number> = {};
+
+    worksheet.eachRow((row, rowNumber) => {
+      let hasItem = false;
+      let hasDimensao = false;
+
+      row.eachCell((cell) => {
+        const value = String(cell.value ?? '').toLowerCase().trim();
+        if (value === 'item' || value.includes('item')) hasItem = true;
+        if (value.includes('dimensão') || value.includes('dimensao')) hasDimensao = true;
+      });
+
+      if (hasItem && hasDimensao && headerRowNumber === 1) {
+        headerRowNumber = rowNumber;
+        columnMap = this.buildInventorColumnMap(row);
+        console.log(`📋 Header encontrado na linha ${rowNumber}`);
+      }
+    });
+
+    console.log('📋 Mapeamento de colunas:', columnMap);
+
+    // Determinar linha inicial dos dados (pular header + possível linha de referência)
+    let dataStartRow = headerRowNumber + 1;
+
+    // Verificar se a próxima linha é uma linha de referência (contém apenas números sequenciais)
+    const nextRow = worksheet.getRow(headerRowNumber + 1);
+    let isReferenceRow = true;
+    let cellCount = 0;
+    nextRow.eachCell((cell) => {
+      const val = String(cell.value ?? '').trim();
+      if (val && !/^\d+$/.test(val)) {
+        isReferenceRow = false;
+      }
+      cellCount++;
+    });
+    if (isReferenceRow && cellCount > 0) {
+      dataStartRow = headerRowNumber + 2;
+      console.log(`📋 Linha de referência detectada na linha ${headerRowNumber + 1}, dados começam na linha ${dataStartRow}`);
+    }
+
+    worksheet.eachRow((row, rowNumber) => {
+      if (rowNumber < dataStartRow) return; // Pular header e linhas de metadados
+
+      const item = this.getExcelCellValue(row, columnMap.item);
+      const modulo = this.getExcelCellValue(row, columnMap.modulo);
+      const projetoNum = this.getExcelCellValue(row, columnMap.projetoNum);
+      const qtde = this.getExcelCellValue(row, columnMap.qtde);
+      const descricao = this.getExcelCellValue(row, columnMap.descricao);
+      const material = this.getExcelCellValue(row, columnMap.material);
+      const dimensao = this.getExcelCellValue(row, columnMap.dimensao);
+      const pesoUnit = this.getExcelCellValue(row, columnMap.pesoUnit);
+
+      // Atualizar módulo se disponível
+      if (modulo) {
+        currentModule = String(modulo);
+      }
+
+      // Validar se é uma linha de dados válida (item deve existir)
+      if (!item) return;
+
+      const itemStr = String(item).trim();
+      const descricaoStr = String(descricao || '');
+      const materialStr = String(material || '').toUpperCase();
+      const dimensaoStr = String(dimensao || '').trim();
+
+      // Filtros de exclusão
+      if (materialStr === 'SOLDADO') {
+        console.log(`⏭️ Ignorando SOLDADO: ${descricaoStr}`);
+        skippedItems.soldado++;
+        return;
+      }
+      if (descricaoStr.includes('DIN')) {
+        console.log(`⏭️ Ignorando parafuso/arruela DIN: ${descricaoStr}`);
+        skippedItems.din++;
+        return;
+      }
+      if (!dimensaoStr || dimensaoStr === '—' || dimensaoStr === '-') {
+        console.log(`⏭️ Ignorando sem dimensão: ${descricaoStr}`);
+        skippedItems.semDimensao++;
+        return;
+      }
+      if (materialStr.includes('C.L')) {
+        console.log(`⏭️ Ignorando C.L (parafuso): ${descricaoStr}`);
+        skippedItems.classeLote++;
+        return;
+      }
+
+      // Analisar dimensões para determinar tipo de peça
+      const dimensaoNormalizada = dimensaoStr.replace(/[×x]/gi, '×');
+      const partes = dimensaoNormalizada.split('×').map(p => parseFloat(p.replace(',', '.').trim()));
+      const descricaoLower = descricaoStr.toLowerCase();
+
+      console.log(`🔍 Analisando peça: ${descricaoStr} | Dimensão: "${dimensaoStr}" | Partes: ${partes.length} [${partes.join(', ')}]`);
+
+      // Lógica de classificação (mesma do parseInventorReportFull):
+      // 1 valor = perfil linear (barra)
+      // 2 valores = chapa (largura × altura)
+      // 3 valores = depende da descrição
+
+      if (partes.length === 1) {
+        // 1 valor = perfil linear
+        const comprimento = partes[0];
+
+        if (isNaN(comprimento) || comprimento < 100 || comprimento > 50000) {
+          console.log(`⏭️ Comprimento inválido: ${comprimento}mm para ${descricaoStr}`);
+          skippedItems.comprimentoInvalido++;
+          return;
+        }
+
+        const perfilNormalizado = this.normalizeInventorPerfil(descricaoStr);
+
+        const piece: CutPiece = {
+          id: `inventor-xlsx-${itemStr}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          length: comprimento,
+          quantity: parseInt(String(qtde)) || 1,
+          posicao: String(projetoNum || ''),
+          tag: itemStr,
+          fase: currentModule,
+          perfil: perfilNormalizado,
+          material: materialStr,
+          peso: parseFloat(String(pesoUnit || '').replace(',', '.')) || 0,
+        };
+
+        linearPieces.push(piece);
+        console.log(`✅ Peça LINEAR: ${descricaoStr} - ${comprimento}mm - Qtd: ${piece.quantity}`);
+
+      } else if (partes.length === 2) {
+        // 2 valores = chapa (largura × altura)
+        const [width, height] = partes;
+
+        if (isNaN(width) || isNaN(height) || width < 10 || height < 10) {
+          console.log(`⏭️ Dimensões inválidas: ${width}×${height}mm para ${descricaoStr}`);
+          skippedItems.comprimentoInvalido++;
+          return;
+        }
+
+        let thickness: number | undefined;
+        const thicknessMatch = descricaoLower.match(/chapa\s+(\d+[,.]?\d*)/i);
+        if (thicknessMatch) {
+          thickness = parseFloat(thicknessMatch[1].replace(',', '.'));
+        }
+
+        const sheetPiece: SheetInventorPiece = {
+          id: `inventor-xlsx-sheet-${itemStr}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          tag: itemStr,
+          posicao: String(projetoNum || ''),
+          width,
+          height,
+          thickness,
+          quantity: parseInt(String(qtde)) || 1,
+          material: materialStr,
+          descricao: descricaoStr,
+          fase: currentModule,
+          peso: parseFloat(String(pesoUnit || '').replace(',', '.')) || 0,
+        };
+
+        sheetPieces.push(sheetPiece);
+        console.log(`✅ Peça CHAPA (2D): ${descricaoStr} - ${width}×${height}mm - Qtd: ${sheetPiece.quantity}`);
+
+      } else if (partes.length === 3) {
+        // 3 valores - verificar se é chapa ou barra
+        const [v1, v2, v3] = partes;
+
+        if (descricaoLower.includes('chapa')) {
+          // É chapa: espessura × largura × comprimento
+          const thickness = v1;
+          const width = v2;
+          const height = v3;
+
+          if (isNaN(width) || isNaN(height) || width < 10 || height < 10) {
+            console.log(`⏭️ Dimensões inválidas: ${width}×${height}mm para ${descricaoStr}`);
+            skippedItems.comprimentoInvalido++;
+            return;
+          }
+
+          const sheetPiece: SheetInventorPiece = {
+            id: `inventor-xlsx-sheet-${itemStr}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            tag: itemStr,
+            posicao: String(projetoNum || ''),
+            width,
+            height,
+            thickness,
+            quantity: parseInt(String(qtde)) || 1,
+            material: materialStr,
+            descricao: descricaoStr,
+            fase: currentModule,
+            peso: parseFloat(String(pesoUnit || '').replace(',', '.')) || 0,
+          };
+
+          sheetPieces.push(sheetPiece);
+          console.log(`✅ Peça CHAPA (3D): ${descricaoStr} - esp:${thickness} ${width}×${height}mm - Qtd: ${sheetPiece.quantity}`);
+
+        } else {
+          // É barra: usar maior dimensão como comprimento
+          const comprimento = Math.max(v1, v2, v3);
+
+          if (isNaN(comprimento) || comprimento < 100 || comprimento > 50000) {
+            console.log(`⏭️ Comprimento inválido: ${comprimento}mm para ${descricaoStr}`);
+            skippedItems.comprimentoInvalido++;
+            return;
+          }
+
+          const perfilNormalizado = this.normalizeInventorPerfil(descricaoStr);
+
+          const piece: CutPiece = {
+            id: `inventor-xlsx-${itemStr}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            length: comprimento,
+            quantity: parseInt(String(qtde)) || 1,
+            posicao: String(projetoNum || ''),
+            tag: itemStr,
+            fase: currentModule,
+            perfil: perfilNormalizado,
+            material: materialStr,
+            peso: parseFloat(String(pesoUnit || '').replace(',', '.')) || 0,
+          };
+
+          linearPieces.push(piece);
+          console.log(`✅ Peça BARRA (3D→linear): ${descricaoStr} - ${comprimento}mm - Qtd: ${piece.quantity}`);
+        }
+      }
+    });
+
+    const totalIgnored = skippedItems.soldado + skippedItems.din + skippedItems.semDimensao +
+                         skippedItems.classeLote + skippedItems.comprimentoInvalido;
+
+    console.log(`📊 Resumo da importação Excel Inventor:`);
+    console.log(`   ✅ Peças LINEARES: ${linearPieces.length}`);
+    console.log(`   ✅ Peças CHAPAS: ${sheetPieces.length}`);
+    console.log(`   ⏭️ Ignorados (SOLDADO): ${skippedItems.soldado}`);
+    console.log(`   ⏭️ Ignorados (DIN): ${skippedItems.din}`);
+    console.log(`   ⏭️ Ignorados (sem dimensão): ${skippedItems.semDimensao}`);
+    console.log(`   ⏭️ Ignorados (C.L): ${skippedItems.classeLote}`);
+    console.log(`   ⏭️ Ignorados (dimensões inválidas): ${skippedItems.comprimentoInvalido}`);
+
+    if (linearPieces.length === 0 && sheetPieces.length === 0) {
+      throw new Error('Nenhuma peça válida foi encontrada no arquivo Excel Inventor. Verifique se o arquivo contém peças com dimensões válidas.');
+    }
+
+    return {
+      linearPieces,
+      sheetPieces,
+      stats: {
+        total: linearPieces.length + sheetPieces.length,
+        linear: linearPieces.length,
+        sheet: sheetPieces.length,
+        ignored: totalIgnored,
+        details: skippedItems
+      }
+    };
+  }
+
+  // Mapear colunas do Excel Inventor pelo header
+  private static buildInventorColumnMap(headerRow: any): Record<string, number> {
+    const map: Record<string, number> = {
+      item: 1,
+      modulo: 2,
+      projetoNum: 3,
+      area: 4,
+      qtde: 5,
+      descricao: 6,
+      material: 7,
+      dimensao: 8,
+      pesoUnit: 9,
+      pesoTotal: 10,
+      obs: 11
+    };
+
+    headerRow.eachCell((cell: any, colNumber: number) => {
+      const value = String(cell.value ?? '').toLowerCase().trim();
+
+      if (value === 'item' || value.includes('item')) {
+        map.item = colNumber;
+      } else if (value === 'módulo' || value === 'modulo' || value.includes('módulo')) {
+        map.modulo = colNumber;
+      } else if (value.includes('projeto') || value.includes('número') || value.includes('numero')) {
+        map.projetoNum = colNumber;
+      } else if (value === 'área' || value === 'area') {
+        map.area = colNumber;
+      } else if (value === 'qtde' || value === 'qtd' || value.includes('quant')) {
+        map.qtde = colNumber;
+      } else if (value.includes('descri') || value.includes('perfil')) {
+        map.descricao = colNumber;
+      } else if (value.includes('material')) {
+        map.material = colNumber;
+      } else if (value.includes('dimensão') || value.includes('dimensao') || value.includes('modelo')) {
+        map.dimensao = colNumber;
+      } else if (value.includes('peso') && value.includes('unit')) {
+        map.pesoUnit = colNumber;
+      } else if (value.includes('peso') && value.includes('total')) {
+        map.pesoTotal = colNumber;
+      } else if (value === 'obs' || value.includes('observ')) {
+        map.obs = colNumber;
+      }
+    });
+
+    return map;
+  }
+
+  // Obter valor de célula do Excel
+  private static getExcelCellValue(row: any, colNumber: number): string | number | null {
+    const cell = row.getCell(colNumber);
+    if (!cell || cell.value === null || cell.value === undefined) return null;
+
+    if (typeof cell.value === 'object' && cell.value !== null) {
+      if ('result' in cell.value) return cell.value.result as string | number;
+      if ('richText' in cell.value) {
+        return (cell.value.richText as Array<{ text: string }>).map(t => t.text).join('');
+      }
+      return String(cell.value);
+    }
+
+    return cell.value as string | number;
+  }
 }

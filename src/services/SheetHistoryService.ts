@@ -29,21 +29,26 @@ export class SheetHistoryService {
     optimizationTime: number = 0
   ): Promise<string | null> {
     try {
+      // Incluir dimensões da chapa nos results para referência futura
+      const resultsWithDimensions = {
+        ...results,
+        sheetWidth: project.sheetWidth,
+        sheetHeight: project.sheetHeight
+      };
+
       const { data, error } = await supabase
         .from('sheet_optimization_history')
         .insert({
           project_id: project.id,
           project_name: project.name,
           pieces: pieces as any,
-          results: results as any,
+          results: resultsWithDimensions as any,
           algorithm: algorithm,
           optimization_time: optimizationTime,
           efficiency: results.averageEfficiency,
           total_sheets: results.totalSheets,
           total_weight: results.totalWeight,
-          material_cost: results.materialCost,
-          sheet_width: project.sheetWidth,
-          sheet_height: project.sheetHeight
+          material_cost: results.materialCost
         })
         .select()
         .single();
