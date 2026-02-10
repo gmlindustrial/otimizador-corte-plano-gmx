@@ -26,10 +26,34 @@ export class ProjetoOtimizacaoService extends BaseService<ProjetoOtimizacao> {
 
   async reverseOptimization(optimizationId: string) {
     try {
-      // Primeiro, retornar todas as peças desta otimização para status 'aguardando_otimizacao'
+      // 1. Deletar registros de uso de lâmina/serra que referenciam esta otimização
+      // Tentar com o nome atual da tabela (serra_uso_cortes)
+      const { error: serraError } = await supabase
+        .from('serra_uso_cortes')
+        .delete()
+        .eq('otimizacao_id', optimizationId);
+
+      if (serraError) {
+        console.warn('Aviso ao deletar serra_uso_cortes:', serraError.message);
+        // Se falhar, pode ser que a tabela foi renomeada para lamina_uso_cortes
+        // ou simplesmente não há registros - ignorar e continuar
+      }
+
+      // 2. Deletar registros de emendas que referenciam esta otimização
+      const { error: emendaError } = await supabase
+        .from('emendas_otimizacao')
+        .delete()
+        .eq('projeto_otimizacao_id', optimizationId);
+
+      if (emendaError) {
+        console.warn('Aviso ao deletar emendas_otimizacao:', emendaError.message);
+        // Ignorar se não existem registros
+      }
+
+      // 3. Retornar todas as peças desta otimização para status 'aguardando_otimizacao'
       const { error: updateError } = await supabase
         .from('projeto_pecas')
-        .update({ 
+        .update({
           status: 'aguardando_otimizacao',
           projeto_otimizacao_id: null,
           corte: false
@@ -38,7 +62,7 @@ export class ProjetoOtimizacaoService extends BaseService<ProjetoOtimizacao> {
 
       if (updateError) throw updateError;
 
-      // Depois, deletar a otimização
+      // 4. Por fim, deletar a otimização
       const { error: deleteError } = await supabase
         .from('projeto_otimizacoes')
         .delete()

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Upload, FileText, Download } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -79,8 +79,10 @@ export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed, onSheetP
     if (!file) return;
 
     setProcessing(true);
-    onOpenChange(false);
+    // IMPORTANTE: NÃO fechar o dialog imediatamente - isso causa race condition
+    // que pode resultar em tela branca em alguns navegadores/computadores
     onProcessStart();
+
     try {
       let pieces: any[];
       let sheetPieces: SheetInventorPiece[] = [];
@@ -147,14 +149,24 @@ export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed, onSheetP
         const combinedMsg = [linearMsg, sheetMsg].filter(Boolean).join(' e ');
         toast.success(`${combinedMsg} encontradas no arquivo`);
         setFile(null);
+
+        // Fechar o dialog APÓS o processamento completar (com pequeno delay para garantir
+        // que os callbacks de estado tenham sido executados)
+        setTimeout(() => {
+          onOpenChange(false);
+        }, 100);
       } else {
         toast.warning('Nenhuma peça foi encontrada no arquivo');
+        // Em caso de nenhuma peça, fechar também
+        setTimeout(() => {
+          onOpenChange(false);
+        }, 100);
       }
     } catch (error) {
       console.error('Erro ao processar arquivo:', error);
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       toast.error(`Erro ao processar arquivo: ${errorMessage}`);
-
+      // Em caso de erro, NÃO fechar - permite o usuário tentar novamente
     } finally {
       setProcessing(false);
     }
@@ -165,6 +177,9 @@ export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed, onSheetP
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Importar Peças</DialogTitle>
+          <DialogDescription>
+            Selecione o tipo de arquivo e faça upload para importar peças do projeto.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
