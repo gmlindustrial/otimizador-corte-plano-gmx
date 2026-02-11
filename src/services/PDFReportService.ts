@@ -630,7 +630,7 @@ export class PDFReportService {
       const rowHeight = effectiveOptions.fontSize <= 7 ? 5 : 6;
       const pageMaxY = effectiveOptions.orientation === 'landscape' ? 190 : 280;
 
-      const drawTableRow = (values: string[], y: number, isHeader = false) => {
+      const drawTableRow = (values: string[], y: number, isHeader = false, columnIds?: string[]) => {
         values.forEach((text, i) => {
           const x = colStarts[i];
           const w = colWidths[i];
@@ -642,17 +642,24 @@ export class PDFReportService {
           doc.setFont("helvetica", isHeader ? "bold" : "normal");
           doc.setFontSize(effectiveOptions.fontSize);
 
-          // Truncar texto se necessário para caber na coluna
-          const maxChars = Math.floor(w / (effectiveOptions.fontSize * 0.35));
-          const displayText = text.length > maxChars
-            ? text.slice(0, maxChars - 1) + '.'
-            : text;
+          // Para coluna de posição, usar o texto como está (já foi truncado pelo modal)
+          // Para outras colunas, truncar se necessário
+          const colId = columnIds ? columnIds[i] : null;
+          let displayText = text;
+
+          if (colId !== 'pos') {
+            const maxChars = Math.floor(w / (effectiveOptions.fontSize * 0.32));
+            if (text.length > maxChars) {
+              displayText = text.slice(0, maxChars - 1) + '.';
+            }
+          }
 
           doc.text(displayText, x + 1, y + (rowHeight * 0.7));
         });
       };
 
-      drawTableRow(headers, currentY, true);
+      const columnIds = enabledColumns.map(c => c.id);
+      drawTableRow(headers, currentY, true, columnIds);
       currentY += rowHeight;
 
       results.bars.forEach((bar: any, barIndex: number) => {
@@ -667,7 +674,7 @@ export class PDFReportService {
               pageNumber
             );
             currentY = 55;
-            drawTableRow(headers, currentY, true);
+            drawTableRow(headers, currentY, true, columnIds);
             currentY += rowHeight;
           }
 
@@ -676,7 +683,7 @@ export class PDFReportService {
             this.getColumnValue(col.id, piece, barIndex, pieceIndex, bar, effectiveOptions)
           );
 
-          drawTableRow(row, currentY);
+          drawTableRow(row, currentY, false, columnIds);
           currentY += rowHeight;
         });
       });

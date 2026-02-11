@@ -29,6 +29,9 @@ interface PDFExportOptionsDialogProps {
   onExport: (options: PDFExportOptions) => void;
 }
 
+// Exemplo de posição longa para preview
+const EXAMPLE_POSITION = "MB-USB-HTM1-001-1019";
+
 export const PDFExportOptionsDialog = ({
   isOpen,
   onClose,
@@ -152,7 +155,7 @@ export const PDFExportOptionsDialog = ({
                   className="w-20"
                 />
                 <span className="text-xs text-gray-500">
-                  Ex: MB-USB-HTM1-001-1002 → {positionTruncateLength > 0 ? "MB-USB-HTM1-001-1002".slice(-positionTruncateLength) : ""}
+                  Ex: {EXAMPLE_POSITION} → {positionTruncateLength > 0 ? EXAMPLE_POSITION.slice(-positionTruncateLength) : ""}
                 </span>
               </div>
             )}
