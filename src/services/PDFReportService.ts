@@ -630,7 +630,7 @@ export class PDFReportService {
       const rowHeight = effectiveOptions.fontSize <= 7 ? 5 : 6;
       const pageMaxY = effectiveOptions.orientation === 'landscape' ? 190 : 280;
 
-      const drawTableRow = (values: string[], y: number, isHeader = false, columnIds?: string[]) => {
+      const drawTableRow = (values: string[], y: number, isHeader = false) => {
         values.forEach((text, i) => {
           const x = colStarts[i];
           const w = colWidths[i];
@@ -642,24 +642,12 @@ export class PDFReportService {
           doc.setFont("helvetica", isHeader ? "bold" : "normal");
           doc.setFontSize(effectiveOptions.fontSize);
 
-          // Para coluna de posição, usar o texto como está (já foi truncado pelo modal)
-          // Para outras colunas, truncar se necessário
-          const colId = columnIds ? columnIds[i] : null;
-          let displayText = text;
-
-          if (colId !== 'pos') {
-            const maxChars = Math.floor(w / (effectiveOptions.fontSize * 0.32));
-            if (text.length > maxChars) {
-              displayText = text.slice(0, maxChars - 1) + '.';
-            }
-          }
-
-          doc.text(displayText, x + 1, y + (rowHeight * 0.7));
+          // Exibir texto como está (truncamento só é aplicado na coluna Pos via getColumnValue)
+          doc.text(text, x + 1, y + (rowHeight * 0.7));
         });
       };
 
-      const columnIds = enabledColumns.map(c => c.id);
-      drawTableRow(headers, currentY, true, columnIds);
+      drawTableRow(headers, currentY, true);
       currentY += rowHeight;
 
       results.bars.forEach((bar: any, barIndex: number) => {
@@ -674,16 +662,17 @@ export class PDFReportService {
               pageNumber
             );
             currentY = 55;
-            drawTableRow(headers, currentY, true, columnIds);
+            drawTableRow(headers, currentY, true);
             currentY += rowHeight;
           }
 
           // Construir linha com valores das colunas habilitadas
+          // Truncamento só é aplicado na coluna Pos (via getColumnValue)
           const row = enabledColumns.map(col =>
             this.getColumnValue(col.id, piece, barIndex, pieceIndex, bar, effectiveOptions)
           );
 
-          drawTableRow(row, currentY, false, columnIds);
+          drawTableRow(row, currentY);
           currentY += rowHeight;
         });
       });

@@ -129,12 +129,12 @@ export const PDFExportOptionsDialog = ({
           </div>
 
           {/* Truncar Posição */}
-          <div className="space-y-3 p-3 border rounded-lg bg-gray-50">
+          <div className="space-y-3 p-3 border rounded-lg bg-blue-50">
             <div className="flex items-center justify-between">
               <div>
-                <Label>Truncar Posição Longa</Label>
+                <Label>Coluna Posição - Truncar</Label>
                 <p className="text-xs text-gray-500">
-                  Mostra apenas os últimos caracteres da posição
+                  Mostra apenas os últimos caracteres na coluna "Pos"
                 </p>
               </div>
               <Switch
@@ -145,7 +145,7 @@ export const PDFExportOptionsDialog = ({
 
             {truncatePosition && (
               <div className="flex items-center gap-2">
-                <Label className="text-sm">Caracteres:</Label>
+                <Label className="text-sm">Últimos caracteres:</Label>
                 <Input
                   type="number"
                   min={3}
@@ -155,7 +155,7 @@ export const PDFExportOptionsDialog = ({
                   className="w-20"
                 />
                 <span className="text-xs text-gray-500">
-                  Ex: {EXAMPLE_POSITION} → {positionTruncateLength > 0 ? EXAMPLE_POSITION.slice(-positionTruncateLength) : ""}
+                  → {positionTruncateLength > 0 ? EXAMPLE_POSITION.slice(-positionTruncateLength) : ""}
                 </span>
               </div>
             )}
