@@ -2,14 +2,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { OptimizationResult, Project, CutPiece } from '@/pages/Index';
-import { BarChart, Download, Printer, FileSpreadsheet, FileText, Wrench, Fullscreen, Recycle, MapPin, DollarSign, Leaf, Package, Link, AlertTriangle } from 'lucide-react';
+import { BarChart, Download, Printer, FileSpreadsheet, FileText, Wrench, Fullscreen, Recycle, MapPin, DollarSign, Leaf, Package, Link, AlertTriangle, Settings } from 'lucide-react';
 import { ReportVisualization } from './ReportVisualization';
 import { PrintableReport } from './PrintableReport';
 import { FullscreenReportViewer } from './reports/FullscreenReportViewer';
+import { PDFExportOptionsDialog } from './reports/PDFExportOptionsDialog';
 import { PDFReportService } from '@/services/PDFReportService';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { PecaComEmenda } from '@/types/project';
+import type { PDFExportOptions } from '@/types/pdfExport';
 interface OptimizationResultsProps {
   results: OptimizationResult;
   barLength: number;
@@ -43,6 +45,7 @@ export const OptimizationResults = ({
 }: OptimizationResultsProps) => {
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [showFullscreen, setShowFullscreen] = useState(false);
+  const [showPDFOptionsDialog, setShowPDFOptionsDialog] = useState(false);
   const [printMode, setPrintMode] = useState<'complete' | 'simplified'>('complete');
   const {
     toast
@@ -110,7 +113,7 @@ export const OptimizationResults = ({
       });
     }
   };
-  const handleExportSimplifiedPDF = async () => {
+  const handleExportSimplifiedPDF = async (options?: PDFExportOptions) => {
     try {
       if (!project) {
         toast({
@@ -120,7 +123,7 @@ export const OptimizationResults = ({
         });
         return;
       }
-      await PDFReportService.generateSimplifiedLinearReport(results, barLength, project, listName);
+      await PDFReportService.generateSimplifiedLinearReport(results, barLength, project, listName, options);
       toast({
         title: "PDF Simplificado Exportado",
         description: "Plano de corte simplificado foi gerado com sucesso"
@@ -432,8 +435,8 @@ export const OptimizationResults = ({
                   <Download className="w-4 h-4" />
                   PDF Completo
                 </Button>
-                <Button variant="outline" className="flex items-center gap-1" onClick={handleExportSimplifiedPDF}>
-                  <Download className="w-4 h-4" />
+                <Button variant="outline" className="flex items-center gap-1" onClick={() => setShowPDFOptionsDialog(true)}>
+                  <Settings className="w-4 h-4" />
                   PDF Produção
                 </Button>
                 {hasEmendas && <Button variant="outline" className="flex items-center gap-1" onClick={handleExportEmendasPDF}>
@@ -465,5 +468,12 @@ export const OptimizationResults = ({
 
       {/* Fullscreen Viewer */}
       <FullscreenReportViewer isOpen={showFullscreen} onClose={() => setShowFullscreen(false)} results={results} barLength={barLength} project={project} onResultsChange={onResultsChange} optimizationId={optimizationId} />
+
+      {/* PDF Export Options Dialog */}
+      <PDFExportOptionsDialog
+        isOpen={showPDFOptionsDialog}
+        onClose={() => setShowPDFOptionsDialog(false)}
+        onExport={handleExportSimplifiedPDF}
+      />
     </>;
 };

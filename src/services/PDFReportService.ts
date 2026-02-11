@@ -6,6 +6,8 @@ import type {
   EmendaInfo,
   SegmentoEmenda,
 } from "@/types/project";
+import type { PDFExportOptions, PDFTableColumn } from "@/types/pdfExport";
+import { DEFAULT_PDF_EXPORT_OPTIONS } from "@/types/pdfExport";
 import { supabase } from "@/integrations/supabase/client";
 
 export class PDFReportService {
@@ -57,6 +59,78 @@ export class PDFReportService {
   private static addLegend(doc: jsPDF, currentY: number): number {
     // Mantido para compatibilidade mas não utilizado
     return currentY;
+  }
+
+  // Trunca posição longa para mostrar apenas os últimos N caracteres
+  private static truncatePosition(position: string, maxLength: number = 7): string {
+    if (!position || position.length <= maxLength) return position || '-';
+    return position.slice(-maxLength);
+  }
+
+  // Calcula larguras das colunas baseado na orientação
+  private static calculateColumnLayout(
+    columns: PDFTableColumn[],
+    orientation: 'portrait' | 'landscape'
+  ): { colWidths: number[]; colStarts: number[] } {
+    const enabledColumns = columns.filter(c => c.enabled);
+    const pageWidth = orientation === 'landscape' ? 297 : 210;
+    const margin = 20;
+    const availableWidth = pageWidth - (margin * 2);
+
+    const totalRequestedWidth = enabledColumns.reduce((sum, col) => sum + col.width, 0);
+    const scaleFactor = totalRequestedWidth > availableWidth
+      ? availableWidth / totalRequestedWidth
+      : 1;
+
+    const colWidths = enabledColumns.map(col => Math.floor(col.width * scaleFactor));
+    const colStarts: number[] = [];
+    colWidths.reduce((acc, width, i) => {
+      colStarts[i] = acc;
+      return acc + width;
+    }, margin);
+
+    return { colWidths, colStarts };
+  }
+
+  // Obtém valor da coluna para uma peça
+  private static getColumnValue(
+    columnId: string,
+    piece: any,
+    barIndex: number,
+    pieceIndex: number,
+    bar: any,
+    options: PDFExportOptions
+  ): string {
+    switch (columnId) {
+      case 'barra':
+        return `${barIndex + 1}`;
+      case 'tipo':
+        return bar.type === 'leftover' ? 'Sobra' : 'Nova';
+      case 'tag':
+        return piece.tag || `P${pieceIndex + 1}`;
+      case 'fase':
+        return piece.fase || '-';
+      case 'pos':
+        return options.truncatePosition
+          ? this.truncatePosition(piece.posicao, options.positionTruncateLength)
+          : (piece.posicao || '-');
+      case 'qtd':
+        return `${piece.quantidade || 1}`;
+      case 'comp':
+        return `${piece.length || 0}mm`;
+      case 'peso':
+        return `${(piece.peso || 0).toFixed(2)}kg`;
+      case 'sobra':
+        return `${(bar.waste / 1000).toFixed(2)}m`;
+      case 'status':
+        return piece.cortada ? 'OK' : '';
+      case 'qc':
+        return '';
+      case 'obs':
+        return '';
+      default:
+        return '-';
+    }
   }
 
   private static extractProfiles(results: OptimizationResult): string {
@@ -416,10 +490,16 @@ export class PDFReportService {
     results: OptimizationResult,
     barLength: number,
     project: Project,
-    listName?: string
+    listName?: string,
+    options?: PDFExportOptions
   ): Promise<void> {
     try {
-      const doc = new jsPDF();
+      const effectiveOptions = options || DEFAULT_PDF_EXPORT_OPTIONS;
+      const doc = new jsPDF({
+        orientation: effectiveOptions.orientation,
+        unit: 'mm',
+        format: 'a4'
+      });
       let currentY = 50;
       let pageNumber = 1;
 
@@ -539,31 +619,16 @@ export class PDFReportService {
       doc.text("Tabela Geral de Peças", 20, currentY);
       currentY += 8;
 
-      // Cabeçalho ajustado
-      const headers = [
-        "Barra",
-        "Tipo",
-        "TAG",
-        "Fase",
-        "Pos",
-        "Qtd",
-        "Comp",
-        "Peso",
-        "Sobra",
-        "Status",
-        "QC",
-        "Obs",
-      ];
-      const colWidths = [12, 14, 15, 12, 13, 12, 16, 16, 16, 14, 14, 14];
-      const colStarts: number[] = [];
+      // Usar colunas dinâmicas baseadas nas opções
+      const enabledColumns = effectiveOptions.columns.filter(c => c.enabled);
+      const headers = enabledColumns.map(c => c.header);
+      const { colWidths, colStarts } = this.calculateColumnLayout(
+        effectiveOptions.columns,
+        effectiveOptions.orientation
+      );
 
-      // calcular posição inicial de cada coluna
-      colWidths.reduce((acc, width, i) => {
-        colStarts[i] = acc;
-        return acc + width;
-      }, 20);
-
-      const rowHeight = 6;
+      const rowHeight = effectiveOptions.fontSize <= 7 ? 5 : 6;
+      const pageMaxY = effectiveOptions.orientation === 'landscape' ? 190 : 280;
 
       const drawTableRow = (values: string[], y: number, isHeader = false) => {
         values.forEach((text, i) => {
@@ -575,8 +640,15 @@ export class PDFReportService {
 
           // Texto centralizado verticalmente
           doc.setFont("helvetica", isHeader ? "bold" : "normal");
-          doc.setFontSize(isHeader ? 9 : 9);
-          doc.text(text, x + 1.5, y + 4);
+          doc.setFontSize(effectiveOptions.fontSize);
+
+          // Truncar texto se necessário para caber na coluna
+          const maxChars = Math.floor(w / (effectiveOptions.fontSize * 0.35));
+          const displayText = text.length > maxChars
+            ? text.slice(0, maxChars - 1) + '.'
+            : text;
+
+          doc.text(displayText, x + 1, y + (rowHeight * 0.7));
         });
       };
 
@@ -584,11 +656,8 @@ export class PDFReportService {
       currentY += rowHeight;
 
       results.bars.forEach((bar: any, barIndex: number) => {
-        const barType = bar.type === "leftover" ? "Sobra" : "Nova";
-        const wasteFormatted = `${(bar.waste / 1000).toFixed(2)}m`;
-
         bar.pieces.forEach((piece: any, pieceIndex: number) => {
-          if (currentY + rowHeight > 280) {
+          if (currentY + rowHeight > pageMaxY) {
             doc.addPage();
             pageNumber++;
             this.addHeader(
@@ -602,34 +671,10 @@ export class PDFReportService {
             currentY += rowHeight;
           }
 
-          const peso = (piece.peso || 0).toFixed(2);
-
-          // Verificar se há emendas para essa peça - removido await para manter performance
-          // const emendasData = await this.getEmendasData(project.id);
-          // const pecaComEmenda = emendasData ? emendasData.find(e =>
-          //   e.tag === piece.tag || e.posicao === piece.posicao
-          // ) : null;
-          const pecaComEmenda = null; // Simplificado para este relatório
-
-          const emendaIndicator = pecaComEmenda ? "🔗" : "";
-          const tagText = pecaComEmenda
-            ? `🔗 ${piece.tag || `P${pieceIndex + 1}`}`
-            : piece.tag || `P${pieceIndex + 1}`;
-
-          const row = [
-            `${barIndex + 1}`,
-            barType,
-            tagText,
-            piece.fase || "-", // Campo FASE
-            piece.posicao || "-",
-            `${piece.quantidade || 1}`,
-            `${piece.length || 0}mm`,
-            `${peso}kg`,
-            wasteFormatted,
-            piece.cortada ? "OK" : "",
-            "",
-            "",
-          ];
+          // Construir linha com valores das colunas habilitadas
+          const row = enabledColumns.map(col =>
+            this.getColumnValue(col.id, piece, barIndex, pieceIndex, bar, effectiveOptions)
+          );
 
           drawTableRow(row, currentY);
           currentY += rowHeight;
