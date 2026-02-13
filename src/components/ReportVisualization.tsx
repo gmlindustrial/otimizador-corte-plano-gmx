@@ -1,7 +1,8 @@
 
 import { OptimizationResult, Project } from '@/pages/Index';
 import { Badge } from '@/components/ui/badge';
-import { Package, Tag, Wrench, Recycle, MapPin, DollarSign } from 'lucide-react';
+import { Package, Tag, Wrench, Recycle, MapPin, DollarSign, Scissors } from 'lucide-react';
+import { EmendaVisualization } from './reports/EmendaVisualization';
 
 interface ReportVisualizationProps {
   results: OptimizationResult;
@@ -27,18 +28,43 @@ export const ReportVisualization = ({ results, barLength, project }: ReportVisua
                   <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                     Barra {barIndex + 1}
                     
-                    {/* Indicadores NOVA/SOBRA */}
+                    {/* Indicadores NOVA/SOBRA/EMENDA */}
                     {isLeftover ? (
                       <Badge variant="default" className="bg-green-100 text-green-800">
                         <Recycle className="w-3 h-3 mr-1" />
-                        SOBRA
+                        SOBRA EST.
+                      </Badge>
+                    ) : (bar.sobraUsada || bar.temEmenda) ? (
+                      <Badge variant="default" className="bg-purple-100 text-purple-800">
+                        EMENDA
                       </Badge>
                     ) : (
                       <Badge variant="outline" className="bg-blue-50 text-blue-700">
                         NOVA
                       </Badge>
                     )}
-                    
+
+                    {/* Indica qual sobra foi usada */}
+                    {bar.sobraUsada && (
+                      <Badge variant="outline" className="bg-orange-50 text-orange-700">
+                        Usa {bar.sobraUsada}
+                      </Badge>
+                    )}
+
+                    {/* Indica qual sobra é gerada */}
+                    {bar.geraSobra && (
+                      <Badge
+                        variant="outline"
+                        className={bar.sobraUtilizavel
+                          ? "bg-cyan-50 text-cyan-700"
+                          : "bg-gray-100 text-gray-500"
+                        }
+                      >
+                        {bar.geraSobra} ({bar.sobraComprimento || bar.waste}mm)
+                        {bar.sobraUtilizavel ? ' ✅' : ' ⚠️'}
+                      </Badge>
+                    )}
+
                     {/* Localização para sobras */}
                     {isLeftover && bar.location && (
                       <Badge variant="secondary" className="bg-gray-100 text-gray-700">
@@ -77,11 +103,12 @@ export const ReportVisualization = ({ results, barLength, project }: ReportVisua
                     {/* Bar segments */}
                     {(() => {
                       let currentX = 0;
+                      const cutLoss = 3; // 3mm de perda de corte entre peças
                       return bar.pieces.map((piece: any, pieceIndex) => {
                         const segmentWidth = piece.length / 10;
                         // Usar cor verde para sobras, cores normais para barras novas
                         const segmentColor = isLeftover ? '#10B981' : piece.color;
-                        
+
                         const segment = (
                           <g key={pieceIndex}>
                             <rect
@@ -118,7 +145,8 @@ export const ReportVisualization = ({ results, barLength, project }: ReportVisua
                             )}
                           </g>
                         );
-                        currentX += segmentWidth;
+                        // Adicionar cutLoss entre peças (exceto após a última)
+                        currentX += segmentWidth + (pieceIndex < bar.pieces.length - 1 ? cutLoss / 10 : 0);
                         return segment;
                       });
                     })()}
@@ -286,6 +314,21 @@ export const ReportVisualization = ({ results, barLength, project }: ReportVisua
                     </tbody>
                   </table>
                 </div>
+
+                {/* Visualização da Emenda - se esta barra tiver emenda */}
+                {bar.emendaDetalhes && (
+                  <div className="mt-4">
+                    <h4 className="text-sm font-semibold text-purple-700 mb-2 flex items-center gap-2">
+                      <Scissors className="w-4 h-4" />
+                      Detalhe da Emenda
+                    </h4>
+                    <EmendaVisualization
+                      emenda={bar.emendaDetalhes}
+                      barraId={bar.id || `Barra ${barIndex + 1}`}
+                      index={barIndex}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           );

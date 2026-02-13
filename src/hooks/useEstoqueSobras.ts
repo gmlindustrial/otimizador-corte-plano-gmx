@@ -143,9 +143,24 @@ export const useEstoqueSobras = () => {
     }
   };
 
+  const removerSobrasPorPerfil = async (perfilId: string) => {
+    try {
+      const { error, count } = await supabase
+        .from('estoque_sobras')
+        .delete()
+        .eq('id_perfis_materiais', perfilId);
+      if (error) throw error;
+      setSobras(prev => prev.filter(s => s.id_perfis_materiais !== perfilId));
+      toast.success(`Sobras do perfil removidas com sucesso`);
+    } catch (error) {
+      console.error('Erro ao remover sobras do perfil:', error);
+      toast.error('Erro ao remover sobras do perfil');
+    }
+  };
+
   useEffect(() => {
     void fetchSobras();
   }, []);
 
-  return { sobras, loading, adicionarSobra, usarSobra, removerSobra, refetch: fetchSobras, fetchSobrasByPerfil: fetchSobras };
+  return { sobras, loading, adicionarSobra, usarSobra, removerSobra, removerSobrasPorPerfil, refetch: fetchSobras, fetchSobrasByPerfil: fetchSobras };
 };

@@ -43,6 +43,7 @@ import type {
   ProjectPieceValidation,
   PerfilMaterial,
   ProjetoChapa,
+  EmendaConfiguration,
 } from "@/types/project";
 import { PieceRegistrationForm } from "./PieceRegistrationForm";
 import { FileUploadDialog } from "./FileUploadDialog";
@@ -85,7 +86,8 @@ interface ProjectDetailsViewProps {
   onCreateOptimization: (
     pieces: ProjetoPeca[],
     name: string,
-    barLength: number
+    barLength: number,
+    emendaConfig?: EmendaConfiguration
   ) => Promise<void>;
   onNavigateToProfileManagement?: () => void;
 }
@@ -187,6 +189,13 @@ export const ProjectDetailsView = ({
   useEffect(() => {
     loadProjectData();
   }, [project.id]);
+
+  // Resetar o estado de importing quando o diálogo de upload for fechado
+  useEffect(() => {
+    if (!showUpload) {
+      setImporting(false);
+    }
+  }, [showUpload]);
 
   const loadProjectData = async () => {
     setLoading(true);
@@ -1294,15 +1303,15 @@ export const ProjectDetailsView = ({
                         />
                       </div>
                     )}
-                    <FileUploadDialog
-                      open={showUpload}
-                      onOpenChange={setShowUpload}
-                      onProcessStart={handleImportStart}
-                      onFileProcessed={handleFileProcessed}
-                      onSheetPiecesProcessed={handleSheetPiecesProcessed}
-                    />
                   </>
                 )}
+                <FileUploadDialog
+                  open={showUpload}
+                  onOpenChange={setShowUpload}
+                  onProcessStart={handleImportStart}
+                  onFileProcessed={handleFileProcessed}
+                  onSheetPiecesProcessed={handleSheetPiecesProcessed}
+                />
               </CardContent>
             </Card>
           </TabsContent>
@@ -2225,11 +2234,12 @@ export const ProjectDetailsView = ({
         <OptimizationCreateDialog
           open={showOptimizationDialog}
           onOpenChange={setShowOptimizationDialog}
-          onCreate={(name, bar) =>
+          onCreate={(name, bar, emendaConfig) =>
             onCreateOptimization(
               pieces.filter((p) => selectedPieces.has(p.id)),
               name,
-              bar
+              bar,
+              emendaConfig
             ).then(() => {
               setShowOptimizationDialog(false);
               setActiveTab("optimizations");

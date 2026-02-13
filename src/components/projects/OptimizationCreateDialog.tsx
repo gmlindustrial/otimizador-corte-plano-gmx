@@ -7,7 +7,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertTriangle, CheckCircle, Users, Link, Info, Settings } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Users, Link, Info, Settings, Package } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { ProjetoPeca, EmendaConfiguration } from '@/types/project';
 import { Switch } from '@/components/ui/switch';
@@ -36,8 +36,14 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selecte
     emendaObrigatoria: false,
     permitirEmendas: false,
     tamanhoMinimoSobra: 200,
-    maxEmendasPorPeca: 3
+    maxEmendasPorPeca: 3,
+    usarSobrasEstoque: true,
+    cadastrarSobrasGeradas: true,
+    usarSobrasInternas: true
   });
+
+  // Estado para mostrar configurações de estoque
+  const [showEstoqueSettings, setShowEstoqueSettings] = useState(false);
 
   // Buscar tamanhos de barra disponíveis e gerar nome sugerido
   useEffect(() => {
@@ -392,8 +398,86 @@ export const OptimizationCreateDialog = ({ open, onOpenChange, onCreate, selecte
                           </p>
                         </div>
 
+                        {/* Usar Sobras da Própria Otimização */}
+                        <div className="flex items-center justify-between">
+                          <div className="space-y-0.5">
+                            <Label className="text-sm font-medium">Usar Sobras da Própria Otimização</Label>
+                            <p className="text-xs text-muted-foreground">
+                              Reaproveitar sobras geradas nesta otimização para fazer emendas
+                            </p>
+                          </div>
+                          <Switch
+                            checked={emendaConfig.usarSobrasInternas}
+                            onCheckedChange={(checked) =>
+                              setEmendaConfig(prev => ({ ...prev, usarSobrasInternas: checked }))
+                            }
+                          />
+                        </div>
 
                       </>
+                    )}
+                  </CardContent>
+                </Card>
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* Configurações de Estoque */}
+            <Collapsible open={showEstoqueSettings} onOpenChange={setShowEstoqueSettings}>
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" size="sm" className="w-full">
+                  <Package className="h-4 w-4 mr-2" />
+                  Configurações de Estoque
+                  {(!emendaConfig.usarSobrasEstoque || !emendaConfig.cadastrarSobrasGeradas) && (
+                    <Badge variant="secondary" className="ml-2">Personalizado</Badge>
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-4 mt-4">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm">Opções de Estoque de Sobras</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {/* Usar Sobras do Estoque */}
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-medium">Usar Sobras do Estoque</Label>
+                        <p className="text-xs text-muted-foreground">
+                          Aproveitar sobras existentes para reduzir compra de barras novas
+                        </p>
+                      </div>
+                      <Switch
+                        checked={emendaConfig.usarSobrasEstoque}
+                        onCheckedChange={(checked) =>
+                          setEmendaConfig(prev => ({ ...prev, usarSobrasEstoque: checked }))
+                        }
+                      />
+                    </div>
+
+                    {/* Cadastrar Sobras Geradas */}
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label className="text-sm font-medium">Cadastrar Sobras no Estoque</Label>
+                        <p className="text-xs text-muted-foreground">
+                          Sobras geradas (&gt; 100mm) serão automaticamente adicionadas ao estoque
+                        </p>
+                      </div>
+                      <Switch
+                        checked={emendaConfig.cadastrarSobrasGeradas}
+                        onCheckedChange={(checked) =>
+                          setEmendaConfig(prev => ({ ...prev, cadastrarSobrasGeradas: checked }))
+                        }
+                      />
+                    </div>
+
+                    {/* Alerta informativo */}
+                    {!emendaConfig.usarSobrasEstoque && !emendaConfig.cadastrarSobrasGeradas && (
+                      <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertDescription className="text-sm">
+                          Modo isolado: a otimização não afetará o estoque de sobras.
+                        </AlertDescription>
+                      </Alert>
                     )}
                   </CardContent>
                 </Card>

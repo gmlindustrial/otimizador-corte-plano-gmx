@@ -94,14 +94,33 @@ export class XlsxTemplateService {
   }
 
   static async parseXlsx(file: File): Promise<ParsedXlsxPiece[]> {
+    console.log(`📁 Parsing arquivo: ${file.name}`);
+
     const workbook = new ExcelJS.Workbook();
     const arrayBuffer = await file.arrayBuffer();
     await workbook.xlsx.load(arrayBuffer);
 
-    const worksheet = workbook.getWorksheet(1);
+    // Tentar encontrar a planilha de várias formas
+    let worksheet = workbook.getWorksheet(1);
+
+    // Se não encontrou pelo índice 1, tentar outras abordagens
+    if (!worksheet) {
+      console.log('⚠️ Planilha não encontrada pelo índice 1, tentando outras abordagens...');
+
+      // Listar todas as planilhas disponíveis e usar a primeira
+      workbook.eachSheet((sheet) => {
+        if (!worksheet) {
+          worksheet = sheet;
+          console.log(`📋 Usando planilha: "${sheet.name}"`);
+        }
+      });
+    }
+
     if (!worksheet) {
       throw new Error('A planilha está vazia ou não foi encontrada');
     }
+
+    console.log(`📋 Planilha: "${worksheet.name}" (${worksheet.rowCount} linhas)`);
 
     const pieces: ParsedXlsxPiece[] = [];
 

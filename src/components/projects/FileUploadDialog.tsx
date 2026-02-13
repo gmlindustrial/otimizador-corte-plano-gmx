@@ -4,8 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Upload, FileText, Download } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { FileParsingService, SheetInventorPiece } from '@/components/file-upload/FileParsingService';
+import { FileParsingService, SheetInventorPiece, IncompletePiece } from '@/components/file-upload/FileParsingService';
+import { IncompleteItemsDialog } from '@/components/file-upload/IncompleteItemsDialog';
 import { XlsxTemplateService } from '@/services/XlsxTemplateService';
+import { CutPiece } from '@/pages/Index';
 import { toast } from 'sonner';
 
 type ImportType = 'tekla' | 'excel' | 'inventor';
@@ -22,6 +24,12 @@ export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed, onSheetP
   const [file, setFile] = useState<File | null>(null);
   const [processing, setProcessing] = useState(false);
   const [importType, setImportType] = useState<ImportType>('tekla');
+
+  // Estado para o diálogo de peças incompletas
+  const [showIncompleteDialog, setShowIncompleteDialog] = useState(false);
+  const [incompletePieces, setIncompletePieces] = useState<IncompletePiece[]>([]);
+  const [pendingPieces, setPendingPieces] = useState<CutPiece[]>([]);
+  const [pendingSheetPieces, setPendingSheetPieces] = useState<SheetInventorPiece[]>([]);
 
   // Definir extensões aceitas por tipo
   const acceptedExtensions: Record<ImportType, string> = {
@@ -75,6 +83,63 @@ export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed, onSheetP
     }
   };
 
+  // Callback quando o usuário confirma as peças incompletas
+  const handleIncompleteConfirm = (completedPieces: CutPiece[]) => {
+    setShowIncompleteDialog(false);
+
+    // Combinar peças pendentes com as peças completadas
+    const allPieces = [...pendingPieces, ...completedPieces];
+    const totalQuantidade = allPieces.reduce((sum, p) => sum + (p.quantity || 1), 0);
+
+    console.log(`✅ Peças incompletas revisadas: ${completedPieces.length} adicionadas`);
+    console.log(`📋 Total de peças: ${allPieces.length} (${totalQuantidade} unidades)`);
+
+    // Processar todas as peças (o handleFileProcessed no componente pai mostra as mensagens)
+    if (allPieces.length > 0) {
+      onFileProcessed(allPieces);
+    }
+
+    if (pendingSheetPieces.length > 0 && onSheetPiecesProcessed) {
+      onSheetPiecesProcessed(pendingSheetPieces);
+    }
+
+    // Limpar estado
+    setFile(null);
+    setPendingPieces([]);
+    setPendingSheetPieces([]);
+    setIncompletePieces([]);
+
+    setTimeout(() => {
+      onOpenChange(false);
+    }, 100);
+  };
+
+  // Callback quando o usuário ignora as peças incompletas
+  const handleIncompleteSkip = () => {
+    setShowIncompleteDialog(false);
+
+    console.log(`⏭️ Peças incompletas ignoradas pelo usuário`);
+
+    // Processar apenas as peças completas (o handleFileProcessed no componente pai mostra as mensagens)
+    if (pendingPieces.length > 0) {
+      onFileProcessed(pendingPieces);
+    }
+
+    if (pendingSheetPieces.length > 0 && onSheetPiecesProcessed) {
+      onSheetPiecesProcessed(pendingSheetPieces);
+    }
+
+    // Limpar estado
+    setFile(null);
+    setPendingPieces([]);
+    setPendingSheetPieces([]);
+    setIncompletePieces([]);
+
+    setTimeout(() => {
+      onOpenChange(false);
+    }, 100);
+  };
+
   const handleProcess = async () => {
     if (!file) return;
 
@@ -112,7 +177,19 @@ export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed, onSheetP
         console.log(`📊 Resultado do parse Inventor:`);
         console.log(`   - Peças lineares: ${result.stats.linear}`);
         console.log(`   - Chapas: ${result.stats.sheet}`);
+        console.log(`   - Peças incompletas: ${result.stats.incomplete}`);
         console.log(`   - Ignorados: ${result.stats.ignored}`);
+
+        // Se houver peças incompletas, mostrar diálogo de revisão
+        if (result.incompletePieces && result.incompletePieces.length > 0) {
+          console.log(`⚠️ ${result.incompletePieces.length} peças incompletas encontradas, aguardando revisão...`);
+          setIncompletePieces(result.incompletePieces);
+          setPendingPieces(pieces);
+          setPendingSheetPieces(sheetPieces);
+          setShowIncompleteDialog(true);
+          setProcessing(false);
+          return; // Aguardar revisão do usuário
+        }
       } else {
         throw new Error('Tipo de importação não reconhecido');
       }
@@ -171,6 +248,23 @@ export const FileUploadDialog = ({ open, onOpenChange, onFileProcessed, onSheetP
       setProcessing(false);
     }
   };
+
+  // Se estiver mostrando o diálogo de peças incompletas, renderizar ele diretamente
+  if (showIncompleteDialog && incompletePieces.length > 0) {
+    return (
+      <IncompleteItemsDialog
+        open={true}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            handleIncompleteSkip();
+          }
+        }}
+        incompletePieces={incompletePieces}
+        onConfirm={handleIncompleteConfirm}
+        onSkip={handleIncompleteSkip}
+      />
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

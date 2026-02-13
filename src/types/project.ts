@@ -52,6 +52,9 @@ export interface EmendaConfiguration {
   permitirEmendas: boolean;
   tamanhoMinimoSobra: number;
   maxEmendasPorPeca: number;
+  usarSobrasEstoque?: boolean;       // Consumir sobras existentes do estoque
+  cadastrarSobrasGeradas?: boolean;  // Adicionar sobras geradas ao estoque
+  usarSobrasInternas?: boolean;      // Usar sobras geradas na própria otimização para emendas
 }
 
 export interface SegmentoEmenda {

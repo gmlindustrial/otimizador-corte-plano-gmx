@@ -15,14 +15,29 @@ export interface SheetInventorPiece {
   peso?: number;
 }
 
+// Peça incompleta que precisa de revisão do usuário
+export interface IncompletePiece {
+  id: string;
+  rowNumber: number;           // Número da linha no Excel
+  item: string;                // Item/Tag
+  descricao: string;           // Descrição do perfil
+  dimensao: number;            // Comprimento em mm
+  quantity: number | null;     // Quantidade (null = faltando)
+  material: string;
+  projetoNum: string;
+  missingFields: string[];     // Lista de campos faltantes
+}
+
 // Resultado do parse do Inventor com separação de tipos
 export interface InventorParseResult {
   linearPieces: CutPiece[];        // Peças para corte linear (1D)
   sheetPieces: SheetInventorPiece[]; // Peças para corte 2D
+  incompletePieces: IncompletePiece[]; // Peças que precisam de revisão
   stats: {
     total: number;
     linear: number;
     sheet: number;
+    incomplete: number;
     ignored: number;
     details: {
       soldado: number;
@@ -446,17 +461,27 @@ export class FileParsingService {
     const lines = content.split('\n');
     const linearPieces: CutPiece[] = [];
     const sheetPieces: SheetInventorPiece[] = [];
+    const incompletePieces: IncompletePiece[] = [];
     let currentProject = '';
     let currentModule = '';
+    let lineNumber = 0;
     let skippedItems = {
       soldado: 0,
       din: 0,
       semDimensao: 0,
       classeLote: 0,
-      comprimentoInvalido: 0
+      comprimentoInvalido: 0,
+      duplicado: 0,
+      linhaTotal: 0
     };
 
-    for (const line of lines) {
+    // Set para rastrear itens já processados e evitar duplicatas
+    const processedItems = new Set<string>();
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      lineNumber = i + 1;
+
       // Extrair metadados do projeto
       const projetoMatch = line.match(/^Projeto:\s*(.+)/);
       if (projetoMatch) {
@@ -483,6 +508,26 @@ export class FileParsingService {
 
       // Validar se é uma linha de dados válida (item deve ser número)
       if (!item || !/^\d+$/.test(item.trim())) continue;
+
+      // Ignorar linhas de total/subtotal/resumo
+      const descricaoLowerCheck = (descricao || '').toLowerCase();
+      if (descricaoLowerCheck.includes('total') ||
+          descricaoLowerCheck.includes('subtotal') ||
+          descricaoLowerCheck.includes('resumo') ||
+          descricaoLowerCheck.includes('soma')) {
+        console.log(`⏭️ Ignorando linha de total/resumo: ${descricao}`);
+        skippedItems.linhaTotal++;
+        continue;
+      }
+
+      // Criar chave única para deduplicação (item + projetoNum + dimensao)
+      const uniqueKey = `${item.trim()}-${(projetoNum || '').trim()}-${(dimensao || '').trim()}`;
+      if (processedItems.has(uniqueKey)) {
+        console.log(`⏭️ Ignorando item duplicado: ${item} (${descricao})`);
+        skippedItems.duplicado++;
+        continue;
+      }
+      processedItems.add(uniqueKey);
 
       // Filtros de exclusão
       if (material?.toUpperCase() === 'SOLDADO') {
@@ -655,28 +700,34 @@ export class FileParsingService {
     }
 
     const totalIgnored = skippedItems.soldado + skippedItems.din + skippedItems.semDimensao +
-                         skippedItems.classeLote + skippedItems.comprimentoInvalido;
+                         skippedItems.classeLote + skippedItems.comprimentoInvalido +
+                         skippedItems.duplicado + skippedItems.linhaTotal;
 
     console.log(`📊 Resumo da importação Inventor:`);
     console.log(`   ✅ Peças LINEARES: ${linearPieces.length}`);
     console.log(`   ✅ Peças CHAPAS: ${sheetPieces.length}`);
+    console.log(`   ⚠️ Peças INCOMPLETAS (para revisão): ${incompletePieces.length}`);
     console.log(`   ⏭️ Ignorados (SOLDADO): ${skippedItems.soldado}`);
     console.log(`   ⏭️ Ignorados (DIN): ${skippedItems.din}`);
     console.log(`   ⏭️ Ignorados (sem dimensão): ${skippedItems.semDimensao}`);
     console.log(`   ⏭️ Ignorados (C.L): ${skippedItems.classeLote}`);
     console.log(`   ⏭️ Ignorados (dimensões inválidas): ${skippedItems.comprimentoInvalido}`);
+    console.log(`   ⏭️ Ignorados (duplicados): ${skippedItems.duplicado}`);
+    console.log(`   ⏭️ Ignorados (linhas de total): ${skippedItems.linhaTotal}`);
 
-    if (linearPieces.length === 0 && sheetPieces.length === 0) {
+    if (linearPieces.length === 0 && sheetPieces.length === 0 && incompletePieces.length === 0) {
       throw new Error('Nenhuma peça válida foi encontrada no arquivo Inventor. Verifique se o arquivo contém peças com dimensões válidas.');
     }
 
     return {
       linearPieces,
       sheetPieces,
+      incompletePieces,
       stats: {
         total: linearPieces.length + sheetPieces.length,
         linear: linearPieces.length,
         sheet: sheetPieces.length,
+        incomplete: incompletePieces.length,
         ignored: totalIgnored,
         details: skippedItems
       }
@@ -703,27 +754,54 @@ export class FileParsingService {
   // Parser para arquivos Excel do Autodesk Inventor
   static async parseInventorExcel(file: File): Promise<InventorParseResult> {
     console.log('🔄 Iniciando parsing de arquivo Excel Inventor...');
+    console.log(`📁 Arquivo: ${file.name}`);
 
     const ExcelJS = (await import('exceljs')).default;
     const workbook = new ExcelJS.Workbook();
     const arrayBuffer = await file.arrayBuffer();
     await workbook.xlsx.load(arrayBuffer);
 
-    const worksheet = workbook.getWorksheet(1);
+    // Tentar encontrar a planilha de várias formas
+    let worksheet = workbook.getWorksheet(1);
+
+    // Se não encontrou pelo índice 1, tentar outras abordagens
+    if (!worksheet) {
+      console.log('⚠️ Planilha não encontrada pelo índice 1, tentando outras abordagens...');
+
+      // Listar todas as planilhas disponíveis
+      const worksheetNames: string[] = [];
+      workbook.eachSheet((sheet, id) => {
+        worksheetNames.push(`${id}: "${sheet.name}"`);
+        if (!worksheet) {
+          worksheet = sheet; // Usar a primeira planilha encontrada
+        }
+      });
+      console.log(`📋 Planilhas disponíveis: ${worksheetNames.join(', ')}`);
+    }
+
     if (!worksheet) {
       throw new Error('A planilha está vazia ou não foi encontrada');
     }
 
+    console.log(`📋 Usando planilha: "${worksheet.name}" (${worksheet.rowCount} linhas)`);
+
+
     const linearPieces: CutPiece[] = [];
     const sheetPieces: SheetInventorPiece[] = [];
+    const incompletePieces: IncompletePiece[] = [];
     let currentModule = '';
     let skippedItems = {
       soldado: 0,
       din: 0,
       semDimensao: 0,
       classeLote: 0,
-      comprimentoInvalido: 0
+      comprimentoInvalido: 0,
+      duplicado: 0,
+      linhaTotal: 0
     };
+
+    // Set para rastrear itens já processados e evitar duplicatas
+    const processedItems = new Set<string>();
 
     // Encontrar a linha do header (que contém "Item" e "Dimensão")
     let headerRowNumber = 1;
@@ -751,18 +829,24 @@ export class FileParsingService {
     // Determinar linha inicial dos dados (pular header + possível linha de referência)
     let dataStartRow = headerRowNumber + 1;
 
-    // Verificar se a próxima linha é uma linha de referência (contém apenas números sequenciais)
+    // Verificar se a próxima linha é uma linha de referência (contém apenas números sequenciais ou está vazia)
     const nextRow = worksheet.getRow(headerRowNumber + 1);
     let isReferenceRow = true;
     let cellCount = 0;
+    let hasNonNumericContent = false;
     nextRow.eachCell((cell) => {
       const val = String(cell.value ?? '').trim();
-      if (val && !/^\d+$/.test(val)) {
-        isReferenceRow = false;
+      if (val) {
+        cellCount++;
+        // Linha de referência contém apenas números ou traços
+        if (!/^[\d\-]+$/.test(val)) {
+          hasNonNumericContent = true;
+        }
       }
-      cellCount++;
     });
-    if (isReferenceRow && cellCount > 0) {
+    // É linha de referência se tem conteúdo e é apenas números/traços
+    isReferenceRow = cellCount > 0 && !hasNonNumericContent;
+    if (isReferenceRow) {
       dataStartRow = headerRowNumber + 2;
       console.log(`📋 Linha de referência detectada na linha ${headerRowNumber + 1}, dados começam na linha ${dataStartRow}`);
     }
@@ -791,6 +875,50 @@ export class FileParsingService {
       const descricaoStr = String(descricao || '');
       const materialStr = String(material || '').toUpperCase();
       const dimensaoStr = String(dimensao || '').trim();
+      const projetoNumStr = String(projetoNum || '').trim();
+
+      // Ignorar linhas de total/subtotal/resumo
+      const descricaoLowerCheck = descricaoStr.toLowerCase();
+      if (descricaoLowerCheck.includes('total') ||
+          descricaoLowerCheck.includes('subtotal') ||
+          descricaoLowerCheck.includes('resumo') ||
+          descricaoLowerCheck.includes('soma') ||
+          itemStr.toLowerCase() === 'total' ||
+          itemStr.toLowerCase() === 'subtotal') {
+        console.log(`⏭️ Ignorando linha de total/resumo: ${descricaoStr}`);
+        skippedItems.linhaTotal++;
+        return;
+      }
+
+      // Verificar se quantidade está faltando - adicionar à lista de revisão
+      if (qtde === null || qtde === undefined) {
+        // Verificar se tem dimensão válida antes de adicionar à revisão
+        const dimNum = parseFloat(dimensaoStr.replace(',', '.'));
+        if (!isNaN(dimNum) && dimNum >= 100 && dimNum <= 50000) {
+          console.log(`⚠️ Peça incompleta (quantidade faltando): Item ${itemStr} - Linha ${rowNumber}`);
+          incompletePieces.push({
+            id: `incomplete-${rowNumber}-${Date.now()}`,
+            rowNumber,
+            item: itemStr,
+            descricao: descricaoStr,
+            dimensao: dimNum,
+            quantity: null,
+            material: materialStr,
+            projetoNum: projetoNumStr,
+            missingFields: ['quantity']
+          });
+        }
+        return;
+      }
+
+      // Criar chave única para deduplicação (item + projetoNum + dimensao)
+      const uniqueKey = `${itemStr}-${projetoNumStr}-${dimensaoStr}`;
+      if (processedItems.has(uniqueKey)) {
+        console.log(`⏭️ Ignorando item duplicado: ${itemStr} (${descricaoStr})`);
+        skippedItems.duplicado++;
+        return;
+      }
+      processedItems.add(uniqueKey);
 
       // Filtros de exclusão
       if (materialStr === 'SOLDADO') {
@@ -950,28 +1078,34 @@ export class FileParsingService {
     });
 
     const totalIgnored = skippedItems.soldado + skippedItems.din + skippedItems.semDimensao +
-                         skippedItems.classeLote + skippedItems.comprimentoInvalido;
+                         skippedItems.classeLote + skippedItems.comprimentoInvalido +
+                         skippedItems.duplicado + skippedItems.linhaTotal;
 
     console.log(`📊 Resumo da importação Excel Inventor:`);
     console.log(`   ✅ Peças LINEARES: ${linearPieces.length}`);
     console.log(`   ✅ Peças CHAPAS: ${sheetPieces.length}`);
+    console.log(`   ⚠️ Peças INCOMPLETAS (para revisão): ${incompletePieces.length}`);
     console.log(`   ⏭️ Ignorados (SOLDADO): ${skippedItems.soldado}`);
     console.log(`   ⏭️ Ignorados (DIN): ${skippedItems.din}`);
     console.log(`   ⏭️ Ignorados (sem dimensão): ${skippedItems.semDimensao}`);
     console.log(`   ⏭️ Ignorados (C.L): ${skippedItems.classeLote}`);
     console.log(`   ⏭️ Ignorados (dimensões inválidas): ${skippedItems.comprimentoInvalido}`);
+    console.log(`   ⏭️ Ignorados (duplicados): ${skippedItems.duplicado}`);
+    console.log(`   ⏭️ Ignorados (linhas de total): ${skippedItems.linhaTotal}`);
 
-    if (linearPieces.length === 0 && sheetPieces.length === 0) {
+    if (linearPieces.length === 0 && sheetPieces.length === 0 && incompletePieces.length === 0) {
       throw new Error('Nenhuma peça válida foi encontrada no arquivo Excel Inventor. Verifique se o arquivo contém peças com dimensões válidas.');
     }
 
     return {
       linearPieces,
       sheetPieces,
+      incompletePieces,
       stats: {
         total: linearPieces.length + sheetPieces.length,
         linear: linearPieces.length,
         sheet: sheetPieces.length,
+        incomplete: incompletePieces.length,
         ignored: totalIgnored,
         details: skippedItems
       }
@@ -1031,11 +1165,19 @@ export class FileParsingService {
     if (!cell || cell.value === null || cell.value === undefined) return null;
 
     if (typeof cell.value === 'object' && cell.value !== null) {
-      if ('result' in cell.value) return cell.value.result as string | number;
+      // Fórmula com resultado
+      if ('result' in cell.value) {
+        const result = cell.value.result;
+        // Se o resultado da fórmula é null/undefined, retornar null
+        if (result === null || result === undefined) return null;
+        return result as string | number;
+      }
+      // Rich text
       if ('richText' in cell.value) {
         return (cell.value.richText as Array<{ text: string }>).map(t => t.text).join('');
       }
-      return String(cell.value);
+      // Outros objetos (células mescladas, etc) - retornar null
+      return null;
     }
 
     return cell.value as string | number;

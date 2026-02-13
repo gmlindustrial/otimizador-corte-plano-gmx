@@ -47,28 +47,50 @@ export class PerfilService {
     try {
       // Normalizar a descrição de entrada
       const normalizedDescription = this.normalizeDescription(description);
-      
+      console.log(`🔍 Buscando perfil para: "${description}" → normalizado: "${normalizedDescription}"`);
+
+      // Primeiro, buscar todos os perfis e comparar normalizados
+      const allPerfis = await this.getAll();
+      if (allPerfis.success && allPerfis.data && allPerfis.data.length > 0) {
+        // Busca correspondência exata normalizada
+        const exactMatch = allPerfis.data.find(
+          (perfil: PerfilMaterial) =>
+            this.normalizeDescription(perfil.descricao_perfil) === normalizedDescription
+        );
+
+        if (exactMatch) {
+          console.log(`✅ Perfil encontrado (match exato normalizado): "${exactMatch.descricao_perfil}"`);
+          return exactMatch;
+        }
+
+        // Buscar correspondência mais próxima entre todos
+        const bestMatch = this.findClosestMatch(normalizedDescription, allPerfis.data);
+        if (bestMatch) {
+          const normalizedBest = this.normalizeDescription(bestMatch.descricao_perfil);
+          const similarity = this.calculateSimilarity(normalizedDescription, normalizedBest);
+          console.log(`🔄 Melhor match encontrado: "${bestMatch.descricao_perfil}" (similaridade: ${(similarity * 100).toFixed(1)}%)`);
+
+          // Se a similaridade for maior que 80%, aceitar como match
+          if (similarity > 0.8) {
+            console.log(`✅ Perfil aceito por alta similaridade`);
+            return bestMatch;
+          }
+        }
+      }
+
+      // Fallback: busca por ILIKE no banco
       const response = await this.searchByDescription(description);
       if (!response.success || !response.data || response.data.length === 0) {
         // Tentar busca com descrição normalizada
         const normalizedResponse = await this.searchByDescription(normalizedDescription);
         if (!normalizedResponse.success || !normalizedResponse.data || normalizedResponse.data.length === 0) {
+          console.log(`❌ Nenhum perfil encontrado para: "${description}"`);
           return null;
         }
         return this.findClosestMatch(normalizedDescription, normalizedResponse.data);
       }
 
-      // Busca correspondência exata primeiro
-      const exactMatch = response.data.find(
-        (perfil: PerfilMaterial) => 
-          this.normalizeDescription(perfil.descricao_perfil) === normalizedDescription
-      );
-
-      if (exactMatch) {
-        return exactMatch;
-      }
-
-      // Buscar correspondência mais próxima
+      // Buscar correspondência mais próxima nos resultados do ILIKE
       return this.findClosestMatch(normalizedDescription, response.data);
     } catch (error) {
       console.error('Erro ao buscar melhor correspondência:', error);
@@ -78,10 +100,15 @@ export class PerfilService {
 
   private normalizeDescription(description: string): string {
     return description
+      .replace(/^perfil\s*/i, '') // Remove prefixo "Perfil " se existir
       .replace(/\s+/g, '') // Remove espaços
-      .replace(/X/gi, 'X') // Padroniza X
-      .replace(/x/g, 'X')
-      .toUpperCase();
+      .replace(/[.,;:'"()[\]{}]/g, '') // Remove pontuação e parênteses
+      .replace(/[°º]/g, '') // Remove símbolos de grau (° e º)
+      .replace(/[×x]/gi, 'X') // Padroniza × e x para X
+      .replace(/-/g, '') // Remove hífens
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // Remove acentos
+      .toUpperCase()
+      .trim();
   }
 
   private findClosestMatch(target: string, profiles: PerfilMaterial[]): PerfilMaterial | null {

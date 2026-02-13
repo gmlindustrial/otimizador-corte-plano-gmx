@@ -105,7 +105,19 @@ export class PDFReportService {
       case 'barra':
         return `${barIndex + 1}`;
       case 'tipo':
-        return bar.type === 'leftover' ? 'Sobra' : 'Nova';
+        // Verificar se usa sobra específica (emenda interna)
+        if (bar.sobraUsada) {
+          return 'Emenda';
+        }
+        // Verificar se tem emenda genérica
+        if (bar.temEmenda || bar.tipo === 'emenda_interna') {
+          return 'Emenda';
+        }
+        // Sobra do estoque
+        if (bar.type === 'leftover') {
+          return 'Sobra Est.';
+        }
+        return 'Nova';
       case 'tag':
         return piece.tag || `P${pieceIndex + 1}`;
       case 'fase':
@@ -127,6 +139,24 @@ export class PDFReportService {
       case 'qc':
         return '';
       case 'obs':
+        // Verificar se a barra usa uma sobra específica (emenda interna)
+        if (bar.sobraUsada) {
+          return `Usa ${bar.sobraUsada}`;  // Ex: "Usa Sobra 1"
+        }
+        // Verificar se a barra tem emenda genérica
+        if (bar.temEmenda || bar.tipo === 'emenda_interna') {
+          return 'Emenda';
+        }
+        // Indicar se veio de sobra do estoque
+        if (bar.type === 'leftover') {
+          return 'Sobra Est.';
+        }
+        // Indicar se a barra gera uma sobra
+        if (bar.geraSobra) {
+          const comprimento = bar.sobraComprimento || bar.waste || 0;
+          const status = bar.sobraUtilizavel ? '✅' : '⚠️';
+          return `${bar.geraSobra} (${comprimento}mm) ${status}`;
+        }
         return '';
       default:
         return '-';
@@ -360,16 +390,30 @@ export class PDFReportService {
         doc.setFontSize(10);
         doc.setFont("helvetica", "bold");
 
-        // Título da barra com indicador NOVA/SOBRA
-        const barType = bar.type === "leftover" ? "SOBRA" : "NOVA";
-        const barTitle = `Barra ${barIndex + 1} - ${barType}`;
+        // Título da barra com indicador NOVA/SOBRA/EMENDA
+        let barType = bar.type === "leftover" ? "SOBRA EST." : "NOVA";
+        if (bar.sobraUsada) {
+          barType = "EMENDA";
+        } else if (bar.temEmenda || bar.tipo === 'emenda_interna') {
+          barType = "EMENDA";
+        }
+        let barTitle = `Barra ${barIndex + 1} - ${barType}`;
+
+        // Adicionar informação de sobra usada ou gerada
+        if (bar.sobraUsada) {
+          barTitle += ` (Usa ${bar.sobraUsada})`;
+        } else if (bar.geraSobra) {
+          const comprimento = bar.sobraComprimento || bar.waste || 0;
+          const status = bar.sobraUtilizavel ? '✅' : '⚠️';
+          barTitle += ` (${bar.geraSobra} ${comprimento}mm ${status})`;
+        }
         doc.text(barTitle, 20, currentY);
 
         // Localização para sobras
         if (bar.type === "leftover" && bar.location) {
           doc.setFontSize(8);
           doc.setFont("helvetica", "normal");
-          doc.text(`Localização: ${bar.location}`, 120, currentY);
+          doc.text(`Localização: ${bar.location}`, 150, currentY);
         }
 
         currentY += 5;
@@ -424,12 +468,16 @@ export class PDFReportService {
           }
 
           doc.text(`${pieceIndex + 1}`, 20, currentY);
-          // Verificar se a peça tem emenda
-          const pecaComEmenda = hasEmendas
+          // Verificar se a peça tem emenda (via banco ou via resultado da otimização)
+          const pecaComEmendaDB = hasEmendas
             ? emendasData.find((e) => e.peca_tag === piece.tag)
             : null;
 
-          const tagText = pecaComEmenda
+          // Também verificar se a barra tem emenda (emendas internas)
+          const barraTemEmenda = bar.temEmenda || bar.tipo === 'emenda_interna' || bar.sobraUsada;
+          const temEmenda = pecaComEmendaDB || barraTemEmenda;
+
+          const tagText = temEmenda
             ? `🔗 ${piece.tag || `P${pieceIndex + 1}`}`
             : `${piece.tag || `P${pieceIndex + 1}`}`;
 
@@ -440,8 +488,17 @@ export class PDFReportService {
           doc.text(piece.perfil || "-", 115, currentY);
           doc.text(piece.cortada ? "OK" : "", 155, currentY);
 
-          // Observação sobre emenda
-          const obsText = pecaComEmenda ? "Emenda" : "";
+          // Observação sobre emenda ou sobra
+          let obsText = "";
+          if (bar.sobraUsada) {
+            obsText = `Usa ${bar.sobraUsada}`;
+          } else if (temEmenda) {
+            obsText = "Emenda";
+          } else if (bar.geraSobra && pieceIndex === 0) {
+            const comprimento = bar.sobraComprimento || bar.waste || 0;
+            const status = bar.sobraUtilizavel ? '✅' : '⚠️';
+            obsText = `${bar.geraSobra} (${comprimento}mm) ${status}`;
+          }
           doc.text(obsText, 175, currentY);
 
           // Indicador de reutilização para sobras

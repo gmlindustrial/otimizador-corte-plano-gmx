@@ -12,6 +12,7 @@ import {
   Package, Tag, Wrench, Printer, Check, Square, Recycle, MapPin, DollarSign, Scissors, AlertTriangle, Power
 } from 'lucide-react';
 import type { OptimizationResult, Project } from '@/pages/Index';
+import { EmendaVisualization } from './EmendaVisualization';
 import { useAuditLogger } from '@/hooks/useAuditLogger';
 import { useLaminaService } from '@/hooks/useLaminaService';
 import { toast } from '@/hooks/use-toast';
@@ -617,6 +618,29 @@ export const FullscreenReportViewer = ({
                             Economia: R$ {(currentBar as any).economySaved.toFixed(2)}
                           </Badge>
                         )}
+
+                        {/* Indicador de sobra gerada */}
+                        {(currentBar as any).geraSobra && (
+                          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-300">
+                            Gera {(currentBar as any).geraSobra}
+                          </Badge>
+                        )}
+
+                        {/* Indicador de sobra usada */}
+                        {(currentBar as any).sobraUsada && (
+                          <Badge variant="default" className="bg-purple-100 text-purple-800">
+                            <Scissors className="w-3 h-3 mr-1" />
+                            Usa {(currentBar as any).sobraUsada}
+                          </Badge>
+                        )}
+
+                        {/* Indicador de emenda */}
+                        {(currentBar as any).temEmenda && (
+                          <Badge variant="default" className="bg-purple-100 text-purple-800">
+                            <Scissors className="w-3 h-3 mr-1" />
+                            EMENDA
+                          </Badge>
+                        )}
                       </div>
                       
                       <div className="flex items-center gap-4 text-sm">
@@ -839,6 +863,21 @@ export const FullscreenReportViewer = ({
                     </div>
                   </CardContent>
                 </Card>
+
+                {/* Seção de Peças com Emenda - mostra detalhes da emenda desta barra */}
+                {(currentBar as any).emendaDetalhes && (
+                  <div className="mt-6">
+                    <h3 className="text-lg font-semibold text-purple-700 mb-4 flex items-center gap-2">
+                      <Scissors className="w-5 h-5" />
+                      Detalhe da Emenda nesta Barra
+                    </h3>
+                    <EmendaVisualization
+                      emenda={(currentBar as any).emendaDetalhes}
+                      barraId={currentBar.id || `Barra ${currentBar.barIndex + 1}`}
+                      index={0}
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>

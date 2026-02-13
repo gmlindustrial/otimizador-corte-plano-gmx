@@ -33,6 +33,12 @@ export interface LinearBarPiece {
   originalIndex?: number;
   /** Status de corte - PADRONIZADO como 'cortada' */
   cortada?: boolean;
+  /** Informacoes da peca original (quando parte de emenda) */
+  pecaOriginal?: {
+    comprimentoTotal: number;
+    tag?: string;
+    posicao?: string;
+  };
 }
 
 /**
@@ -61,6 +67,26 @@ export interface LinearBar {
   informacoesEmenda?: LinearEmendaInfo;
   /** Economia gerada ao usar sobras (R$) */
   economySaved?: number;
+  /** Nome da sobra usada nesta barra (ex: "Sobra 1") */
+  sobraUsada?: string;
+  /** Nome da sobra gerada por esta barra (ex: "Sobra 1") */
+  geraSobra?: string;
+  /** Comprimento da sobra em mm */
+  sobraComprimento?: number;
+  /** Se a sobra pode ser usada para emendas */
+  sobraUtilizavel?: boolean;
+  /** ID da barra que usou a sobra desta barra */
+  sobraUsadaPor?: string;
+  /** Detalhes completos da emenda para visualizacao separada */
+  emendaDetalhes?: {
+    pecaTag?: string;
+    pecaPosicao?: string;
+    comprimentoTotal: number;
+    sobraNome: string;
+    sobraComprimento: number;
+    barraOrigemSobra: string;
+    comprimentoNovaBarra: number;
+  };
 }
 
 /**

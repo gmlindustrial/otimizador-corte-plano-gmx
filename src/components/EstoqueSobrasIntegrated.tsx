@@ -9,7 +9,7 @@ import { useEstoqueSobras } from '@/hooks/useEstoqueSobras';
 import { usePerfilService } from '@/hooks/services/usePerfilService';
 
 export const EstoqueSobrasIntegrated = () => {
-  const { sobras, loading, adicionarSobra, removerSobra } =
+  const { sobras, loading, adicionarSobra, removerSobra, removerSobrasPorPerfil } =
     useEstoqueSobras();
   const { perfis } = usePerfilService();
 
@@ -131,11 +131,12 @@ export const EstoqueSobrasIntegrated = () => {
           ) : (
             <div className="space-y-6">
               {Object.entries(sobrasAgrupadas).map(([perfilNome, sobrasDoGrupo]) => {
-                const sobras = sobrasDoGrupo as any[];
-                const totalSobras = sobras.reduce((acc, sobra) => acc + sobra.quantidade, 0);
-                const perfilInfo = sobras[0]?.tipo_perfil;
-                const kgPorMetro = sobras[0]?.kg_por_metro;
-                
+                const sobrasGrupo = sobrasDoGrupo as any[];
+                const totalSobras = sobrasGrupo.reduce((acc, sobra) => acc + sobra.quantidade, 0);
+                const perfilInfo = sobrasGrupo[0]?.tipo_perfil;
+                const kgPorMetro = sobrasGrupo[0]?.kg_por_metro;
+                const perfilId = sobrasGrupo[0]?.id_perfis_materiais;
+
                 return (
                   <Card key={perfilNome} className="border-l-4 border-l-green-500 shadow-sm">
                     <CardHeader className="pb-3">
@@ -157,19 +158,37 @@ export const EstoqueSobrasIntegrated = () => {
                             )}
                           </div>
                         </div>
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-green-600">
-                            {totalSobras}
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <div className="text-lg font-bold text-green-600">
+                              {totalSobras}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {totalSobras === 1 ? 'sobra' : 'sobras'}
+                            </div>
                           </div>
-                          <div className="text-sm text-gray-500">
-                            {totalSobras === 1 ? 'sobra' : 'sobras'}
-                          </div>
+                          {perfilId && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                if (confirm(`Tem certeza que deseja remover todas as ${totalSobras} sobras do perfil "${perfilNome}"?`)) {
+                                  removerSobrasPorPerfil(perfilId);
+                                }
+                              }}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
+                              title={`Remover todas as sobras de ${perfilNome}`}
+                            >
+                              <Trash2 className="w-4 h-4 mr-1" />
+                              Deletar Perfil
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </CardHeader>
                     <CardContent className="pt-0">
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {sobras.map((sobra) => (
+                        {sobrasGrupo.map((sobra) => (
                           <div
                             key={sobra.id}
                             className="flex items-center justify-between bg-gradient-to-r from-green-50 to-emerald-50 p-3 rounded-lg border border-green-100 hover:shadow-md transition-all duration-200"
