@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Ruler } from 'lucide-react';
 
 interface BarSize {
@@ -23,10 +24,15 @@ export const BarSizeSelector = ({ availableSizes, selectedSize, onSizeChange }: 
   return (
     <Card className="bg-blue-50/50 border-blue-200">
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-blue-800">
-          <Ruler className="w-4 h-4" />
-          Tamanho da Barra
-        </CardTitle>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <CardTitle className="flex items-center gap-2 text-blue-800 cursor-default">
+              <Ruler className="w-4 h-4" />
+              Tamanho da Barra
+            </CardTitle>
+          </TooltipTrigger>
+          <TooltipContent>Comprimento padrão da barra de material para otimização de corte</TooltipContent>
+        </Tooltip>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="space-y-2">

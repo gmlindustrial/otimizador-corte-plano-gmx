@@ -49,7 +49,7 @@ export const ProfileGroupingView = ({ projectId, pieces }: ProfileGroupingViewPr
 
   if (loading) {
     return (
-      <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
+      <Card className="shadow-lg border">
         <CardContent className="p-6">
           <div className="flex items-center justify-center">
             <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-2" />
@@ -62,7 +62,7 @@ export const ProfileGroupingView = ({ projectId, pieces }: ProfileGroupingViewPr
 
   if (groupedProfiles.length === 0) {
     return (
-      <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
+      <Card className="shadow-lg border">
         <CardContent className="p-6">
           <div className="text-center text-gray-500">
             <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -76,7 +76,7 @@ export const ProfileGroupingView = ({ projectId, pieces }: ProfileGroupingViewPr
 
   return (
     <div className="space-y-6">
-      <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
+      <Card className="shadow-lg border">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Package className="w-5 h-5" />
@@ -92,7 +92,7 @@ export const ProfileGroupingView = ({ projectId, pieces }: ProfileGroupingViewPr
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {groupedProfiles.map((group, index) => (
-          <Card key={group.perfil_id || index} className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
+          <Card key={group.perfil_id || index} className="shadow-lg border">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <div>

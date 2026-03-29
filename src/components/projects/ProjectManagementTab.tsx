@@ -342,8 +342,8 @@ export const ProjectManagementTab = ({
 
   if (view === "create") {
     return (
-      <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
-        <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
+      <Card className="shadow-lg border">
+        <CardHeader className="bg-primary text-primary-foreground rounded-t-lg">
           <CardTitle className="flex items-center gap-2">
             <FolderPlus className="w-5 h-5" />
             Criar Novo Projeto

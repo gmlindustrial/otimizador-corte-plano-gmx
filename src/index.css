@@ -2,7 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. */
+/*
+ * Design System — Otimizador de Corte Plano GMX
+ * Dark mode by Leo (UI/UX Consultant)
+ * Base: Neutral Gray hue 220, saturation 5-6%, azul profissional como acento
+ * References: Linear, Figma, Grafana, Material Design 3, Vercel Geist
+ */
 
 @layer base {
   :root {
@@ -37,58 +42,86 @@
     --radius: 0.5rem;
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Semantic colors — light mode */
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 0%;
+    --info: 210 100% 50%;
+    --info-foreground: 0 0% 100%;
   }
 
+  /*
+   * DARK MODE — Leo's Pick
+   * Neutral-blue base (hue 220, sat 5-6%)
+   * 4 elevation levels: L0 7% → L1 10% → L2 13% → L3 16%
+   * Professional blue accent (220 60% 55%)
+   * All text combinations pass WCAG AA (4.5:1)
+   */
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    /* L0 — Page background */
+    --background: 220 6% 7%;
+    /* Primary text — off-white, not pure white (reduces glare) */
+    --foreground: 210 15% 95%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    /* L1 — Cards, panels (3% above background) */
+    --card: 220 5% 10%;
+    --card-foreground: 210 15% 95%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    /* L1.5 — Popovers, dropdowns (slightly above cards) */
+    --popover: 220 5% 12%;
+    --popover-foreground: 210 15% 95%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    /* Blue accent — professional, not vibrant */
+    --primary: 220 60% 55%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    /* L2 — Secondary surfaces, zebra stripes, fields */
+    --secondary: 220 5% 13%;
+    --secondary-foreground: 210 12% 90%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    /* L2 — Muted backgrounds + tertiary text */
+    --muted: 220 5% 13%;
+    --muted-foreground: 215 10% 58%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    /* L3 — Hover, active selection */
+    --accent: 220 5% 16%;
+    --accent-foreground: 210 15% 95%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    /* Red — desaturated for dark mode, 58% L for WCAG AA on card */
+    --destructive: 0 55% 58%;
+    --destructive-foreground: 210 15% 95%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    /* Structural — borders visible but subtle */
+    --border: 220 5% 18%;
+    --input: 220 5% 15%;
+    --ring: 220 60% 55%;
+
+    /* Sidebar — slightly darker than content */
+    --sidebar-background: 220 7% 6%;
+    --sidebar-foreground: 210 12% 90%;
+    --sidebar-primary: 220 60% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 220 5% 12%;
+    --sidebar-accent-foreground: 210 12% 90%;
+    --sidebar-border: 220 5% 14%;
+    --sidebar-ring: 220 60% 55%;
+
+    /* Semantic colors — desaturated for dark mode */
+    --success: 145 50% 48%;
+    --success-foreground: 145 10% 95%;
+    --warning: 35 60% 50%;
+    --warning-foreground: 35 10% 10%;
+    --info: 200 55% 50%;
+    --info-foreground: 200 10% 95%;
   }
 }
 
@@ -100,4 +133,481 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/*
+ * Dark mode overrides for hardcoded Tailwind colors.
+ * These map legacy color classes to design tokens.
+ * TODO: Gradually migrate components to use tokens directly.
+ */
+
+/* --- Backgrounds --- */
+.dark .bg-white,
+.dark .bg-white\/80,
+.dark .bg-white\/90,
+.dark .bg-white\/95,
+.dark .bg-white\/20,
+.dark .bg-white\/10 {
+  background-color: hsl(var(--card)) !important;
+}
+.dark .bg-gray-50,
+.dark .bg-gray-100 {
+  background-color: hsl(var(--muted)) !important;
+}
+.dark .bg-gray-200 {
+  background-color: hsl(220 5% 22%) !important;
+}
+.dark .bg-gray-300 {
+  background-color: hsl(220 5% 28%) !important;
+}
+.dark .bg-gray-400 {
+  background-color: hsl(220 5% 35%) !important;
+}
+
+/* --- Text --- */
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-gray-700 {
+  color: hsl(var(--foreground)) !important;
+}
+.dark .text-gray-600,
+.dark .text-gray-500,
+.dark .text-gray-400,
+.dark .text-gray-300 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* --- Borders --- */
+.dark .border-gray-200,
+.dark .border-gray-300 {
+  border-color: hsl(var(--border)) !important;
+}
+
+/* --- Semantic backgrounds (light colored) --- */
+.dark .bg-blue-50,
+.dark .bg-blue-50\/50,
+.dark .bg-blue-100 {
+  background-color: hsl(var(--secondary)) !important;
+}
+.dark .bg-green-50,
+.dark .bg-green-100 {
+  background-color: hsl(145 50% 42% / 0.1) !important;
+}
+.dark .bg-green-200 {
+  background-color: hsl(145 40% 40% / 0.15) !important;
+}
+.dark .bg-red-50,
+.dark .bg-red-100 {
+  background-color: hsl(0 55% 45% / 0.1) !important;
+}
+.dark .bg-orange-50,
+.dark .bg-orange-100,
+.dark .bg-yellow-50 {
+  background-color: hsl(35 60% 50% / 0.1) !important;
+}
+.dark .bg-orange-200 {
+  background-color: hsl(30 50% 45% / 0.15) !important;
+}
+
+/* --- Semantic text (colored) --- */
+.dark .text-blue-900,
+.dark .text-blue-800,
+.dark .text-blue-700,
+.dark .text-blue-600,
+.dark .text-blue-500 {
+  color: hsl(220 60% 65%) !important;
+}
+.dark .text-blue-100,
+.dark .text-blue-200 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+.dark .text-green-900,
+.dark .text-green-800,
+.dark .text-green-700,
+.dark .text-green-600,
+.dark .text-green-500 {
+  color: hsl(var(--success)) !important;
+}
+.dark .text-red-900,
+.dark .text-red-800,
+.dark .text-red-700,
+.dark .text-red-600,
+.dark .text-red-500 {
+  color: hsl(var(--destructive)) !important;
+}
+.dark .text-orange-800,
+.dark .text-orange-700,
+.dark .text-orange-600,
+.dark .text-orange-500 {
+  color: hsl(var(--warning)) !important;
+}
+
+/* --- Semantic borders (colored) --- */
+.dark .border-blue-200,
+.dark .border-blue-300 {
+  border-color: hsl(220 60% 55% / 0.3) !important;
+}
+.dark .border-green-200,
+.dark .border-green-300 {
+  border-color: hsl(145 50% 42% / 0.3) !important;
+}
+.dark .border-red-200,
+.dark .border-red-300 {
+  border-color: hsl(0 55% 45% / 0.3) !important;
+}
+.dark .border-orange-100,
+.dark .border-orange-200,
+.dark .border-orange-300 {
+  border-color: hsl(35 60% 50% / 0.3) !important;
+}
+.dark .border-green-100,
+.dark .border-green-500,
+.dark .border-green-600 {
+  border-color: hsl(145 50% 42% / 0.3) !important;
+}
+.dark .border-red-500 {
+  border-color: hsl(0 55% 45% / 0.4) !important;
+}
+.dark .border-purple-100,
+.dark .border-purple-200 {
+  border-color: hsl(270 50% 50% / 0.2) !important;
+}
+.dark .border-yellow-200 {
+  border-color: hsl(45 50% 45% / 0.2) !important;
+}
+.dark .border-blue-100,
+.dark .border-blue-600 {
+  border-color: hsl(220 60% 55% / 0.3) !important;
+}
+.dark .border-teal-200,
+.dark .border-teal-600 {
+  border-color: hsl(170 40% 40% / 0.3) !important;
+}
+.dark .border-indigo-600 {
+  border-color: hsl(230 40% 45% / 0.3) !important;
+}
+
+/* --- Purple (KPIs, badges, buttons) --- */
+.dark .text-purple-800,
+.dark .text-purple-700,
+.dark .text-purple-600,
+.dark .text-purple-500 {
+  color: hsl(270 50% 65%) !important;
+}
+.dark .bg-purple-50,
+.dark .bg-purple-100 {
+  background-color: hsl(270 50% 50% / 0.1) !important;
+}
+.dark .bg-purple-600 {
+  background-color: hsl(270 50% 45%) !important;
+}
+.dark .hover\:bg-purple-700:hover {
+  background-color: hsl(270 50% 40%) !important;
+}
+
+/* --- Yellow --- */
+.dark .text-yellow-800,
+.dark .text-yellow-700,
+.dark .text-yellow-600,
+.dark .text-yellow-500 {
+  color: hsl(var(--warning)) !important;
+}
+
+/* --- Violet --- */
+.dark .text-violet-600 {
+  color: hsl(260 50% 65%) !important;
+}
+
+/* --- Slate --- */
+.dark .text-slate-600 {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* --- Teal text light (on colored bg) --- */
+.dark .text-teal-100 {
+  color: hsl(170 30% 90%) !important;
+}
+
+/* --- Hovers --- */
+.dark .hover\:bg-gray-50:hover,
+.dark .hover\:bg-gray-100:hover {
+  background-color: hsl(var(--accent)) !important;
+}
+.dark .hover\:text-red-700:hover {
+  color: hsl(0 55% 58%) !important;
+}
+.dark .hover\:bg-red-50:hover {
+  background-color: hsl(0 55% 45% / 0.1) !important;
+}
+.dark .hover\:bg-blue-100:hover,
+.dark .hover\:bg-blue-200:hover,
+.dark .hover\:bg-blue-50:hover {
+  background-color: hsl(220 40% 40% / 0.15) !important;
+}
+.dark .hover\:bg-green-50:hover {
+  background-color: hsl(145 40% 40% / 0.1) !important;
+}
+.dark .hover\:bg-orange-200:hover,
+.dark .hover\:bg-orange-50:hover {
+  background-color: hsl(30 40% 40% / 0.15) !important;
+}
+.dark .hover\:bg-violet-200:hover {
+  background-color: hsl(260 40% 40% / 0.15) !important;
+}
+.dark .hover\:bg-yellow-200:hover {
+  background-color: hsl(45 40% 40% / 0.15) !important;
+}
+.dark .hover\:text-blue-700:hover,
+.dark .hover\:text-blue-800:hover {
+  color: hsl(220 60% 70%) !important;
+}
+.dark .hover\:text-red-600:hover {
+  color: hsl(0 55% 62%) !important;
+}
+.dark .hover\:text-indigo-600:hover {
+  color: hsl(230 50% 70%) !important;
+}
+.dark .hover\:border-indigo-300:hover {
+  border-color: hsl(230 40% 45% / 0.3) !important;
+}
+.dark .hover\:border-orange-300:hover {
+  border-color: hsl(30 45% 45% / 0.3) !important;
+}
+.dark .hover\:border-red-300:hover {
+  border-color: hsl(0 45% 45% / 0.3) !important;
+}
+.dark .hover\:border-teal-200:hover,
+.dark .hover\:border-teal-300:hover {
+  border-color: hsl(170 40% 40% / 0.3) !important;
+}
+
+/* --- Emerald / Teal (Estoque de Sobras, ProjectDetails) --- */
+.dark .bg-emerald-50,
+.dark .bg-emerald-100 {
+  background-color: hsl(160 40% 40% / 0.1) !important;
+}
+.dark .bg-teal-50,
+.dark .bg-teal-100 {
+  background-color: hsl(170 40% 40% / 0.1) !important;
+}
+.dark .text-emerald-800,
+.dark .text-emerald-700,
+.dark .text-emerald-600 {
+  color: hsl(160 45% 55%) !important;
+}
+.dark .text-teal-800,
+.dark .text-teal-700,
+.dark .text-teal-600 {
+  color: hsl(170 45% 55%) !important;
+}
+.dark .border-emerald-100,
+.dark .border-emerald-200 {
+  border-color: hsl(160 40% 40% / 0.2) !important;
+}
+.dark .border-teal-100,
+.dark .border-teal-300 {
+  border-color: hsl(170 40% 40% / 0.2) !important;
+}
+.dark .hover\:bg-emerald-200:hover {
+  background-color: hsl(160 40% 40% / 0.2) !important;
+}
+.dark .hover\:bg-teal-200:hover,
+.dark .hover\:bg-teal-50:hover {
+  background-color: hsl(170 40% 40% / 0.15) !important;
+}
+
+/* --- Cyan (ProjectDetails, Reports) --- */
+.dark .bg-cyan-50,
+.dark .bg-cyan-100 {
+  background-color: hsl(190 40% 40% / 0.1) !important;
+}
+.dark .text-cyan-800,
+.dark .text-cyan-700,
+.dark .text-cyan-600 {
+  color: hsl(190 50% 55%) !important;
+}
+.dark .border-cyan-100 {
+  border-color: hsl(190 40% 40% / 0.2) !important;
+}
+.dark .hover\:bg-cyan-200:hover {
+  background-color: hsl(190 40% 40% / 0.2) !important;
+}
+
+/* --- Indigo (ProjectDetails, badges) --- */
+.dark .bg-indigo-50,
+.dark .bg-indigo-100 {
+  background-color: hsl(230 40% 45% / 0.1) !important;
+}
+.dark .text-indigo-800,
+.dark .text-indigo-700,
+.dark .text-indigo-600 {
+  color: hsl(230 50% 65%) !important;
+}
+.dark .border-indigo-100,
+.dark .border-indigo-200,
+.dark .border-indigo-300 {
+  border-color: hsl(230 40% 45% / 0.2) !important;
+}
+.dark .hover\:bg-indigo-50:hover,
+.dark .hover\:bg-indigo-100:hover {
+  background-color: hsl(230 40% 45% / 0.15) !important;
+}
+
+/* --- Violet (ProjectDetails status cards) --- */
+.dark .bg-violet-50,
+.dark .bg-violet-100 {
+  background-color: hsl(260 40% 45% / 0.1) !important;
+}
+.dark .border-violet-100 {
+  border-color: hsl(260 40% 45% / 0.2) !important;
+}
+
+/* --- Amber (ProjectDetails, badges) --- */
+.dark .bg-amber-50,
+.dark .bg-amber-100,
+.dark .bg-amber-200 {
+  background-color: hsl(40 45% 45% / 0.1) !important;
+}
+.dark .text-amber-800,
+.dark .text-amber-700,
+.dark .text-amber-600,
+.dark .text-amber-500 {
+  color: hsl(40 55% 60%) !important;
+}
+.dark .border-amber-100,
+.dark .border-amber-200,
+.dark .border-amber-300 {
+  border-color: hsl(40 45% 45% / 0.2) !important;
+}
+.dark .hover\:bg-amber-200:hover {
+  background-color: hsl(40 45% 45% / 0.2) !important;
+}
+
+/* --- Pink (Relatórios, InspetorManagement) --- */
+.dark .bg-pink-50,
+.dark .bg-pink-100 {
+  background-color: hsl(330 40% 45% / 0.1) !important;
+}
+.dark .text-pink-800,
+.dark .text-pink-700,
+.dark .text-pink-600 {
+  color: hsl(330 50% 65%) !important;
+}
+
+/* --- Yellow (Lâminas, badges) --- */
+.dark .bg-yellow-100,
+.dark .bg-yellow-50 {
+  background-color: hsl(45 50% 45% / 0.1) !important;
+}
+.dark .border-yellow-100 {
+  border-color: hsl(45 50% 45% / 0.2) !important;
+}
+
+/* --- Colored gradient headers — desaturated for dark mode --- */
+.dark .from-green-600 {
+  --tw-gradient-from: hsl(145 40% 22%) !important;
+}
+.dark .to-emerald-600,
+.dark .to-emerald-700 {
+  --tw-gradient-to: hsl(160 35% 18%) !important;
+}
+.dark .from-blue-600,
+.dark .from-blue-700 {
+  --tw-gradient-from: hsl(220 45% 25%) !important;
+}
+.dark .to-blue-700,
+.dark .to-blue-800 {
+  --tw-gradient-to: hsl(220 40% 18%) !important;
+}
+.dark .to-indigo-600,
+.dark .to-indigo-700 {
+  --tw-gradient-to: hsl(230 40% 22%) !important;
+}
+.dark .from-indigo-500,
+.dark .from-indigo-600 {
+  --tw-gradient-from: hsl(230 40% 25%) !important;
+}
+.dark .from-purple-600,
+.dark .from-purple-700 {
+  --tw-gradient-from: hsl(270 35% 25%) !important;
+}
+.dark .to-purple-600,
+.dark .to-purple-700 {
+  --tw-gradient-to: hsl(270 30% 20%) !important;
+}
+.dark .via-purple-600 {
+  --tw-gradient-via: hsl(270 35% 23%) !important;
+}
+.dark .from-orange-600 {
+  --tw-gradient-from: hsl(30 40% 25%) !important;
+}
+.dark .to-red-600 {
+  --tw-gradient-to: hsl(0 40% 22%) !important;
+}
+.dark .from-red-600 {
+  --tw-gradient-from: hsl(0 40% 25%) !important;
+}
+.dark .to-pink-600 {
+  --tw-gradient-to: hsl(330 35% 20%) !important;
+}
+.dark .from-cyan-600 {
+  --tw-gradient-from: hsl(190 35% 22%) !important;
+}
+.dark .from-teal-500,
+.dark .from-teal-600 {
+  --tw-gradient-from: hsl(170 35% 22%) !important;
+}
+.dark .to-cyan-500,
+.dark .to-cyan-600 {
+  --tw-gradient-to: hsl(190 30% 18%) !important;
+}
+.dark .from-amber-500,
+.dark .from-amber-600 {
+  --tw-gradient-from: hsl(40 40% 25%) !important;
+}
+.dark .to-amber-600,
+.dark .to-orange-600 {
+  --tw-gradient-to: hsl(30 35% 20%) !important;
+}
+.dark .from-green-500 {
+  --tw-gradient-from: hsl(145 35% 20%) !important;
+}
+.dark .from-blue-500 {
+  --tw-gradient-from: hsl(220 40% 23%) !important;
+}
+/* --- Pastel gradient backgrounds — neutralize for dark --- */
+.dark .from-blue-50,
+.dark .from-green-50,
+.dark .from-emerald-50,
+.dark .from-teal-50,
+.dark .from-cyan-50,
+.dark .from-indigo-50,
+.dark .from-purple-50,
+.dark .from-orange-50,
+.dark .from-amber-50,
+.dark .from-yellow-50,
+.dark .from-violet-50 {
+  --tw-gradient-from: hsl(var(--secondary)) !important;
+}
+.dark .to-indigo-50,
+.dark .to-blue-50,
+.dark .to-green-50,
+.dark .to-emerald-50,
+.dark .to-cyan-50,
+.dark .to-purple-50,
+.dark .to-orange-50,
+.dark .to-amber-50,
+.dark .to-white {
+  --tw-gradient-to: hsl(var(--secondary)) !important;
+}
+
+/* --- Background gradients (page-level) --- */
+.dark .from-slate-50 {
+  --tw-gradient-from: hsl(var(--background)) !important;
+}
+.dark .via-blue-50 {
+  --tw-gradient-via: hsl(var(--background)) !important;
+}
+.dark .to-indigo-100 {
+  --tw-gradient-to: hsl(var(--background)) !important;
 }

@@ -45,7 +45,7 @@ export const EstoqueSobrasIntegrated = () => {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-0">
+      <Card className="bg-card backdrop-blur-sm shadow-lg border">
         <CardHeader className="bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-t-lg">
           <CardTitle className="flex items-center gap-2">
             <Package className="w-5 h-5" /> Estoque de Sobras
@@ -191,13 +191,13 @@ export const EstoqueSobrasIntegrated = () => {
                         {sobrasGrupo.map((sobra) => (
                           <div
                             key={sobra.id}
-                            className="flex items-center justify-between bg-gradient-to-r from-green-50 to-emerald-50 p-3 rounded-lg border border-green-100 hover:shadow-md transition-all duration-200"
+                            className="flex items-center justify-between bg-secondary p-3 rounded-lg border hover:shadow-md transition-all duration-200"
                           >
                             <div className="flex-1">
-                              <div className="font-semibold text-gray-800">
+                              <div className="font-semibold text-foreground">
                                 {sobra.comprimento}mm
                               </div>
-                              <div className="text-sm text-gray-600">
+                              <div className="text-sm text-muted-foreground">
                                 {sobra.quantidade} {sobra.quantidade === 1 ? 'unidade' : 'unidades'}
                               </div>
                             </div>

@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BarChart3, Clock, Users, Scissors, AlertTriangle, TrendingUp, Download, Send, Shield } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { OperationalKPIs } from './dashboard/OperationalKPIs';
 import { EfficiencyReport } from './dashboard/EfficiencyReport';
 import { BladeManagement } from './dashboard/BladeManagement';
@@ -78,88 +79,122 @@ export const Dashboard = ({ history }: DashboardProps) => {
         </CardHeader>
         <CardContent>
           <div className="flex gap-4">
-            <Select value={timeFilter} onValueChange={setTimeFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue />
-              </SelectTrigger>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Select value={timeFilter} onValueChange={setTimeFilter}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue />
+                    </SelectTrigger>
               <SelectContent>
                 <SelectItem value="today">Hoje</SelectItem>
                 <SelectItem value="week">Esta Semana</SelectItem>
                 <SelectItem value="month">Este Mês</SelectItem>
               </SelectContent>
             </Select>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>Filtrar dados por período de tempo</TooltipContent>
+            </Tooltip>
 
-            <Select value={operatorFilter} onValueChange={setOperatorFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Todos os Operadores" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os Operadores</SelectItem>
-                {operadores.filter(op => op.id && op.id.trim() !== '' && op.nome && op.nome.trim() !== '').map(op => (
-                  <SelectItem key={op.id} value={op.nome}>{op.nome}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <Select value={operatorFilter} onValueChange={setOperatorFilter}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Todos os Operadores" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os Operadores</SelectItem>
+                      {operadores.filter(op => op.id && op.id.trim() !== '' && op.nome && op.nome.trim() !== '').map(op => (
+                        <SelectItem key={op.id} value={op.nome}>{op.nome}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>Filtrar dados por operador da máquina</TooltipContent>
+            </Tooltip>
           </div>
         </CardContent>
       </Card>
 
       {/* KPIs Principais */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Peças Cortadas Hoje</p>
-                <p className="text-2xl font-bold text-green-600">{totalPiecesToday}</p>
-                <p className="text-xs text-gray-500">~{tempoEstimadoHoras.toFixed(1)}h estimadas</p>
-              </div>
-              <Scissors className="w-8 h-8 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Card className="cursor-default">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Peças Cortadas Hoje</p>
+                    <p className="text-2xl font-bold text-green-600">{totalPiecesToday}</p>
+                    <p className="text-xs text-muted-foreground">~{tempoEstimadoHoras.toFixed(1)}h estimadas</p>
+                  </div>
+                  <Scissors className="w-8 h-8 text-green-600" />
+                </div>
+              </CardContent>
+            </Card>
+          </TooltipTrigger>
+          <TooltipContent>Total de peças cortadas no dia atual com tempo estimado</TooltipContent>
+        </Tooltip>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Barras Utilizadas</p>
-                <p className="text-2xl font-bold text-blue-600">{totalBarsToday}</p>
-              </div>
-              <BarChart3 className="w-8 h-8 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Card className="cursor-default">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Barras Utilizadas</p>
+                    <p className="text-2xl font-bold text-blue-600">{totalBarsToday}</p>
+                  </div>
+                  <BarChart3 className="w-8 h-8 text-blue-600" />
+                </div>
+              </CardContent>
+            </Card>
+          </TooltipTrigger>
+          <TooltipContent>Quantidade de barras utilizadas nas otimizações de hoje</TooltipContent>
+        </Tooltip>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Eficiência Média</p>
-                <p className="text-2xl font-bold text-orange-600">{avgEfficiency.toFixed(1)}%</p>
-                <p className="text-xs text-gray-500">
-                  Meta: {settings.meta_eficiencia || '85'}%
-                </p>
-              </div>
-              <TrendingUp className="w-8 h-8 text-orange-600" />
-            </div>
-          </CardContent>
-        </Card>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Card className="cursor-default">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Eficiência Média</p>
+                    <p className="text-2xl font-bold text-orange-600">{avgEfficiency.toFixed(1)}%</p>
+                    <p className="text-xs text-muted-foreground">
+                      Meta: {settings.meta_eficiencia || '85'}%
+                    </p>
+                  </div>
+                  <TrendingUp className="w-8 h-8 text-orange-600" />
+                </div>
+              </CardContent>
+            </Card>
+          </TooltipTrigger>
+          <TooltipContent>Percentual médio de aproveitamento do material nas otimizações</TooltipContent>
+        </Tooltip>
 
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Listas Processadas</p>
-                <p className="text-2xl font-bold text-purple-600">{todayHistory.length}</p>
-                <p className="text-xs text-gray-500">
-                  {operadores.length} operadores ativos
-                </p>
-              </div>
-              <Users className="w-8 h-8 text-purple-600" />
-            </div>
-          </CardContent>
-        </Card>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Card className="cursor-default">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Listas Processadas</p>
+                    <p className="text-2xl font-bold text-purple-600">{todayHistory.length}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {operadores.length} operadores ativos
+                    </p>
+                  </div>
+                  <Users className="w-8 h-8 text-purple-600" />
+                </div>
+              </CardContent>
+            </Card>
+          </TooltipTrigger>
+          <TooltipContent>Número de listas de corte processadas hoje</TooltipContent>
+        </Tooltip>
       </div>
 
       {/* Tabs de Relatórios */}

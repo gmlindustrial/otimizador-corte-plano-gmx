@@ -906,7 +906,7 @@ export const ProjectDetailsView = ({
 
   if (loading) {
     return (
-      <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
+      <Card className="bg-card backdrop-blur-sm shadow-lg border">
         <CardContent className="p-6">
           <div className="text-center">Carregando dados do projeto...</div>
         </CardContent>
@@ -915,7 +915,7 @@ export const ProjectDetailsView = ({
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-background">
       {/* Loading overlay durante otimização de chapas */}
       {isOptimizingSheets && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center">
@@ -943,7 +943,7 @@ export const ProjectDetailsView = ({
 
       <div className="container mx-auto px-4 py-8 max-w-7xl space-y-8">
         {/* Header */}
-        <Card className="bg-white/95 backdrop-blur-lg shadow-xl border-0 rounded-2xl overflow-hidden">
+        <Card className="bg-card backdrop-blur-lg shadow-xl border rounded-2xl overflow-hidden">
           <CardHeader className="bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 text-white p-8">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
               <div className="flex flex-col sm:flex-row sm:items-center gap-6">
@@ -996,7 +996,7 @@ export const ProjectDetailsView = ({
         </Card>
 
         {/* Project Info */}
-        <Card className="bg-white/95 backdrop-blur-lg shadow-xl border-0 rounded-2xl">
+        <Card className="bg-card backdrop-blur-lg shadow-xl border rounded-2xl">
           <CardHeader className="pb-6">
             <CardTitle className="flex items-center gap-3 text-xl font-semibold text-gray-800">
               <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg">
@@ -1176,7 +1176,7 @@ export const ProjectDetailsView = ({
           }
           className="space-y-8"
         >
-          <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm p-2 rounded-xl shadow-lg border-0">
+          <TabsList className="grid w-full grid-cols-5 bg-card backdrop-blur-sm p-2 rounded-xl shadow-lg border">
             <TabsTrigger
               value="register"
               className="flex items-center gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-indigo-500 data-[state=active]:to-purple-600 data-[state=active]:text-white rounded-lg transition-all duration-300"
@@ -1231,7 +1231,7 @@ export const ProjectDetailsView = ({
           </TabsList>
 
           <TabsContent value="register">
-            <Card className="bg-white/95 backdrop-blur-lg shadow-xl border-0 rounded-2xl">
+            <Card className="bg-card backdrop-blur-lg shadow-xl border rounded-2xl">
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-xl font-semibold text-gray-800">
                   <div className="p-2 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg">
@@ -1317,7 +1317,7 @@ export const ProjectDetailsView = ({
           </TabsContent>
 
           <TabsContent value="pieces">
-            <Card className="bg-white/95 backdrop-blur-lg shadow-xl border-0 rounded-2xl">
+            <Card className="bg-card backdrop-blur-lg shadow-xl border rounded-2xl">
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-xl font-semibold text-gray-800">
                   <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
@@ -1772,7 +1772,7 @@ export const ProjectDetailsView = ({
           </TabsContent>
 
           <TabsContent value="sheets">
-            <Card className="bg-white/95 backdrop-blur-lg shadow-xl border-0 rounded-2xl">
+            <Card className="bg-card backdrop-blur-lg shadow-xl border rounded-2xl">
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-xl font-semibold text-gray-800">
                   <div className="p-2 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-lg">
@@ -2006,7 +2006,7 @@ export const ProjectDetailsView = ({
           </TabsContent>
 
           <TabsContent value="optimizations">
-            <Card className="bg-white/95 backdrop-blur-lg shadow-xl border-0 rounded-2xl">
+            <Card className="bg-card backdrop-blur-lg shadow-xl border rounded-2xl">
               <CardHeader>
                 <CardTitle className="flex items-center gap-3 text-xl font-semibold text-gray-800">
                   <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg">

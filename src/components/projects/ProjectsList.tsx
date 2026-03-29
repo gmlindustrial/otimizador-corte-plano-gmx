@@ -85,7 +85,7 @@ export const ProjectsList = ({
 
   if (loading) {
     return (
-      <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
+      <Card className="shadow-lg border">
         <CardContent className="p-6">
           <div className="text-center">Carregando projetos...</div>
         </CardContent>
@@ -96,8 +96,8 @@ export const ProjectsList = ({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
-        <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-t-lg">
+      <Card className="shadow-lg border">
+        <CardHeader className="bg-primary text-primary-foreground rounded-t-lg">
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <FolderOpen className="w-5 h-5" />
@@ -107,7 +107,7 @@ export const ProjectsList = ({
               onClick={onCreateNew}
               variant="outline"
               size="sm"
-              className="bg-transparent text-white border-white hover:bg-white hover:text-blue-600"
+              className="bg-transparent text-primary-foreground border-primary-foreground/50 hover:bg-primary-foreground hover:text-primary"
             >
               Novo Projeto
             </Button>
@@ -115,7 +115,7 @@ export const ProjectsList = ({
         </CardHeader>
         <CardContent className="p-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
             <Input
               placeholder="Buscar por nome, número, cliente ou obra..."
               value={searchTerm}
@@ -128,10 +128,10 @@ export const ProjectsList = ({
 
       {/* Projects Grid */}
       {filteredProjects.length === 0 ? (
-        <Card className="bg-white/90 backdrop-blur-sm shadow-lg border-0">
+        <Card className="shadow-lg border">
           <CardContent className="p-8 text-center">
-            <FolderOpen className="w-16 h-16 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-600">
+            <FolderOpen className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">
               {searchTerm ? 'Nenhum projeto encontrado' : 'Nenhum projeto cadastrado'}
             </p>
             {!searchTerm && (
@@ -146,7 +146,7 @@ export const ProjectsList = ({
           {filteredProjects.map((project) => (
             <Card 
               key={project.id}
-              className="bg-white/90 backdrop-blur-sm shadow-lg border-0 hover:shadow-xl transition-shadow cursor-pointer"
+              className="shadow-lg border hover:shadow-xl transition-shadow cursor-pointer"
             >
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
@@ -160,7 +160,7 @@ export const ProjectsList = ({
               </CardHeader>
               
               <CardContent className="pt-0">
-                <div className="space-y-2 text-sm text-gray-600 mb-4">
+                <div className="space-y-2 text-sm text-muted-foreground mb-4">
                   <div className="flex items-center gap-2">
                     <User className="w-4 h-4" />
                     <span>{project.clientes?.nome || 'Cliente não definido'}</span>

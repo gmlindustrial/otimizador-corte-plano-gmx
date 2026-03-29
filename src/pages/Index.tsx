@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { Header } from "@/components/Header";
+import { AppSidebar } from "@/components/AppSidebar";
 import { Dashboard } from "@/components/Dashboard";
-import { HistoryPanel } from "@/components/HistoryPanel";
 import { EstoqueSobrasIntegrated } from "@/components/EstoqueSobrasIntegrated";
 import { CadastroManagerIntegrated } from "@/components/CadastroManagerIntegrated";
 import { SheetCuttingSettings } from "@/components/settings/SheetCuttingSettings";
@@ -12,22 +12,9 @@ import { LinearCuttingTab } from "@/components/optimization/LinearCuttingTab";
 import { SheetCuttingTab } from "@/components/optimization/SheetCuttingTab";
 import { ProjectManagementTab } from "@/components/projects/ProjectManagementTab";
 import { Laminas } from "./Laminas";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  BarChart3,
-  Calculator,
-  History,
-  Settings,
-  Package,
-  Square,
-  FileText,
-  Shield,
-  Folder,
-  Scissors,
-} from "lucide-react";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { supabase } from "@/integrations/supabase/client";
 import AdminUsuarios from "./AdminUsuarios";
-import { cn } from "@/lib/utils";
 import { BottomLeftFillOptimizer } from "@/algorithms/sheet/BottomLeftFill";
 import { useOptimizationHistoryPersistent } from "@/hooks/useOptimizationHistoryPersistent";
 import { useLinearProjects } from "@/hooks/useLinearProjects";
@@ -47,7 +34,7 @@ export interface CutPiece {
   tag?: string;
   posicao?: string;
   fase?: string;
-  conjunto?: string; // Alias para fase (compatibilidade com import AutoCAD)
+  conjunto?: string;
   perfil?: string;
   material?: string;
   peso?: number;
@@ -96,14 +83,12 @@ export interface Project {
 
 const Index = () => {
   useAuthGuard();
-  const [activeTab, setActiveTab] = useState("projects");
+  const [activeSection, setActiveSection] = useState("projects");
   const [isAdmin, setIsAdmin] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
-  // Get materials data from useSupabaseData
   const { materiaisBarras, materiaisChapas } = useSupabaseData();
 
-  // Linear cutting optimization with persistent projects
   const { savedProjects: savedLinearProjects, saveProject: saveLinearProject } =
     useLinearProjects();
   const {
@@ -120,14 +105,12 @@ const Index = () => {
     handleOptimize,
   } = useLinearOptimization();
 
-  // Optimization history - now persistent
   const {
     optimizationHistory,
     addToHistory,
     loading: historyLoading,
   } = useOptimizationHistoryPersistent();
 
-  // Sheet cutting with persistent projects
   const { savedProjects: savedSheetProjects, saveProject: saveSheetProject } =
     useSheetProjects();
   const [sheetProject, setSheetProject] = useState<SheetProject | null>(null);
@@ -155,7 +138,6 @@ const Index = () => {
   }, []);
 
   const handleLinearOptimize = async (customBarSize?: number) => {
-    // Se um tamanho personalizado foi fornecido, usar ele temporariamente
     const originalBarLength = barLength;
     if (customBarSize) {
       setBarLength(customBarSize);
@@ -163,20 +145,16 @@ const Index = () => {
 
     const result = await handleOptimize(selectedPerfilId);
 
-    // Save project and add to history if project exists
     if (project && pieces.length > 0 && result) {
       try {
-        // Use the custom bar size or the current bar length
         const usedBarLength = customBarSize || barLength;
         await addToHistory(project, pieces, result, usedBarLength, selectedPerfilId);
-
         console.log("Projeto salvo com sucesso no Supabase");
       } catch (error) {
         console.error("Erro ao salvar projeto/histórico:", error);
       }
     }
 
-    // Restaurar o tamanho original se foi alterado
     if (customBarSize && customBarSize !== originalBarLength) {
       setBarLength(originalBarLength);
     }
@@ -194,7 +172,6 @@ const Index = () => {
     const optimizationResult = optimizer.optimize(sheetPieces);
     setSheetResults(optimizationResult);
 
-    // Save sheet project
     try {
       await saveSheetProject({ project: sheetProject, pieces: sheetPieces });
       console.log("Projeto de chapas salvo com sucesso");
@@ -209,37 +186,32 @@ const Index = () => {
     });
   };
 
-  // Handlers para carregar projetos salvos
   const handleLoadLinearProject = (projectData: any) => {
     setProject(projectData.project);
     setPieces(projectData.pieces);
     setBarLength(projectData.barLength);
-    setActiveTab("optimize");
+    setActiveSection("optimize");
   };
 
   const handleLoadSheetProject = (projectData: any) => {
     setSheetProject(projectData.project);
     setSheetPieces(projectData.pieces);
-    setActiveTab("sheet-cutting");
+    setActiveSection("sheet-cutting");
   };
 
-  // Helper function to find material info
   const findMaterialInfo = (materialId: string | undefined) => {
     if (!materialId) return { id: undefined, tipo: undefined };
 
-    // Check if materialId is already a valid UUID (from project data)
     const isUUID =
       /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
         materialId
       );
 
     if (isUUID) {
-      // If it's a UUID, find the material type by ID
       const allMaterials = [...materiaisBarras, ...materiaisChapas];
       const material = allMaterials.find((m) => m.id === materialId);
       return { id: materialId, tipo: material?.tipo };
     } else {
-      // If it's a material type string, find the ID
       const allMaterials = [...materiaisBarras, ...materiaisChapas];
       const material = allMaterials.find((m) => m.tipo === materialId);
       return { id: material?.id, tipo: material?.tipo };
@@ -248,116 +220,79 @@ const Index = () => {
 
   const materialInfo = findMaterialInfo(project?.tipoMaterial);
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <Header />
-
-      <div className="container mx-auto px-4 py-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList
-            className={cn(
-              "grid w-full mb-6",
-              isAdmin ? "grid-cols-8" : "grid-cols-7"
-            )}
-          >
-            <TabsTrigger value="dashboard" className="flex items-center gap-2">
-              <BarChart3 className="w-4 h-4" />
-              Dashboard
-            </TabsTrigger>
-            <TabsTrigger value="projects" className="flex items-center gap-2">
-              <Folder className="w-4 h-4" />
-              Projetos
-            </TabsTrigger>
-            <TabsTrigger value="sobras" className="flex items-center gap-2">
-              <Package className="w-4 h-4" />
-              Estoque
-            </TabsTrigger>
-            <TabsTrigger value="reports" className="flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Relatórios
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              Configurações
-            </TabsTrigger>
-            <TabsTrigger value="laminas" className="flex items-center gap-2">
-              <Scissors className="w-4 h-4" />
-              Lâminas
-            </TabsTrigger>
-            {isAdmin && (
-              <TabsTrigger value="admin" className="flex items-center gap-2">
-                <Shield className="w-4 h-4" />
-                Administrador
-              </TabsTrigger>
-            )}
-          </TabsList>
-
-          <TabsContent value="laminas">
-            <Laminas />
-          </TabsContent>
-
-          <TabsContent value="dashboard">
-            <Dashboard history={optimizationHistory} />
-          </TabsContent>
-
-          <TabsContent value="optimize">
-            <LinearCuttingTab
-              project={project}
-              setProject={setProject}
-              barLength={barLength}
-              setBarLength={setBarLength}
-              pieces={pieces}
-              setPieces={setPieces}
-              results={results}
-              onOptimize={handleLinearOptimize}
-            />
-          </TabsContent>
-
-          <TabsContent value="sheet-cutting">
-            <SheetCuttingTab
-              sheetProject={sheetProject}
-              setSheetProject={setSheetProject}
-              sheetPieces={sheetPieces}
-              setSheetPieces={setSheetPieces}
-              sheetResults={sheetResults}
-              onOptimize={handleSheetOptimize}
-            />
-          </TabsContent>
-
-          <TabsContent value="projects">
-            <ProjectManagementTab 
-              onNavigateToProfileManagement={() => setActiveTab("settings")}
-            />
-          </TabsContent>
-
-          <TabsContent value="sobras">
-            <EstoqueSobrasIntegrated />
-          </TabsContent>
-
-
-          <TabsContent value="reports">
-            <ReportsManager optimizationHistory={optimizationHistory} />
-          </TabsContent>
-
-          <TabsContent value="settings" className="space-y-6">
+  const renderContent = () => {
+    switch (activeSection) {
+      case "dashboard":
+        return <Dashboard history={optimizationHistory} />;
+      case "projects":
+        return (
+          <ProjectManagementTab
+            onNavigateToProfileManagement={() => setActiveSection("settings")}
+          />
+        );
+      case "optimize":
+        return (
+          <LinearCuttingTab
+            project={project}
+            setProject={setProject}
+            barLength={barLength}
+            setBarLength={setBarLength}
+            pieces={pieces}
+            setPieces={setPieces}
+            results={results}
+            onOptimize={handleLinearOptimize}
+          />
+        );
+      case "sheet-cutting":
+        return (
+          <SheetCuttingTab
+            sheetProject={sheetProject}
+            setSheetProject={setSheetProject}
+            sheetPieces={sheetPieces}
+            setSheetPieces={setSheetPieces}
+            sheetResults={sheetResults}
+            onOptimize={handleSheetOptimize}
+          />
+        );
+      case "sobras":
+        return <EstoqueSobrasIntegrated />;
+      case "reports":
+        return <ReportsManager optimizationHistory={optimizationHistory} />;
+      case "settings":
+        return (
+          <div className="space-y-6">
             <CadastroManagerIntegrated
               onUpdateData={() => {
                 console.log("Dados atualizados - recarregando listas...");
               }}
             />
-
             <BarCuttingSettings />
-
             <SheetCuttingSettings />
-          </TabsContent>
-          {isAdmin && (
-            <TabsContent value="admin">
-              <AdminUsuarios />
-            </TabsContent>
-          )}
-        </Tabs>
-      </div>
-    </div>
+          </div>
+        );
+      case "laminas":
+        return <Laminas />;
+      case "admin":
+        return isAdmin ? <AdminUsuarios /> : null;
+      default:
+        return <ProjectManagementTab onNavigateToProfileManagement={() => setActiveSection("settings")} />;
+    }
+  };
+
+  return (
+    <SidebarProvider>
+      <AppSidebar
+        activeSection={activeSection}
+        onSectionChange={setActiveSection}
+        isAdmin={isAdmin}
+      />
+      <SidebarInset>
+        <Header />
+        <div className="flex-1 p-4 md:p-6">
+          {renderContent()}
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 };
 
