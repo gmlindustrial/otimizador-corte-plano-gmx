@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Project, CutPiece, OptimizationResult } from '@/pages/Index';
 import { BestFitOptimizer } from '@/algorithms/linear/BestFitOptimizer';
 import { BundleOptimizer } from '@/algorithms/linear/BundleOptimizer';
+import { MultiLengthOptimizer } from '@/algorithms/linear/MultiLengthOptimizer';
 import { PreAnalyzer } from '@/algorithms/linear/PreAnalyzer';
 import { useEstoqueSobras } from '@/hooks/useEstoqueSobras';
 import { usePerfilService } from '@/hooks/services/usePerfilService';
@@ -104,8 +105,9 @@ export const useAdvancedLinearOptimization = () => {
   /**
    * Executar otimização avançada
    * @param bundleEnabled - Se true, usa BundleOptimizer para agrupar por perfil
+   * @param availableBarLengths - Se fornecido com >1 tamanho, usa MultiLengthOptimizer (G8)
    */
-  const runAdvancedOptimization = async (bundleEnabled: boolean = false) => {
+  const runAdvancedOptimization = async (bundleEnabled: boolean = false, availableBarLengths?: number[]) => {
     if (pieces.length === 0) {
       toast.error('Adicione peças antes de otimizar');
       return null;
@@ -314,8 +316,19 @@ export const useAdvancedLinearOptimization = () => {
       }
 
       // === OTIMIZAÇÃO INDIVIDUAL (padrão) ===
-      const optimizer = new BestFitOptimizer(cutLoss);
-      const optimizationResult = await optimizer.optimize(expandedPieces, barLength, sobras);
+      // G8: Se múltiplos tamanhos disponíveis, usar MultiLengthOptimizer
+      let optimizationResult;
+      if (availableBarLengths && availableBarLengths.length > 1) {
+        console.log('=== MODO MULTI-COMPRIMENTO (G8) ===');
+        const multiOptimizer = new MultiLengthOptimizer(cutLoss);
+        const multiResult = await multiOptimizer.optimize(expandedPieces, availableBarLengths, sobras);
+        optimizationResult = multiResult;
+        console.log(`Melhor tamanho: ${multiResult.bestBarLength}mm`);
+        console.log('Comparação:', multiResult.comparison.map(c => `${c.barLength}mm: ${c.efficiency.toFixed(1)}%`).join(', '));
+      } else {
+        const optimizer = new BestFitOptimizer(cutLoss);
+        optimizationResult = await optimizer.optimize(expandedPieces, barLength, sobras);
+      }
 
       console.log('Estratégia utilizada:', optimizationResult.strategy);
       console.log('Barras geradas:', optimizationResult.bars.length);

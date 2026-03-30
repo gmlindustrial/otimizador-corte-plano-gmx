@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { MaterialInput } from '@/components/MaterialInput';
 import { OptimizationResults } from '@/components/OptimizationResults';
 import { OptimizationAnalysis } from './OptimizationAnalysis';
@@ -9,6 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { CuttingWorkflow } from './CuttingWorkflow';
+import { PreCutInspection } from './PreCutInspection';
+import { CuttingIncidentReport } from './CuttingIncidentReport';
 import { Layers, Info } from 'lucide-react';
 import type { Project, CutPiece, OptimizationResult } from '@/pages/Index';
 
@@ -50,6 +53,21 @@ export const LinearCuttingTab = ({
   } = useAdvancedLinearOptimization();
 
   const [bundleEnabled, setBundleEnabled] = useState(false);
+  const [availableBarLengths, setAvailableBarLengths] = useState<number[]>([]);
+
+  // Buscar tamanhos de barra disponíveis (G8: multi-comprimento)
+  useEffect(() => {
+    const fetchBarLengths = async () => {
+      const { data } = await supabase
+        .from('tamanhos_barras')
+        .select('comprimento')
+        .order('comprimento', { ascending: true });
+      if (data && data.length > 0) {
+        setAvailableBarLengths(data.map(d => d.comprimento));
+      }
+    };
+    fetchBarLengths();
+  }, []);
 
   // Sincronizar com props legadas para compatibilidade
   React.useEffect(() => {
@@ -70,7 +88,7 @@ export const LinearCuttingTab = ({
         project={legacyProject}
         pieces={legacyPieces}
         setPieces={setLegacyPieces}
-        onOptimize={() => runAdvancedOptimization(bundleEnabled)}
+        onOptimize={() => runAdvancedOptimization(bundleEnabled, availableBarLengths.length > 1 ? availableBarLengths : undefined)}
       />
 
       {/* Toggle Amarrado */}
@@ -123,7 +141,7 @@ export const LinearCuttingTab = ({
         isAnalyzing={isAnalyzing}
         isOptimizing={isOptimizing}
         onRunAnalysis={runPreAnalysis}
-        onRunOptimization={() => runAdvancedOptimization(bundleEnabled)}
+        onRunOptimization={() => runAdvancedOptimization(bundleEnabled, availableBarLengths.length > 1 ? availableBarLengths : undefined)}
         piecesCount={pieces.length}
       />
 
@@ -167,6 +185,15 @@ export const LinearCuttingTab = ({
         </Card>
       )}
 
+      {/* Inspeção Pré-Corte (G14) */}
+      {results && (
+        <PreCutInspection
+          onApproved={() => console.log('Material aprovado para corte')}
+          onRejected={(reason) => console.log('Material reprovado:', reason)}
+          materialInfo={project?.tipoMaterial}
+        />
+      )}
+
       {/* Resultados - apenas barras de corte */}
       {results && (
         <OptimizationResults
@@ -196,6 +223,11 @@ export const LinearCuttingTab = ({
           bars={results.bars as any}
           barLength={barLength}
         />
+      )}
+
+      {/* Registro de Ocorrências (G11) */}
+      {results && (
+        <CuttingIncidentReport />
       )}
     </div>
   );
