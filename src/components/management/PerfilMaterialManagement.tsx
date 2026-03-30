@@ -18,7 +18,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Package, Plus, Edit, Trash2, Search, ChevronLeft, ChevronRight } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Package, Plus, Edit, Trash2, Search, ChevronLeft, ChevronRight, Layers } from "lucide-react";
 import { usePerfilService } from "@/hooks/services/usePerfilService";
 import { DeleteConfirmDialog } from "./DeleteConfirmDialog";
 import type { PerfilMaterial } from "@/types/project";
@@ -38,6 +39,7 @@ export const PerfilMaterialManagement = () => {
     tipo_perfil: "",
     descricao_perfil: "",
     kg_por_metro: 0,
+    max_barras_amarrado: 1,
   });
 
   useEffect(() => {
@@ -79,6 +81,7 @@ export const PerfilMaterialManagement = () => {
       tipo_perfil: perfil.tipo_perfil,
       descricao_perfil: perfil.descricao_perfil,
       kg_por_metro: Number(perfil.kg_por_metro),
+      max_barras_amarrado: perfil.max_barras_amarrado ?? 1,
     });
     setDialogOpen(true);
   };
@@ -102,6 +105,7 @@ export const PerfilMaterialManagement = () => {
       tipo_perfil: "",
       descricao_perfil: "",
       kg_por_metro: 0,
+      max_barras_amarrado: 1,
     });
   };
 
@@ -180,6 +184,31 @@ export const PerfilMaterialManagement = () => {
                       required
                     />
                   </div>
+                  <div>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Label htmlFor="max_barras_amarrado" className="flex items-center gap-1 cursor-default">
+                          <Layers className="w-3.5 h-3.5" />
+                          Máx. Barras por Amarrado
+                        </Label>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Quantidade máxima de barras cortadas simultaneamente na serra fita. Use 1 para corte individual.
+                      </TooltipContent>
+                    </Tooltip>
+                    <Input
+                      id="max_barras_amarrado"
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={formData.max_barras_amarrado}
+                      onChange={(e) => setFormData(prev => ({ ...prev, max_barras_amarrado: Math.max(1, Math.min(20, Number(e.target.value))) }))}
+                      placeholder="1"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {formData.max_barras_amarrado === 1 ? 'Corte individual' : `Amarrado de ${formData.max_barras_amarrado} barras`}
+                    </p>
+                  </div>
                   <div className="flex gap-2 pt-4">
                     <Button type="button" variant="outline" onClick={handleDialogClose} className="flex-1">
                       Cancelar
@@ -199,7 +228,8 @@ export const PerfilMaterialManagement = () => {
                 <TableRow>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Descrição</TableHead>
-                  <TableHead>Peso por Metro (kg/m)</TableHead>
+                  <TableHead>Peso (kg/m)</TableHead>
+                  <TableHead>Amarrado</TableHead>
                   <TableHead>Data de Criação</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
@@ -207,13 +237,13 @@ export const PerfilMaterialManagement = () => {
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8">
+                    <TableCell colSpan={6} className="text-center py-8">
                       Carregando perfis...
                     </TableCell>
                   </TableRow>
                 ) : currentPerfis.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                       {searchTerm ? "Nenhum perfil encontrado" : "Nenhum perfil cadastrado"}
                     </TableCell>
                   </TableRow>
@@ -223,6 +253,16 @@ export const PerfilMaterialManagement = () => {
                       <TableCell className="font-medium">{perfil.tipo_perfil}</TableCell>
                       <TableCell>{perfil.descricao_perfil}</TableCell>
                       <TableCell>{Number(perfil.kg_por_metro).toFixed(2)} kg/m</TableCell>
+                      <TableCell>
+                        {(perfil.max_barras_amarrado ?? 1) > 1 ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                            <Layers className="w-3 h-3" />
+                            ×{perfil.max_barras_amarrado}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Individual</span>
+                        )}
+                      </TableCell>
                       <TableCell>
                         {new Date(perfil.created_at).toLocaleDateString('pt-BR')}
                       </TableCell>

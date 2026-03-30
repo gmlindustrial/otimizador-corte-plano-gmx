@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import type { Project, CutPiece, OptimizationResult } from '@/pages/Index';
 import { BestFitOptimizer } from '@/algorithms/linear/BestFitOptimizer';
+import { BundleOptimizer } from '@/algorithms/linear/BundleOptimizer';
 import { PreAnalyzer } from '@/algorithms/linear/PreAnalyzer';
 import { useEstoqueSobras } from '@/hooks/useEstoqueSobras';
+import { usePerfilService } from '@/hooks/services/usePerfilService';
 import { toast } from 'sonner';
+import type { BundleOptimizationResult } from '@/types/bundle';
 
 // Interface para resultados de análise prévia
 interface PreAnalysisResult {
@@ -61,8 +64,10 @@ export const useAdvancedLinearOptimization = () => {
   const [preAnalysis, setPreAnalysis] = useState<PreAnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
+  const [bundleResults, setBundleResults] = useState<BundleOptimizationResult | null>(null);
 
   const { sobras, usarSobra, adicionarSobra } = useEstoqueSobras();
+  const { perfis } = usePerfilService();
 
   /**
    * Executar análise prévia das peças
@@ -98,8 +103,9 @@ export const useAdvancedLinearOptimization = () => {
 
   /**
    * Executar otimização avançada
+   * @param bundleEnabled - Se true, usa BundleOptimizer para agrupar por perfil
    */
-  const runAdvancedOptimization = async () => {
+  const runAdvancedOptimization = async (bundleEnabled: boolean = false) => {
     if (pieces.length === 0) {
       toast.error('Adicione peças antes de otimizar');
       return null;
@@ -157,7 +163,125 @@ export const useAdvancedLinearOptimization = () => {
       const barConfig = savedConfig ? JSON.parse(savedConfig) : {};
       const cutLoss = barConfig.cutLoss ?? 3;
 
-      // Executar otimização com algoritmo avançado
+      // === OTIMIZAÇÃO POR AMARRADO ===
+      if (bundleEnabled) {
+        console.log('=== MODO AMARRADO ATIVADO ===');
+
+        // Construir profileLookup a partir dos perfis do banco
+        const profileLookup = new Map<string, { maxBarsPerBundle: number; description: string; type: string; kgPerMeter: number }>();
+        for (const perfil of perfis) {
+          profileLookup.set(perfil.id, {
+            maxBarsPerBundle: perfil.max_barras_amarrado ?? 1,
+            description: perfil.descricao_perfil,
+            type: perfil.tipo_perfil,
+            kgPerMeter: perfil.kg_por_metro,
+          });
+        }
+
+        // Converter CutPiece[] para LinearInputPiece[]
+        const inputPieces = pieces.map(p => ({
+          id: p.id,
+          length: p.length,
+          quantity: p.quantity,
+          tag: (p as any).tag,
+          posicao: (p as any).posicao,
+          fase: (p as any).fase,
+          perfil: (p as any).perfil,
+          peso: (p as any).peso,
+          perfilId: (p as any).perfilId,
+        }));
+
+        const bundleOptimizer = new BundleOptimizer({
+          barLength,
+          cutLoss,
+          kerfFactor: 1.2,
+          costPerBar: 50,
+          setupTimePerCut: 2.5,
+        });
+
+        const bundleResult = await bundleOptimizer.optimize(inputPieces, profileLookup);
+        setBundleResults(bundleResult);
+
+        // Converter bundle results para formato compatível com a UI existente
+        const allBars = [
+          ...bundleResult.bundles.flatMap(b => {
+            // Cada amarrado gera bundleSize barras idênticas, mas mostramos 1 com badge ×N
+            return [{
+              id: b.bundleId,
+              pieces: b.pattern.pieces.map((p, idx) => ({
+                length: p.length,
+                color: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'][idx % 5],
+                label: p.tag || `${p.length}mm`,
+                tag: p.tag,
+                fase: p.fase,
+                perfil: p.profileDescription,
+                peso: p.peso,
+                posicao: p.posicao,
+              })),
+              waste: b.pattern.wastePerBar,
+              totalUsed: b.pattern.totalUsed,
+              // Metadados extras para visualização de amarrado
+              _bundleSize: b.bundleSize,
+              _bundleId: b.bundleId,
+              _profileDescription: b.profileDescription,
+            }];
+          }),
+          ...bundleResult.individualBars.map(bar => ({
+            id: bar.id,
+            pieces: bar.pieces.map((p, idx) => ({
+              length: p.length,
+              color: ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'][idx % 5],
+              label: p.tag || `${p.length}mm`,
+              tag: p.tag,
+              fase: p.fase,
+              perfil: p.perfil,
+              peso: p.peso,
+              posicao: p.posicao,
+            })),
+            waste: bar.waste,
+            totalUsed: bar.totalUsed,
+          })),
+        ];
+
+        const result: AdvancedOptimizationResult = {
+          bars: allBars,
+          totalBars: bundleResult.summary.totalBars,
+          totalWaste: bundleResult.summary.totalWaste,
+          wastePercentage: 100 - bundleResult.summary.averageEfficiency,
+          efficiency: bundleResult.summary.averageEfficiency,
+          cuttableBars: allBars.map(bar => ({
+            id: bar.id,
+            type: 'new' as const,
+            pieces: bar.pieces,
+            waste: bar.waste,
+            totalUsed: bar.totalUsed,
+            originalLength: barLength,
+          })),
+          sustainability: {
+            leftoverBarsUsed: 0,
+            newBarsUsed: bundleResult.summary.totalBars,
+            materialReused: 0,
+            totalEconomy: bundleResult.summary.totalCostSaving,
+            wasteReduction: 0,
+            autoRegisteredWastes: 0,
+          },
+          strategy: 'bundle',
+          preAnalysis: analysis,
+        };
+
+        setResults(result);
+
+        toast.success(
+          `Otimização por amarrado concluída! ` +
+          `${bundleResult.summary.totalBundles} amarrado(s), ` +
+          `${bundleResult.individualBars.length} barra(s) individual(is), ` +
+          `${bundleResult.summary.averageEfficiency.toFixed(1)}% eficiência`
+        );
+
+        return result;
+      }
+
+      // === OTIMIZAÇÃO INDIVIDUAL (padrão) ===
       const optimizer = new BestFitOptimizer(cutLoss);
       const optimizationResult = await optimizer.optimize(expandedPieces, barLength, sobras);
 
@@ -166,7 +290,7 @@ export const useAdvancedLinearOptimization = () => {
 
       // Filtrar barras vazias e que precisam ser cortadas
       const validBars = optimizationResult.bars.filter(bar => bar.pieces.length > 0);
-      const cuttableBars = validBars.filter(bar => 
+      const cuttableBars = validBars.filter(bar =>
         bar.pieces.length > 1 || bar.pieces[0]?.length < bar.originalLength - 100
       );
 
@@ -304,11 +428,12 @@ export const useAdvancedLinearOptimization = () => {
     results,
     setResults,
     preAnalysis,
-    
+    bundleResults,
+
     // Flags de carregamento
     isAnalyzing,
     isOptimizing,
-    
+
     // Métodos
     runPreAnalysis,
     runAdvancedOptimization,

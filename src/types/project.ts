@@ -4,6 +4,8 @@ export interface PerfilMaterial {
   kg_por_metro: number;
   tipo_perfil: string;
   created_at: string;
+  /** Máximo de barras cortadas simultaneamente na serra (amarrado). Default: 1 */
+  max_barras_amarrado?: number;
 }
 
 export interface ProjetoPeca {
