@@ -5,7 +5,6 @@ import {
   OptimizationHistoryService,
   type OptimizationHistoryEntry,
 } from "@/services/OptimizationHistoryService";
-import { WasteStockService } from "@/services/WasteStockService";
 import { useOptimizationStats } from "./useOptimizationStats";
 
 export const useOptimizationHistoryPersistent = () => {

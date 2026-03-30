@@ -31,6 +31,12 @@ export interface LinearBarPiece {
   peso?: number;
   /** Indice original na lista de entrada */
   originalIndex?: number;
+  /** ID do amarrado (agrupa N pecas cortadas simultaneamente) */
+  bundleId?: string;
+  /** Posicao desta peca no amarrado (1 de N) */
+  bundleSequence?: number;
+  /** Total de pecas no amarrado */
+  bundleTotal?: number;
   /** Status de corte - PADRONIZADO como 'cortada' */
   cortada?: boolean;
   /** Informacoes da peca original (quando parte de emenda) */

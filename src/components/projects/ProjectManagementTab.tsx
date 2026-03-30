@@ -18,7 +18,6 @@ import type { ProjetoPeca, ProjectPieceValidation, EmendaConfiguration } from "@
 import { runLinearOptimizationWithLeftovers } from "@/lib/runLinearOptimization";
 import { BestFitOptimizer } from "@/algorithms/linear/BestFitOptimizer";
 import { estoqueSobrasService } from "@/services/entities/EstoqueSobrasService";
-import { WasteStockService } from "@/services/WasteStockService";
 import { toast } from "sonner";
 
 interface Projeto {

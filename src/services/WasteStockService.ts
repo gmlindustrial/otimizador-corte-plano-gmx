@@ -1,4 +1,8 @@
-
+/**
+ * WasteStockService — Será estendido com addBundleWaste() para amarrados.
+ * O método addWasteToStock() abaixo não é chamado atualmente (o fluxo usa
+ * adicionarSobra() de useEstoqueSobras). Mantido para futura extensão com bundles.
+ */
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import type { LinearOptimizationWithLeftoversResult } from '@/lib/runLinearOptimization';

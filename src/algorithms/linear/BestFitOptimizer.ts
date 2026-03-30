@@ -15,6 +15,9 @@ interface Piece {
   posicao?: string;
   perfilId?: string;
   originalIndex: number;
+  bundleId?: string;
+  bundleSequence?: number;
+  bundleTotal?: number;
 }
 
 // Re-exportar Bar como alias para LinearBar para compatibilidade
@@ -59,6 +62,13 @@ export class BestFitOptimizer {
       // Caso contrário, usar EmendaOptimizer com sobras do estoque
       console.log('>>> Usando EmendaOptimizer (sobras do estoque)');
       return await this.optimizeWithEmendas(pieces, barLength, leftovers, emendaConfig);
+    }
+
+    // Performance safeguard: >3K peças usa apenas 1 estratégia
+    if (pieces.length > 3000) {
+      console.log(`>>> Otimização grande (${pieces.length} peças) — usando apenas leftover-first`);
+      const result = this.bestFitWithLeftoversFirst(pieces, barLength, leftovers);
+      return { ...result, strategy: 'leftover-first (performance mode)' };
     }
 
     console.log('>>> Testando múltiplas estratégias...');

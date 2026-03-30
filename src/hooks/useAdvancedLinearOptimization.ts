@@ -125,9 +125,10 @@ export const useAdvancedLinearOptimization = () => {
       console.log('Peças:', pieces.length);
       console.log('Sobras disponíveis:', sobras.length);
 
-      // Preparar peças para otimização
+      // Preparar peças para otimização (preservando identidade de bundle)
       const expandedPieces = [];
       pieces.forEach((piece, index) => {
+        const bundleId = piece.quantity > 1 ? `bundle-${piece.id || index}` : undefined;
         for (let i = 0; i < piece.quantity; i++) {
           expandedPieces.push({
             length: piece.length,
@@ -136,13 +137,28 @@ export const useAdvancedLinearOptimization = () => {
             perfil: (piece as any).perfil,
             peso: (piece as any).peso,
             posicao: (piece as any).posicao,
-            originalIndex: index
+            originalIndex: index,
+            bundleId,
+            bundleSequence: bundleId ? i + 1 : undefined,
+            bundleTotal: bundleId ? piece.quantity : undefined,
           });
         }
       });
 
+      // Safeguard de performance
+      if (expandedPieces.length > 3000) {
+        toast.warning(`Otimização grande (${expandedPieces.length} peças) — usando algoritmo simplificado para melhor desempenho`);
+      }
+
+      // Ler configurações de corte do localStorage
+      const savedConfig = typeof window !== 'undefined'
+        ? localStorage.getItem('barCuttingConfig')
+        : null;
+      const barConfig = savedConfig ? JSON.parse(savedConfig) : {};
+      const cutLoss = barConfig.cutLoss ?? 3;
+
       // Executar otimização com algoritmo avançado
-      const optimizer = new BestFitOptimizer();
+      const optimizer = new BestFitOptimizer(cutLoss);
       const optimizationResult = await optimizer.optimize(expandedPieces, barLength, sobras);
 
       console.log('Estratégia utilizada:', optimizationResult.strategy);
