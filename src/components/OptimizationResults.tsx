@@ -309,62 +309,62 @@ export const OptimizationResults = ({
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
               <div className="text-center p-3 bg-blue-50 rounded-lg">
                 <div className="text-2xl font-bold text-blue-600">{results.totalBars}</div>
-                <div className="text-sm text-gray-600">Barras Utilizadas</div>
+                <div className="text-sm text-muted-foreground">Barras Utilizadas</div>
               </div>
               <div className="text-center p-3 bg-green-50 rounded-lg">
                 <div className="text-2xl font-bold text-green-600">{results.efficiency.toFixed(1)}%</div>
-                <div className="text-sm text-gray-600">Eficiência</div>
+                <div className="text-sm text-muted-foreground">Eficiência</div>
               </div>
               <div className="text-center p-3 bg-purple-50 rounded-lg">
                 <div className="text-2xl font-bold text-purple-600">{totalPieces}</div>
-                <div className="text-sm text-gray-600">Total de Peças</div>
+                <div className="text-sm text-muted-foreground">Total de Peças</div>
               </div>
               <div className="text-center p-3 bg-indigo-50 rounded-lg">
                 <div className="text-2xl font-bold text-indigo-600">{totalWeight.toFixed(1)}kg</div>
-                <div className="text-sm text-gray-600">Peso Total</div>
+                <div className="text-sm text-muted-foreground">Peso Total</div>
               </div>
               <div className="text-center p-3 bg-red-50 rounded-lg">
                 <div className="text-2xl font-bold text-red-600">{(results.totalWaste / 1000).toFixed(2)}m</div>
-                <div className="text-sm text-gray-600">Desperdício</div>
+                <div className="text-sm text-muted-foreground">Desperdício</div>
               </div>
               <div className="text-center p-3 bg-yellow-50 rounded-lg">
                 <div className="text-2xl font-bold text-yellow-600">{results.wastePercentage.toFixed(1)}%</div>
-                <div className="text-sm text-gray-600">% Desperdício</div>
+                <div className="text-sm text-muted-foreground">% Desperdício</div>
               </div>
             </div>
 
             {/* Informações de Emendas */}
             {hasEmendas && <div className="border-t pt-4 mb-4">
-                <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
                   <Link className="w-4 h-4 text-orange-600" />
                   Informações de Emendas
                 </h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                   <div className="text-center p-2 bg-orange-50 rounded">
                     <div className="text-lg font-bold text-orange-600">{pecasComEmenda.length}</div>
-                    <div className="text-xs text-gray-600">Peças com Emenda</div>
+                    <div className="text-xs text-muted-foreground">Peças com Emenda</div>
                   </div>
                   <div className="text-center p-2 bg-orange-50 rounded">
                     <div className="text-lg font-bold text-orange-600">{totalEmendas}</div>
-                    <div className="text-xs text-gray-600">Total de Emendas</div>
+                    <div className="text-xs text-muted-foreground">Total de Emendas</div>
                   </div>
                   <div className="text-center p-2 bg-red-50 rounded">
                     <div className="text-lg font-bold text-red-600">
                       {pecasComEmenda.filter(p => p.statusQualidade === 'pendente').length}
                     </div>
-                    <div className="text-xs text-gray-600">Pendentes QA</div>
+                    <div className="text-xs text-muted-foreground">Pendentes QA</div>
                   </div>
                   <div className="text-center p-2 bg-yellow-50 rounded">
                     <div className="text-lg font-bold text-yellow-600">
                       {pecasComEmenda.filter(p => p.emendas.some(e => e.inspecaoObrigatoria)).length}
                     </div>
-                    <div className="text-xs text-gray-600">Inspeção Obrigatória</div>
+                    <div className="text-xs text-muted-foreground">Inspeção Obrigatória</div>
                   </div>
                 </div>
                 
                 {/* Lista de peças com emenda */}
                 <div className="mt-4 space-y-2">
-                  <h5 className="text-sm font-medium text-gray-700">Peças com Emenda:</h5>
+                  <h5 className="text-sm font-medium text-foreground">Peças com Emenda:</h5>
                   <div className="max-h-32 overflow-y-auto">
                     {pecasComEmenda.map((peca, index) => <div key={index} className="flex items-center justify-between text-xs bg-orange-50 p-2 rounded">
                         <span>{peca.tag || peca.posicao || `Peça ${index + 1}`}</span>
@@ -381,44 +381,44 @@ export const OptimizationResults = ({
 
             {/* Informações de Sustentabilidade */}
             {hasSustainabilityData && <div className="border-t pt-4 mb-4">
-                <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
                   <Recycle className="w-4 h-4 text-green-600" />
                   Métricas de Sustentabilidade
                 </h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                   <div className="text-center p-2 bg-green-50 rounded">
                     <div className="text-lg font-bold text-green-600">{extendedResults.sustainability.leftoverBarsUsed}</div>
-                    <div className="text-xs text-gray-600">Sobras Utilizadas</div>
+                    <div className="text-xs text-muted-foreground">Sobras Utilizadas</div>
                   </div>
                   <div className="text-center p-2 bg-green-50 rounded">
                     <div className="text-lg font-bold text-green-600">{extendedResults.sustainability.newBarsUsed}</div>
-                    <div className="text-xs text-gray-600">Barras Novas</div>
+                    <div className="text-xs text-muted-foreground">Barras Novas</div>
                   </div>
                   <div className="text-center p-2 bg-green-50 rounded">
                     <div className="text-lg font-bold text-green-600">{extendedResults.sustainability.materialReused.toFixed(2)}kg</div>
-                    <div className="text-xs text-gray-600">Material Reutilizado</div>
+                    <div className="text-xs text-muted-foreground">Material Reutilizado</div>
                   </div>
                   <div className="text-center p-2 bg-green-50 rounded">
                     <div className="text-lg font-bold text-green-600">R$ {extendedResults.sustainability.totalEconomy.toFixed(2)}</div>
-                    <div className="text-xs text-gray-600">Economia Total</div>
+                    <div className="text-xs text-muted-foreground">Economia Total</div>
                   </div>
                 </div>
               </div>}
             
             {/* Informações de Peças Cortadas */}
             <div className="border-t pt-4 mb-4">
-              <h4 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-                <Package className="w-4 h-4 text-gray-600" />
+              <h4 className="font-medium text-foreground mb-3 flex items-center gap-2">
+                <Package className="w-4 h-4 text-muted-foreground" />
                 Detalhes das Peças Cortadas
               </h4>
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="text-center p-2 bg-slate-50 rounded">
                   <div className="text-lg font-bold text-slate-600">{cutPieces}</div>
-                  <div className="text-xs text-gray-600">Peças Cortadas</div>
+                  <div className="text-xs text-muted-foreground">Peças Cortadas</div>
                 </div>
                 <div className="text-center p-2 bg-slate-50 rounded">
                   <div className="text-lg font-bold text-slate-600">{cutWeight.toFixed(1)}kg</div>
-                  <div className="text-xs text-gray-600">Peso das Peças Cortadas</div>
+                  <div className="text-xs text-muted-foreground">Peso das Peças Cortadas</div>
                 </div>
               </div>
             </div>

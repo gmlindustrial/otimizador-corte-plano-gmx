@@ -43,7 +43,7 @@ export const SustainabilityMetrics = ({
               <Recycle className="w-6 h-6 text-green-600" />
             </div>
             <div className="text-2xl font-bold text-green-600">{leftoverBarsUsed}</div>
-            <div className="text-sm text-gray-600">Sobras Reutilizadas</div>
+            <div className="text-sm text-muted-foreground">Sobras Reutilizadas</div>
             <div className="text-xs text-green-600 mt-1">
               {reusePercentage.toFixed(1)}% do total
             </div>
@@ -54,7 +54,7 @@ export const SustainabilityMetrics = ({
               <TrendingUp className="w-6 h-6 text-blue-600" />
             </div>
             <div className="text-2xl font-bold text-blue-600">{(materialReused / 1000).toFixed(1)}m</div>
-            <div className="text-sm text-gray-600">Material Reutilizado</div>
+            <div className="text-sm text-muted-foreground">Material Reutilizado</div>
             <div className="text-xs text-blue-600 mt-1">
               {materialReuseKm > 0.001 ? `${materialReuseKm.toFixed(3)}km` : `${materialReused}mm`}
             </div>
@@ -65,7 +65,7 @@ export const SustainabilityMetrics = ({
               <DollarSign className="w-6 h-6 text-emerald-600" />
             </div>
             <div className="text-2xl font-bold text-emerald-600">{totalEconomy.toFixed(0)}</div>
-            <div className="text-sm text-gray-600">Economia (R$)</div>
+            <div className="text-sm text-muted-foreground">Economia (R$)</div>
             <div className="text-xs text-emerald-600 mt-1">
               Material não comprado
             </div>
@@ -76,7 +76,7 @@ export const SustainabilityMetrics = ({
               <Leaf className="w-6 h-6 text-teal-600" />
             </div>
             <div className="text-2xl font-bold text-teal-600">{wasteReduction.toFixed(1)}%</div>
-            <div className="text-sm text-gray-600">Redução Desperdício</div>
+            <div className="text-sm text-muted-foreground">Redução Desperdício</div>
             <div className="text-xs text-teal-600 mt-1">
               Impacto ambiental
             </div>
@@ -87,7 +87,7 @@ export const SustainabilityMetrics = ({
         <div className="space-y-3">
           <div>
             <div className="flex justify-between text-sm mb-2">
-              <span className="font-medium text-gray-700">Taxa de Reaproveitamento</span>
+              <span className="font-medium text-foreground">Taxa de Reaproveitamento</span>
               <span className="text-green-600 font-semibold">{reusePercentage.toFixed(1)}%</span>
             </div>
             <Progress 
@@ -98,7 +98,7 @@ export const SustainabilityMetrics = ({
           
           <div>
             <div className="flex justify-between text-sm mb-2">
-              <span className="font-medium text-gray-700">Eficiência Sustentável</span>
+              <span className="font-medium text-foreground">Eficiência Sustentável</span>
               <span className="text-blue-600 font-semibold">{Math.min(100, wasteReduction + reusePercentage).toFixed(1)}%</span>
             </div>
             <Progress 
@@ -110,15 +110,15 @@ export const SustainabilityMetrics = ({
 
         {/* Comparativo */}
         <div className="bg-white rounded-lg p-4 shadow-sm border-l-4 border-green-500">
-          <h4 className="font-semibold text-gray-800 mb-3">Comparativo com Método Tradicional</h4>
+          <h4 className="font-semibold text-foreground mb-3">Comparativo com Método Tradicional</h4>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <div className="text-gray-600">Sem Reaproveitamento:</div>
+              <div className="text-muted-foreground">Sem Reaproveitamento:</div>
               <div className="font-semibold text-red-600">{totalBars} barras novas</div>
-              <div className="text-xs text-gray-500">R$ {((totalBars * 6) * 8).toFixed(2)} em material</div>
+              <div className="text-xs text-muted-foreground">R$ {((totalBars * 6) * 8).toFixed(2)} em material</div>
             </div>
             <div>
-              <div className="text-gray-600">Com Reaproveitamento:</div>
+              <div className="text-muted-foreground">Com Reaproveitamento:</div>
               <div className="font-semibold text-green-600">{newBarsUsed} barras novas + {leftoverBarsUsed} sobras</div>
               <div className="text-xs text-green-600">Economia de R$ {totalEconomy.toFixed(2)}</div>
             </div>

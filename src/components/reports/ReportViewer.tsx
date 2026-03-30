@@ -63,19 +63,19 @@ export const ReportViewer = ({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-blue-50 p-4 rounded-lg text-center">
           <div className="text-2xl font-bold text-blue-600">{reportData?.totalMaterials || 0}</div>
-          <div className="text-sm text-gray-600">Total Materiais</div>
+          <div className="text-sm text-muted-foreground">Total Materiais</div>
         </div>
         <div className="bg-green-50 p-4 rounded-lg text-center">
           <div className="text-2xl font-bold text-green-600">{reportData?.activeMaterials || 0}</div>
-          <div className="text-sm text-gray-600">Ativos</div>
+          <div className="text-sm text-muted-foreground">Ativos</div>
         </div>
         <div className="bg-yellow-50 p-4 rounded-lg text-center">
           <div className="text-2xl font-bold text-yellow-600">{reportData?.archivedMaterials || 0}</div>
-          <div className="text-sm text-gray-600">Arquivados</div>
+          <div className="text-sm text-muted-foreground">Arquivados</div>
         </div>
         <div className="bg-purple-50 p-4 rounded-lg text-center">
           <div className="text-2xl font-bold text-purple-600">{reportData?.totalUsage || 0}</div>
-          <div className="text-sm text-gray-600">Usos Totais</div>
+          <div className="text-sm text-muted-foreground">Usos Totais</div>
         </div>
       </div>
 
@@ -113,19 +113,19 @@ export const ReportViewer = ({
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-blue-50 p-4 rounded-lg text-center">
           <div className="text-2xl font-bold text-blue-600">{reportData?.totalSheets || 0}</div>
-          <div className="text-sm text-gray-600">Total Chapas</div>
+          <div className="text-sm text-muted-foreground">Total Chapas</div>
         </div>
         <div className="bg-green-50 p-4 rounded-lg text-center">
           <div className="text-2xl font-bold text-green-600">{reportData?.averageEfficiency?.toFixed(1) || 0}%</div>
-          <div className="text-sm text-gray-600">Eficiência</div>
+          <div className="text-sm text-muted-foreground">Eficiência</div>
         </div>
         <div className="bg-purple-50 p-4 rounded-lg text-center">
           <div className="text-2xl font-bold text-purple-600">{reportData?.totalWeight?.toFixed(0) || 0} kg</div>
-          <div className="text-sm text-gray-600">Peso Total</div>
+          <div className="text-sm text-muted-foreground">Peso Total</div>
         </div>
         <div className="bg-orange-50 p-4 rounded-lg text-center">
           <div className="text-2xl font-bold text-orange-600">R$ {reportData?.materialCost?.toFixed(2) || 0}</div>
-          <div className="text-sm text-gray-600">Custo</div>
+          <div className="text-sm text-muted-foreground">Custo</div>
         </div>
       </div>
 
@@ -200,8 +200,8 @@ export const ReportViewer = ({
             {reportType === 'sheet' && renderSheetReport()}
             {(reportType === 'linear' || reportType === 'efficiency') && (
               <div className="text-center py-8">
-                <FileText className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-600">Relatório em desenvolvimento</p>
+                <FileText className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground">Relatório em desenvolvimento</p>
               </div>
             )}
           </div>

@@ -53,7 +53,8 @@ describe('BestFitOptimizer', () => {
     const optimizer = new BestFitOptimizer()
     const result = await optimizer.optimize(pieces, 6000)
 
-    expect(result.efficiency).toBeGreaterThan(80)
+    // 13000mm em 3 barras de 6000mm = 72.2% eficiência (correto)
+    expect(result.efficiency).toBeGreaterThan(60)
     // CORRIGIDO: usar originalLength em vez de totalLength
     expect(result.bars.every(bar => bar.originalLength <= 6000)).toBe(true)
   })

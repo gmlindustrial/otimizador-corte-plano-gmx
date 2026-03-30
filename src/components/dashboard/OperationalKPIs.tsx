@@ -121,21 +121,21 @@ export const OperationalKPIs = ({
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
                   <div className="text-center p-3 bg-green-50 rounded">
                     <div className="text-2xl font-bold text-green-600">{Number(stats.cortadas || 0)}</div>
-                    <div className="text-sm text-gray-600">Cortadas</div>
+                    <div className="text-sm text-muted-foreground">Cortadas</div>
                   </div>
                   <div className="text-center p-3 bg-yellow-50 rounded">
                     <div className="text-2xl font-bold text-yellow-600">{Number(stats.pendentes || 0)}</div>
-                    <div className="text-sm text-gray-600">Pendentes</div>
+                    <div className="text-sm text-muted-foreground">Pendentes</div>
                   </div>
                   <div className="text-center p-3 bg-blue-50 rounded">
                     <div className="text-2xl font-bold text-blue-600">{tempoMedioPorPeca}min</div>
-                    <div className="text-sm text-gray-600">Tempo/Peça</div>
+                    <div className="text-sm text-muted-foreground">Tempo/Peça</div>
                   </div>
                   <div className="text-center p-3 bg-purple-50 rounded">
                     <div className="text-2xl font-bold text-purple-600">
                       {(Number(stats.cortadas || 0) * tempoMedioPorPeca / 60).toFixed(1)}h
                     </div>
-                    <div className="text-sm text-gray-600">Previsão Total</div>
+                    <div className="text-sm text-muted-foreground">Previsão Total</div>
                   </div>
                 </div>
 
@@ -146,7 +146,7 @@ export const OperationalKPIs = ({
                       <div className="font-semibold">
                         {turno === 'Central' ? 'Central' : `${turno}º Turno`}
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-muted-foreground">
                         {Number(dados.cortadas || 0)} peças | {Number(dados.listas || 0)} listas
                       </div>
                     </div>
@@ -174,7 +174,7 @@ export const OperationalKPIs = ({
                 <span className="text-lg font-semibold">{tempoMedioPorPeca}min</span>
               </div>
               <Progress value={75} className="h-2" />
-              <div className="text-xs text-gray-500">Meta: 2.0min por peça</div>
+              <div className="text-xs text-muted-foreground">Meta: 2.0min por peça</div>
             </div>
 
             <div className="space-y-3">
@@ -185,7 +185,7 @@ export const OperationalKPIs = ({
                 </span>
               </div>
               <Progress value={60} className="h-2" />
-              <div className="text-xs text-gray-500">Capacidade: 8h por turno</div>
+              <div className="text-xs text-muted-foreground">Capacidade: 8h por turno</div>
             </div>
 
             <div className="space-y-3">
@@ -196,7 +196,7 @@ export const OperationalKPIs = ({
                 </span>
               </div>
               <Progress value={82} className="h-2" />
-              <div className="text-xs text-gray-500">Meta: {metaEficiencia}%</div>
+              <div className="text-xs text-muted-foreground">Meta: {metaEficiencia}%</div>
             </div>
           </div>
         </CardContent>

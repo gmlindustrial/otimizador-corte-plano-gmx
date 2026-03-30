@@ -73,8 +73,8 @@ export const EstoqueSobras = ({ tipoMaterial }: EstoqueSobrasProps) => {
         <CardContent className="p-6 space-y-4">
           {!tipoMaterial ? (
             <div className="text-center py-8">
-              <Package className="w-12 h-12 mx-auto text-gray-400 mb-3" />
-              <p className="text-gray-600">
+              <Package className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+              <p className="text-muted-foreground">
                 Selecione um tipo de material no projeto para gerenciar sobras
               </p>
             </div>
@@ -124,7 +124,7 @@ export const EstoqueSobras = ({ tipoMaterial }: EstoqueSobrasProps) => {
               {/* Lista de Sobras Disponíveis */}
               {sobrasDisponiveis.length > 0 && (
                 <div className="space-y-3">
-                  <h4 className="font-medium text-gray-900 flex items-center gap-2">
+                  <h4 className="font-medium text-foreground flex items-center gap-2">
                     <Package className="w-4 h-4" />
                     Sobras Disponíveis ({sobrasDisponiveis.length})
                   </h4>
@@ -135,7 +135,7 @@ export const EstoqueSobras = ({ tipoMaterial }: EstoqueSobrasProps) => {
                           <span className="text-sm font-medium">
                             {sobra.comprimento}mm
                           </span>
-                          <p className="text-xs text-gray-600 flex items-center gap-1">
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
                             <MapPin className="w-3 h-3" />
                             {sobra.localizacao}
                           </p>
@@ -167,7 +167,7 @@ export const EstoqueSobras = ({ tipoMaterial }: EstoqueSobrasProps) => {
               {/* Lista de Sobras Usadas */}
               {sobrasUsadas.length > 0 && (
                 <div className="space-y-3">
-                  <h4 className="font-medium text-gray-500 flex items-center gap-2">
+                  <h4 className="font-medium text-muted-foreground flex items-center gap-2">
                     Sobras Utilizadas ({sobrasUsadas.length})
                   </h4>
                   <div className="max-h-32 overflow-y-auto space-y-2">
@@ -194,8 +194,8 @@ export const EstoqueSobras = ({ tipoMaterial }: EstoqueSobrasProps) => {
 
               {sobras.length === 0 && (
                 <div className="text-center py-6">
-                  <Package className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                  <p className="text-gray-600 text-sm">
+                  <Package className="w-8 h-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-muted-foreground text-sm">
                     Nenhuma sobra cadastrada para este material
                   </p>
                 </div>
