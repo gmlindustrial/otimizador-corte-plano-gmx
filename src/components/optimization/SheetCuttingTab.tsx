@@ -1,9 +1,12 @@
 import { SheetProjectSelector } from '@/components/sheet/SheetProjectSelector';
 import { SheetMaterialInput } from '@/components/sheet/SheetMaterialInput';
 import { DxfUpload } from '@/components/sheet/DxfUpload';
+import { SheetAlgorithmComparison, runMultiAlgorithmOptimization } from '@/components/sheet/SheetAlgorithmComparison';
+import type { AlgorithmResult } from '@/components/sheet/SheetAlgorithmComparison';
 import { SheetOptimizationResults } from '@/components/sheet/SheetOptimizationResults';
 import { SheetVisualization } from '@/components/sheet/SheetVisualization';
 import { SheetTechnicalReport } from '@/components/sheet/SheetTechnicalReport';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -32,8 +35,30 @@ export const SheetCuttingTab = ({
 }: SheetCuttingTabProps) => {
   const { toast } = useToast();
   const { saveOptimization, history, loadHistory } = useSheetOptimizationHistory();
+  const [alternatives, setAlternatives] = useState<AlgorithmResult[]>([]);
+  const [selectedAlgorithm, setSelectedAlgorithm] = useState('blf');
 
   const handleOptimizeWithHistory = async () => {
+    // Rodar multi-algoritmo se temos projeto e peças
+    if (sheetProject && sheetPieces.length > 0) {
+      try {
+        const results = await runMultiAlgorithmOptimization(
+          sheetPieces,
+          sheetProject.sheetWidth,
+          sheetProject.sheetHeight,
+          sheetProject.kerf,
+          sheetProject.thickness,
+          sheetProject.material,
+        );
+        setAlternatives(results);
+        if (results.length > 0) {
+          setSelectedAlgorithm(results[0].name);
+        }
+      } catch (e) {
+        console.warn('Multi-algorithm failed, falling back to default:', e);
+      }
+    }
+
     onOptimize();
     
     // Salvar no histórico após otimização
@@ -116,6 +141,19 @@ export const SheetCuttingTab = ({
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Comparação Multi-Algoritmo */}
+      {alternatives.length > 1 && (
+        <SheetAlgorithmComparison
+          alternatives={alternatives}
+          onSelectAlternative={(result) => {
+            // Quando o usuário seleciona uma alternativa, atualizar o resultado
+            const selected = alternatives.find(a => a.result === result);
+            if (selected) setSelectedAlgorithm(selected.name);
+          }}
+          selectedName={selectedAlgorithm}
+        />
       )}
 
       <div className="grid lg:grid-cols-3 gap-6">
