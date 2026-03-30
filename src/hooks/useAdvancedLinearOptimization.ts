@@ -191,10 +191,12 @@ export const useAdvancedLinearOptimization = () => {
           perfilId: (p as any).perfilId,
         }));
 
+        const bundleKerfFactor = barConfig.bundleKerfFactor ?? 1.2;
+
         const bundleOptimizer = new BundleOptimizer({
           barLength,
           cutLoss,
-          kerfFactor: 1.2,
+          kerfFactor: bundleKerfFactor,
           costPerBar: 50,
           setupTimePerCut: 2.5,
         });
@@ -269,13 +271,43 @@ export const useAdvancedLinearOptimization = () => {
           preAnalysis: analysis,
         };
 
+        // Fase 4: Registrar sobras do amarrado ×N no estoque
+        let autoRegisteredBundleWastes = 0;
+        for (const bundle of bundleResult.bundles) {
+          if (bundle.pattern.wastePerBar > 100) {
+            try {
+              // Cada barra do amarrado gera a mesma sobra
+              await adicionarSobra(
+                Math.floor(bundle.pattern.wastePerBar),
+                bundle.bundleSize // ×N: quantidade = bundleSize
+              );
+              autoRegisteredBundleWastes += bundle.bundleSize;
+            } catch (error) {
+              console.error('Erro ao cadastrar sobras do amarrado:', error);
+            }
+          }
+        }
+        // Sobras de barras individuais
+        for (const bar of bundleResult.individualBars) {
+          if (bar.waste > 100) {
+            try {
+              await adicionarSobra(Math.floor(bar.waste), 1);
+              autoRegisteredBundleWastes++;
+            } catch (error) {
+              console.error('Erro ao cadastrar sobra individual:', error);
+            }
+          }
+        }
+
+        result.sustainability.autoRegisteredWastes = autoRegisteredBundleWastes;
         setResults(result);
 
         toast.success(
           `Otimização por amarrado concluída! ` +
           `${bundleResult.summary.totalBundles} amarrado(s), ` +
           `${bundleResult.individualBars.length} barra(s) individual(is), ` +
-          `${bundleResult.summary.averageEfficiency.toFixed(1)}% eficiência`
+          `${bundleResult.summary.averageEfficiency.toFixed(1)}% eficiência` +
+          (autoRegisteredBundleWastes > 0 ? `, ${autoRegisteredBundleWastes} sobra(s) cadastrada(s)` : '')
         );
 
         return result;

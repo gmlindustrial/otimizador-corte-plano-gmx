@@ -18,6 +18,7 @@ interface BarCuttingConfig {
   allowWaste: boolean;
   maxWastePercentage: number;
   minPieceLength: number;
+  bundleKerfFactor: number;
 }
 
 interface TamanhoBarra {
@@ -34,7 +35,8 @@ export const BarCuttingSettings = () => {
     algorithm: 'FFD',
     allowWaste: true,
     maxWastePercentage: 15,
-    minPieceLength: 50
+    minPieceLength: 50,
+    bundleKerfFactor: 1.2
   });
   
   const [tamanhos, setTamanhos] = useState<TamanhoBarra[]>([]);
@@ -237,6 +239,22 @@ export const BarCuttingSettings = () => {
                 onChange={(e) => setConfig(prev => ({ ...prev, minPieceLength: parseInt(e.target.value) }))}
                 min={0}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bundleKerfFactor">Fator de Kerf do Amarrado</Label>
+              <Input
+                id="bundleKerfFactor"
+                type="number"
+                value={config.bundleKerfFactor}
+                onChange={(e) => setConfig(prev => ({ ...prev, bundleKerfFactor: Math.max(1.0, Math.min(2.0, parseFloat(e.target.value) || 1.2)) }))}
+                min={1.0}
+                max={2.0}
+                step={0.1}
+              />
+              <p className="text-xs text-muted-foreground">
+                Multiplicador de perda de corte em amarrado (1.0 = igual ao individual, 1.2 = 20% a mais). Compensa vibração e desalinhamento.
+              </p>
             </div>
           </div>
 

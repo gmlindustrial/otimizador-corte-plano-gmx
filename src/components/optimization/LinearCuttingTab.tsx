@@ -8,6 +8,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { CuttingWorkflow } from './CuttingWorkflow';
 import { Layers, Info } from 'lucide-react';
 import type { Project, CutPiece, OptimizationResult } from '@/pages/Index';
 
@@ -186,6 +187,14 @@ export const LinearCuttingTab = ({
           barLength={barLength}
           project={project}
           pieces={pieces}
+        />
+      )}
+
+      {/* Workflow do Operador (G10) */}
+      {results && (
+        <CuttingWorkflow
+          bars={results.bars as any}
+          barLength={barLength}
         />
       )}
     </div>
