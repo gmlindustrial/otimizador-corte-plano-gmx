@@ -52,6 +52,8 @@ import { ProjectDuplicateManager } from "./ProjectDuplicateManager";
 import { DeleteConfirmDialog } from "../management/DeleteConfirmDialog";
 import type { Project } from "@/pages/Index";
 import { ProjectHistoryTab } from "./ProjectHistoryTab";
+import { ProjectHeader } from "./ProjectHeader";
+import { ProjectInfoCards } from "./ProjectInfoCards";
 import { OptimizationReverseDialog } from "./OptimizationReverseDialog";
 import { XlsxTemplateService } from "@/services/XlsxTemplateService";
 import { perfilService } from "@/services/entities/PerfilService";
@@ -943,228 +945,23 @@ export const ProjectDetailsView = ({
 
       <div className="container mx-auto px-4 py-8 max-w-7xl space-y-8">
         {/* Header */}
-        <Card className="bg-card backdrop-blur-lg shadow-xl border rounded-2xl overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 text-white p-8">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-              <div className="flex flex-col sm:flex-row sm:items-center gap-6">
-                <Button
-                  onClick={onBack}
-                  variant="outline"
-                  size="sm"
-                  className="bg-white/10 text-white border-white/30 hover:bg-white hover:text-indigo-600 transition-all duration-300 w-fit backdrop-blur-sm"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Voltar
-                </Button>
-                <div className="space-y-2">
-                  <CardTitle className="text-2xl font-bold tracking-tight">
-                    {project.nome}
-                  </CardTitle>
-                  <div className="flex flex-wrap items-center gap-2 text-sm text-white/90">
-                    <span className="px-3 py-1 bg-white/20 rounded-full backdrop-blur-sm">
-                      {project.numero_projeto}
-                    </span>
-                    <span>•</span>
-                    <span>{project.clientes?.nome}</span>
-                    <span>•</span>
-                    <span>{project.obras?.nome}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <Button
-                  onClick={onEdit}
-                  variant="outline"
-                  size="sm"
-                  className="bg-white/10 text-white border-white/30 hover:bg-white hover:text-indigo-600 transition-all duration-300 backdrop-blur-sm"
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Editar
-                </Button>
-                <Button
-                  onClick={onDelete}
-                  variant="outline"
-                  size="sm"
-                  className="bg-white/10 text-white border-white/30 hover:bg-white hover:text-red-600 transition-all duration-300 backdrop-blur-sm"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Excluir
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
+        <ProjectHeader
+          projectName={project.nome}
+          projectNumber={project.numero_projeto}
+          clientName={project.clientes?.nome}
+          obraName={project.obras?.nome}
+          onBack={onBack}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
 
-        {/* Project Info */}
-        <Card className="bg-card backdrop-blur-lg shadow-xl border rounded-2xl">
-          <CardHeader className="pb-6">
-            <CardTitle className="flex items-center gap-3 text-xl font-semibold text-gray-800">
-              <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg">
-                <Settings className="w-5 h-5 text-white" />
-              </div>
-              Informações do Projeto
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="group p-6 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100 hover:shadow-lg transition-all duration-300">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-blue-100 rounded-xl group-hover:bg-blue-200 transition-colors">
-                    <User className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-blue-600 uppercase tracking-wide">
-                      Cliente
-                    </p>
-                    <p className="text-lg font-semibold text-gray-800">
-                      {project.clientes?.nome || "Não definido"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="group p-6 bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl border border-emerald-100 hover:shadow-lg transition-all duration-300">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-emerald-100 rounded-xl group-hover:bg-emerald-200 transition-colors">
-                    <Building className="w-6 h-6 text-emerald-600" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-emerald-600 uppercase tracking-wide">
-                      Obra
-                    </p>
-                    <p className="text-lg font-semibold text-gray-800">
-                      {project.obras?.nome || "Não definida"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <div className="group p-6 bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl border border-amber-100 hover:shadow-lg transition-all duration-300">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-amber-100 rounded-xl group-hover:bg-amber-200 transition-colors">
-                    <Calendar className="w-6 h-6 text-amber-600" />
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-amber-600 uppercase tracking-wide">
-                      Criado em
-                    </p>
-                    <p className="text-lg font-semibold text-gray-800">
-                      {format(new Date(project.created_at), "dd/MM/yyyy")}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mt-6">
-              {/* Total de Peças */}
-              <div className="group p-6 bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl border border-violet-100 hover:shadow-lg transition-all duration-300">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-violet-100 rounded-xl group-hover:bg-violet-200 transition-colors">
-                    <Package className="w-6 h-6 text-violet-600" />
-                  </div>
-                  <div className="space-y-1 w-full">
-                    <p className="text-sm font-medium text-violet-600 uppercase tracking-wide">
-                      Total de Peças
-                    </p>
-                    <p className="text-lg font-semibold text-gray-800">
-                      {projectStats?.total || 0}
-                    </p>
-                    <div className="mt-3 space-y-1">
-                      <div className="text-xs text-gray-600">100% do total</div>
-                      <Progress value={100} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Peças Aguardando Otimização */}
-              <div className="group p-6 bg-gradient-to-br from-yellow-50 to-amber-50 rounded-xl border border-yellow-100 hover:shadow-lg transition-all duration-300">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-yellow-100 rounded-xl group-hover:bg-yellow-200 transition-colors">
-                    <Clock className="w-6 h-6 text-yellow-600" />
-                  </div>
-                  <div className="space-y-1 w-full">
-                    <p className="text-sm font-medium text-yellow-600 uppercase tracking-wide">
-                      Aguardando Otimização
-                    </p>
-                    <p className="text-lg font-semibold text-gray-800">
-                      {projectStats?.aguardandoOtimizacao || 0}
-                    </p>
-                    <div className="mt-3 space-y-1">
-                      <div className="text-xs text-gray-600">
-                        {projectStats?.total > 0 ? ((projectStats.aguardandoOtimizacao / projectStats.total) * 100).toFixed(1) : 0}% do total
-                      </div>
-                      <Progress 
-                        value={projectStats?.total > 0 ? (projectStats.aguardandoOtimizacao / projectStats.total) * 100 : 0} 
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Peças Otimizadas (Aguardando Corte) */}
-              <div className="group p-6 bg-gradient-to-br from-cyan-50 to-blue-50 rounded-xl border border-cyan-100 hover:shadow-lg transition-all duration-300">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-cyan-100 rounded-xl group-hover:bg-cyan-200 transition-colors">
-                    <Calculator className="w-6 h-6 text-cyan-600" />
-                  </div>
-                  <div className="space-y-1 w-full">
-                    <p className="text-sm font-medium text-cyan-600 uppercase tracking-wide">
-                      Aguardando Corte
-                    </p>
-                    <p className="text-lg font-semibold text-gray-800">
-                      {projectStats?.otimizadas || 0}
-                    </p>
-                    <div className="mt-3 space-y-1">
-                      <div className="text-xs text-gray-600">
-                        {projectStats?.total > 0 ? ((projectStats.otimizadas / projectStats.total) * 100).toFixed(1) : 0}% do total
-                      </div>
-                      <Progress 
-                        value={projectStats?.total > 0 ? (projectStats.otimizadas / projectStats.total) * 100 : 0} 
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Peças Cortadas */}
-              <div className="group p-6 bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl border border-emerald-100 hover:shadow-lg transition-all duration-300">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 bg-emerald-100 rounded-xl group-hover:bg-emerald-200 transition-colors">
-                    <Scissors className="w-6 h-6 text-emerald-600" />
-                  </div>
-                  <div className="space-y-1 w-full">
-                    <p className="text-sm font-medium text-emerald-600 uppercase tracking-wide">
-                      Peças Cortadas
-                    </p>
-                    <p className="text-lg font-semibold text-gray-800">
-                      {projectStats?.cortadas || 0}
-                    </p>
-                    <div className="mt-3 space-y-2">
-                      <div>
-                        <div className="text-xs text-gray-600 mb-1">
-                          Do total: {projectStats?.total > 0 ? ((projectStats.cortadas / projectStats.total) * 100).toFixed(1) : 0}%
-                        </div>
-                        <Progress 
-                          value={projectStats?.total > 0 ? (projectStats.cortadas / projectStats.total) * 100 : 0} 
-                        />
-                      </div>
-                      {projectStats?.otimizadas > 0 && (
-                        <div>
-                          <div className="text-xs text-gray-600 mb-1">
-                            Das otimizadas: {((projectStats.cortadas / projectStats.otimizadas) * 100).toFixed(1)}%
-                          </div>
-                          <Progress 
-                            value={(projectStats.cortadas / projectStats.otimizadas) * 100} 
-                          />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Project Info + Stats */}
+        <ProjectInfoCards
+          clientName={project.clientes?.nome}
+          obraName={project.obras?.nome}
+          createdAt={project.created_at}
+          stats={projectStats}
+        />
 
         {/* Tabs */}
         <Tabs
