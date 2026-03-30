@@ -87,14 +87,14 @@ export const IncompleteItemsDialog = ({
                     <span className="text-xs bg-amber-200 text-amber-800 px-2 py-0.5 rounded">
                       Linha {piece.rowNumber}
                     </span>
-                    <span className="text-sm font-medium text-gray-900 truncate">
+                    <span className="text-sm font-medium text-foreground truncate">
                       Item {piece.item}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-600 truncate" title={piece.descricao}>
+                  <p className="text-sm text-muted-foreground truncate" title={piece.descricao}>
                     {piece.descricao}
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {piece.dimensao}mm | {piece.material || 'Material não informado'}
                   </p>
                 </div>

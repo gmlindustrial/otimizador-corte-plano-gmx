@@ -40,12 +40,12 @@ export const StorageStep = ({ formData, setFormData }: StorageStepProps) => {
 
         <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
           <div className="text-center">
-            <QrCode className="w-12 h-12 mx-auto text-gray-600 mb-3" />
-            <h4 className="font-medium text-gray-900 mb-2">QR Code da Lista</h4>
-            <p className="text-sm text-gray-600 mb-3">
+            <QrCode className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+            <h4 className="font-medium text-foreground mb-2">QR Code da Lista</h4>
+            <p className="text-sm text-muted-foreground mb-3">
               Será gerado automaticamente após a criação do projeto
             </p>
-            <div className="flex items-center justify-center gap-2 text-xs text-gray-500">
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <AlertCircle className="w-4 h-4" />
               <span>Para uso em conferência e rastreabilidade</span>
             </div>

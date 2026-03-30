@@ -12,12 +12,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ShieldCheck, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 interface PreCutInspectionProps {
   onApproved: () => void;
   onRejected: (reason: string) => void;
   materialInfo?: string;
+  optimizationId?: string;
 }
 
 const INSPECTION_ITEMS = [
@@ -41,7 +43,7 @@ const DEFECT_OPTIONS = [
   'Outro',
 ];
 
-export const PreCutInspection = ({ onApproved, onRejected, materialInfo }: PreCutInspectionProps) => {
+export const PreCutInspection = ({ onApproved, onRejected, materialInfo, optimizationId }: PreCutInspectionProps) => {
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
   const [defects, setDefects] = useState<string[]>([]);
   const [observations, setObservations] = useState('');
@@ -67,16 +69,32 @@ export const PreCutInspection = ({ onApproved, onRejected, materialInfo }: PreCu
   const requiredItems = INSPECTION_ITEMS.filter(i => i.required);
   const allRequiredChecked = requiredItems.every(i => checkedItems.has(i.id));
 
-  const handleApprove = () => {
+  const saveInspection = async (status: string) => {
+    if (!optimizationId) return;
+    try {
+      await supabase.from('inspecao_pre_corte').insert({
+        projeto_otimizacao_id: optimizationId,
+        status,
+        tipo_inspecao: inspectionType,
+        observacoes: observations || null,
+        defeitos_encontrados: defects.length > 0 ? defects : null,
+      });
+    } catch (e) {
+      console.error('Erro ao salvar inspeção:', e);
+    }
+  };
+
+  const handleApprove = async () => {
     if (!allRequiredChecked) {
       toast.error('Complete todos os itens obrigatórios antes de aprovar');
       return;
     }
+    await saveInspection('aprovado');
     toast.success('Material aprovado para corte');
     onApproved();
   };
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (defects.length === 0 && !observations) {
       toast.error('Informe o motivo da rejeição (defeito ou observação)');
       return;
@@ -85,6 +103,7 @@ export const PreCutInspection = ({ onApproved, onRejected, materialInfo }: PreCu
       ...defects,
       observations ? `Obs: ${observations}` : '',
     ].filter(Boolean).join('; ');
+    await saveInspection('reprovado');
     toast.error('Material reprovado para corte');
     onRejected(reason);
   };

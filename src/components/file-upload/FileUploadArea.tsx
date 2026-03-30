@@ -32,15 +32,15 @@ export const FileUploadArea = ({ onFileSelect, uploading }: FileUploadAreaProps)
       <div className="space-y-4">
         <div className="flex justify-center">
           <div className="bg-gray-100 p-3 rounded-full">
-            <FileText className="w-8 h-8 text-gray-600" />
+            <FileText className="w-8 h-8 text-muted-foreground" />
           </div>
         </div>
         
         <div>
-          <p className="text-lg font-medium text-gray-900">
+          <p className="text-lg font-medium text-foreground">
             Arraste arquivos ou clique para selecionar
           </p>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Formatos aceitos: CSV, XLSX, TXT, PDF
           </p>
         </div>

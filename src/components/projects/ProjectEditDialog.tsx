@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -81,20 +81,17 @@ export const ProjectEditDialog = ({
     }
   };
 
-  // Atualizar form quando projeto mudar
-  if (project && (
-    formData.nome !== project.nome ||
-    formData.numero_projeto !== project.numero_projeto ||
-    formData.cliente_id !== project.cliente_id ||
-    formData.obra_id !== project.obra_id
-  )) {
-    setFormData({
-      nome: project.nome,
-      numero_projeto: project.numero_projeto,
-      cliente_id: project.cliente_id,
-      obra_id: project.obra_id
-    });
-  }
+  // Atualizar form apenas quando o projeto (ID) mudar — não a cada re-render
+  useEffect(() => {
+    if (project) {
+      setFormData({
+        nome: project.nome,
+        numero_projeto: project.numero_projeto,
+        cliente_id: project.cliente_id,
+        obra_id: project.obra_id
+      });
+    }
+  }, [project?.id]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -164,7 +164,7 @@ export const ReportsManager = ({ optimizationHistory }: ReportsManagerProps) => 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <Card className="p-4">
                         <h4 className="font-semibold mb-2">Otimizações por Período</h4>
-                        <p className="text-sm text-gray-600 mb-4">
+                        <p className="text-sm text-muted-foreground mb-4">
                           Relatório completo das otimizações realizadas por período
                         </p>
                         <div className="flex gap-2">
@@ -181,7 +181,7 @@ export const ReportsManager = ({ optimizationHistory }: ReportsManagerProps) => 
                       
                       <Card className="p-4">
                         <h4 className="font-semibold mb-2">Consumo de Material</h4>
-                        <p className="text-sm text-gray-600 mb-4">
+                        <p className="text-sm text-muted-foreground mb-4">
                           Análise do consumo de materiais por projeto
                         </p>
                         <div className="flex gap-2">
@@ -222,7 +222,7 @@ export const ReportsManager = ({ optimizationHistory }: ReportsManagerProps) => 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <Card className="p-4">
                         <h4 className="font-semibold mb-2">Desempenho por Operador</h4>
-                        <p className="text-sm text-gray-600 mb-4">
+                        <p className="text-sm text-muted-foreground mb-4">
                           Análise de desempenho individual dos operadores
                         </p>
                         <div className="flex gap-2">
@@ -239,7 +239,7 @@ export const ReportsManager = ({ optimizationHistory }: ReportsManagerProps) => 
                       
                       <Card className="p-4">
                         <h4 className="font-semibold mb-2">Custos e Economia</h4>
-                        <p className="text-sm text-gray-600 mb-4">
+                        <p className="text-sm text-muted-foreground mb-4">
                           Relatório de custos e economia gerada pela otimização
                         </p>
                         <div className="flex gap-2">

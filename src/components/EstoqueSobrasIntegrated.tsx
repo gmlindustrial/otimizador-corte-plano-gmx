@@ -126,7 +126,7 @@ export const EstoqueSobrasIntegrated = () => {
           {loading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
-              <p className="text-gray-500 mt-2">Carregando estoque...</p>
+              <p className="text-muted-foreground mt-2">Carregando estoque...</p>
             </div>
           ) : (
             <div className="space-y-6">
@@ -142,12 +142,12 @@ export const EstoqueSobrasIntegrated = () => {
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <div>
-                          <CardTitle className="text-lg font-semibold text-gray-800">
+                          <CardTitle className="text-lg font-semibold text-foreground">
                             {perfilNome}
                           </CardTitle>
                           <div className="flex items-center gap-4 mt-1">
                             {perfilInfo && (
-                              <span className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                              <span className="text-sm text-muted-foreground bg-gray-100 px-2 py-1 rounded">
                                 {perfilInfo}
                               </span>
                             )}
@@ -163,7 +163,7 @@ export const EstoqueSobrasIntegrated = () => {
                             <div className="text-lg font-bold text-green-600">
                               {totalSobras}
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-muted-foreground">
                               {totalSobras === 1 ? 'sobra' : 'sobras'}
                             </div>
                           </div>
@@ -219,9 +219,9 @@ export const EstoqueSobrasIntegrated = () => {
               })}
               {Object.keys(sobrasAgrupadas).length === 0 && (
                 <div className="text-center py-12">
-                  <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhuma sobra encontrada</h3>
-                  <p className="text-sm text-gray-500">
+                  <Package className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-foreground mb-2">Nenhuma sobra encontrada</h3>
+                  <p className="text-sm text-muted-foreground">
                     {filtroPerfilId ? 'Não há sobras para o perfil selecionado.' : 'Adicione sobras usando o formulário acima.'}
                   </p>
                 </div>

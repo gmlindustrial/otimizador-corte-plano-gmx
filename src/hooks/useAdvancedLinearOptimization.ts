@@ -6,6 +6,7 @@ import { MultiLengthOptimizer } from '@/algorithms/linear/MultiLengthOptimizer';
 import { PreAnalyzer } from '@/algorithms/linear/PreAnalyzer';
 import { useEstoqueSobras } from '@/hooks/useEstoqueSobras';
 import { usePerfilService } from '@/hooks/services/usePerfilService';
+import { StockVerificationService } from '@/services/StockVerificationService';
 import { toast } from 'sonner';
 import type { BundleOptimizationResult } from '@/types/bundle';
 
@@ -132,6 +133,19 @@ export const useAdvancedLinearOptimization = () => {
       console.log('Projeto:', project);
       console.log('Peças:', pieces.length);
       console.log('Sobras disponíveis:', sobras.length);
+
+      // G13: Verificação de estoque real
+      const estimatedBars = StockVerificationService.estimateBarsNeeded(pieces, barLength);
+      const materialId = (project as any)?.tipoMaterial;
+      if (materialId) {
+        const stockCheck = await StockVerificationService.verifyStock(materialId, estimatedBars);
+        if (!stockCheck.isAvailable && stockCheck.deficit > 0) {
+          toast.warning(
+            `Estoque insuficiente: necessário ${stockCheck.barsNeeded} barras, ` +
+            `disponível ${stockCheck.barsInStock}. Faltam ${stockCheck.deficit} barras.`
+          );
+        }
+      }
 
       // Preparar peças para otimização (preservando identidade de bundle)
       const expandedPieces = [];

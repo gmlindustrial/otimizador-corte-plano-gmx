@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { supabase } from '@/integrations/supabase/client';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -59,7 +60,7 @@ export const CuttingIncidentReport = ({ barId, optimizationId }: CuttingIncident
 
   const selectedIncidentType = INCIDENT_TYPES.find(t => t.value === selectedType);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedType || !descricao) {
       toast.error('Informe o tipo e a descrição da ocorrência');
       return;
@@ -77,6 +78,25 @@ export const CuttingIncidentReport = ({ barId, optimizationId }: CuttingIncident
     };
 
     setIncidents(prev => [incident, ...prev]);
+
+    // Persistir no Supabase
+    if (optimizationId) {
+      try {
+        await supabase.from('ocorrencias_corte').insert({
+          projeto_otimizacao_id: optimizationId,
+          barra_id: barId || null,
+          tipo: selectedType,
+          severidade,
+          descricao,
+          acao_tomada: acaoTomada || null,
+          pecas_afetadas: pecasAfetadas,
+          material_perdido_mm: materialPerdido,
+        });
+      } catch (e) {
+        console.error('Erro ao salvar ocorrência:', e);
+      }
+    }
+
     toast.success('Ocorrência registrada');
 
     // Reset

@@ -65,9 +65,9 @@ export const DuplicateManager = ({ duplicates, onResolved, onCancel }: Duplicate
   const getActionColor = (action: string) => {
     switch (action) {
       case 'update': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'ignore': return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'ignore': return 'bg-gray-100 text-foreground border-gray-200';
       case 'duplicate': return 'bg-blue-100 text-blue-800 border-blue-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      default: return 'bg-gray-100 text-foreground border-gray-200';
     }
   };
 
@@ -98,7 +98,7 @@ export const DuplicateManager = ({ duplicates, onResolved, onCancel }: Duplicate
 
         {/* Ação em massa */}
         <div className="space-y-3">
-          <h4 className="font-medium text-gray-900">Ação para todos os conflitos:</h4>
+          <h4 className="font-medium text-foreground">Ação para todos os conflitos:</h4>
           <div className="flex gap-2">
             <Button
               variant={selectedAction === 'ignore' ? 'default' : 'outline'}
@@ -129,7 +129,7 @@ export const DuplicateManager = ({ duplicates, onResolved, onCancel }: Duplicate
 
         {/* Lista de conflitos */}
         <div className="space-y-3">
-          <h4 className="font-medium text-gray-900">Conflitos detectados:</h4>
+          <h4 className="font-medium text-foreground">Conflitos detectados:</h4>
           <div className="space-y-3 max-h-60 overflow-y-auto">
             {duplicates.map((duplicate, index) => (
               <div key={index} className="bg-white border rounded-lg p-4 space-y-3">
@@ -141,7 +141,7 @@ export const DuplicateManager = ({ duplicates, onResolved, onCancel }: Duplicate
                         Qtd: {duplicate.imported.quantity}
                       </Badge>
                     </div>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-muted-foreground">
                       Existente: {duplicate.existing.quantity} unidades
                     </div>
                     {duplicate.conflicts.length > 0 && (

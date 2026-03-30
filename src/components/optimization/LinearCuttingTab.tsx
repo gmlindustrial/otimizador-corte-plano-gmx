@@ -13,6 +13,7 @@ import { CuttingWorkflow } from './CuttingWorkflow';
 import { PreCutInspection } from './PreCutInspection';
 import { CuttingIncidentReport } from './CuttingIncidentReport';
 import { BundleEconomyReport } from './BundleEconomyReport';
+import { CuttingLabels } from './CuttingLabels';
 import { Layers, Info } from 'lucide-react';
 import type { Project, CutPiece, OptimizationResult } from '@/pages/Index';
 
@@ -194,6 +195,18 @@ export const LinearCuttingTab = ({
           costPerBar={50}
           projectName={project?.name}
         />
+      )}
+
+      {/* Ações: Etiquetas + Inspeção (G5, G14) */}
+      {results && (
+        <div className="flex gap-2 flex-wrap">
+          <CuttingLabels
+            bars={results.bars as any}
+            projectName={project?.name}
+            projectNumber={project?.projectNumber}
+            barLength={barLength}
+          />
+        </div>
       )}
 
       {/* Inspeção Pré-Corte (G14) */}
