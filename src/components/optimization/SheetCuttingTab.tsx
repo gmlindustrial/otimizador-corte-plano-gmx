@@ -1,5 +1,6 @@
 import { SheetProjectSelector } from '@/components/sheet/SheetProjectSelector';
 import { SheetMaterialInput } from '@/components/sheet/SheetMaterialInput';
+import { DxfUpload } from '@/components/sheet/DxfUpload';
 import { SheetOptimizationResults } from '@/components/sheet/SheetOptimizationResults';
 import { SheetVisualization } from '@/components/sheet/SheetVisualization';
 import { SheetTechnicalReport } from '@/components/sheet/SheetTechnicalReport';
@@ -123,7 +124,14 @@ export const SheetCuttingTab = ({
             project={sheetProject}
             setProject={setSheetProject}
           />
-          
+
+          {/* Importação DXF */}
+          <DxfUpload
+            onPiecesImported={(importedPieces) => {
+              setSheetPieces([...sheetPieces, ...importedPieces]);
+            }}
+          />
+
           <SheetMaterialInput
             pieces={sheetPieces}
             setPieces={setSheetPieces}
