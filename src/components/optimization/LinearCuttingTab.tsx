@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { CuttingWorkflow } from './CuttingWorkflow';
 import { PreCutInspection } from './PreCutInspection';
 import { CuttingIncidentReport } from './CuttingIncidentReport';
+import { BundleEconomyReport } from './BundleEconomyReport';
 import { Layers, Info } from 'lucide-react';
 import type { Project, CutPiece, OptimizationResult } from '@/pages/Index';
 
@@ -183,6 +184,16 @@ export const LinearCuttingTab = ({
             ))}
           </CardContent>
         </Card>
+      )}
+
+      {/* Relatório de Economia (G6) */}
+      {bundleEnabled && bundleResults && (
+        <BundleEconomyReport
+          bundleResults={bundleResults}
+          barLength={barLength}
+          costPerBar={50}
+          projectName={project?.name}
+        />
       )}
 
       {/* Inspeção Pré-Corte (G14) */}
