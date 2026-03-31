@@ -7,8 +7,6 @@ import {
   Scissors,
   Shield,
   LogOut,
-  Ruler,
-  Square,
 } from "lucide-react";
 import {
   Sidebar,
@@ -37,8 +35,6 @@ interface AppSidebarProps {
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: BarChart3, tooltip: "Painel de indicadores e KPIs" },
   { id: "projects", label: "Projetos", icon: Folder, tooltip: "Gerenciar projetos de corte" },
-  { id: "optimize", label: "Corte Linear", icon: Ruler, tooltip: "Otimização de corte de barras/perfis" },
-  { id: "sheet-cutting", label: "Corte Chapas", icon: Square, tooltip: "Nesting de chapas com importação DXF" },
   { id: "sobras", label: "Estoque", icon: Package, tooltip: "Estoque de sobras disponíveis" },
   { id: "reports", label: "Relatórios", icon: FileText, tooltip: "Relatórios e exportações" },
   { id: "settings", label: "Configurações", icon: Settings, tooltip: "Cadastros e configurações do sistema" },

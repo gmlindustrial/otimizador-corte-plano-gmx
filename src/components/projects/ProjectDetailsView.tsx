@@ -61,6 +61,7 @@ import { SheetValidationAlert, SheetValidation, groupByDescricao } from "./Sheet
 import { SheetGroupCard } from "./SheetGroupCard";
 import { SheetOptimizationDialog, SheetOptimizationConfig } from "./SheetOptimizationDialog";
 import { SheetOptimizationResultsDialog } from "./SheetOptimizationResultsDialog";
+import { DxfUpload } from "@/components/sheet/DxfUpload";
 import type { SheetInventorPiece } from "@/components/file-upload/FileParsingService";
 import { materialService } from "@/services/entities/MaterialService";
 import type { Material } from "@/services/interfaces";
@@ -151,6 +152,7 @@ export const ProjectDetailsView = ({
   } | null>(null);
   const [sheetOptimizations, setSheetOptimizations] = useState<SheetOptimizationHistory[]>([]);
   const [viewSheetOptimization, setViewSheetOptimization] = useState<SheetOptimizationHistory | null>(null);
+  const [sheetAlternatives, setSheetAlternatives] = useState<any[]>([]);
 
   const mapProjetoToProject = (p: Projeto): Project => ({
     id: p.id,
@@ -643,7 +645,7 @@ export const ProjectDetailsView = ({
         allowRotation: config.allowRotation,
         thickness: chapa.espessura_mm,
         material: chapa.material?.descricao || chapa.descricao,
-        geometry: {
+        geometry: (chapa as any).geometria_dxf || {
           type: 'rectangle' as const,
           boundingBox: { width: chapa.largura_mm, height: chapa.altura_mm },
           area: chapa.largura_mm * chapa.altura_mm,
@@ -678,11 +680,27 @@ export const ProjectDetailsView = ({
         validation.warnings.forEach(w => toast.warning(w));
       }
 
-      // 4. Executar otimização
+      // 4. Executar otimização principal
       setSheetOptimizationProgress(`Otimizando com algoritmo ${config.algorithm}...`);
       const result = await sheetOptimizationService.optimize(pieces, sheetProject);
 
       const optimizationTime = Date.now() - startTime;
+
+      // 4b. Rodar multi-algoritmo em paralelo para comparação
+      try {
+        const { runMultiAlgorithmOptimization } = await import('@/components/sheet/SheetAlgorithmComparison');
+        const alternatives = await runMultiAlgorithmOptimization(
+          pieces,
+          sheetProject.sheetWidth,
+          sheetProject.sheetHeight,
+          sheetProject.kerf,
+          sheetProject.thickness,
+          sheetProject.material,
+        );
+        setSheetAlternatives(alternatives);
+      } catch (e) {
+        console.warn('Multi-algorithm comparison failed:', e);
+      }
 
       // 5. Salvar no histórico
       setSheetOptimizationProgress('Salvando resultado...');
@@ -1590,23 +1608,72 @@ export const ProjectDetailsView = ({
                   </div>
                 )}
 
+                {/* Upload DXF para chapas */}
+                <DxfUpload
+                  onPiecesImported={async (importedPieces) => {
+                    try {
+                      // Converter SheetCutPiece[] → ProjetoChapa format
+                      const chapasToSave = importedPieces.map(piece => {
+                        // Calcular peso: volume (m³) × densidade aço (7850 kg/m³)
+                        const thicknessMm = piece.thickness || 0;
+                        const volumeM3 = (piece.width / 1000) * (piece.height / 1000) * (thicknessMm / 1000);
+                        const peso = Math.round(volumeM3 * 7850 * 100) / 100;
+
+                        return {
+                          projeto_id: project.id,
+                          tag: piece.tag || 'DXF',
+                          posicao: piece.cadFile || `DXF-${Date.now()}`,
+                          largura_mm: piece.width,
+                          altura_mm: piece.height,
+                          espessura_mm: thicknessMm,
+                          quantidade: piece.quantity,
+                          material_descricao_raw: piece.material || null,
+                          material_nao_encontrado: !piece.material,
+                          peso,
+                          status: 'aguardando_otimizacao' as const,
+                          geometria_dxf: piece.geometry || null,
+                        };
+                      });
+
+                      const result = await projetoChapaService.createBatch(chapasToSave as any);
+
+                      if (result.success) {
+                        // Recarregar chapas do banco
+                        await loadProjectData();
+                        setActiveTab("sheets");
+                        const saved = result.data?.length || 0;
+                        const skipped = (result as any).skipped || 0;
+                        toast.success(
+                          `${saved} peça(s) DXF salva(s) no projeto` +
+                          (skipped > 0 ? ` (${skipped} duplicada(s) ignorada(s))` : '')
+                        );
+                      } else {
+                        toast.error(`Erro ao salvar peças: ${result.error}`);
+                      }
+                    } catch (error) {
+                      console.error('Erro ao importar DXF para projeto:', error);
+                      toast.error('Erro ao importar peças DXF');
+                    }
+                  }}
+                />
+
                 {loadingChapas ? (
                   <div className="flex items-center justify-center py-12">
                     <div className="flex flex-col items-center gap-4">
                       <div className="w-8 h-8 border-3 border-teal-600 border-t-transparent rounded-full animate-spin" />
-                      <p className="text-gray-600 font-medium">Carregando chapas...</p>
+                      <p className="text-muted-foreground font-medium">Carregando chapas...</p>
                     </div>
                   </div>
                 ) : projectChapas.length === 0 ? (
                   <div className="text-center py-16">
-                    <div className="p-4 bg-gray-100 rounded-full w-fit mx-auto mb-4">
-                      <Scissors className="w-8 h-8 text-gray-400" />
+                    <div className="p-4 bg-secondary rounded-full w-fit mx-auto mb-4">
+                      <Scissors className="w-8 h-8 text-muted-foreground" />
                     </div>
-                    <p className="text-gray-500 text-lg">
+                    <p className="text-muted-foreground text-lg">
                       Nenhuma chapa cadastrada neste projeto.
                     </p>
-                    <p className="text-sm text-gray-400 mt-2">
-                      Importe um arquivo do Inventor que contenha chapas.
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Importe um arquivo DXF ou Inventor que contenha chapas.
                     </p>
                   </div>
                 ) : (
