@@ -47,9 +47,39 @@ export class DxfParserService {
 
     console.log(`🔄 DXF Parser: ${dxf.entities.length} entidades encontradas`);
 
+    // Filtrar entidades não-geométricas (textos, cotas, dimensões)
+    const NON_GEOMETRY_TYPES = new Set([
+      'TEXT', 'MTEXT', 'DIMENSION', 'LEADER', 'ATTDEF', 'ATTRIB',
+      'POINT', 'INSERT', 'HATCH', 'VIEWPORT',
+    ]);
+
+    // Layers que tipicamente contêm elementos auxiliares (cota, centro, hatch)
+    const AUXILIARY_LAYER_PATTERNS = [
+      /defpoints/i,    // Layer padrão de cotas no AutoCAD
+      /dim/i,          // Dimensionamento
+      /cot[ae]/i,      // Cota (PT)
+      /centro/i,       // Linhas de centro
+      /center/i,       // Linhas de centro (EN)
+      /hidden/i,       // Linhas ocultas
+      /hatch/i,        // Hachuras
+      /text/i,         // Textos
+      /anno/i,         // Anotações
+      /viewport/i,     // Viewports
+    ];
+
+    const geometricEntities = dxf.entities.filter((entity: any) => {
+      // Ignorar tipos não-geométricos
+      if (NON_GEOMETRY_TYPES.has(entity.type)) return false;
+      // Ignorar entidades invisíveis
+      if (entity.visible === false) return false;
+      return true;
+    });
+
+    console.log(`🔧 Entidades geométricas: ${geometricEntities.length} de ${dxf.entities.length}`);
+
     // Agrupar entidades por layer
     const layers = new Map<string, any[]>();
-    for (const entity of dxf.entities) {
+    for (const entity of geometricEntities) {
       const layer = entity.layer || '0';
       if (!layers.has(layer)) {
         layers.set(layer, []);
@@ -59,10 +89,34 @@ export class DxfParserService {
 
     console.log(`📂 Layers encontrados: ${Array.from(layers.keys()).join(', ')}`);
 
+    // Identificar layers auxiliares
+    const auxiliaryLayers = new Set<string>();
+    for (const layerName of layers.keys()) {
+      if (AUXILIARY_LAYER_PATTERNS.some(pattern => pattern.test(layerName))) {
+        auxiliaryLayers.add(layerName);
+        console.log(`⏭️ Layer auxiliar ignorado: "${layerName}"`);
+      }
+    }
+
+    // Verificar via linetype: linhas de centro (CENTER, DASHDOT) são auxiliares
+    for (const [layerName, entities] of layers) {
+      if (auxiliaryLayers.has(layerName)) continue;
+      const centerLineTypes = entities.filter((e: any) =>
+        e.lineType && /center|dashdot|phantom/i.test(e.lineType)
+      );
+      // Se >80% das entidades do layer são linhas de centro, é layer auxiliar
+      if (centerLineTypes.length > entities.length * 0.8 && entities.length > 0) {
+        auxiliaryLayers.add(layerName);
+        console.log(`⏭️ Layer de linhas de centro ignorado: "${layerName}" (${centerLineTypes.length}/${entities.length} entidades CENTER)`);
+      }
+    }
+
     const pieces: ParsedPiece[] = [];
 
-    // Processar cada layer
+    // Processar cada layer (exceto auxiliares)
     for (const [layerName, entities] of layers) {
+      // Ignorar layers auxiliares
+      if (auxiliaryLayers.has(layerName)) continue;
       const contourPoints: DxfPoint[] = [];
       const holes: Array<{ center: DxfPoint; radius: number }> = [];
 
@@ -126,6 +180,47 @@ export class DxfParserService {
       }
     }
 
+    // Filtrar peças muito finas (provavelmente linhas de cota ou anotações)
+    // Se uma dimensão é < 30% da outra, não é peça real
+    const validPieces = pieces.filter(piece => {
+      const { width, height } = piece.boundingBox;
+      if (width < 1 || height < 1) {
+        console.log(`⏭️ Peça descartada (dimensão zero): layer "${piece.layer}" (${width.toFixed(1)}×${height.toFixed(1)}mm)`);
+        return false;
+      }
+      const ratio = Math.min(width, height) / Math.max(width, height);
+      if (ratio < 0.30) {
+        console.log(`⏭️ Peça descartada (muito fina, provavelmente cota): layer "${piece.layer}" (${width.toFixed(1)}×${height.toFixed(1)}mm, ratio=${ratio.toFixed(2)})`);
+        return false;
+      }
+      // Peças com poucos pontos (< 3 pontos únicos) são linhas soltas
+      const uniquePoints = this.removeDuplicatePoints(piece.contour, 1);
+      if (uniquePoints.length < 3) {
+        console.log(`⏭️ Peça descartada (< 3 pontos): layer "${piece.layer}"`);
+        return false;
+      }
+      return true;
+    });
+    pieces.length = 0;
+    pieces.push(...validPieces);
+
+    // Deduplicar peças com bounding box muito similar (tolerância 5%)
+    const deduplicatedPieces: ParsedPiece[] = [];
+    for (const piece of pieces) {
+      const isDuplicate = deduplicatedPieces.some(existing => {
+        const wRatio = Math.abs(existing.boundingBox.width - piece.boundingBox.width) / Math.max(existing.boundingBox.width, 1);
+        const hRatio = Math.abs(existing.boundingBox.height - piece.boundingBox.height) / Math.max(existing.boundingBox.height, 1);
+        return wRatio < 0.05 && hRatio < 0.05;
+      });
+      if (!isDuplicate) {
+        deduplicatedPieces.push(piece);
+      } else {
+        console.log(`⏭️ Peça duplicada ignorada: layer "${piece.layer}" (${piece.boundingBox.width.toFixed(0)}×${piece.boundingBox.height.toFixed(0)}mm)`);
+      }
+    }
+    pieces.length = 0;
+    pieces.push(...deduplicatedPieces);
+
     // Se nenhuma peça por layer, tentar processar todas as entidades como uma única peça
     if (pieces.length === 0) {
       const allPoints = this.processAllEntities(dxf.entities);
@@ -171,7 +266,7 @@ export class DxfParserService {
       const isComplex = piece.contour.length > 4 || piece.holes.length > 0;
 
       return {
-        id: `dxf-${index}-${Date.now()}`,
+        id: `dxf-${index}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         width: Math.round(piece.boundingBox.width * 100) / 100,
         height: Math.round(piece.boundingBox.height * 100) / 100,
         quantity: options.quantity ?? 1,
