@@ -47,7 +47,7 @@ export interface SheetOptimizationConfig {
   };
   kerf: number;
   allowRotation: boolean;
-  algorithm: 'BLF' | 'Genetic' | 'Hybrid';
+  algorithm: 'BLF' | 'Genetic' | 'Hybrid' | 'NFP';
   processo: 'plasma' | 'oxicorte';
 }
 
@@ -290,6 +290,7 @@ export const SheetOptimizationDialog = ({
                     <SelectItem value="Hybrid">Hibrido (Recomendado)</SelectItem>
                     <SelectItem value="BLF">BLF - Rapido</SelectItem>
                     <SelectItem value="Genetic">Genetico - Qualidade</SelectItem>
+                    <SelectItem value="NFP">NFP - Geometria Irregular</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

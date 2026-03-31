@@ -152,6 +152,17 @@ export async function runMultiAlgorithmOptimization(
     console.warn('MaxRects falhou:', e);
   }
 
+  // 4. SVGnest NFP (Geometria Irregular)
+  try {
+    const { runSvgNest } = await import('@/algorithms/sheet/svgnest/SvgNestEngine');
+    const start = performance.now();
+    const result = await runSvgNest(pieces, sheetWidth, sheetHeight, { spacing: kerf });
+    const timeMs = Math.round(performance.now() - start);
+    results.push({ name: 'nfp', label: 'NFP (Geometria Irregular)', result, timeMs, isBest: false });
+  } catch (e) {
+    console.warn('NFP falhou:', e);
+  }
+
   // Ordenar por eficiência (melhor primeiro)
   results.sort((a, b) => b.result.averageEfficiency - a.result.averageEfficiency);
 

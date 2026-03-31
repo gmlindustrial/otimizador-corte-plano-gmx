@@ -682,7 +682,17 @@ export const ProjectDetailsView = ({
 
       // 4. Executar otimização principal
       setSheetOptimizationProgress(`Otimizando com algoritmo ${config.algorithm}...`);
-      const result = await sheetOptimizationService.optimize(pieces, sheetProject);
+      let result;
+      if (config.algorithm === 'NFP') {
+        // Usar SVGnest engine para geometrias irregulares
+        const { runSvgNest } = await import('@/algorithms/sheet/svgnest/SvgNestEngine');
+        result = await runSvgNest(pieces, sheetProject.sheetWidth, sheetProject.sheetHeight, {
+          spacing: sheetProject.kerf,
+          rotations: config.allowRotation ? 4 : 1,
+        });
+      } else {
+        result = await sheetOptimizationService.optimize(pieces, sheetProject);
+      }
 
       const optimizationTime = Date.now() - startTime;
 
