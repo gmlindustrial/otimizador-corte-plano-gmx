@@ -21,6 +21,7 @@ import {
 import type { SheetOptimizationResult, SheetProject } from '@/types/sheet';
 import { SheetVisualization } from '@/components/sheet/SheetVisualization';
 import { SheetOptimizationResults } from '@/components/sheet/SheetOptimizationResults';
+import { SheetCuttingLabels } from '@/components/sheet/SheetCuttingLabels';
 
 interface SheetOptimizationResultsDialogProps {
   open: boolean;
@@ -66,6 +67,7 @@ export const SheetOptimizationResultsDialog = ({
                   {results.averageEfficiency.toFixed(1)}% Eficiência
                 </Badge>
               </div>
+              <SheetCuttingLabels results={results} project={project} />
             </div>
           </DialogTitle>
         </DialogHeader>
