@@ -685,9 +685,8 @@ export const ProjectDetailsView = ({
       let result;
       if (config.algorithm === 'NFP') {
         // Usar SVGnest engine para geometrias irregulares
-        const { runSvgNest } = await import('@/algorithms/sheet/svgnest/SvgNestEngine');
-        result = await runSvgNest(pieces, sheetProject.sheetWidth, sheetProject.sheetHeight, {
-          spacing: sheetProject.kerf,
+        const { runNesting } = await import('@/algorithms/sheet/svgnest/nestAdapter');
+        result = await runNesting(pieces, sheetProject.sheetWidth, sheetProject.sheetHeight, sheetProject.kerf, {
           rotations: config.allowRotation ? 4 : 1,
         });
       } else {

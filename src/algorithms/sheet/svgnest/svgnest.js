@@ -335,13 +335,13 @@
 					searchEdges: config.exploreConcave,
 					useHoles: config.useHoles
 				},
-				evalPath: 'util/eval.js'
+				evalPath: '/svgnest/eval.js'
 			});
 			
-			p.require('matrix.js');
-			p.require('geometryutil.js');
-			p.require('placementworker.js');
-			p.require('clipper.js');
+			p.require('/svgnest/matrix.js');
+			p.require('/svgnest/geometryutil.js');
+			p.require('/svgnest/placementworker.js');
+			p.require('/svgnest/clipper.js');
 			
 			var self = this;
 			var spawncount = 0;
@@ -538,10 +538,10 @@
 					env: {
 						self: worker
 					},
-					evalPath: 'util/eval.js'
+					evalPath: '/svgnest/eval.js'
 				});
 				
-				p2.require('json.js');
+				p2.require('/svgnest/json.js');
 				p2.require('clipper.js');
 				p2.require('matrix.js');
 				p2.require('geometryutil.js');
@@ -809,6 +809,143 @@
 			return svglist;
 		}
 		
+		// =====================================================
+		// nestFromPolygons — accepts JSON polygons directly
+		// Bypasses SvgParser/DOM. Used by our React adapter.
+		// =====================================================
+		this.nestFromPolygons = function(polygonParts, binPolygonInput, configOverride, resultCallback){
+			this.stop();
+
+			// Apply config overrides
+			if(configOverride){
+				for(var key in configOverride){
+					if(configOverride.hasOwnProperty(key)){
+						config[key] = configOverride[key];
+					}
+				}
+			}
+
+			// Build tree from JSON polygons
+			tree = [];
+			for(var i = 0; i < polygonParts.length; i++){
+				var poly = polygonParts[i].slice(0);
+				poly.id = polygonParts[i].id !== undefined ? polygonParts[i].id : i;
+				poly.source = polygonParts[i].source !== undefined ? polygonParts[i].source : i;
+				if(polygonParts[i].children){
+					poly.children = polygonParts[i].children;
+				}
+				tree.push(poly);
+			}
+
+			// Apply spacing offset to parts
+			if(config.spacing > 0){
+				offsetTree(tree, 0.5*config.spacing, this.polygonOffset.bind(this));
+			}
+
+			function offsetTree(t, offset, offsetFunction){
+				for(var i=0; i<t.length; i++){
+					var offsetpaths = offsetFunction(t[i], offset);
+					if(offsetpaths.length == 1){
+						Array.prototype.splice.apply(t[i], [0, t[i].length].concat(offsetpaths[0]));
+					}
+					if(t[i].children && t[i].children.length > 0){
+						offsetTree(t[i].children, -offset, offsetFunction);
+					}
+				}
+			}
+
+			// Setup bin polygon
+			binPolygon = binPolygonInput.slice(0);
+			binPolygon = this.cleanPolygon(binPolygon);
+
+			if(!binPolygon || binPolygon.length < 3){
+				if(resultCallback) resultCallback(null);
+				return false;
+			}
+
+			binBounds = GeometryUtil.getPolygonBounds(binPolygon);
+
+			if(config.spacing > 0){
+				var offsetBin = this.polygonOffset(binPolygon, -0.5*config.spacing);
+				if(offsetBin.length == 1){
+					binPolygon = offsetBin.pop();
+				}
+			}
+
+			binPolygon.id = -1;
+
+			// Put bin on origin
+			var xbinmax = binPolygon[0].x, xbinmin = binPolygon[0].x;
+			var ybinmax = binPolygon[0].y, ybinmin = binPolygon[0].y;
+			for(var i=1; i<binPolygon.length; i++){
+				if(binPolygon[i].x > xbinmax) xbinmax = binPolygon[i].x;
+				else if(binPolygon[i].x < xbinmin) xbinmin = binPolygon[i].x;
+				if(binPolygon[i].y > ybinmax) ybinmax = binPolygon[i].y;
+				else if(binPolygon[i].y < ybinmin) ybinmin = binPolygon[i].y;
+			}
+			for(i=0; i<binPolygon.length; i++){
+				binPolygon[i].x -= xbinmin;
+				binPolygon[i].y -= ybinmin;
+			}
+			binPolygon.width = xbinmax-xbinmin;
+			binPolygon.height = ybinmax-ybinmin;
+
+			// Ensure counterclockwise winding for bin
+			if(GeometryUtil.polygonArea(binPolygon) > 0){
+				binPolygon.reverse();
+			}
+
+			// Normalize winding for parts
+			for(i=0; i<tree.length; i++){
+				var start = tree[i][0];
+				var end = tree[i][tree[i].length-1];
+				if(start == end || (GeometryUtil.almostEqual(start.x,end.x) && GeometryUtil.almostEqual(start.y,end.y))){
+					tree[i].pop();
+				}
+				if(GeometryUtil.polygonArea(tree[i]) > 0){
+					tree[i].reverse();
+				}
+			}
+
+			// Reset GA and best
+			GA = null;
+			best = null;
+			nfpCache = {};
+
+			var self = this;
+			this.working = false;
+
+			// Store resultCallback for use in displayCallback
+			this._resultCallback = resultCallback;
+			this._bestPlacements = null;
+
+			workerTimer = setInterval(function(){
+				if(!self.working){
+					self.launchWorkers.call(self, tree, binPolygon, config, function(p){
+						progress = p;
+					}, function(svgList, efficiency, numPlaced, numTotal){
+						// Store raw placements (JSON) for the adapter
+						if(best && best.placements){
+							self._bestPlacements = {
+								placements: best.placements,
+								efficiency: efficiency,
+								numPlaced: numPlaced,
+								numTotal: numTotal
+							};
+						}
+					});
+					self.working = true;
+				}
+			}, 100);
+
+			return true;
+		};
+
+		// Get current best result as JSON (called by adapter)
+		this.getBestResult = function(){
+			return this._bestPlacements;
+		};
+
 		this.stop = function(){
 			this.working = false;
 			if(workerTimer){

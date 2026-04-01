@@ -154,9 +154,9 @@ export async function runMultiAlgorithmOptimization(
 
   // 4. SVGnest NFP (Geometria Irregular)
   try {
-    const { runSvgNest } = await import('@/algorithms/sheet/svgnest/SvgNestEngine');
+    const { runNesting } = await import('@/algorithms/sheet/svgnest/nestAdapter');
     const start = performance.now();
-    const result = await runSvgNest(pieces, sheetWidth, sheetHeight, { spacing: kerf });
+    const result = await runNesting(pieces, sheetWidth, sheetHeight, kerf, { rotations: 4 });
     const timeMs = Math.round(performance.now() - start);
     results.push({ name: 'nfp', label: 'NFP (Geometria Irregular)', result, timeMs, isBest: false });
   } catch (e) {
